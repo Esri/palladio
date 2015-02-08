@@ -19,8 +19,15 @@
 #include "SOP/SOP_Guide.h"
 
 #include "boost/foreach.hpp"
+#include "boost/filesystem.hpp"
 
 #include <vector>
+
+#ifdef _WIN32
+#	include <Windows.h>
+#else
+#	include <dlfcn.h>
+#endif
 
 
 namespace {
@@ -150,11 +157,47 @@ std::string objectToXML(prt::Object const* obj) {
 }
 
 
+void getPathToCurrentModule(boost::filesystem::path& path) {
+#ifdef _WIN32
+	HMODULE dllHandle = 0;
+	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)getPathToCurrentModule, &dllHandle)) {
+		DWORD c = GetLastError();
+		char msg[255];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
+		throw std::runtime_error("error while trying to get current module handle': " + std::string(msg));
+	}
+	assert(sizeof(TCHAR) == 1);
+	const size_t PATHMAXSIZE = 4096;
+	TCHAR pathA[PATHMAXSIZE];
+	DWORD pathSize = GetModuleFileName(dllHandle, pathA, PATHMAXSIZE);
+	if(pathSize == 0 || pathSize == PATHMAXSIZE) {
+		DWORD c = GetLastError();
+		char msg[255];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
+		throw std::runtime_error("error while trying to get current module path': " + std::string(msg));
+	}
+	path = pathA;
+#else /* macosx or linux */
+	Dl_info dl_info;
+	if(dladdr((void*)getPathToCurrentModule, &dl_info) == 0) {
+		char* error = dlerror();
+		throw std::runtime_error("error while trying to get current module path': " + std::string(error ? error : ""));
+	}
+	path = dl_info.dli_fname;
+#endif
+}
+
 } // namespace anonymous
 
 
 class HoudiniGeometry : public HoudiniCallbacks {
+public:
+	HoudiniGeometry(GU_Detail* gdp) : mDetail(gdp) { }
+
+protected:
 	virtual void setVertices(double* vtx, size_t size) {
+		for (size_t pi = 0; pi < size; pi += 3)
+			mPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
 	}
 	virtual void setNormals(double* nrm, size_t size) {
 	}
@@ -162,10 +205,19 @@ class HoudiniGeometry : public HoudiniCallbacks {
 	}
 
 	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
+		for (size_t ci = 0; ci < countsSize; ci++)
+			mPolyCounts.append(counts[ci]);
+		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
 	}
+
 	virtual void createMesh() {
 	}
 	virtual void finishMesh() {
+		GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
+		mPolyCounts.clear();
+		mIndices.clear();
+		mPoints.clear();
+		LOG_DBG << "finishMesh";
 	}
 
 	virtual void matSetColor(int start, int count, float r, float g, float b) {
@@ -203,6 +255,12 @@ class HoudiniGeometry : public HoudiniCallbacks {
 	virtual prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
 		return prt::STATUS_OK;
 	}
+
+private:
+	GU_Detail* mDetail;
+	std::vector<UT_Vector3> mPoints;
+	std::vector<int> mIndices;
+	GEO_PolyCounts mPolyCounts;
 };
 
 using namespace HDK_Sample;
@@ -239,16 +297,19 @@ void newSopOperator(OP_OperatorTable *table) {
 	prtConsoleLog = prt::ConsoleLogHandler::create(prt::LogHandler::ALL, prt::LogHandler::ALL_COUNT);
 	prt::addLogHandler(prtConsoleLog);
 
+	boost::filesystem::path sopPath;
+	getPathToCurrentModule(sopPath);
+
 	prt::FlexLicParams flp;
-	flp.mActLibPath = "/home/shaegler/procedural/dev/builds/cesdk/esri_ce_sdk_1_2_1591_rhel6_gcc44_rel_opt/bin/libflexnet_prt.so";
+	std::string libflexnetPath = (sopPath.parent_path() / "libflexnet_prt.so").string();
+	flp.mActLibPath = libflexnetPath.c_str();
 	flp.mFeature = "CityEngAdvFx";
 
-	const wchar_t* extPaths[] = {
-		 L"/home/shaegler/procedural/dev/builds/cesdk/esri_ce_sdk_1_2_1591_rhel6_gcc44_rel_opt/lib",
-		 L"/home/shaegler/git/esri-cityengine-sdk/examples/prt4houdini/codec/install/lib"
-	};
+	std::wstring libPath = (sopPath.parent_path() / "lib").wstring();
+	const wchar_t* extPaths[] = { libPath.c_str() };
+
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtLicHandle = prt::init(extPaths, 2, prt::LOG_DEBUG, &flp, &status);
+	prtLicHandle = prt::init(extPaths, 1, prt::LOG_DEBUG, &flp, &status);
 	
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
@@ -309,7 +370,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		std::vector<uint32_t> idx, faceCounts;
 		
 		GA_Offset ptoff;
-		GA_FOR_ALL_GROUP_PTOFF(gdp, mPointGroup, ptoff) {
+		GA_FOR_ALL_PTOFF(gdp, ptoff) {
 			UT_Vector3 p = gdp->getPos3(ptoff);
 			vtx.push_back(static_cast<double>(p.x()));
 			vtx.push_back(static_cast<double>(p.y()));
@@ -317,21 +378,27 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		}
 
 		GA_Primitive* prim = 0;
-		GA_FOR_ALL_GROUP_PRIMITIVES(gdp, mPrimitiveGroup, prim) {
-			for(GA_Size i = prim->getVertexCount()-1; i >=0 ; i--) { // houdini clockwise?
-				GA_Offset off = prim->getVertexOffset(i);
+		GA_FOR_ALL_PRIMITIVES(gdp, prim) {
+			GU_PrimPoly* face = (GU_PrimPoly*)prim;
+			for(GA_Size i = face->getVertexCount()-1; i >= 0 ; i--) {
+				GA_Offset off = face->getPointOffset(i);
 				idx.push_back(static_cast<uint32_t>(off));
 			}
-			faceCounts.push_back(static_cast<uint32_t>(prim->getVertexCount()));
+			faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
 		}
 		
 		LOG_DBG << "initial shape geo: vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 		
-		HoudiniGeometry hg;
+		gdp->clearAndDestroy();
+
+		HoudiniGeometry hg(gdp);
 		prt::CacheObject* cache = prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT);
 		{ // create scope to better see lifetime of callback and cache
 
-			std::wstring rpkURI = L"file:/home/shaegler/procedural/dev/builds/cesdk/data/candler.02.rpk";
+			// test rpk for development...
+			boost::filesystem::path sopPath;
+			getPathToCurrentModule(sopPath);
+			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "extrude.rpk").wstring();
 
 			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 			const prt::ResolveMap* assetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
@@ -341,17 +408,18 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			}
 
 			prt::AttributeMapBuilder* bld = prt::AttributeMapBuilder::create();
+
 			const prt::AttributeMap* initialShapeAttrs = bld->createAttributeMapAndReset();
 			bld->destroy();
 
 			std::wstring shapeName = L"TheInitialShape";
-			std::wstring ruleFile = L"bin/candler.01.cgb";
-			std::wstring startRule = L"default$Lot";
+			std::wstring ruleFile = L"rules/rule.cgb";
+			std::wstring startRule = L"Default$Init";
 			int32_t seed = 666;
 
 			prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
-// 			isb->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
-			isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
+ 			isb->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+			//isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
 			isb->setAttributes(
 					ruleFile.c_str(),
 					startRule.c_str(),
@@ -406,6 +474,8 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			assetsMap->destroy();
 		}
 		cache->destroy();
+
+		select(GU_SPrimitive);
     }
 
     unlockInputs();

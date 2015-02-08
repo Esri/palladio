@@ -5,12 +5,6 @@ set(PROJECT prt4houdini)
 project(${PROJECT})
 include(../../common.cmake)
 
-if(MAYA_PLUGIN_INSTALL_PATH)
-	set(CMAKE_INSTALL_PREFIX ${HOUDINI_PLUGIN_INSTALL_PATH})
-else()
-	set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/../install")
-endif()
-
 
 ### dependencies
 
@@ -21,6 +15,16 @@ set(prt4houdini_codec_DIR "../../codec/install/cmake")
 find_package(prt4houdini_codec CONFIG REQUIRED)
 include_directories(${PRT4HOUDINI_CODEC_INCLUDE_PATH})
 set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION_MICRO}")
+
+
+### install prt libraries
+
+install(FILES ${PRT_LIBRARIES} DESTINATION ${HOUDINI_DSO_PATH})
+install(FILES ${PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_DSO_PATH}/lib")
+install(FILES ${PRT4HOUDINI_CODEC_EXT_LIBRARIES} DESTINATION "${HOUDINI_DSO_PATH}/lib")
+
+# test rule just for development
+install(FILES "${CMAKE_CURRENT_LIST_DIR}/../../../testdata/extrude.rpk" DESTINATION ${HOUDINI_DSO_PATH})
 
 
 ### use makefiles by houdini
