@@ -272,7 +272,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			// test rpk for development...
 			boost::filesystem::path sopPath;
 			utils::getPathToCurrentModule(sopPath);
-			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "hdn2.rpk").wstring();
+			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "candler.rpk").wstring();
 
 			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 			const prt::ResolveMap* assetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
@@ -284,13 +284,13 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			fpreal t = context.getTime();
 			float height = evalFloat("height", 0, t);
 			prt::AttributeMapBuilder* bld = prt::AttributeMapBuilder::create();
-			bld->setFloat(L"height", height);
+			bld->setFloat(L"BuildingHeight", height);
 			const prt::AttributeMap* initialShapeAttrs = bld->createAttributeMapAndReset();
 			bld->destroy();
 
 			std::wstring shapeName = L"TheInitialShape";
-			std::wstring ruleFile = L"bin/hdn2.cgb";
-			std::wstring startRule = L"Default$Init";
+			std::wstring ruleFile = L"bin/Candler Building.cgb";
+			std::wstring startRule = L"Default$Footprint";
 			int32_t seed = 666;
 
 			prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();

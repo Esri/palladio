@@ -1,5 +1,8 @@
 # houdini-cityengine-plugin
 
+## requirements
+- currently linux only (e.g. RHEL6)
+- requires gcc 4.4
+
 ## building
-1. install/symlink CE SDK 1.2.x into directory "prt" next to prt4houdini
-2. in prt4houdini, run "./build.sh /opt/hfs13.0.509" (adapt houdini location if necessary)
+in prt4houdini, run "./build.sh <path to ce sdk cmake subdir> /opt/hfs13.0.509"

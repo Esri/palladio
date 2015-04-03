@@ -9,7 +9,7 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 prt_DIR=$1
-BUILDTYPE=Debug
+BUILDTYPE=RelWithDebInfo
 
 export houdini_DIR=$2
 export PATH=${houdini_DIR}/bin:${PATH}
