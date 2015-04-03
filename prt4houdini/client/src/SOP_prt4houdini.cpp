@@ -162,6 +162,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
 	flp.mActLibPath = libflexnetPath.c_str();
 	flp.mFeature = "CityEngAdvFx";
+	flp.mHostName = "";
 
 	std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
 	const wchar_t* extPaths[] = { libPath.c_str() };
