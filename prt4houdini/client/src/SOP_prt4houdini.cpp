@@ -1,4 +1,6 @@
 #include "SOP_prt4houdini.h"
+#include "logging.h"
+#include "utils.h"
 
 #include "HoudiniCallbacks.h"
 
@@ -23,172 +25,33 @@
 
 #include <vector>
 
-#ifdef _WIN32
-#	include <Windows.h>
-#else
-#	include <dlfcn.h>
-#endif
-
 
 namespace {
 
-
-// some file name definitions
+// some file/directory name definitions
+const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
-const char* 	FILE_LOG				= "prt4cmd.log";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
 const wchar_t*	FILE_CGA_PRINT			= L"CGAPrint.txt";
-
 
 // some encoder IDs
 const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
 const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
 const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 
-
+// prt objects with same life-cycle as SOP
 const prt::Object* prtLicHandle = 0;
 prt::CacheObject* prtCache = 0;
 prt::ConsoleLogHandler*	prtConsoleLog = 0;
 
-
 void dsoExit(void*) {
 	if (prtCache)
 		prtCache->destroy();
-	
 	if (prtLicHandle)
 		prtLicHandle->destroy();
-	
 	if (prtConsoleLog)
 		prt::removeLogHandler(prtConsoleLog);
 }
-
-
-struct Logger {
-};
-
-// log to std streams
-const std::wstring LEVELS[] = { L"trace", L"debug", L"info", L"warning", L"error", L"fatal" };
-template<prt::LogLevel L> struct StreamLogger : public Logger {
-	StreamLogger(std::wostream& out = std::wcout) : Logger(), mOut(out) { mOut << prefix(); }
-	virtual ~StreamLogger() { mOut << std::endl; }
-	StreamLogger<L>& operator<<(std::wostream&(*x)(std::wostream&)) { mOut << x; return *this; }
-	StreamLogger<L>& operator<<(const std::string& x) { std::copy(x.begin(), x.end(), std::ostream_iterator<char, wchar_t>(mOut)); return *this; }
-	template<typename T> StreamLogger<L>& operator<<(const T& x) { mOut << x; return *this; }
-	static std::wstring prefix() { return L"[" + LEVELS[L] + L"] "; }
-	std::wostream& mOut;
-};
-
-// log through the prt logger
-template<prt::LogLevel L> struct PRTLogger : public Logger {
-	PRTLogger() : Logger() { }
-	virtual ~PRTLogger() { prt::log(wstr.str().c_str(), L); }
-	PRTLogger<L>& operator<<(std::wostream&(*x)(std::wostream&)) { wstr << x;  return *this; }
-	PRTLogger<L>& operator<<(const std::string& x) {
-		std::copy(x.begin(), x.end(), std::ostream_iterator<char, wchar_t>(wstr));
-		return *this;
-	}
-	template<typename T> PRTLogger<L>& operator<<(const std::vector<T>& v) { 
-		wstr << L"[ ";
-		BOOST_FOREACH(const T& x, v) {
-			wstr << x << L" ";
-		}
-		wstr << L"]";
-		return *this;
-	}
-	template<typename T> PRTLogger<L>& operator<<(const T& x) { wstr << x; return *this; }
-	std::wostringstream wstr;
-};
-
-// log to Houdini message
-// template<prt::LogLevel L> struct HoudiniLogger : public Logger {
-// 	HoudiniLogger() : Logger() { }
-// 	virtual ~HoudiniLogger() { 
-// 		switch (L) {
-// 			case prt::LOG_DEBUG:
-// 			case prt::LOG_INFO:
-// 				
-// 		prt::log(wstr.str().c_str(), L);
-// 		
-// 	}
-// 	HoudiniLogger<L>& operator<<(std::wostream&(*x)(std::wostream&)) { wstr << x;  return *this; }
-// 	HoudiniLogger<L>& operator<<(const std::string& x) {
-// 		std::copy(x.begin(), x.end(), std::ostream_iterator<char, wchar_t>(wstr));
-// 		return *this;
-// 	}
-// 	template<typename T> HoudiniLogger<L>& operator<<(const T& x) { wstr << x; return *this; }
-// 	std::ostringstream str;
-// };
-
-#define LT PRTLogger
-
-typedef LT<prt::LOG_DEBUG>		_LOG_DBG;
-typedef LT<prt::LOG_INFO>		_LOG_INF;
-typedef LT<prt::LOG_WARNING>	_LOG_WRN;
-typedef LT<prt::LOG_ERROR>		_LOG_ERR;
-
-#define LOG_DBG _LOG_DBG()
-#define LOG_INF _LOG_INF()
-#define LOG_WRN _LOG_WRN()
-#define LOG_ERR _LOG_ERR()
-
-
-const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
-	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(encID);
-	const prt::AttributeMap* validatedOptions = 0;
-	const prt::AttributeMap* optionStates = 0;
-	encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
-	optionStates->destroy();
-	encInfo->destroy();
-	return validatedOptions;
-}
-
-
-std::string objectToXML(prt::Object const* obj) {
-	if (obj == 0)
-		throw std::invalid_argument("object pointer is not valid");
-	const size_t siz = 4096;
-	size_t actualSiz = siz;
-	std::string buffer(siz, ' ');
-	obj->toXML((char*)&buffer[0], &actualSiz);
-	buffer.resize(actualSiz-1); // ignore terminating 0
-	if(siz < actualSiz)
-		obj->toXML((char*)&buffer[0], &actualSiz);
-	return buffer;
-}
-
-
-void getPathToCurrentModule(boost::filesystem::path& path) {
-#ifdef _WIN32
-	HMODULE dllHandle = 0;
-	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)getPathToCurrentModule, &dllHandle)) {
-		DWORD c = GetLastError();
-		char msg[255];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
-		throw std::runtime_error("error while trying to get current module handle': " + std::string(msg));
-	}
-	assert(sizeof(TCHAR) == 1);
-	const size_t PATHMAXSIZE = 4096;
-	TCHAR pathA[PATHMAXSIZE];
-	DWORD pathSize = GetModuleFileName(dllHandle, pathA, PATHMAXSIZE);
-	if(pathSize == 0 || pathSize == PATHMAXSIZE) {
-		DWORD c = GetLastError();
-		char msg[255];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
-		throw std::runtime_error("error while trying to get current module path': " + std::string(msg));
-	}
-	path = pathA;
-#else /* macosx or linux */
-	Dl_info dl_info;
-	if(dladdr((void*)getPathToCurrentModule, &dl_info) == 0) {
-		char* error = dlerror();
-		throw std::runtime_error("error while trying to get current module path': " + std::string(error ? error : ""));
-	}
-	path = dl_info.dli_fname;
-#endif
-}
-
-} // namespace anonymous
-
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
@@ -199,9 +62,13 @@ protected:
 		for (size_t pi = 0; pi < size; pi += 3)
 			mPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
 	}
+
 	virtual void setNormals(double* nrm, size_t size) {
+		// TODO
 	}
+
 	virtual void setUVs(float* u, float* v, size_t size) {
+		// TODO
 	}
 
 	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
@@ -210,8 +77,18 @@ protected:
 		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
 	}
 
-	virtual void createMesh() {
+	virtual void matSetColor(int start, int count, float r, float g, float b) {
+		// TODO
 	}
+
+	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
+		// TODO
+	}
+
+	virtual void createMesh() {
+		// TODO
+	}
+
 	virtual void finishMesh() {
 		GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
 		mPolyCounts.clear();
@@ -220,11 +97,6 @@ protected:
 		LOG_DBG << "finishMesh";
 	}
 
-	virtual void matSetColor(int start, int count, float r, float g, float b) {
-	}
-	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
-	}
-	
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
 		return prt::STATUS_OK;
 	}
@@ -263,33 +135,18 @@ private:
 	GEO_PolyCounts mPolyCounts;
 };
 
-using namespace HDK_Sample;
-// namespace HDK_Sample {
-
-static PRM_Name names[] = {
-    PRM_Name("rpk",			"Rule Package"),
-    PRM_Name("startRule",	"Start Rule"),
-    PRM_Name("seed",		"Random Seed"),
-    PRM_Name("name",		"Initial Shape Name")
+PRM_Name names[] = {
+		PRM_Name("rpk",			"Rule Package"),
+		PRM_Name("startRule",	"Start Rule"),
+		PRM_Name("seed",		"Random Seed"),
+		PRM_Name("name",		"Initial Shape Name"),
+		PRM_Name("height",		"height")
 };
 
-static PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+PRM_Default rpkDefault(0, "$HIP/$F.rpk");
 
-PRM_Template SOP_PRT::myTemplateList[] = {
-    PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
-    PRM_Template(PRM_FILE,		1, &names[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-    PRM_Template(PRM_STRING,	1, &names[1],		PRMoneDefaults),
-    PRM_Template(PRM_FLT_J,		1, &names[2],		PRMzeroDefaults),
-    PRM_Template(PRM_STRING,	1, &names[3],		PRMoneDefaults),
-    PRM_Template(),
-};
+} // namespace anonymous
 
-
- //PRM_Template(PRM_STRING,    PRM_TYPE_DYNAMIC_PATH, 1, &copnames[4], 0, 0, 0, 0, &PRM_SpareData::cop2Path),
-  //  PRM_Template(PRM_STRING,    1, &copnames[3], &colorDef, &colorMenu),
-   // PRM_Template(PRM_FLT_J,     1, &copnames[1], &copFrameDefault),
-//     PRM_Template(PRM_PICFILE,   1, &copnames[2], &fileDef,
-//                                 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
 
 void newSopOperator(OP_OperatorTable *table) {
 	UT_Exit::addExitCallback(dsoExit);
@@ -298,35 +155,56 @@ void newSopOperator(OP_OperatorTable *table) {
 	prt::addLogHandler(prtConsoleLog);
 
 	boost::filesystem::path sopPath;
-	getPathToCurrentModule(sopPath);
+	prt4hdn::utils::getPathToCurrentModule(sopPath);
 
 	prt::FlexLicParams flp;
-	std::string libflexnetPath = (sopPath.parent_path() / "libflexnet_prt.so").string();
+	std::string libflexnet = prt4hdn::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + prt4hdn::utils::getSharedLibrarySuffix();
+	std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
 	flp.mActLibPath = libflexnetPath.c_str();
 	flp.mFeature = "CityEngAdvFx";
 
-	std::wstring libPath = (sopPath.parent_path() / "lib").wstring();
+	std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
 	const wchar_t* extPaths[] = { libPath.c_str() };
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	prtLicHandle = prt::init(extPaths, 1, prt::LOG_DEBUG, &flp, &status);
-	
+
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
-	 
+
 	prtCache = prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT);
-	
+
 	table->addOperator(new OP_Operator("prt4houdini",
-					"prt4houdini",
-					 SOP_PRT::myConstructor,
-					 SOP_PRT::myTemplateList,
-					 1,
-					 1,
-					 0));
+			"prt4houdini",
+			prt4hdn::SOP_PRT::myConstructor,
+			prt4hdn::SOP_PRT::myTemplateList,
+			1,
+			1,
+			0)
+	);
 }
 
+
+namespace prt4hdn {
+
+PRM_Template SOP_PRT::myTemplateList[] = {
+		PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
+		PRM_Template(PRM_FILE,		1, &names[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING,	1, &names[1],		PRMoneDefaults),
+		PRM_Template(PRM_FLT_J,		1, &names[2],		PRMzeroDefaults),
+		PRM_Template(PRM_STRING,	1, &names[3],		PRMoneDefaults),
+		PRM_Template(PRM_FLT_J,		1, &names[4],		PRMoneDefaults),
+		PRM_Template(),
+};
+
+//PRM_Template(PRM_STRING,    PRM_TYPE_DYNAMIC_PATH, 1, &copnames[4], 0, 0, 0, 0, &PRM_SpareData::cop2Path),
+//  PRM_Template(PRM_STRING,    1, &copnames[3], &colorDef, &colorMenu),
+// PRM_Template(PRM_FLT_J,     1, &copnames[1], &copFrameDefault),
+//     PRM_Template(PRM_PICFILE,   1, &copnames[2], &fileDef,
+//                                 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+
 OP_Node* SOP_PRT::myConstructor(OP_Network *net, const char *name, OP_Operator *op) {
-    return new SOP_PRT(net, name, op);
+	return new SOP_PRT(net, name, op);
 }
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
@@ -339,10 +217,11 @@ SOP_PRT::~SOP_PRT() {
 }
 
 OP_ERROR SOP_PRT::cookInputGroups(OP_Context &context, int alone) {
-    cookInputPointGroups(context, mPointGroup, myDetailGroupPair);
-    return cookInputPrimitiveGroups(context, mPrimitiveGroup, myDetailGroupPair);
+	cookInputPointGroups(context, mPointGroup, myDetailGroupPair);
+	return cookInputPrimitiveGroups(context, mPrimitiveGroup, myDetailGroupPair);
 }
 
+// debug geo
 namespace UnitQuad {
 const double 	vertices[]				= { 0, 0, 0,  0, 0, 1,  1, 0, 1,  1, 0, 0 };
 const size_t 	vertexCount				= 12;
@@ -353,22 +232,17 @@ const size_t 	faceCountsCount			= 1;
 }
 
 OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
-    if (lockInputs(context) >= UT_ERROR_ABORT)
+	if (lockInputs(context) >= UT_ERROR_ABORT)
 		return error();
 
-    duplicateSource(0, context);
+	duplicateSource(0, context);
 
-//     fpreal t = context.getTime();
-//     float phase = PHASE(t);
-//     float amp = AMP(t);
-//     float period = PERIOD(t);
-
-    if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
+	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating PRT Geometry...");
-		
+
 		std::vector<double> vtx;
 		std::vector<uint32_t> idx, faceCounts;
-		
+
 		GA_Offset ptoff;
 		GA_FOR_ALL_PTOFF(gdp, ptoff) {
 			UT_Vector3 p = gdp->getPos3(ptoff);
@@ -386,9 +260,9 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			}
 			faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
 		}
-		
+
 		LOG_DBG << "initial shape geo: vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
-		
+
 		gdp->clearAndDestroy();
 
 		HoudiniGeometry hg(gdp);
@@ -397,8 +271,8 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 
 			// test rpk for development...
 			boost::filesystem::path sopPath;
-			getPathToCurrentModule(sopPath);
-			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "extrude.rpk").wstring();
+			utils::getPathToCurrentModule(sopPath);
+			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "hdn2.rpk").wstring();
 
 			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 			const prt::ResolveMap* assetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
@@ -407,18 +281,20 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 				return error();
 			}
 
+			fpreal t = context.getTime();
+			float height = evalFloat("height", 0, t);
 			prt::AttributeMapBuilder* bld = prt::AttributeMapBuilder::create();
-
+			bld->setFloat(L"height", height);
 			const prt::AttributeMap* initialShapeAttrs = bld->createAttributeMapAndReset();
 			bld->destroy();
 
 			std::wstring shapeName = L"TheInitialShape";
-			std::wstring ruleFile = L"rules/rule.cgb";
+			std::wstring ruleFile = L"bin/hdn2.cgb";
 			std::wstring startRule = L"Default$Init";
 			int32_t seed = 666;
 
 			prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
- 			isb->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+			isb->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
 			//isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
 			isb->setAttributes(
 					ruleFile.c_str(),
@@ -429,26 +305,26 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 					assetsMap
 			);
 			const prt::InitialShape* initialShape = isb->createInitialShapeAndReset();
-			LOG_DBG << objectToXML(initialShape);
+			LOG_DBG << utils::objectToXML(initialShape);
 			isb->destroy();
-			
+
 			// -- setup options for helper encoders
 			prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
-			
+
 			const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
-			
+
 			optionsBuilder->setString(L"name", FILE_CGA_ERROR);
 			const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
-			
+
 			optionsBuilder->setString(L"name", FILE_CGA_PRINT);
 			const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
-			
+
 			optionsBuilder->destroy();
 
 			// -- validate & complete encoder options
-			const prt::AttributeMap* validatedEncOpts = createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
-			const prt::AttributeMap* validatedErrOpts = createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions);
-			const prt::AttributeMap* validatedPrintOpts = createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
+			const prt::AttributeMap* validatedEncOpts = utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
+			const prt::AttributeMap* validatedErrOpts = utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions);
+			const prt::AttributeMap* validatedPrintOpts = utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
 
 			// -- THE GENERATE CALL
 			const prt::AttributeMap* encoderOpts[] = { validatedEncOpts, validatedErrOpts, validatedPrintOpts };
@@ -476,15 +352,15 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		cache->destroy();
 
 		select(GU_SPrimitive);
-    }
+	}
 
-    unlockInputs();
-    
-    return error();
+	unlockInputs();
+
+	return error();
 }
 
-	// const char* SOP_PRT::inputLabel(unsigned) const {
-	//     return "Initial Shape Geometry";
-	// }
+// const char* SOP_PRT::inputLabel(unsigned) const {
+//     return "Initial Shape Geometry";
+// }
 
-// } // namespace
+} // namespace prt4hdn

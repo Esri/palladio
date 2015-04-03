@@ -103,7 +103,7 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	convertGeometry(cgbName, geometries, materials, oh);
 }
 
-void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* mayaOutput) {
+void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
 	std::vector<double> vertices;
 	std::vector<int>    counts;
 	std::vector<int>    connects;
@@ -187,13 +187,13 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 	bool hasUVS     = tcsU.size() > 0;
 	bool hasNormals = normals.size() > 0;
 
-	mayaOutput->setVertices(&vertices[0], vertices.size());
+	hc->setVertices(&vertices[0], vertices.size());
 	log_trace("    set vertices");
-	mayaOutput->setUVs(hasUVS ? &tcsU[0] : 0, hasUVS ? &tcsV[0] : 0, tcsU.size());
+	hc->setUVs(hasUVS ? &tcsU[0] : 0, hasUVS ? &tcsV[0] : 0, tcsU.size());
 	log_trace("    set uvs");
 
-	mayaOutput->setNormals(hasNormals ? &normals[0] : 0, normals.size());
-	mayaOutput->setFaces(
+	hc->setNormals(hasNormals ? &normals[0] : 0, normals.size());
+	hc->setFaces(
 			&counts[0], counts.size(),
 			&connects[0], connects.size(),
 			hasUVS ? &uvCounts[0]   : 0, hasUVS ? uvCounts.size()   : 0,
@@ -201,7 +201,7 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 	);
 	log_trace("set faces");
 
-	mayaOutput->createMesh();
+	hc->createMesh();
 	log_trace("    maya output: created mesh");
 
 	int startFace = 0;
@@ -225,14 +225,14 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 			prtx::URIPtr texURI = mat->diffuseMap()[0]->getURI();
 			log_wtrace(L"trying to set texture uri: %s") % texURI->wstring();
 			std::wstring texPath = texURI->getPath();
-			mayaOutput->matSetDiffuseTexture(startFace, faceCount, texPath.c_str());
+			hc->matSetDiffuseTexture(startFace, faceCount, texPath.c_str());
 		} else {
-			mayaOutput->matSetColor(startFace, faceCount, mat->color_r(), mat->color_g(), mat->color_b());
+			hc->matSetColor(startFace, faceCount, mat->color_r(), mat->color_g(), mat->color_b());
 		}
 
 		startFace += faceCount;
 	}
-	mayaOutput->finishMesh();
+	hc->finishMesh();
 
 	log_trace("HoudiniEncoder::convertGeometry: end");
 }

@@ -1,20 +1,20 @@
 #!/bin/bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-prt_DIR=${DIR}/../prt/cmake
-BUILDTYPE=Release
-
 if [ $# -eq 0 ]
 then
-	echo "ERROR: first argument must be houdini path"
+	echo "ERROR: usage: ./build.sh <prt dir> <houdini dir> [package version maj min bld]"
 	exit 1
 fi
 
-export houdini_DIR=$1
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+prt_DIR=$1
+BUILDTYPE=Debug
+
+export houdini_DIR=$2
 export PATH=${houdini_DIR}/bin:${PATH}
 
-if [ $# -eq 1 ]
+if [ $# -eq 2 ]
 then
 	CLIENT_TARGET=install
 	VER_MAJOR=0
@@ -22,9 +22,9 @@ then
 	VER_MICRO=0
 else
   	CLIENT_TARGET=package
-	VER_MAJOR=$2
-	VER_MINOR=$3
-	VER_MICRO=$4
+	VER_MAJOR=$3
+	VER_MINOR=$4
+	VER_MICRO=$5
 fi
 
 export CC=/usr/bin/gcc-4.4.7

@@ -27,41 +27,37 @@
  */
 
 
-#ifndef __SOP_PointWave_h__
-#define __SOP_PointWave_h__
+#ifndef __SOP_PRT4HOUDINI__
+#define __SOP_PRT4HOUDINI__
 
 #include "SOP/SOP_Node.h"
 
 
-namespace HDK_Sample {
+namespace prt4hdn {
 
 
 class SOP_PRT : public SOP_Node {
 public:
-    static PRM_Template	myTemplateList[];
-    static OP_Node*		myConstructor(OP_Network*, const char*, OP_Operator*);
+	static PRM_Template	myTemplateList[];
+	static OP_Node* myConstructor(OP_Network*, const char*, OP_Operator*);
 
 	SOP_PRT(OP_Network *net, const char *name, OP_Operator *op);
 	virtual ~SOP_PRT();
-
-	virtual OP_ERROR		 cookInputGroups(OP_Context &context, int alone = 0);
+	virtual OP_ERROR cookInputGroups(OP_Context &context, int alone = 0);
 
 protected:
-    virtual OP_ERROR	 cookMySop(OP_Context &context);
-// 	virtual const char*	inputLabel(unsigned) const;
+	virtual OP_ERROR	 cookMySop(OP_Context &context);
+	// 	virtual const char*	inputLabel(unsigned) const;
 
 private:
-    void	getGroups(UT_String &str){ evalString(str, "group", 0, 0); }
-//     fpreal	AMP(fpreal t)		{ return evalFloat("amp", 0, t); }
-//     fpreal	PHASE(fpreal t)		{ return evalFloat("phase", 0, t); }
-//     fpreal	PERIOD(fpreal t)	{ return evalFloat("period", 0, t); }
+	void	getGroups(UT_String &str){ evalString(str, "group", 0, 0); }
 
-    GU_DetailGroupPair			myDetailGroupPair;
-    const GA_PointGroup*		mPointGroup;
-    const GA_PrimitiveGroup*	mPrimitiveGroup;
+	GU_DetailGroupPair			myDetailGroupPair;
+	const GA_PointGroup*		mPointGroup;
+	const GA_PrimitiveGroup*	mPrimitiveGroup;
 };
 
 
-} // End HDK_Sample namespace
+} // namespace prt4hdn
 
-#endif
+#endif // __SOP_PRT4HOUDINI__

@@ -5,10 +5,10 @@
 
 #include "encoder/HoudiniEncoder.h"
 
-
-static const int MINIMAL_VERSION_MAJOR = 1;
-static const int MINIMAL_VERSION_MINOR = 2;
-
+namespace {
+const int VERSION_MAJOR = 1;
+const int VERSION_MINOR = 3;
+}
 
 extern "C" {
 
@@ -22,13 +22,13 @@ PRT4HOUDINI_CODEC_EXPORTS_API void unregisterExtensionFactories(prtx::ExtensionM
 }
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API int getMinimalVersionMajor() {
-	return MINIMAL_VERSION_MAJOR;
+PRT4HOUDINI_CODEC_EXPORTS_API int getVersionMajor() {
+	return VERSION_MAJOR;
 }
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API int getMinimalVersionMinor() {
-	return MINIMAL_VERSION_MINOR;
+PRT4HOUDINI_CODEC_EXPORTS_API int getVersionMinor() {
+	return VERSION_MINOR;
 }
 
 
