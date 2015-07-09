@@ -1,5 +1,4 @@
-#ifndef __P4H_LOGGING__
-#define __P4H_LOGGING__
+#pragma once
 
 #include "prt/API.h"
 
@@ -68,6 +67,3 @@ typedef LT<prt::LOG_ERROR>		_LOG_ERR;
 #define LOG_INF _LOG_INF()
 #define LOG_WRN _LOG_WRN()
 #define LOG_ERR _LOG_ERR()
-
-
-#endif // __P4H_LOGGING__

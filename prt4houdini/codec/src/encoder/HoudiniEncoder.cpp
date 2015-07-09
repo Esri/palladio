@@ -19,6 +19,11 @@
 #include "encoder/HoudiniEncoder.h"
 
 
+namespace {
+const bool DBG = false;
+}
+
+
 const std::wstring HoudiniEncoder::ID          	= L"HoudiniEncoder";
 const std::wstring HoudiniEncoder::NAME        	= L"SideFX(tm) Houdini(tm) Encoder";
 const std::wstring HoudiniEncoder::DESCRIPTION	= L"Encodes geometry into the Houdini format.";
@@ -36,15 +41,15 @@ HoudiniEncoder::~HoudiniEncoder() {
 
 void HoudiniEncoder::init(prtx::GenerateContext&) {
 	prt::Callbacks* cb = getCallbacks();
-	log_debug("HoudiniEncoder::init: cb = %x") % (size_t)cb;
+	if (DBG) log_debug("HoudiniEncoder::init: cb = %x") % (size_t)cb;
 	HoudiniCallbacks* oh = dynamic_cast<HoudiniCallbacks*>(cb);
-	log_debug("                   oh = %x") % (size_t)oh;
+	if (DBG) log_debug("                   oh = %x") % (size_t)oh;
 	if(oh == 0) throw(prtx::StatusException(prt::STATUS_ILLEGAL_CALLBACK_OBJECT));
 }
 
 
 void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeIndex) {
-	prtx::InitialShape const* initialShape = context.getInitialShape(initialShapeIndex);
+	const prtx::InitialShape& initialShape = *context.getInitialShape(initialShapeIndex);
 
 	HoudiniCallbacks* oh = dynamic_cast<HoudiniCallbacks*>(getCallbacks());
 
@@ -57,7 +62,7 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 
 	prtx::LeafIteratorPtr li = prtx::LeafIterator::create(context, initialShapeIndex);
 	for (prtx::ShapePtr shape = li->getNext(); shape != 0; shape = li->getNext())
-		encPrep->add(context.getCache(), shape, initialShape->getAttributeMap());
+		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap());
 
 	prtx::GeometryPtrVector geometries;
 	std::vector<prtx::DoubleVector> trafos;
@@ -84,7 +89,7 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 
 	size_t   start = 0;
 	size_t   end   = 0;
-	wchar_t* ruleFile = wcsdup(initialShape->getRuleFile()); // TODO: cleanup
+	wchar_t* ruleFile = wcsdup(initialShape.getRuleFile()); // TODO: cleanup
 	for(size_t i = 0; ruleFile[i]; i++) {
 		switch(ruleFile[i]) {
 			case '\\':
@@ -100,10 +105,10 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	ruleFile[end] = 0;
 	std::wstring cgbName = std::wstring(&ruleFile[start]);
 	free(ruleFile);
-	convertGeometry(cgbName, geometries, materials, oh);
+	convertGeometry(initialShape.getName(), cgbName, geometries, materials, oh);
 }
 
-void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
+void HoudiniEncoder::convertGeometry(const wchar_t* isName, const std::wstring& cgbName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
 	std::vector<double> vertices;
 	std::vector<int>    counts;
 	std::vector<int>    connects;
@@ -151,7 +156,7 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 					tcsV.push_back((float)uvs[i+1]);
 				}
 			}
-			log_trace("      copied vertex attributes");
+			if (DBG) log_debug("      copied vertex attributes");
 
 			for(size_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
 				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
@@ -162,14 +167,14 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 					connects.push_back(base + vidxs[vi]);
 
 				if(hasUVs && mesh->getFaceUVCount(fi, 0) > 0) {
-						//log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
-						//log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
+						//if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
+						//if (DBG) log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
 						assert(mesh->getFaceUVCount(fi, 0) == mesh->getFaceVertexCount(fi));
 
 						const uint32_t* uv0Idx = mesh->getFaceUVIndices(fi, 0);
 						uvCounts.push_back((int)mesh->getFaceUVCount(fi, 0));
 						for(size_t vi = 0, size = mesh->getFaceUVCount(fi, 0); vi < size; ++vi) {
-							//log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
+							//if (DBG) log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
 							uvConnects.push_back(uvBase + uv0Idx[vi]);
 						}
 				}
@@ -180,7 +185,7 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 			base   += (int)verts.size() / 3;
 			uvBase += (int)uvsCount     / 2;
 
-			log_trace("copied face attributes");
+			if (DBG) log_debug("copied face attributes");
 		}
 	}
 
@@ -188,9 +193,9 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 	bool hasNormals = normals.size() > 0;
 
 	hc->setVertices(&vertices[0], vertices.size());
-	log_trace("    set vertices");
+	if (DBG) log_debug("    set vertices");
 	hc->setUVs(hasUVS ? &tcsU[0] : 0, hasUVS ? &tcsV[0] : 0, tcsU.size());
-	log_trace("    set uvs");
+	if (DBG) log_debug("    set uvs");
 
 	hc->setNormals(hasNormals ? &normals[0] : 0, normals.size());
 	hc->setFaces(
@@ -199,10 +204,10 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 			hasUVS ? &uvCounts[0]   : 0, hasUVS ? uvCounts.size()   : 0,
 			hasUVS ? &uvConnects[0] : 0, hasUVS ? uvConnects.size() : 0
 	);
-	log_trace("set faces");
+	if (DBG) log_debug("set faces");
 
-	hc->createMesh();
-	log_trace("    maya output: created mesh");
+	hc->createMesh(isName);
+	if (DBG) log_debug("    maya output: created mesh");
 
 	int startFace = 0;
 	for(size_t gi = 0, geoCount = geometries.size(); gi < geoCount; ++gi) {
@@ -234,7 +239,7 @@ void HoudiniEncoder::convertGeometry(const std::wstring& cgbName, const prtx::Ge
 	}
 	hc->finishMesh();
 
-	log_trace("HoudiniEncoder::convertGeometry: end");
+	if (DBG) log_debug("HoudiniEncoder::convertGeometry: end");
 }
 
 

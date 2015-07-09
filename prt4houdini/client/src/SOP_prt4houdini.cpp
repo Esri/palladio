@@ -19,9 +19,11 @@
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
 #include "SOP/SOP_Guide.h"
+#include "GOP/GOP_GroupParse.h"
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
+#include "boost/assign.hpp"
 
 #include <vector>
 
@@ -48,10 +50,12 @@ void dsoExit(void*) {
 	if (prtCache)
 		prtCache->destroy();
 	if (prtLicHandle)
-		prtLicHandle->destroy();
+		prtLicHandle->destroy(); // prt shutdown
 	if (prtConsoleLog)
 		prt::removeLogHandler(prtConsoleLog);
 }
+
+const bool DBG = false;
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
@@ -59,6 +63,7 @@ public:
 
 protected:
 	virtual void setVertices(double* vtx, size_t size) {
+		mPoints.reserve(size / 3);
 		for (size_t pi = 0; pi < size; pi += 3)
 			mPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
 	}
@@ -74,6 +79,7 @@ protected:
 	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
 		for (size_t ci = 0; ci < countsSize; ci++)
 			mPolyCounts.append(counts[ci]);
+		mIndices.reserve(connectsSize);
 		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
 	}
 
@@ -85,16 +91,20 @@ protected:
 		// TODO
 	}
 
-	virtual void createMesh() {
-		// TODO
+	virtual void createMesh(const wchar_t* name) {
+		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
+		mCurGroup = static_cast<GA_ElementGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
+		if (DBG) LOG_DBG << "createMesh: " << nname;
 	}
 
 	virtual void finishMesh() {
+		GA_IndexMap::Marker marker(mDetail->getPrimitiveMap());
 		GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
+		mCurGroup->addRange(marker.getRange());
 		mPolyCounts.clear();
 		mIndices.clear();
 		mPoints.clear();
-		LOG_DBG << "finishMesh";
+		if (DBG) LOG_DBG << "finishMesh";
 	}
 
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
@@ -130,6 +140,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
+	GA_ElementGroup* mCurGroup;
 	std::vector<UT_Vector3> mPoints;
 	std::vector<int> mIndices;
 	GEO_PolyCounts mPolyCounts;
@@ -144,6 +155,64 @@ PRM_Name names[] = {
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+
+struct RulePackageContext {
+
+};
+
+typedef std::vector<const prt::InitialShape*> InitialShapePtrVector;
+typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
+
+struct InitialShapeContext {
+	InitialShapeContext(OP_Context& ctx) : mContext(ctx) {
+		// test rpk for development...
+		boost::filesystem::path sopPath;
+		prt4hdn::utils::getPathToCurrentModule(sopPath);
+		std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "candler.rpk").wstring();
+
+		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+		mAssetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
+		if(status != prt::STATUS_OK) {
+			LOG_ERR << "getting resolve map from '" << rpkURI << "' failed, aborting.";
+			abort(); // TODO
+		}
+
+		mAMB = prt::AttributeMapBuilder::create();
+		mISB = prt::InitialShapeBuilder::create();
+	}
+
+	~InitialShapeContext() {
+		BOOST_FOREACH(const prt::InitialShape* is, mInitialShapes) {
+			is->destroy();
+		}
+
+		BOOST_FOREACH(const prt::AttributeMap* am, mInitialShapeAttributes) {
+			am->destroy();
+		}
+
+		mISB->destroy();
+		mAMB->destroy();
+		mAssetsMap->destroy();
+	}
+
+	OP_Context& mContext;
+
+	const prt::ResolveMap* mAssetsMap;
+	prt::InitialShapeBuilder* mISB;
+	InitialShapePtrVector mInitialShapes;
+	prt::AttributeMapBuilder* mAMB;
+	AttributeMapPtrVector mInitialShapeAttributes;
+};
+
+PRM_Template myTemplateList[] = {
+		PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
+		PRM_Template(PRM_FILE,		1, &names[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING,	1, &names[1],		PRMoneDefaults),
+		PRM_Template(PRM_FLT_J,		1, &names[2],		PRMzeroDefaults),
+		PRM_Template(PRM_STRING,	1, &names[3],		PRMoneDefaults),
+		PRM_Template(PRM_FLT_J,		1, &names[4],		PRMoneDefaults),
+		PRM_Template(),
+};
 
 } // namespace anonymous
 
@@ -168,7 +237,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	const wchar_t* extPaths[] = { libPath.c_str() };
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtLicHandle = prt::init(extPaths, 1, prt::LOG_DEBUG, &flp, &status);
+	prtLicHandle = prt::init(extPaths, 1, prt::LOG_DEBUG, &flp, &status); // TODO: add UI for log level control
 
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
@@ -178,7 +247,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	table->addOperator(new OP_Operator("prt4houdini",
 			"prt4houdini",
 			prt4hdn::SOP_PRT::myConstructor,
-			prt4hdn::SOP_PRT::myTemplateList,
+			myTemplateList,
 			1,
 			1,
 			0)
@@ -188,48 +257,107 @@ void newSopOperator(OP_OperatorTable *table) {
 
 namespace prt4hdn {
 
-PRM_Template SOP_PRT::myTemplateList[] = {
-		PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
-		PRM_Template(PRM_FILE,		1, &names[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &names[1],		PRMoneDefaults),
-		PRM_Template(PRM_FLT_J,		1, &names[2],		PRMzeroDefaults),
-		PRM_Template(PRM_STRING,	1, &names[3],		PRMoneDefaults),
-		PRM_Template(PRM_FLT_J,		1, &names[4],		PRMoneDefaults),
-		PRM_Template(),
-};
-
-//PRM_Template(PRM_STRING,    PRM_TYPE_DYNAMIC_PATH, 1, &copnames[4], 0, 0, 0, 0, &PRM_SpareData::cop2Path),
-//  PRM_Template(PRM_STRING,    1, &copnames[3], &colorDef, &colorMenu),
-// PRM_Template(PRM_FLT_J,     1, &copnames[1], &copFrameDefault),
-//     PRM_Template(PRM_PICFILE,   1, &copnames[2], &fileDef,
-//                                 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-
 OP_Node* SOP_PRT::myConstructor(OP_Network *net, const char *name, OP_Operator *op) {
 	return new SOP_PRT(net, name, op);
 }
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
-, mPointGroup(0)
-, mPrimitiveGroup(0) {
+, mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
+{
+	prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
+
+	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
+	mHoudiniEncoderOptions = utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
+	encoderOptions->destroy();
+
+	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
+	const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
+	mCGAErrorOptions = utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions);
+	errOptions->destroy();
+
+	optionsBuilder->setString(L"name", FILE_CGA_PRINT);
+	const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
+	mCGAPrintOptions = utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
+	printOptions->destroy();
+
+	optionsBuilder->destroy();
+
+	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
+	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
 }
 
 SOP_PRT::~SOP_PRT() {
+	mHoudiniEncoderOptions->destroy();
+	mCGAErrorOptions->destroy();
+	mCGAPrintOptions->destroy();
+
+	mPRTCache->destroy();
 }
 
-OP_ERROR SOP_PRT::cookInputGroups(OP_Context &context, int alone) {
-	cookInputPointGroups(context, mPointGroup, myDetailGroupPair);
-	return cookInputPrimitiveGroups(context, mPrimitiveGroup, myDetailGroupPair);
-}
+void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
+	static const bool DBG = false;
 
-// debug geo
-namespace UnitQuad {
-const double 	vertices[]				= { 0, 0, 0,  0, 0, 1,  1, 0, 1,  1, 0, 0 };
-const size_t 	vertexCount				= 12;
-const uint32_t	indices[]				= { 0, 1, 2, 3 };
-const size_t 	indexCount				= 4;
-const uint32_t 	faceCounts[]			= { 4 };
-const size_t 	faceCountsCount			= 1;
+	InitialShapeContext* isc = static_cast<InitialShapeContext*>(ctx);
+
+	std::vector<double> vtx;
+	std::vector<uint32_t> idx, faceCounts;
+
+	GA_Offset ptoff;
+	GA_FOR_ALL_PTOFF(gdp, ptoff) {
+		UT_Vector3 p = gdp->getPos3(ptoff);
+		vtx.push_back(static_cast<double>(p.x()));
+		vtx.push_back(static_cast<double>(p.y()));
+		vtx.push_back(static_cast<double>(p.z()));
+	}
+
+	GA_Primitive* prim = 0;
+	GA_FOR_ALL_GROUP_PRIMITIVES(gdp, static_cast<const GA_PrimitiveGroup*>(group), prim) {
+		GU_PrimPoly* face = static_cast<GU_PrimPoly*>(prim);
+		for(GA_Size i = face->getVertexCount()-1; i >= 0 ; i--) {
+			GA_Offset off = face->getPointOffset(i);
+			idx.push_back(static_cast<uint32_t>(off));
+		}
+		faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
+	}
+
+	if (DBG) LOG_DBG << "initial shape geo from group " << group->getName() << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
+
+
+	// TODO: optimize creating the initialshape object (how to detect when input geo changes?)
+
+	fpreal t = isc->mContext.getTime();
+	float height = evalFloat("height", 0, t);
+	isc->mAMB->setFloat(L"BuildingHeight", height);
+	const prt::AttributeMap* initialShapeAttrs = isc->mAMB->createAttributeMapAndReset();
+
+	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
+	std::wstring ruleFile = L"bin/Candler Building.cgb";
+	std::wstring startRule = L"Default$Footprint";
+	int32_t seed = 666;
+
+	isc->mISB->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+	isc->mISB->setAttributes(
+			ruleFile.c_str(),
+			startRule.c_str(),
+			seed,
+			shapeName.c_str(),
+			initialShapeAttrs,
+			isc->mAssetsMap
+	);
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const prt::InitialShape* initialShape = isc->mISB->createInitialShapeAndReset(&status);
+	if (status != prt::STATUS_OK) {
+		LOG_WRN << "ignored input group '" << group->getName() << "': " << prt::getStatusDescription(status);
+ 		initialShapeAttrs->destroy();
+		return;
+	}
+
+	if (DBG) LOG_DBG << prt4hdn::utils::objectToXML(initialShape);
+
+	isc->mInitialShapes.push_back(initialShape);
+	isc->mInitialShapeAttributes.push_back(initialShapeAttrs);
 }
 
 OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
@@ -241,127 +369,30 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating PRT Geometry...");
 
-		std::vector<double> vtx;
-		std::vector<uint32_t> idx, faceCounts;
-
-		GA_Offset ptoff;
-		GA_FOR_ALL_PTOFF(gdp, ptoff) {
-			UT_Vector3 p = gdp->getPos3(ptoff);
-			vtx.push_back(static_cast<double>(p.x()));
-			vtx.push_back(static_cast<double>(p.y()));
-			vtx.push_back(static_cast<double>(p.z()));
-		}
-
-		GA_Primitive* prim = 0;
-		GA_FOR_ALL_PRIMITIVES(gdp, prim) {
-			GU_PrimPoly* face = (GU_PrimPoly*)prim;
-			for(GA_Size i = face->getVertexCount()-1; i >= 0 ; i--) {
-				GA_Offset off = face->getPointOffset(i);
-				idx.push_back(static_cast<uint32_t>(off));
-			}
-			faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
-		}
-
-		LOG_DBG << "initial shape geo: vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
+		InitialShapeContext isc(context);
+		const char* pattern = "*";
+		GroupOperation createInitialShapeOp = static_cast<GroupOperation>(&SOP_PRT::createInitialShape);
+		forEachGroupMatchingMask(pattern, createInitialShapeOp, static_cast<void*>(&isc), GA_GROUP_PRIMITIVE, gdp);
 
 		gdp->clearAndDestroy();
 
 		HoudiniGeometry hg(gdp);
-		prt::CacheObject* cache = prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT);
-		{ // create scope to better see lifetime of callback and cache
-
-			// test rpk for development...
-			boost::filesystem::path sopPath;
-			utils::getPathToCurrentModule(sopPath);
-			std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "candler.rpk").wstring();
-
-			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-			const prt::ResolveMap* assetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
-			if(status != prt::STATUS_OK) {
-				LOG_ERR << "getting resolve map from '" << rpkURI << "' failed, aborting.";
-				return error();
-			}
-
-			fpreal t = context.getTime();
-			float height = evalFloat("height", 0, t);
-			prt::AttributeMapBuilder* bld = prt::AttributeMapBuilder::create();
-			bld->setFloat(L"BuildingHeight", height);
-			const prt::AttributeMap* initialShapeAttrs = bld->createAttributeMapAndReset();
-			bld->destroy();
-
-			std::wstring shapeName = L"TheInitialShape";
-			std::wstring ruleFile = L"bin/Candler Building.cgb";
-			std::wstring startRule = L"Default$Footprint";
-			int32_t seed = 666;
-
-			prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
-			isb->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
-			//isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
-			isb->setAttributes(
-					ruleFile.c_str(),
-					startRule.c_str(),
-					seed,
-					shapeName.c_str(),
-					initialShapeAttrs,
-					assetsMap
+		{
+			prt::Status stat = prt::generate(
+					&isc.mInitialShapes[0], isc.mInitialShapes.size(), 0,
+					&mAllEncoders[0], mAllEncoders.size(), &mAllEncoderOptions[0],
+					&hg, mPRTCache, 0
 			);
-			const prt::InitialShape* initialShape = isb->createInitialShapeAndReset();
-			LOG_DBG << utils::objectToXML(initialShape);
-			isb->destroy();
-
-			// -- setup options for helper encoders
-			prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
-
-			const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
-
-			optionsBuilder->setString(L"name", FILE_CGA_ERROR);
-			const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
-
-			optionsBuilder->setString(L"name", FILE_CGA_PRINT);
-			const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
-
-			optionsBuilder->destroy();
-
-			// -- validate & complete encoder options
-			const prt::AttributeMap* validatedEncOpts = utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
-			const prt::AttributeMap* validatedErrOpts = utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions);
-			const prt::AttributeMap* validatedPrintOpts = utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
-
-			// -- THE GENERATE CALL
-			const prt::AttributeMap* encoderOpts[] = { validatedEncOpts, validatedErrOpts, validatedPrintOpts };
-			const wchar_t* encoders[] = {
-					ENCODER_ID_HOUDINI,		// the houdini geometry encoder
-					ENCODER_ID_CGA_ERROR,	// an encoder to redirect rule errors into CGAErrors.txt
-					ENCODER_ID_CGA_PRINT	// an encoder to redirect CGA print statements to CGAPrint.txt
-			};
-			prt::Status stat = prt::generate(&initialShape, 1, 0, encoders, 3, encoderOpts, &hg, cache, 0);
 			if(stat != prt::STATUS_OK) {
 				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 			}
-
-			// -- cleanup
-			encoderOptions->destroy();
-			errOptions->destroy();
-			printOptions->destroy();
-			validatedEncOpts->destroy();
-			validatedErrOpts->destroy();
-			validatedPrintOpts->destroy();
-			initialShape->destroy();
-			initialShapeAttrs->destroy();
-			assetsMap->destroy();
 		}
-		cache->destroy();
 
 		select(GU_SPrimitive);
 	}
 
 	unlockInputs();
-
 	return error();
 }
-
-// const char* SOP_PRT::inputLabel(unsigned) const {
-//     return "Initial Shape Geometry";
-// }
 
 } // namespace prt4hdn

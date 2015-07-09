@@ -1,5 +1,4 @@
-#ifndef __P4H_UTILS__
-#define __P4H_UTILS__
+#pragma once
 
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
@@ -17,8 +16,8 @@ std::string objectToXML(prt::Object const* obj);
 void getPathToCurrentModule(boost::filesystem::path& path);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
+std::string toOSNarrowFromUTF16(const std::wstring& osWString);
+std::wstring toUTF16FromOSNarrow(const std::string& osString);
 
 }
 }
-
-#endif

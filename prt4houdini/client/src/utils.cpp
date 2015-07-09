@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include "prt/API.h"
+#include "prt/StringUtils.h"
 
 #ifdef _WIN32
 #	include <Windows.h>
@@ -87,6 +88,30 @@ std::string getSharedLibrarySuffix() {
 	#else
 	#	error unsupported build platform
 	#endif
+}
+
+std::string toOSNarrowFromUTF16(const std::wstring& osWString) {
+	std::vector<char> temp(osWString.size());
+	size_t size = temp.size();
+	prt::Status status = prt::STATUS_OK;
+	prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), &temp[0], &size, &status);
+	if(size > temp.size()) {
+		temp.resize(size);
+		prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), &temp[0], &size, &status);
+	}
+	return std::string(&temp[0]);
+}
+
+std::wstring toUTF16FromOSNarrow(const std::string& osString) {
+	std::vector<wchar_t> temp(osString.size());
+	size_t size = temp.size();
+	prt::Status status = prt::STATUS_OK;
+	prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), &temp[0], &size, &status);
+	if(size > temp.size()) {
+		temp.resize(size);
+		prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), &temp[0], &size, &status);
+	}
+	return std::wstring(&temp[0]);
 }
 
 }
