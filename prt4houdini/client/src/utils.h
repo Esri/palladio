@@ -3,7 +3,10 @@
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
 
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #include "boost/filesystem.hpp"
+//#pragma GCC diagnostic pop
 
 #include <string>
 

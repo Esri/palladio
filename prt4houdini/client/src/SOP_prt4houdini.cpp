@@ -7,11 +7,9 @@
 #include "prt/API.h"
 #include "prt/FlexLicParams.h"
 
-#include "SYS/SYS_Math.h"
-#include "UT/UT_DSOVersion.h"
-#include "UT/UT_Matrix3.h"
-#include "UT/UT_Matrix4.h"
-#include "UT/UT_Exit.h"
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#pragma GCC diagnostic ignored "-Wattributes"
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
 #include "PRM/PRM_Include.h"
@@ -20,10 +18,18 @@
 #include "OP/OP_OperatorTable.h"
 #include "SOP/SOP_Guide.h"
 #include "GOP/GOP_GroupParse.h"
+#include "GEO/GEO_PolyCounts.h"
+#include "UT/UT_DSOVersion.h"
+#include "UT/UT_Matrix3.h"
+#include "UT/UT_Matrix4.h"
+#include "UT/UT_Exit.h"
+#include "UT/UT_Interrupt.h"
+#include "SYS/SYS_Math.h"
+//#pragma GCC diagnostic pop
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
-#include "boost/assign.hpp"
+#include "boost/dynamic_bitset.hpp"
 
 #include <vector>
 
@@ -151,7 +157,7 @@ PRM_Name names[] = {
 		PRM_Name("startRule",	"Start Rule"),
 		PRM_Name("seed",		"Random Seed"),
 		PRM_Name("name",		"Initial Shape Name"),
-		PRM_Name("height",		"height")
+		PRM_Name("BuildingHeight",		"Building Height")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -164,7 +170,7 @@ typedef std::vector<const prt::InitialShape*> InitialShapePtrVector;
 typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
 
 struct InitialShapeContext {
-	InitialShapeContext(OP_Context& ctx) : mContext(ctx) {
+	InitialShapeContext(OP_Context& ctx, GU_Detail& detail) : mContext(ctx) {
 		// test rpk for development...
 		boost::filesystem::path sopPath;
 		prt4hdn::utils::getPathToCurrentModule(sopPath);
@@ -179,6 +185,11 @@ struct InitialShapeContext {
 
 		mAMB = prt::AttributeMapBuilder::create();
 		mISB = prt::InitialShapeBuilder::create();
+
+		// collect all primitive attributes
+		for (GA_AttributeDict::iterator it = detail.getAttributeDict(GA_ATTRIB_PRIMITIVE).begin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it) {
+			mPrimitiveAttributes.push_back(GA_ROAttributeRef(it.attrib()));
+		}
 	}
 
 	~InitialShapeContext() {
@@ -196,6 +207,7 @@ struct InitialShapeContext {
 	}
 
 	OP_Context& mContext;
+	std::vector<GA_ROAttributeRef> mPrimitiveAttributes;
 
 	const prt::ResolveMap* mAssetsMap;
 	prt::InitialShapeBuilder* mISB;
@@ -283,8 +295,8 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 
 	optionsBuilder->destroy();
 
-	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
-	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
+	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
+	mAllEncoderOptions = { mHoudiniEncoderOptions, mCGAErrorOptions, mCGAPrintOptions };
 }
 
 SOP_PRT::~SOP_PRT() {
@@ -296,10 +308,25 @@ SOP_PRT::~SOP_PRT() {
 }
 
 void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
-	static const bool DBG = false;
+	static const bool DBG = true;
 
 	InitialShapeContext* isc = static_cast<InitialShapeContext*>(ctx);
 
+	// preset attribute builder with node values
+	// TODO for dynamic UI
+	fpreal t = isc->mContext.getTime();
+//	size_t ai = setAttributes.find_first();
+//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
+//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
+		double v = evalFloat("BuildingHeight", 0, t);
+		//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+		isc->mAMB->setFloat(L"BuildingHeight", v);
+		if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
+//		setAttributes.reset(ai);
+//		ai = setAttributes.find_next(ai);
+//	}
+
+	// convert geometry
 	std::vector<double> vtx;
 	std::vector<uint32_t> idx, faceCounts;
 
@@ -311,7 +338,8 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 		vtx.push_back(static_cast<double>(p.z()));
 	}
 
-	GA_Primitive* prim = 0;
+	boost::dynamic_bitset<> setAttributes(isc->mPrimitiveAttributes.size(), 1);
+	GA_Primitive* prim = nullptr;
 	GA_FOR_ALL_GROUP_PRIMITIVES(gdp, static_cast<const GA_PrimitiveGroup*>(group), prim) {
 		GU_PrimPoly* face = static_cast<GU_PrimPoly*>(prim);
 		for(GA_Size i = face->getVertexCount()-1; i >= 0 ; i--) {
@@ -319,16 +347,27 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 			idx.push_back(static_cast<uint32_t>(off));
 		}
 		faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
+
+		// extract attr
+		size_t ai = setAttributes.find_first();
+		while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
+			if (DBG) LOG_DBG << "next unset attribute: " << ai;
+			const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
+			if (ar.isFloat() || ar.isInt()) {
+				double v = prim->getValue<double>(ar);
+				if (DBG) LOG_DBG << "   attrib " << ar->getName() << " = " << v;
+				std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+				isc->mAMB->setFloat(wn.c_str(), v);
+			} else if (ar.isString()) {
+				// TODO
+			}
+			setAttributes.reset(ai);
+			ai = setAttributes.find_next(ai);
+		}
 	}
 
 	if (DBG) LOG_DBG << "initial shape geo from group " << group->getName() << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 
-
-	// TODO: optimize creating the initialshape object (how to detect when input geo changes?)
-
-	fpreal t = isc->mContext.getTime();
-	float height = evalFloat("height", 0, t);
-	isc->mAMB->setFloat(L"BuildingHeight", height);
 	const prt::AttributeMap* initialShapeAttrs = isc->mAMB->createAttributeMapAndReset();
 
 	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
@@ -369,7 +408,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating PRT Geometry...");
 
-		InitialShapeContext isc(context);
+		InitialShapeContext isc(context, *gdp);
 		const char* pattern = "*";
 		GroupOperation createInitialShapeOp = static_cast<GroupOperation>(&SOP_PRT::createInitialShape);
 		forEachGroupMatchingMask(pattern, createInitialShapeOp, static_cast<void*>(&isc), GA_GROUP_PRIMITIVE, gdp);

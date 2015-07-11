@@ -29,4 +29,4 @@ if(NOT houdini_DIR)
 endif()
 
 # houdini user dso location
-set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini13.0/dso")
+set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini14.0/dso")

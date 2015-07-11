@@ -67,27 +67,27 @@ void getPathToCurrentModule(boost::filesystem::path& path) {
 }
 
 std::string getSharedLibraryPrefix() {
-	#if defined(_WIN32)
+#if defined(_WIN32)
 	return "";
-	#elif defined(__APPLE__)
+#elif defined(__APPLE__)
 	return "lib";
-	#elif defined(linux)
+#elif defined(__linux__)
 	return "lib";
-	#else
-	#	error unsupported build platform
-	#endif
+#else
+#	error unsupported build platform
+#endif
 }
 
 std::string getSharedLibrarySuffix() {
-	#if defined(_WIN32)
+#if defined(_WIN32)
 	return ".dll";
-	#elif defined(__APPLE__)
+#elif defined(__APPLE__)
 	return ".dylib";
-	#elif defined(linux)
+#elif defined(__linux__)
 	return ".so";
-	#else
-	#	error unsupported build platform
-	#endif
+#else
+#	error unsupported build platform
+#endif
 }
 
 std::string toOSNarrowFromUTF16(const std::wstring& osWString) {

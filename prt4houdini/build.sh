@@ -27,8 +27,8 @@ else
 	VER_MICRO=$5
 fi
 
-export CC=/usr/bin/gcc-4.4.7
-export CXX=/usr/bin/g++-4.4.7
+#export CC=/usr/bin/gcc-4.4.7
+#export CXX=/usr/bin/g++-4.4.7
 
 pushd codec
 rm -rf build install && mkdir build
