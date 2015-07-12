@@ -16,9 +16,11 @@
 #include "PRM/PRM_SpareData.h"
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
+#include "OP/OP_Director.h"
 #include "SOP/SOP_Guide.h"
 #include "GOP/GOP_GroupParse.h"
 #include "GEO/GEO_PolyCounts.h"
+#include "PI/PI_EditScriptedParms.h"
 #include "UT/UT_DSOVersion.h"
 #include "UT/UT_Matrix3.h"
 #include "UT/UT_Matrix4.h"
@@ -30,6 +32,7 @@
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/dynamic_bitset.hpp"
+#include "boost/algorithm/string/replace.hpp"
 
 #include <vector>
 
@@ -47,14 +50,11 @@ const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
 const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
 const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 
-// prt objects with same life-cycle as SOP
+// global objects with the same lifetime as the whole
 const prt::Object* prtLicHandle = 0;
-prt::CacheObject* prtCache = 0;
 prt::ConsoleLogHandler*	prtConsoleLog = 0;
 
 void dsoExit(void*) {
-	if (prtCache)
-		prtCache->destroy();
 	if (prtLicHandle)
 		prtLicHandle->destroy(); // prt shutdown
 	if (prtConsoleLog)
@@ -152,37 +152,11 @@ private:
 	GEO_PolyCounts mPolyCounts;
 };
 
-PRM_Name names[] = {
-		PRM_Name("rpk",			"Rule Package"),
-		PRM_Name("startRule",	"Start Rule"),
-		PRM_Name("seed",		"Random Seed"),
-		PRM_Name("name",		"Initial Shape Name"),
-		PRM_Name("BuildingHeight",		"Building Height")
-};
-
-PRM_Default rpkDefault(0, "$HIP/$F.rpk");
-
-struct RulePackageContext {
-
-};
-
 typedef std::vector<const prt::InitialShape*> InitialShapePtrVector;
 typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
 
 struct InitialShapeContext {
 	InitialShapeContext(OP_Context& ctx, GU_Detail& detail) : mContext(ctx) {
-		// test rpk for development...
-		boost::filesystem::path sopPath;
-		prt4hdn::utils::getPathToCurrentModule(sopPath);
-		std::wstring rpkURI = L"file:" + (sopPath.parent_path() / "prtdata" / "candler.rpk").wstring();
-
-		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-		mAssetsMap = prt::createResolveMap(rpkURI.c_str(), 0, &status);
-		if(status != prt::STATUS_OK) {
-			LOG_ERR << "getting resolve map from '" << rpkURI << "' failed, aborting.";
-			abort(); // TODO
-		}
-
 		mAMB = prt::AttributeMapBuilder::create();
 		mISB = prt::InitialShapeBuilder::create();
 
@@ -196,39 +170,48 @@ struct InitialShapeContext {
 		BOOST_FOREACH(const prt::InitialShape* is, mInitialShapes) {
 			is->destroy();
 		}
-
+		mISB->destroy();
 		BOOST_FOREACH(const prt::AttributeMap* am, mInitialShapeAttributes) {
 			am->destroy();
 		}
-
-		mISB->destroy();
 		mAMB->destroy();
-		mAssetsMap->destroy();
 	}
 
 	OP_Context& mContext;
 	std::vector<GA_ROAttributeRef> mPrimitiveAttributes;
 
-	const prt::ResolveMap* mAssetsMap;
 	prt::InitialShapeBuilder* mISB;
 	InitialShapePtrVector mInitialShapes;
 	prt::AttributeMapBuilder* mAMB;
 	AttributeMapPtrVector mInitialShapeAttributes;
 };
 
-PRM_Template myTemplateList[] = {
-		PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
-		PRM_Template(PRM_FILE,		1, &names[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &names[1],		PRMoneDefaults),
-		PRM_Template(PRM_FLT_J,		1, &names[2],		PRMzeroDefaults),
-		PRM_Template(PRM_STRING,	1, &names[3],		PRMoneDefaults),
-		PRM_Template(PRM_FLT_J,		1, &names[4],		PRMoneDefaults),
+const char* NODE_PARAM_RPK = "rpk";
+const char* NODE_PARAM_RULE_FILE = "ruleFile";
+const char* NODE_PARAM_START_RULE = "startRule";
+
+PRM_Name NODE_PARAM_NAMES[] = {
+		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
+		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
+		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
+		//PRM_Name("BuildingHeight",	"Building Height")
+};
+
+PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+
+PRM_Template NODE_PARAM_TEMPLATES[] = {
+		//PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
+		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
+		//PRM_Template(PRM_FLT_J,		1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
 		PRM_Template(),
 };
 
 } // namespace anonymous
 
 
+// TODO: add support for multiple nodes
 void newSopOperator(OP_OperatorTable *table) {
 	UT_Exit::addExitCallback(dsoExit);
 
@@ -254,12 +237,10 @@ void newSopOperator(OP_OperatorTable *table) {
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
 
-	prtCache = prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT);
-
 	table->addOperator(new OP_Operator("prt4houdini",
 			"prt4houdini",
 			prt4hdn::SOP_PRT::myConstructor,
-			myTemplateList,
+			NODE_PARAM_TEMPLATES,
 			1,
 			1,
 			0)
@@ -270,12 +251,14 @@ void newSopOperator(OP_OperatorTable *table) {
 namespace prt4hdn {
 
 OP_Node* SOP_PRT::myConstructor(OP_Network *net, const char *name, OP_Operator *op) {
-	return new SOP_PRT(net, name, op);
+	OP_Node* n = new SOP_PRT(net, name, op);
+	return n;
 }
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
+, mAssetsMap(nullptr)
 {
 	prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
 
@@ -300,6 +283,9 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 }
 
 SOP_PRT::~SOP_PRT() {
+	if (mAssetsMap != nullptr)
+		mAssetsMap->destroy();
+
 	mHoudiniEncoderOptions->destroy();
 	mCGAErrorOptions->destroy();
 	mCGAPrintOptions->destroy();
@@ -315,16 +301,16 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 	// preset attribute builder with node values
 	// TODO for dynamic UI
 	fpreal t = isc->mContext.getTime();
-//	size_t ai = setAttributes.find_first();
-//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
-//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
-		double v = evalFloat("BuildingHeight", 0, t);
-		//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-		isc->mAMB->setFloat(L"BuildingHeight", v);
-		if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
-//		setAttributes.reset(ai);
-//		ai = setAttributes.find_next(ai);
-//	}
+	//	size_t ai = setAttributes.find_first();
+	//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
+	//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
+	double v = evalFloat("BuildingHeight", 0, t);
+	//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+	isc->mAMB->setFloat(L"BuildingHeight", v);
+	if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
+	//		setAttributes.reset(ai);
+	//		ai = setAttributes.find_next(ai);
+	//	}
 
 	// convert geometry
 	std::vector<double> vtx;
@@ -370,26 +356,25 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 
 	const prt::AttributeMap* initialShapeAttrs = isc->mAMB->createAttributeMapAndReset();
 
-	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
-	std::wstring ruleFile = L"bin/Candler Building.cgb";
-	std::wstring startRule = L"Default$Footprint";
-	int32_t seed = 666;
-
 	isc->mISB->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+
+	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
+	int32_t seed = 666; // TODO
+
 	isc->mISB->setAttributes(
-			ruleFile.c_str(),
-			startRule.c_str(),
+			mRuleFile.c_str(),
+			mStartRule.c_str(),
 			seed,
 			shapeName.c_str(),
 			initialShapeAttrs,
-			isc->mAssetsMap
+			mAssetsMap
 	);
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	const prt::InitialShape* initialShape = isc->mISB->createInitialShapeAndReset(&status);
 	if (status != prt::STATUS_OK) {
 		LOG_WRN << "ignored input group '" << group->getName() << "': " << prt::getStatusDescription(status);
- 		initialShapeAttrs->destroy();
+		initialShapeAttrs->destroy();
 		return;
 	}
 
@@ -400,6 +385,9 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 }
 
 OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
+	if (!handleParams(context))
+		return error();
+
 	if (lockInputs(context) >= UT_ERROR_ABORT)
 		return error();
 
@@ -432,6 +420,189 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 
 	unlockInputs();
 	return error();
+}
+
+void getRuleAttributes(const prt::RuleFileInfo* info, std::vector<PRM_Name>& parmNames, std::vector<PRM_Template>& parmTemplates) {
+	for(size_t i = 0; i < info->getNumAttributes(); i++) {
+		if(info->getAttribute(i)->getNumParameters() != 0) continue;
+		const wchar_t* attrName = info->getAttribute(i)->getName();
+		std::string nAttrName = utils::toOSNarrowFromUTF16(attrName);
+		//boost::replace_all(nAttrName, "$", "\\$");
+		nAttrName = nAttrName.substr(8);
+		LOG_DBG << "rule attr: " << nAttrName;
+		parmNames.push_back(PRM_Name(nAttrName.c_str(), nAttrName.c_str()));
+
+		switch(info->getAttribute(i)->getReturnType()) {
+		case prt::AAT_BOOL: {
+			//				for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
+			//					const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
+			//					if(!(wcscmp(an->getName(), ANNOT_RANGE)))
+			//						e = new PRTEnum(prtNode, an);
+			//				}
+			//
+			//				bool value = evalAttrs.find(name.asWChar())->second.mBool;
+			//
+			//				if(e) {
+			//					MCHECK(addEnumParameter(node, attr, name, value, e));
+			//				} else {
+			//					MCHECK(addBoolParameter(node, attr, name, value));
+			//				}
+
+			parmTemplates.push_back(PRM_Template(PRM_TOGGLE, 1, &parmNames.back(), PRMoneDefaults));
+			break;
+		}
+		case prt::AAT_FLOAT: {
+//			double min = std::numeric_limits<double>::quiet_NaN();
+//			double max = std::numeric_limits<double>::quiet_NaN();
+//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
+//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
+//				if(!(wcscmp(an->getName(), ANNOT_RANGE))) {
+//					if(an->getNumArguments() == 2 && an->getArgument(0)->getType() == prt::AAT_FLOAT && an->getArgument(1)->getType() == prt::AAT_FLOAT) {
+//						min = an->getArgument(0)->getFloat();
+//						max = an->getArgument(1)->getFloat();
+//					} else
+//						e = new PRTEnum(prtNode, an);
+//				}
+//			}
+//
+//			double value = evalAttrs.find(name.asWChar())->second.mFloat;
+
+			parmTemplates.push_back(PRM_Template(PRM_FLT_J, 1, &parmNames.back(), PRMoneDefaults));
+
+			break;
+		}
+		case prt::AAT_STR: {
+//			MString exts;
+//			bool    asFile  = false;
+//			bool    asColor = false;
+//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
+//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
+//				if(!(wcscmp(an->getName(), ANNOT_RANGE)))
+//					e = new PRTEnum(prtNode, an);
+//				else if(!(wcscmp(an->getName(), ANNOT_COLOR)))
+//					asColor = true;
+//				else if(!(wcscmp(an->getName(), ANNOT_DIR))) {
+//					exts = MString(an->getName());
+//					asFile = true;
+//				} else if(!(wcscmp(an->getName(), ANNOT_FILE))) {
+//					asFile = true;
+//					for(size_t arg = 0; arg < an->getNumArguments(); arg++) {
+//						if(an->getArgument(arg)->getType() == prt::AAT_STR) {
+//							exts += MString(an->getArgument(arg)->getStr());
+//							exts += " (*.";
+//							exts += MString(an->getArgument(arg)->getStr());
+//							exts += ");;";
+//						}
+//					}
+//					exts += "All Files (*.*)";
+//				}
+//			}
+//
+//			std::wstring value = evalAttrs.find(name.asWChar())->second.mString;
+//			MString mvalue(value.c_str());
+//			if(!(asColor) && mvalue.length() == 7 && value[0] == L'#')
+//				asColor = true;
+//
+//			if(e) {
+//				MCHECK(addEnumParameter(node, attr, name, mvalue, e));
+//			} else if(asFile) {
+//				MCHECK(addFileParameter(node, attr, name, mvalue, exts));
+//			} else if(asColor) {
+//				MCHECK(addColorParameter(node, attr, name, mvalue));
+//			} else {
+//				MCHECK(addStrParameter(node, attr, name, mvalue));
+//			}
+
+			parmTemplates.push_back(PRM_Template(PRM_STRING, 1, &parmNames.back(), PRMoneDefaults));
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	parmTemplates.push_back(PRM_Template());
+}
+
+bool SOP_PRT::handleParams(OP_Context &context) {
+	LOG_DBG << "handleParams()";
+	fpreal now = context.getTime();
+
+	// -- rule file
+	// TODO: search/list cgbs
+	// mRuleFile = L"bin/Candler Building.cgb";
+	UT_String utRuleFile;
+	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
+	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
+
+	// -- rule package
+	UT_String utNextRPKStr;
+	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
+	boost::filesystem::path nextRPKPath(utNextRPKStr);
+	if (boost::filesystem::exists(nextRPKPath)) {
+		std::wstring nextRPKURI = L"file:" + nextRPKPath.wstring();
+		if (nextRPKURI != mRPKURI) {
+			LOG_DBG << L"detected new RPK path: " << nextRPKURI;
+
+			// clean up previous rpk context
+			if (mAssetsMap != nullptr) {
+				mAssetsMap->destroy();
+				mAssetsMap = nullptr;
+			}
+			mPRTCache->flushAll();
+
+			// rebuild assets map
+			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), 0, &status);
+			if(status != prt::STATUS_OK) {
+				LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
+				return false;
+			}
+
+			// rebuild attribute UI
+			status = prt::STATUS_UNSPECIFIED_ERROR;
+			const wchar_t* cgbURI = mAssetsMap->getString(mRuleFile.c_str());
+			const prt::RuleFileInfo* info = prt::createRuleFileInfo(cgbURI, 0, &status);
+			if (status == prt::STATUS_OK) {
+				parmNames.clear();
+				parmTemplates.clear();
+				getRuleAttributes(info, parmNames, parmTemplates);
+				updateRuleAttributeParams(parmTemplates);
+				info->destroy();
+			}
+
+			// new rpk is "go"
+			mRPKURI = nextRPKURI;
+		}
+	}
+
+	// -- start rule
+	// TODO: search for @StartRule
+	// Default$Footprint
+	UT_String utStartRule;
+	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
+	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
+
+	return true;
+}
+
+bool SOP_PRT::updateParmsFlags() {
+	bool changed = SOP_Node::updateParmsFlags();
+	//LOG_DBG << "updateParmsFlags";
+	return changed;
+}
+
+void SOP_PRT::updateRuleAttributeParams(const std::vector<PRM_Template>& spareParmTemplate) {
+	UT_String				errors;
+	OP_Director*			director = OPgetDirector();
+	PI_EditScriptedParms	nodeParms(this, true, false);
+
+	nodeParms.clearParms();
+	LOG_DBG << "cleared spare params";
+
+	const PI_EditScriptedParms spareParms(this, &spareParmTemplate[0], true, false, false);
+	nodeParms.mergeParms(spareParms);
+	director->changeNodeSpareParms(this, nodeParms, errors);
 }
 
 } // namespace prt4hdn

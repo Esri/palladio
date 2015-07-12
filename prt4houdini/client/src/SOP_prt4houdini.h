@@ -10,6 +10,7 @@
 namespace prt {
 class CacheObject;
 class AttributeMap;
+class ResolveMap;
 }
 
 
@@ -25,11 +26,24 @@ public:
 	virtual ~SOP_PRT();
 
 protected:
-	void createInitialShape(const GA_Group* group, void* ctx);
 	virtual OP_ERROR cookMySop(OP_Context &context);
+	virtual bool updateParmsFlags();
+
+private:
+	void createInitialShape(const GA_Group* group, void* ctx);
+	bool handleParams(OP_Context &context);
+	void updateRuleAttributeParams(const std::vector<PRM_Template>& parmTemplates);
 
 private:
 	prt::CacheObject* mPRTCache;
+	const prt::ResolveMap* mAssetsMap;
+
+	std::wstring mRPKURI;
+	std::wstring mRuleFile;
+	std::wstring mStartRule; // fixed per rpk for now
+
+	std::vector<PRM_Name> parmNames;
+	std::vector<PRM_Template> parmTemplates;
 
 	const prt::AttributeMap* mHoudiniEncoderOptions;;
 	const prt::AttributeMap* mCGAPrintOptions;
