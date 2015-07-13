@@ -27,6 +27,8 @@
 #include "UT/UT_Exit.h"
 #include "UT/UT_Interrupt.h"
 #include "SYS/SYS_Math.h"
+#include <HOM/HOM_Module.h>
+#include <HOM/HOM_SopNode.h>
 //#pragma GCC diagnostic pop
 
 #include "boost/foreach.hpp"
@@ -157,7 +159,7 @@ typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
 
 struct InitialShapeContext {
 	InitialShapeContext(OP_Context& ctx, GU_Detail& detail) : mContext(ctx) {
-		mAMB = prt::AttributeMapBuilder::create();
+		//mAMB = prt::AttributeMapBuilder::create();
 		mISB = prt::InitialShapeBuilder::create();
 
 		// collect all primitive attributes
@@ -174,7 +176,7 @@ struct InitialShapeContext {
 		BOOST_FOREACH(const prt::AttributeMap* am, mInitialShapeAttributes) {
 			am->destroy();
 		}
-		mAMB->destroy();
+		//mAMB->destroy();
 	}
 
 	OP_Context& mContext;
@@ -182,17 +184,19 @@ struct InitialShapeContext {
 
 	prt::InitialShapeBuilder* mISB;
 	InitialShapePtrVector mInitialShapes;
-	prt::AttributeMapBuilder* mAMB;
+	//prt::AttributeMapBuilder* mAMB;
 	AttributeMapPtrVector mInitialShapeAttributes;
 };
 
-const char* NODE_PARAM_RPK = "rpk";
-const char* NODE_PARAM_RULE_FILE = "ruleFile";
-const char* NODE_PARAM_START_RULE = "startRule";
+const char* NODE_PARAM_RPK			= "rpk";
+const char* NODE_PARAM_RULE_FILE	= "ruleFile";
+const char* NODE_PARAM_STYLE		= "style";
+const char* NODE_PARAM_START_RULE	= "startRule";
 
 PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
+		PRM_Name(NODE_PARAM_STYLE,		"Style"),
 		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
 		//PRM_Name("BuildingHeight",	"Building Height")
 };
@@ -204,7 +208,8 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
-		//PRM_Template(PRM_FLT_J,		1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
+		//PRM_Template(PRM_FLT_J,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
 		PRM_Template(),
 };
 
@@ -259,6 +264,7 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
 , mAssetsMap(nullptr)
+, mAttributeSource(prt::AttributeMapBuilder::create())
 {
 	prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
 
@@ -283,6 +289,8 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 }
 
 SOP_PRT::~SOP_PRT() {
+	mAttributeSource->destroy();
+
 	if (mAssetsMap != nullptr)
 		mAssetsMap->destroy();
 
@@ -304,10 +312,10 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 	//	size_t ai = setAttributes.find_first();
 	//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
 	//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
-	double v = evalFloat("BuildingHeight", 0, t);
-	//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-	isc->mAMB->setFloat(L"BuildingHeight", v);
-	if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
+	//	double v = evalFloat("BuildingHeight", 0, t);
+	//	//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+	//	isc->mAMB->setFloat(L"BuildingHeight", v);
+	//	if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
 	//		setAttributes.reset(ai);
 	//		ai = setAttributes.find_next(ai);
 	//	}
@@ -343,7 +351,7 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 				double v = prim->getValue<double>(ar);
 				if (DBG) LOG_DBG << "   attrib " << ar->getName() << " = " << v;
 				std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-				isc->mAMB->setFloat(wn.c_str(), v);
+				mAttributeSource->setFloat(wn.c_str(), v);
 			} else if (ar.isString()) {
 				// TODO
 			}
@@ -354,16 +362,16 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 
 	if (DBG) LOG_DBG << "initial shape geo from group " << group->getName() << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 
-	const prt::AttributeMap* initialShapeAttrs = isc->mAMB->createAttributeMapAndReset();
+	const prt::AttributeMap* initialShapeAttrs = mAttributeSource->createAttributeMap();
 
 	isc->mISB->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
 
 	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
 	int32_t seed = 666; // TODO
-
+	std::wstring startRule = mStyle + L"$" + mStartRule;
 	isc->mISB->setAttributes(
 			mRuleFile.c_str(),
-			mStartRule.c_str(),
+			startRule.c_str(),
 			seed,
 			shapeName.c_str(),
 			initialShapeAttrs,
@@ -422,15 +430,30 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	return error();
 }
 
-void getRuleAttributes(const prt::RuleFileInfo* info, std::vector<PRM_Name>& parmNames, std::vector<PRM_Template>& parmTemplates) {
+void getParamDef(const prt::RuleFileInfo* info, std::vector<std::string>& createdParams, std::ostream& defStream) {
 	for(size_t i = 0; i < info->getNumAttributes(); i++) {
 		if(info->getAttribute(i)->getNumParameters() != 0) continue;
 		const wchar_t* attrName = info->getAttribute(i)->getName();
 		std::string nAttrName = utils::toOSNarrowFromUTF16(attrName);
-		//boost::replace_all(nAttrName, "$", "\\$");
-		nAttrName = nAttrName.substr(8);
+		nAttrName = nAttrName.substr(8); // TODO: better way to remove style for now...
 		LOG_DBG << "rule attr: " << nAttrName;
-		parmNames.push_back(PRM_Name(nAttrName.c_str(), nAttrName.c_str()));
+
+//		parmDef << "parm {\n";
+//		parmDef << "name    \"FloorHeight\"\n";
+//		parmDef << "label   \"\"\n";
+//		parmDef << "type    float\n";
+//		//parmDef << "invisible\n";
+//		parmDef << "size    1\n";
+//		parmDef << "default { 5 }\n";
+//		parmDef << "range   { 0 10 }\n";
+//		parmDef << "export  none\n";
+//		parmDef << "}\n";
+
+
+		defStream << "parm {" << "\n";
+		defStream << "    name  \"" << nAttrName << "\"" << "\n";
+		defStream << "    label \"\"\n";
+
 
 		switch(info->getAttribute(i)->getReturnType()) {
 		case prt::AAT_BOOL: {
@@ -440,88 +463,85 @@ void getRuleAttributes(const prt::RuleFileInfo* info, std::vector<PRM_Name>& par
 			//						e = new PRTEnum(prtNode, an);
 			//				}
 			//
-			//				bool value = evalAttrs.find(name.asWChar())->second.mBool;
-			//
-			//				if(e) {
-			//					MCHECK(addEnumParameter(node, attr, name, value, e));
-			//				} else {
-			//					MCHECK(addBoolParameter(node, attr, name, value));
-			//				}
 
-			parmTemplates.push_back(PRM_Template(PRM_TOGGLE, 1, &parmNames.back(), PRMoneDefaults));
+			defStream << "    type    integer\n";
 			break;
 		}
 		case prt::AAT_FLOAT: {
-//			double min = std::numeric_limits<double>::quiet_NaN();
-//			double max = std::numeric_limits<double>::quiet_NaN();
-//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
-//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
-//				if(!(wcscmp(an->getName(), ANNOT_RANGE))) {
-//					if(an->getNumArguments() == 2 && an->getArgument(0)->getType() == prt::AAT_FLOAT && an->getArgument(1)->getType() == prt::AAT_FLOAT) {
-//						min = an->getArgument(0)->getFloat();
-//						max = an->getArgument(1)->getFloat();
-//					} else
-//						e = new PRTEnum(prtNode, an);
-//				}
-//			}
-//
-//			double value = evalAttrs.find(name.asWChar())->second.mFloat;
+			//			double min = std::numeric_limits<double>::quiet_NaN();
+			//			double max = std::numeric_limits<double>::quiet_NaN();
+			//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
+			//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
+			//				if(!(wcscmp(an->getName(), ANNOT_RANGE))) {
+			//					if(an->getNumArguments() == 2 && an->getArgument(0)->getType() == prt::AAT_FLOAT && an->getArgument(1)->getType() == prt::AAT_FLOAT) {
+			//						min = an->getArgument(0)->getFloat();
+			//						max = an->getArgument(1)->getFloat();
+			//					} else
+			//						e = new PRTEnum(prtNode, an);
+			//				}
+			//			}
 
-			parmTemplates.push_back(PRM_Template(PRM_FLT_J, 1, &parmNames.back(), PRMoneDefaults));
+			createdParams.push_back(nAttrName);
 
+
+			defStream << "    type    float\n";
 			break;
 		}
 		case prt::AAT_STR: {
-//			MString exts;
-//			bool    asFile  = false;
-//			bool    asColor = false;
-//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
-//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
-//				if(!(wcscmp(an->getName(), ANNOT_RANGE)))
-//					e = new PRTEnum(prtNode, an);
-//				else if(!(wcscmp(an->getName(), ANNOT_COLOR)))
-//					asColor = true;
-//				else if(!(wcscmp(an->getName(), ANNOT_DIR))) {
-//					exts = MString(an->getName());
-//					asFile = true;
-//				} else if(!(wcscmp(an->getName(), ANNOT_FILE))) {
-//					asFile = true;
-//					for(size_t arg = 0; arg < an->getNumArguments(); arg++) {
-//						if(an->getArgument(arg)->getType() == prt::AAT_STR) {
-//							exts += MString(an->getArgument(arg)->getStr());
-//							exts += " (*.";
-//							exts += MString(an->getArgument(arg)->getStr());
-//							exts += ");;";
-//						}
-//					}
-//					exts += "All Files (*.*)";
-//				}
-//			}
-//
-//			std::wstring value = evalAttrs.find(name.asWChar())->second.mString;
-//			MString mvalue(value.c_str());
-//			if(!(asColor) && mvalue.length() == 7 && value[0] == L'#')
-//				asColor = true;
-//
-//			if(e) {
-//				MCHECK(addEnumParameter(node, attr, name, mvalue, e));
-//			} else if(asFile) {
-//				MCHECK(addFileParameter(node, attr, name, mvalue, exts));
-//			} else if(asColor) {
-//				MCHECK(addColorParameter(node, attr, name, mvalue));
-//			} else {
-//				MCHECK(addStrParameter(node, attr, name, mvalue));
-//			}
+			//			MString exts;
+			//			bool    asFile  = false;
+			//			bool    asColor = false;
+			//			for(size_t a = 0; a < info->getAttribute(i)->getNumAnnotations(); a++) {
+			//				const prt::Annotation* an = info->getAttribute(i)->getAnnotation(a);
+			//				if(!(wcscmp(an->getName(), ANNOT_RANGE)))
+			//					e = new PRTEnum(prtNode, an);
+			//				else if(!(wcscmp(an->getName(), ANNOT_COLOR)))
+			//					asColor = true;
+			//				else if(!(wcscmp(an->getName(), ANNOT_DIR))) {
+			//					exts = MString(an->getName());
+			//					asFile = true;
+			//				} else if(!(wcscmp(an->getName(), ANNOT_FILE))) {
+			//					asFile = true;
+			//					for(size_t arg = 0; arg < an->getNumArguments(); arg++) {
+			//						if(an->getArgument(arg)->getType() == prt::AAT_STR) {
+			//							exts += MString(an->getArgument(arg)->getStr());
+			//							exts += " (*.";
+			//							exts += MString(an->getArgument(arg)->getStr());
+			//							exts += ");;";
+			//						}
+			//					}
+			//					exts += "All Files (*.*)";
+			//				}
+			//			}
+			//
+			//			std::wstring value = evalAttrs.find(name.asWChar())->second.mString;
+			//			MString mvalue(value.c_str());
+			//			if(!(asColor) && mvalue.length() == 7 && value[0] == L'#')
+			//				asColor = true;
+			//
+			//			if(e) {
+			//				MCHECK(addEnumParameter(node, attr, name, mvalue, e));
+			//			} else if(asFile) {
+			//				MCHECK(addFileParameter(node, attr, name, mvalue, exts));
+			//			} else if(asColor) {
+			//				MCHECK(addColorParameter(node, attr, name, mvalue));
+			//			} else {
+			//				MCHECK(addStrParameter(node, attr, name, mvalue));
+			//			}
 
-			parmTemplates.push_back(PRM_Template(PRM_STRING, 1, &parmNames.back(), PRMoneDefaults));
+			defStream << "    type    string\n";
 			break;
 		}
 		default:
 			break;
 		}
-	}
 
-	parmTemplates.push_back(PRM_Template());
+		defStream << "    size    1\n";
+//		parmDef << "default { 5 }\n";
+//		parmDef << "range   { 0 10 }\n";
+		defStream << "    export  none\n";
+		defStream << "}\n";
+	}
 }
 
 bool SOP_PRT::handleParams(OP_Context &context) {
@@ -534,6 +554,7 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	UT_String utRuleFile;
 	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
 	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
+	LOG_DBG << L"got rule file: " << mRuleFile;
 
 	// -- rule package
 	UT_String utNextRPKStr;
@@ -561,13 +582,31 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 			// rebuild attribute UI
 			status = prt::STATUS_UNSPECIFIED_ERROR;
+			LOG_DBG << "going to get cgbURI";
 			const wchar_t* cgbURI = mAssetsMap->getString(mRuleFile.c_str());
+			if (cgbURI == nullptr) {
+				LOG_ERR << L"failed to resolve rule file '" << mRuleFile << "', aborting.";
+				return false;
+			}
+			LOG_DBG << "going to createRuleFileInfo";
 			const prt::RuleFileInfo* info = prt::createRuleFileInfo(cgbURI, 0, &status);
 			if (status == prt::STATUS_OK) {
-				parmNames.clear();
-				parmTemplates.clear();
-				getRuleAttributes(info, parmNames, parmTemplates);
-				updateRuleAttributeParams(parmTemplates);
+
+				mActiveParams.clear();;
+				std::ostringstream paramDef;
+				getParamDef(info, mActiveParams, paramDef);
+				std::string s = paramDef.str();
+
+				OP_Director* director = OPgetDirector();
+				director->deleteAllNodeSpareParms(this);
+
+				UT_IStream istr(&s[0], s.size(), UT_ISTREAM_ASCII);
+				UT_String errors;
+				director->loadNodeSpareParms(this, istr, errors);
+
+				//	std::ostringstream ostr;
+				//	director->saveNodeSpareParms(this, true, ostr);
+				//	LOG_DBG << ostr.str();
 				info->destroy();
 			}
 
@@ -575,6 +614,13 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 			mRPKURI = nextRPKURI;
 		}
 	}
+
+	// -- start rule
+	// TODO: search for @StartRule
+	// Default$Footprint
+	UT_String utStyle;
+	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
+	mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
 
 	// -- start rule
 	// TODO: search for @StartRule
@@ -587,22 +633,16 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 }
 
 bool SOP_PRT::updateParmsFlags() {
+	for (std::string& p: mActiveParams) {
+		double v = evalFloat(p.c_str(), 0, 0); // TODO: time
+		std::wstring wp = utils::toUTF16FromOSNarrow(p);
+		mAttributeSource->setFloat(wp.c_str(), v);
+	}
+
+	forceRecook();
+
 	bool changed = SOP_Node::updateParmsFlags();
-	//LOG_DBG << "updateParmsFlags";
 	return changed;
-}
-
-void SOP_PRT::updateRuleAttributeParams(const std::vector<PRM_Template>& spareParmTemplate) {
-	UT_String				errors;
-	OP_Director*			director = OPgetDirector();
-	PI_EditScriptedParms	nodeParms(this, true, false);
-
-	nodeParms.clearParms();
-	LOG_DBG << "cleared spare params";
-
-	const PI_EditScriptedParms spareParms(this, &spareParmTemplate[0], true, false, false);
-	nodeParms.mergeParms(spareParms);
-	director->changeNodeSpareParms(this, nodeParms, errors);
 }
 
 } // namespace prt4hdn

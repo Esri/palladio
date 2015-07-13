@@ -11,7 +11,7 @@
 namespace prt4hdn {
 namespace log {
 
-struct Logger {
+struct Logger { // TODO: use std::ostream as basis
 };
 
 // log to std streams

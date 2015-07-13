@@ -10,6 +10,7 @@
 namespace prt {
 class CacheObject;
 class AttributeMap;
+class AttributeMapBuilder;
 class ResolveMap;
 }
 
@@ -32,7 +33,6 @@ protected:
 private:
 	void createInitialShape(const GA_Group* group, void* ctx);
 	bool handleParams(OP_Context &context);
-	void updateRuleAttributeParams(const std::vector<PRM_Template>& parmTemplates);
 
 private:
 	prt::CacheObject* mPRTCache;
@@ -40,10 +40,10 @@ private:
 
 	std::wstring mRPKURI;
 	std::wstring mRuleFile;
+	std::wstring mStyle;
 	std::wstring mStartRule; // fixed per rpk for now
-
-	std::vector<PRM_Name> parmNames;
-	std::vector<PRM_Template> parmTemplates;
+	prt::AttributeMapBuilder* mAttributeSource;
+	std::vector<std::string> mActiveParams;
 
 	const prt::AttributeMap* mHoudiniEncoderOptions;;
 	const prt::AttributeMap* mCGAPrintOptions;
