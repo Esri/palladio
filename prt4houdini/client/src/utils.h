@@ -3,10 +3,14 @@
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
 
-//#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#ifndef WIN32
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
 #include "boost/filesystem.hpp"
-//#pragma GCC diagnostic pop
+#ifndef WIN32
+#	pragma GCC diagnostic pop
+#endif
 
 #include <string>
 

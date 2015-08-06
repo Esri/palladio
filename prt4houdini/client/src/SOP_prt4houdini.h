@@ -1,11 +1,14 @@
 #pragma once
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Wattributes"
+#ifndef WIN32
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#	pragma GCC diagnostic ignored "-Wattributes"
+#endif
 #include "SOP/SOP_Node.h"
-#pragma GCC diagnostic pop
-
+#ifndef WIN32
+#	pragma GCC diagnostic pop
+#endif
 
 namespace prt {
 class CacheObject;

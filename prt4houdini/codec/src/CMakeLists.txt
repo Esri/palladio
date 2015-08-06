@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 3.2)
 cmake_policy(SET CMP0015 NEW)
 
 
@@ -6,16 +6,7 @@ cmake_policy(SET CMP0015 NEW)
 
 set(PROJECT prt4houdini_codec)
 project(${PROJECT})
-include(../../common.cmake)
-
-
-### dependencies
-
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
-
-find_package(prt CONFIG REQUIRED)
-include_directories(${PRT_INCLUDE_PATH})
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/common.cmake)
 
 
 ### build target

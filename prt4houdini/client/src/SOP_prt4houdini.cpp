@@ -7,9 +7,11 @@
 #include "prt/API.h"
 #include "prt/FlexLicParams.h"
 
-//#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Wattributes"
+#ifndef WIN32
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#	pragma GCC diagnostic ignored "-Wattributes"
+#endif
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
 #include "PRM/PRM_Include.h"
@@ -29,12 +31,15 @@
 #include "SYS/SYS_Math.h"
 #include <HOM/HOM_Module.h>
 #include <HOM/HOM_SopNode.h>
-//#pragma GCC diagnostic pop
+#ifndef WIN32
+#	pragma GCC diagnostic pop
+#endif
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/algorithm/string/replace.hpp"
+#include "boost/assign.hpp"
 
 #include <vector>
 
@@ -284,8 +289,8 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 
 	optionsBuilder->destroy();
 
-	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
-	mAllEncoderOptions = { mHoudiniEncoderOptions, mCGAErrorOptions, mCGAPrintOptions };
+	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
+	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
 }
 
 SOP_PRT::~SOP_PRT() {
@@ -396,8 +401,10 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	if (!handleParams(context))
 		return error();
 
-	if (lockInputs(context) >= UT_ERROR_ABORT)
+	if (lockInputs(context) >= UT_ERROR_ABORT) {
+		LOG_DBG << "lockInputs error";
 		return error();
+	}
 
 	duplicateSource(0, context);
 
@@ -555,13 +562,17 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
 	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
 	LOG_DBG << L"got rule file: " << mRuleFile;
+	if (mRuleFile.empty()) {
+		LOG_ERR << "rule file is empty/invalid, cannot continue";
+		return false;
+	}
 
 	// -- rule package
 	UT_String utNextRPKStr;
 	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
-	boost::filesystem::path nextRPKPath(utNextRPKStr);
+	boost::filesystem::path nextRPKPath(utNextRPKStr.toStdString());
 	if (boost::filesystem::exists(nextRPKPath)) {
-		std::wstring nextRPKURI = L"file:" + nextRPKPath.wstring();
+		std::wstring nextRPKURI = L"file:/" + nextRPKPath.wstring();
 		if (nextRPKURI != mRPKURI) {
 			LOG_DBG << L"detected new RPK path: " << nextRPKURI;
 
@@ -582,8 +593,12 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 			// rebuild attribute UI
 			status = prt::STATUS_UNSPECIFIED_ERROR;
-			LOG_DBG << "going to get cgbURI";
+			LOG_DBG << L"going to get cgbURI: mAssetsMap = " << mAssetsMap << L", mRuleFile = " << mRuleFile;
+			if (!mAssetsMap->hasKey(mRuleFile.c_str()))
+				return false;
+
 			const wchar_t* cgbURI = mAssetsMap->getString(mRuleFile.c_str());
+			LOG_DBG << L"got cgbURI = " << cgbURI;
 			if (cgbURI == nullptr) {
 				LOG_ERR << L"failed to resolve rule file '" << mRuleFile << "', aborting.";
 				return false;
@@ -604,9 +619,9 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 				UT_String errors;
 				director->loadNodeSpareParms(this, istr, errors);
 
-				//	std::ostringstream ostr;
-				//	director->saveNodeSpareParms(this, true, ostr);
-				//	LOG_DBG << ostr.str();
+				std::ostringstream ostr;
+				director->saveNodeSpareParms(this, true, ostr);
+				LOG_DBG << ostr.str();
 				info->destroy();
 			}
 
@@ -628,6 +643,8 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	UT_String utStartRule;
 	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
 	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
+
+	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
 
 	return true;
 }

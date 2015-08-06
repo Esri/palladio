@@ -1,0 +1,20 @@
+#   OPTIMIZER	Override the optimization level (optional, defaults to -O2)
+#   INCDIRS	Specify any additional include directories.
+#   LIBDIRS	Specify any addition library include directories
+#   SOURCES	List all .C files required to build the DSO or App
+#   DSONAME	Name of the desired output DSO file (if applicable)
+#   APPNAME	Name of the desires output application (if applicable)
+#   INSTDIR	Directory to be installed. If not specified, this will
+#		default to the the HOME houdini directory.
+#   ICONS	Name of the icon files to install (optionial)
+
+HFS = @houdini_DIR@
+#INCDIRS = -I@PRT_INCLUDE_PATH@ -I@PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I@CMAKE_CURRENT_SOURCE_DIR@
+#LIBDIRS = -L@PRT_INSTALL_PATH@/bin -lcom.esri.prt.core
+
+INCDIRS = -I @PRT_INCLUDE_PATH@ -I @PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I @CMAKE_CURRENT_SOURCE_DIR@
+LIBDIRS = -LIBPATH:@PRT_INSTALL_PATH@/bin com.esri.prt.core.lib -LIBPATH:@Boost_LIBRARY_DIR@ libboost_filesystem-vc110-mt-1_53.lib
+
+DSONAME = SOP_prt4houdini.dll 
+SOURCES = SOP_prt4houdini.cpp utils.cpp
+!INCLUDE $(HFS)/toolkit/makefiles/Makefile.nmake
