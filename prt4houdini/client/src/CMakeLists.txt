@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 2.8.10)
 cmake_policy(SET CMP0015 NEW)
 
+
 ### project definition
 
 set(PROJECT prt4houdini_client)
 project(${PROJECT})
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/common.cmake)
+
+set(PRT4HOUDINI_VERSION_MAJOR 0)
+set(PRT4HOUDINI_VERSION_MINOR 5)
+set(PRT4HOUDINI_VERSION_MICRO 0) #TODO
 
 
 ### dependencies

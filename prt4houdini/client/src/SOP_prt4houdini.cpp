@@ -31,22 +31,27 @@
 #include "SYS/SYS_Math.h"
 #include <HOM/HOM_Module.h>
 #include <HOM/HOM_SopNode.h>
-#ifndef WIN32
-#	pragma GCC diagnostic pop
-#endif
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/algorithm/string/replace.hpp"
-#include "boost/assign.hpp"
+
+#ifdef WIN32
+#	include "boost/assign.hpp"
+#endif
+
+#ifndef WIN32
+#	pragma GCC diagnostic pop
+#endif
 
 #include <vector>
 
 
 namespace {
 
-// some file/directory name definitions
+// global prt settings
+const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
 const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
@@ -239,7 +244,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	const wchar_t* extPaths[] = { libPath.c_str() };
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtLicHandle = prt::init(extPaths, 1, prt::LOG_WARNING, &flp, &status); // TODO: add UI for log level control
+	prtLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
 
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
@@ -286,8 +291,13 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 
 	optionsBuilder->destroy();
 
+#ifdef WIN32
 	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
 	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
+#else
+	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
+	mAllEncoderOptions = { mHoudiniEncoderOptions, mCGAErrorOptions, mCGAPrintOptions };
+#endif
 }
 
 SOP_PRT::~SOP_PRT() {
@@ -418,7 +428,6 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		HoudiniGeometry hg(gdp);
 		{
 			LOG_DBG << "generating... ";
-			assert(false);
 			prt::Status stat = prt::generate(
 					&isc.mInitialShapes[0], isc.mInitialShapes.size(), 0,
 					&mAllEncoders[0], mAllEncoders.size(), &mAllEncoderOptions[0],
@@ -572,7 +581,7 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
 	boost::filesystem::path nextRPKPath(utNextRPKStr.toStdString());
 	if (boost::filesystem::exists(nextRPKPath)) {
-		std::wstring nextRPKURI = L"file:/" + nextRPKPath.wstring();
+		std::wstring nextRPKURI = L"file://" + nextRPKPath.wstring();
 		if (nextRPKURI != mRPKURI) {
 			LOG_DBG << L"detected new RPK path: " << nextRPKURI;
 

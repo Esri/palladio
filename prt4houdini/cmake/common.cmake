@@ -45,19 +45,20 @@ endif()
 
 ### common dependencies
 
-set(PRT_DEPENDENCY_CACHE_PATH "C:/dev/depcache")
+if (WIN32)
+	set(PRT_DEPENDENCY_CACHE_PATH "C:/dev/depcache")
+else()
+	set(PRT_DEPENDENCY_CACHE_PATH "${CMAKE_CURRENT_LIST_DIR}/../depcache")
+endif()
 get_dep_classifier_components(${P4H_OS} ${P4H_TC} DEP_OS DEP_TC)
 
 
 ### PRT dependency
 
- # fetch prt release if prt_DIR not specified
-if(NOT prt_DIR)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    	prt_get_dependency("releases" "cesdk" "prt" "1.3.1969" "${DEP_OS}-${FORCED_PRT_TC}-${P4H_ARCH}-rel-dbg" "prt_DIR")
-    else()
-    	prt_get_dependency("releases" "cesdk" "prt" "1.3.1969" "${DEP_OS}-${FORCED_PRT_TC}-${P4H_ARCH}-rel-opt" "prt_DIR")
-    endif()
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	prt_get_dependency("releases" "cesdk" "prt" "1.3.1969" "${DEP_OS}-${FORCED_PRT_TC}-${P4H_ARCH}-rel-dbg" "prt_DIR")
+else()
+	prt_get_dependency("releases" "cesdk" "prt" "1.3.1969" "${DEP_OS}-${FORCED_PRT_TC}-${P4H_ARCH}-rel-opt" "prt_DIR")
 endif()
 find_package(prt CONFIG)
 include_directories(${PRT_INCLUDE_PATH})
@@ -66,12 +67,14 @@ set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION
 
 ### HOUDINI dependency
 
-# houdini location
-set(houdini_DIR "C:/Program Files/Side Effects Software/Houdini 14.0.291")
-
-# houdini user dso location
 if (WIN32)
+	set(houdini_DIR "C:/Program Files/Side Effects Software/Houdini 14.0.291")
 	set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini14.0/dso")
 else()
+	# see build.sh set(houdini_DIR "/opt/hfs14.0.361")
 	set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini14.0/dso")
 endif()
+
+# FIXME: this does not work, using workaround in build.sh/build.bat for now
+#LIST(APPEND CMAKE_PROGRAM_PATH "${houdini_DIR}/bin")
+

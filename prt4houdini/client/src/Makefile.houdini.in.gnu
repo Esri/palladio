@@ -14,4 +14,6 @@ LIBDIRS = -L@PRT_INSTALL_PATH@/bin -lcom.esri.prt.core -Wl,-rpath,@PRT_INSTALL_P
 
 DSONAME = SOP_prt4houdini.so 
 SOURCES = @CMAKE_CURRENT_BINARY_DIR@/SOP_prt4houdini.cpp @CMAKE_CURRENT_BINARY_DIR@/utils.cpp
+
+#export PATH := @houdini_DIR@/bin:$(PATH)
 include ${HFS}/toolkit/makefiles/Makefile.gnu
