@@ -9,6 +9,14 @@ project(${PROJECT})
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/common.cmake)
 
 
+### dependencies
+
+prt_get_dependency("thirdparty"	"com.esri" "boost" "1.53.0" "${DEP_OS}-${DEP_TC}-${P4H_ARCH}" "Boost_DIR")
+find_package(Boost NO_MODULE)
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
+
+
 ### build target
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

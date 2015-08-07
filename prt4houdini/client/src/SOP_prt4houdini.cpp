@@ -202,19 +202,16 @@ PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
 		PRM_Name(NODE_PARAM_STYLE,		"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
-		//PRM_Name("BuildingHeight",	"Building Height")
+		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
 
 PRM_Template NODE_PARAM_TEMPLATES[] = {
-		//PRM_Template(PRM_STRING,   	1, &PRMgroupName,	0, &SOP_Node::pointGroupMenu),
 		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
-		//PRM_Template(PRM_FLT_J,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
 		PRM_Template(),
 };
 
@@ -242,7 +239,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	const wchar_t* extPaths[] = { libPath.c_str() };
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtLicHandle = prt::init(extPaths, 1, prt::LOG_DEBUG, &flp, &status); // TODO: add UI for log level control
+	prtLicHandle = prt::init(extPaths, 1, prt::LOG_WARNING, &flp, &status); // TODO: add UI for log level control
 
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
@@ -420,6 +417,8 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 
 		HoudiniGeometry hg(gdp);
 		{
+			LOG_DBG << "generating... ";
+			assert(false);
 			prt::Status stat = prt::generate(
 					&isc.mInitialShapes[0], isc.mInitialShapes.size(), 0,
 					&mAllEncoders[0], mAllEncoders.size(), &mAllEncoderOptions[0],
@@ -428,6 +427,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 			if(stat != prt::STATUS_OK) {
 				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 			}
+			LOG_DBG << "done.";
 		}
 
 		select(GU_SPrimitive);

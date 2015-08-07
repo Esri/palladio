@@ -9,12 +9,11 @@
 #   ICONS	Name of the icon files to install (optionial)
 
 HFS = @houdini_DIR@
-#INCDIRS = -I@PRT_INCLUDE_PATH@ -I@PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I@CMAKE_CURRENT_SOURCE_DIR@
-#LIBDIRS = -L@PRT_INSTALL_PATH@/bin -lcom.esri.prt.core
 
 INCDIRS = -I @PRT_INCLUDE_PATH@ -I @PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I @CMAKE_CURRENT_SOURCE_DIR@
-LIBDIRS = -LIBPATH:@PRT_INSTALL_PATH@/bin com.esri.prt.core.lib -LIBPATH:@Boost_LIBRARY_DIR@ libboost_filesystem-vc110-mt-1_53.lib
+LIBDIRS = -LIBPATH:@PRT_INSTALL_PATH@/bin com.esri.prt.core.lib -LIBPATH:F:\tmp\boost_1_55_0\lib64-msvc-11.0 libboost_filesystem-vc110-1_55.lib
 
+#OPTIMIZER = /Z7 /Od
 DSONAME = SOP_prt4houdini.dll 
 SOURCES = SOP_prt4houdini.cpp utils.cpp
 !INCLUDE $(HFS)/toolkit/makefiles/Makefile.nmake

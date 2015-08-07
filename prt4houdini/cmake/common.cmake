@@ -48,15 +48,6 @@ endif()
 set(PRT_DEPENDENCY_CACHE_PATH "C:/dev/depcache")
 get_dep_classifier_components(${P4H_OS} ${P4H_TC} DEP_OS DEP_TC)
 
-prt_get_dependency("thirdparty"	"com.esri" "boost" "1.53.0" "${DEP_OS}-${DEP_TC}-${P4H_ARCH}" "Boost_DIR")
-set(BOOST_ROOT=${Boost_DIR})
-set(Boost_ADDITIONAL_VERSIONS=1.53.0)
-set(Boost_NO_SYSTEM_PATHS ON)
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost)
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIR})
-
 
 ### PRT dependency
 
