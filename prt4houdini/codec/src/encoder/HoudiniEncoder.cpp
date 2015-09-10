@@ -57,7 +57,6 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	prtx::NamePreparator::NamespacePtr nsMesh     = namePrep.newNamespace();
 	prtx::NamePreparator::NamespacePtr nsMaterial = namePrep.newNamespace();
 
-	// create the preparator
 	prtx::EncodePreparatorPtr encPrep = prtx::EncodePreparator::create(true, namePrep, nsMesh, nsMaterial);
 
 	prtx::LeafIteratorPtr li = prtx::LeafIterator::create(context, initialShapeIndex);
@@ -203,14 +202,14 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 		for(size_t mi = 0, meshCount = meshes.size(); mi < meshCount; mi++)
 			faceCount += (int)meshes[mi]->getFaceCount();
 
+		hc->matSetColor(startFace, faceCount, mat->color_r(), mat->color_g(), mat->color_b());
+
 		std::wstring tex;
 		if(mat->diffuseMap().size() > 0 && mat->diffuseMap()[0]->isValid()) {
 			prtx::URIPtr texURI = mat->diffuseMap()[0]->getURI();
 			log_wtrace(L"trying to set texture uri: %s") % texURI->wstring();
 			std::wstring texPath = texURI->getPath();
 			hc->matSetDiffuseTexture(startFace, faceCount, texPath.c_str());
-		} else {
-			hc->matSetColor(startFace, faceCount, mat->color_r(), mat->color_g(), mat->color_b());
 		}
 
 		startFace += faceCount;

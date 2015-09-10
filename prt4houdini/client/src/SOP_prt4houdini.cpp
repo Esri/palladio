@@ -112,7 +112,7 @@ protected:
 
 	virtual void matSetColor(int start, int count, float r, float g, float b) {
 		LOG_DBG << "matSetColor: start = " << start << ", count = " << count << ", rgb = " << r << ", " << g << ", " << b;
-		GA_Offset off = mCurOffset;
+		GA_Offset off = mCurOffset + start;
 		for (int i = 0; i < count; i++) {
 			GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
 			UT_Vector3 color(r, g, b);
@@ -138,12 +138,15 @@ protected:
 	}
 
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
+		LOG_ERR << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
+		LOG_WRN << key << L": " << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
+		LOG_ERR << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
@@ -346,19 +349,7 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 		LOG_DBG << "-- creating initial shape geo from group " << group->getName(); // << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 	}
 
-	// preset attribute builder with node values
-	// TODO for dynamic UI
 	fpreal t = isc->mContext.getTime();
-	//	size_t ai = setAttributes.find_first();
-	//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
-	//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
-	//	double v = evalFloat("BuildingHeight", 0, t);
-	//	//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-	//	isc->mAMB->setFloat(L"BuildingHeight", v);
-	//	if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
-	//		setAttributes.reset(ai);
-	//		ai = setAttributes.find_next(ai);
-	//	}
 
 	// convert geometry
 	std::vector<double> vtx;
@@ -390,12 +381,16 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 				const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
 				if (ar.isFloat() || ar.isInt()) {
 					double v = prim->getValue<double>(ar);
-					if (DBG) LOG_DBG << "   setting attrib " << ar->getName() << " = " << v;
+					if (DBG) LOG_DBG << "   setting float attrib " << ar->getName() << " = " << v;
 					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
 					mAttributeSource->setFloat(wn.c_str(), v);
 					setAttributes.set(ai);
 				} else if (ar.isString()) {
-					// TODO
+					const char* v = prim->getString(ar);
+					if (DBG) LOG_DBG << "   setting string attrib " << ar->getName() << " = " << v;
+					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+					std::wstring wv = utils::toUTF16FromOSNarrow(v);
+					mAttributeSource->setString(wn.c_str(), wv.c_str());
 					setAttributes.set(ai);
 				}
 			}
@@ -404,7 +399,7 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 
 	const prt::AttributeMap* initialShapeAttrs = mAttributeSource->createAttributeMap();
 
-	isc->mISB->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+	isc->mISB->setGeometry(vtx.data(), vtx.size(), idx.data(), idx.size(), faceCounts.data(), faceCounts.size());
 
 	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
 	int32_t seed = 666; // TODO
@@ -476,7 +471,7 @@ namespace {
 
 void getParamDef(
 		const prt::RuleFileInfo* info,
-		std::vector<std::string>& createdParams,
+		SOP_PRT::TypedParamNames& createdParams,
 		std::ostream& defStream
 ) {
 	for(size_t i = 0; i < info->getNumAttributes(); i++) {
@@ -499,11 +494,12 @@ void getParamDef(
 		case prt::AAT_FLOAT: {
 			defStream << "    type    float\n";
 			// TODO: handle @RANGE annotation:	parmDef << "range   { 0 10 }\n";
-			createdParams.push_back(nAttrName); // FIXME
+			createdParams[prt::Attributable::PT_FLOAT].push_back(nAttrName);
 			break;
 		}
 		case prt::AAT_STR: {
 			defStream << "    type    string\n";
+			createdParams[prt::Attributable::PT_STRING].push_back(nAttrName);
 			break;
 		}
 		default:
@@ -663,7 +659,15 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 						setFloat(nKey.c_str(), 0, 0.0, defAttrVals->getFloat(key));
 						break;
 					}
-					// TODO: other types
+					case prt::AttributeMap::PT_STRING: {
+						UT_String val(utils::toOSNarrowFromUTF16(defAttrVals->getString(key)));
+						setString(val, CH_STRING_LITERAL, nKey.c_str(), 0, 0.0);
+						break;
+					}
+					default: {
+						LOG_WRN << "attribute " << nKey << ": type not handled";
+						break;
+					}
 					}
 				}
 
@@ -690,11 +694,17 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 }
 
 bool SOP_PRT::updateParmsFlags() {
-	for (std::string& p: mActiveParams) {
-		// TODO: other types than float
-		double v = evalFloat(p.c_str(), 0, 0); // TODO: time
+	for (std::string& p: mActiveParams[prt::AttributeMap::PT_FLOAT]) {
+		double v = evalFloat(p.c_str(), 0, 0.0); // TODO: time
 		std::wstring wp = utils::toUTF16FromOSNarrow(p);
 		mAttributeSource->setFloat(wp.c_str(), v);
+	}
+	for (std::string& p: mActiveParams[prt::AttributeMap::PT_STRING]) {
+		UT_String v;
+		evalString(v, p.c_str(), 0, 0.0); // TODO: time
+		std::wstring wp = utils::toUTF16FromOSNarrow(p);
+		std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
+		mAttributeSource->setString(wp.c_str(), wv.c_str());
 	}
 
 	forceRecook();
