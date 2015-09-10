@@ -51,8 +51,8 @@
 namespace {
 
 // global prt settings
-const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
-//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
+const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
 const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
@@ -79,7 +79,8 @@ const bool DBG = false;
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
-	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr) : mDetail(gdp), mEvalAttrBuilder(eab) { }
+	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr)
+	: mDetail(gdp), mEvalAttrBuilder(eab), mCurOffset(0) { }
 
 protected:
 	virtual void setVertices(double* vtx, size_t size) {
@@ -103,23 +104,32 @@ protected:
 		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
 	}
 
+	virtual void createMesh(const wchar_t* name) {
+		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
+		mCurGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
+		if (DBG) LOG_DBG << "createMesh: " << nname;
+	}
+
 	virtual void matSetColor(int start, int count, float r, float g, float b) {
-		// TODO
+		LOG_DBG << "matSetColor: start = " << start << ", count = " << count << ", rgb = " << r << ", " << g << ", " << b;
+		GA_Offset off = mCurOffset;
+		for (int i = 0; i < count; i++) {
+			GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
+			UT_Vector3 color(r, g, b);
+			//LOG_DBG << "  face index = " << i;
+			//GA_Offset off = mDetail->primitiveOffset(i);
+//			LOG_DBG << "     offset = " << off;
+			c.set(off++, color);
+		}
 	}
 
 	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
 		// TODO
 	}
 
-	virtual void createMesh(const wchar_t* name) {
-		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
-		mCurGroup = static_cast<GA_ElementGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
-		if (DBG) LOG_DBG << "createMesh: " << nname;
-	}
-
 	virtual void finishMesh() {
 		GA_IndexMap::Marker marker(mDetail->getPrimitiveMap());
-		GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
+		mCurOffset = GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
 		mCurGroup->addRange(marker.getRange());
 		mPolyCounts.clear();
 		mIndices.clear();
@@ -169,7 +179,8 @@ protected:
 
 private:
 	GU_Detail* mDetail;
-	GA_ElementGroup* mCurGroup;
+	GA_Offset mCurOffset;
+	GA_PrimitiveGroup* mCurGroup;
 	std::vector<UT_Vector3> mPoints;
 	std::vector<int> mIndices;
 	GEO_PolyCounts mPolyCounts;
@@ -188,6 +199,7 @@ struct InitialShapeContext {
 		mISB = prt::InitialShapeBuilder::create();
 
 		// collect all primitive attributes
+		// TODO: GA_AttributeDict is just for bw comp, use GA_AttributeSet
 		for (GA_AttributeDict::iterator it = detail.getAttributeDict(GA_ATTRIB_PRIMITIVE).begin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it) {
 			mPrimitiveAttributes.push_back(GA_ROAttributeRef(it.attrib()));
 			LOG_DBG << "    prim attr: " << mPrimitiveAttributes.back()->getName();

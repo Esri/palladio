@@ -73,9 +73,9 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	prepFlags.instancing(false);
 	prepFlags.mergeByMaterial(true);
 	prepFlags.triangulate(false);
-	prepFlags.mergeVertices(false);
-	prepFlags.cleanupVertexNormals(false);
-	prepFlags.cleanupUVs(false);
+	prepFlags.mergeVertices(true);
+	prepFlags.cleanupVertexNormals(true);
+	prepFlags.cleanupUVs(true);
 	prepFlags.processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS);
 	prepFlags.indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SAME_FOR_VERTICES_AND_NORMALS);
 
@@ -87,28 +87,10 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 		materials.push_back(instIt->getMaterials());
 	}
 
-	size_t   start = 0;
-	size_t   end   = 0;
-	wchar_t* ruleFile = wcsdup(initialShape.getRuleFile()); // TODO: cleanup
-	for(size_t i = 0; ruleFile[i]; i++) {
-		switch(ruleFile[i]) {
-			case '\\':
-			case '/':
-				start = i + 1;
-				break;
-			case '.':
-				ruleFile[i] = '_';
-				end = i;
-				break;
-		}
-	}
-	ruleFile[end] = 0;
-	std::wstring cgbName = std::wstring(&ruleFile[start]);
-	free(ruleFile);
-	convertGeometry(initialShape.getName(), cgbName, geometries, materials, oh);
+	convertGeometry(initialShape.getName(), geometries, materials, oh);
 }
 
-void HoudiniEncoder::convertGeometry(const wchar_t* isName, const std::wstring& cgbName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
+void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
 	std::vector<double> vertices;
 	std::vector<int>    counts;
 	std::vector<int>    connects;
@@ -209,16 +191,12 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const std::wstring& 
 	hc->createMesh(isName);
 	if (DBG) log_debug("    maya output: created mesh");
 
+	hc->finishMesh();
+
 	int startFace = 0;
 	for(size_t gi = 0, geoCount = geometries.size(); gi < geoCount; ++gi) {
 		prtx::Geometry* geo = geometries[gi].get();
-
 		prtx::MaterialPtr mat = mats[gi].front();
-
-		std::wostringstream matName;
-		matName << "m" << cgbName << gi;
-
-		log_wtrace(L"creating material: '%s'") % matName.str();
 
 		int faceCount = 0;
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
@@ -237,7 +215,6 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const std::wstring& 
 
 		startFace += faceCount;
 	}
-	hc->finishMesh();
 
 	if (DBG) log_debug("HoudiniEncoder::convertGeometry: end");
 }
