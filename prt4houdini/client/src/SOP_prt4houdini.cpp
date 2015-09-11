@@ -235,12 +235,14 @@ const char* NODE_PARAM_RPK			= "rpk";
 const char* NODE_PARAM_RULE_FILE	= "ruleFile";
 const char* NODE_PARAM_STYLE		= "style";
 const char* NODE_PARAM_START_RULE	= "startRule";
+const char* NODE_PARAM_SEED			= "seed";
 
 PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
 		PRM_Name(NODE_PARAM_STYLE,		"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule")
+		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
+		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -250,7 +252,8 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
-		PRM_Template(),
+		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
+		PRM_Template()
 };
 
 } // namespace anonymous
@@ -402,12 +405,11 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 	isc->mISB->setGeometry(vtx.data(), vtx.size(), idx.data(), idx.size(), faceCounts.data(), faceCounts.size());
 
 	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
-	int32_t seed = 666; // TODO
 	std::wstring startRule = mStyle + L"$" + mStartRule;
 	isc->mISB->setAttributes(
 			mRuleFile.c_str(),
 			startRule.c_str(),
-			seed,
+			mSeed,
 			shapeName.c_str(),
 			initialShapeAttrs,
 			mAssetsMap
@@ -554,6 +556,8 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
 	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
+
+	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
 
 	// -- rule package
 	UT_String utNextRPKStr;

@@ -50,6 +50,7 @@ private:
 	std::wstring mRuleFile;
 	std::wstring mStyle;
 	std::wstring mStartRule; // fixed per rpk for now
+	int32_t mSeed;
 	prt::AttributeMapBuilder* mAttributeSource;
 
 	TypedParamNames mActiveParams;
