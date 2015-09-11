@@ -94,7 +94,8 @@ protected:
 	}
 
 	virtual void setUVs(float* u, float* v, size_t size) {
-		// TODO
+//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
+	// TODO
 	}
 
 	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
@@ -113,18 +114,19 @@ protected:
 	virtual void matSetColor(int start, int count, float r, float g, float b) {
 		LOG_DBG << "matSetColor: start = " << start << ", count = " << count << ", rgb = " << r << ", " << g << ", " << b;
 		GA_Offset off = mCurOffset + start;
+		GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
+		UT_Vector3 color(r, g, b);
 		for (int i = 0; i < count; i++) {
-			GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
-			UT_Vector3 color(r, g, b);
-			//LOG_DBG << "  face index = " << i;
-			//GA_Offset off = mDetail->primitiveOffset(i);
-//			LOG_DBG << "     offset = " << off;
 			c.set(off++, color);
 		}
 	}
 
 	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
-		// TODO
+		LOG_DBG << L"matSetDiffuseTexture: " << start << L", count = " << count << L", tex = " << tex;
+//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
+//		GA_Offset off = mCurOffset + start;
+//		for (int i = 0; i < count; i++)
+//			txth.set(off++, )
 	}
 
 	virtual void finishMesh() {
@@ -575,9 +577,11 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 			}
 			mPRTCache->flushAll();
 
+			boost::filesystem::path unpackPath = boost::filesystem::temp_directory_path();
+
 			// rebuild assets map
 			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), 0, &status);
+			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), unpackPath.wstring().c_str(), &status);
 			if(status != prt::STATUS_OK) {
 				LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
 				return false;
