@@ -10,6 +10,8 @@
 #	pragma GCC diagnostic pop
 #endif
 
+#include "prt/Attributable.h"
+
 namespace prt {
 class CacheObject;
 class AttributeMap;
@@ -22,6 +24,9 @@ namespace prt4hdn {
 
 
 class SOP_PRT : public SOP_Node {
+public:
+	typedef std::map<prt::Attributable::PrimitiveType,std::vector<std::string> > TypedParamNames;
+
 public:
 	static OP_Node* myConstructor(OP_Network*, const char*, OP_Operator*);
 
@@ -45,8 +50,10 @@ private:
 	std::wstring mRuleFile;
 	std::wstring mStyle;
 	std::wstring mStartRule; // fixed per rpk for now
+	int32_t mSeed;
 	prt::AttributeMapBuilder* mAttributeSource;
-	std::vector<std::string> mActiveParams;
+
+	TypedParamNames mActiveParams;
 
 	const prt::AttributeMap* mHoudiniEncoderOptions;;
 	const prt::AttributeMap* mCGAPrintOptions;

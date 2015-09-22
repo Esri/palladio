@@ -51,8 +51,8 @@
 namespace {
 
 // global prt settings
-const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
-//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
+const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
 const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
@@ -79,7 +79,8 @@ const bool DBG = false;
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
-	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr) : mDetail(gdp), mEvalAttrBuilder(eab) { }
+	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr)
+	: mDetail(gdp), mEvalAttrBuilder(eab), mCurOffset(0) { }
 
 protected:
 	virtual void setVertices(double* vtx, size_t size) {
@@ -93,7 +94,8 @@ protected:
 	}
 
 	virtual void setUVs(float* u, float* v, size_t size) {
-		// TODO
+//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
+	// TODO
 	}
 
 	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
@@ -103,23 +105,33 @@ protected:
 		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
 	}
 
+	virtual void createMesh(const wchar_t* name) {
+		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
+		mCurGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
+		if (DBG) LOG_DBG << "createMesh: " << nname;
+	}
+
 	virtual void matSetColor(int start, int count, float r, float g, float b) {
-		// TODO
+		LOG_DBG << "matSetColor: start = " << start << ", count = " << count << ", rgb = " << r << ", " << g << ", " << b;
+		GA_Offset off = mCurOffset + start;
+		GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
+		UT_Vector3 color(r, g, b);
+		for (int i = 0; i < count; i++) {
+			c.set(off++, color);
+		}
 	}
 
 	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
-		// TODO
-	}
-
-	virtual void createMesh(const wchar_t* name) {
-		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
-		mCurGroup = static_cast<GA_ElementGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
-		if (DBG) LOG_DBG << "createMesh: " << nname;
+		LOG_DBG << L"matSetDiffuseTexture: " << start << L", count = " << count << L", tex = " << tex;
+//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
+//		GA_Offset off = mCurOffset + start;
+//		for (int i = 0; i < count; i++)
+//			txth.set(off++, )
 	}
 
 	virtual void finishMesh() {
 		GA_IndexMap::Marker marker(mDetail->getPrimitiveMap());
-		GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
+		mCurOffset = GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
 		mCurGroup->addRange(marker.getRange());
 		mPolyCounts.clear();
 		mIndices.clear();
@@ -128,12 +140,15 @@ protected:
 	}
 
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
+		LOG_ERR << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
+		LOG_WRN << key << L": " << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
+		LOG_ERR << message;
 		return prt::STATUS_OK;
 	}
 	virtual prt::Status cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
@@ -169,7 +184,8 @@ protected:
 
 private:
 	GU_Detail* mDetail;
-	GA_ElementGroup* mCurGroup;
+	GA_Offset mCurOffset;
+	GA_PrimitiveGroup* mCurGroup;
 	std::vector<UT_Vector3> mPoints;
 	std::vector<int> mIndices;
 	GEO_PolyCounts mPolyCounts;
@@ -188,6 +204,7 @@ struct InitialShapeContext {
 		mISB = prt::InitialShapeBuilder::create();
 
 		// collect all primitive attributes
+		// TODO: GA_AttributeDict is just for bw comp, use GA_AttributeSet
 		for (GA_AttributeDict::iterator it = detail.getAttributeDict(GA_ATTRIB_PRIMITIVE).begin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it) {
 			mPrimitiveAttributes.push_back(GA_ROAttributeRef(it.attrib()));
 			LOG_DBG << "    prim attr: " << mPrimitiveAttributes.back()->getName();
@@ -220,12 +237,14 @@ const char* NODE_PARAM_RPK			= "rpk";
 const char* NODE_PARAM_RULE_FILE	= "ruleFile";
 const char* NODE_PARAM_STYLE		= "style";
 const char* NODE_PARAM_START_RULE	= "startRule";
+const char* NODE_PARAM_SEED			= "seed";
 
 PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
 		PRM_Name(NODE_PARAM_STYLE,		"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule")
+		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
+		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -235,7 +254,8 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
-		PRM_Template(),
+		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
+		PRM_Template()
 };
 
 } // namespace anonymous
@@ -334,19 +354,7 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 		LOG_DBG << "-- creating initial shape geo from group " << group->getName(); // << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 	}
 
-	// preset attribute builder with node values
-	// TODO for dynamic UI
 	fpreal t = isc->mContext.getTime();
-	//	size_t ai = setAttributes.find_first();
-	//	while (ai < isc->mPrimitiveAttributes.size() && ai != boost::dynamic_bitset<>::npos) {
-	//		const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
-	//	double v = evalFloat("BuildingHeight", 0, t);
-	//	//std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-	//	isc->mAMB->setFloat(L"BuildingHeight", v);
-	//	if (DBG) LOG_DBG << "   preset attr builder with node values " << "BuildingHeight" << " = " << v;
-	//		setAttributes.reset(ai);
-	//		ai = setAttributes.find_next(ai);
-	//	}
 
 	// convert geometry
 	std::vector<double> vtx;
@@ -378,12 +386,16 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 				const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
 				if (ar.isFloat() || ar.isInt()) {
 					double v = prim->getValue<double>(ar);
-					if (DBG) LOG_DBG << "   setting attrib " << ar->getName() << " = " << v;
+					if (DBG) LOG_DBG << "   setting float attrib " << ar->getName() << " = " << v;
 					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
 					mAttributeSource->setFloat(wn.c_str(), v);
 					setAttributes.set(ai);
 				} else if (ar.isString()) {
-					// TODO
+					const char* v = prim->getString(ar);
+					if (DBG) LOG_DBG << "   setting string attrib " << ar->getName() << " = " << v;
+					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
+					std::wstring wv = utils::toUTF16FromOSNarrow(v);
+					mAttributeSource->setString(wn.c_str(), wv.c_str());
 					setAttributes.set(ai);
 				}
 			}
@@ -392,15 +404,14 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 
 	const prt::AttributeMap* initialShapeAttrs = mAttributeSource->createAttributeMap();
 
-	isc->mISB->setGeometry(&vtx[0], vtx.size(), &idx[0], idx.size(), &faceCounts[0], faceCounts.size());
+	isc->mISB->setGeometry(vtx.data(), vtx.size(), idx.data(), idx.size(), faceCounts.data(), faceCounts.size());
 
 	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
-	int32_t seed = 666; // TODO
 	std::wstring startRule = mStyle + L"$" + mStartRule;
 	isc->mISB->setAttributes(
 			mRuleFile.c_str(),
 			startRule.c_str(),
-			seed,
+			mSeed,
 			shapeName.c_str(),
 			initialShapeAttrs,
 			mAssetsMap
@@ -464,7 +475,7 @@ namespace {
 
 void getParamDef(
 		const prt::RuleFileInfo* info,
-		std::vector<std::string>& createdParams,
+		SOP_PRT::TypedParamNames& createdParams,
 		std::ostream& defStream
 ) {
 	for(size_t i = 0; i < info->getNumAttributes(); i++) {
@@ -487,11 +498,12 @@ void getParamDef(
 		case prt::AAT_FLOAT: {
 			defStream << "    type    float\n";
 			// TODO: handle @RANGE annotation:	parmDef << "range   { 0 10 }\n";
-			createdParams.push_back(nAttrName); // FIXME
+			createdParams[prt::Attributable::PT_FLOAT].push_back(nAttrName);
 			break;
 		}
 		case prt::AAT_STR: {
 			defStream << "    type    string\n";
+			createdParams[prt::Attributable::PT_STRING].push_back(nAttrName);
 			break;
 		}
 		default:
@@ -547,6 +559,8 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
 
+	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
+
 	// -- rule package
 	UT_String utNextRPKStr;
 	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
@@ -563,9 +577,11 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 			}
 			mPRTCache->flushAll();
 
+			boost::filesystem::path unpackPath = boost::filesystem::temp_directory_path();
+
 			// rebuild assets map
 			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), 0, &status);
+			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), unpackPath.wstring().c_str(), &status);
 			if(status != prt::STATUS_OK) {
 				LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
 				return false;
@@ -651,7 +667,15 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 						setFloat(nKey.c_str(), 0, 0.0, defAttrVals->getFloat(key));
 						break;
 					}
-					// TODO: other types
+					case prt::AttributeMap::PT_STRING: {
+						UT_String val(utils::toOSNarrowFromUTF16(defAttrVals->getString(key)));
+						setString(val, CH_STRING_LITERAL, nKey.c_str(), 0, 0.0);
+						break;
+					}
+					default: {
+						LOG_WRN << "attribute " << nKey << ": type not handled";
+						break;
+					}
 					}
 				}
 
@@ -678,11 +702,17 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 }
 
 bool SOP_PRT::updateParmsFlags() {
-	for (std::string& p: mActiveParams) {
-		// TODO: other types than float
-		double v = evalFloat(p.c_str(), 0, 0); // TODO: time
+	for (std::string& p: mActiveParams[prt::AttributeMap::PT_FLOAT]) {
+		double v = evalFloat(p.c_str(), 0, 0.0); // TODO: time
 		std::wstring wp = utils::toUTF16FromOSNarrow(p);
 		mAttributeSource->setFloat(wp.c_str(), v);
+	}
+	for (std::string& p: mActiveParams[prt::AttributeMap::PT_STRING]) {
+		UT_String v;
+		evalString(v, p.c_str(), 0, 0.0); // TODO: time
+		std::wstring wp = utils::toUTF16FromOSNarrow(p);
+		std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
+		mAttributeSource->setString(wp.c_str(), wv.c_str());
 	}
 
 	forceRecook();
