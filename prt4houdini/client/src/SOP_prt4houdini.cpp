@@ -51,8 +51,9 @@
 namespace {
 
 // global prt settings
+const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_ERROR;
 //const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
-const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
 const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
@@ -122,7 +123,7 @@ protected:
 	}
 
 	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
-		LOG_DBG << L"matSetDiffuseTexture: " << start << L", count = " << count << L", tex = " << tex;
+//		LOG_DBG << L"matSetDiffuseTexture: " << start << L", count = " << count << L", tex = " << tex;
 //		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
 //		GA_Offset off = mCurOffset + start;
 //		for (int i = 0; i < count; i++)
@@ -238,13 +239,15 @@ const char* NODE_PARAM_RULE_FILE	= "ruleFile";
 const char* NODE_PARAM_STYLE		= "style";
 const char* NODE_PARAM_START_RULE	= "startRule";
 const char* NODE_PARAM_SEED			= "seed";
+const char* NODE_PARAM_LOG			= "logLevel";
 
 PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
 		PRM_Name(NODE_PARAM_STYLE,		"Style"),
 		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
-		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed")
+		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed")//,
+		//PRM_Name(NODE_PARAM_LOG,)		"Log Level")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -255,6 +258,7 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
 		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
+		//PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[5],		PRMoneDefaults),
 		PRM_Template()
 };
 
@@ -347,7 +351,7 @@ SOP_PRT::~SOP_PRT() {
 }
 
 void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
-	static const bool DBG = true;
+	static const bool DBG = false;
 
 	InitialShapeContext* isc = static_cast<InitialShapeContext*>(ctx);
 	if (DBG) {
