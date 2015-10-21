@@ -1,7 +1,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
 
 
-### configuration
+### platform configuration
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	set(P4H_WINDOWS 1)
@@ -68,13 +68,9 @@ set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION
 ### HOUDINI dependency
 
 if (WIN32)
-	set(houdini_DIR "C:/Program Files/Side Effects Software/Houdini 14.0.291")
+	set(houdini_DIR "C:/Program Files/Side Effects Software/Houdini 14.0.444")
 	set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini14.0/dso")
 else()
 	# see build.sh set(houdini_DIR "/opt/hfs14.0.361")
 	set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini14.0/dso")
 endif()
-
-# FIXME: this does not work, using workaround in build.sh/build.bat for now
-#LIST(APPEND CMAKE_PROGRAM_PATH "${houdini_DIR}/bin")
-

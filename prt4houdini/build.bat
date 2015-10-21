@@ -45,7 +45,7 @@ setlocal
 call "%ProgramFiles(x86)%\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" amd64
 REM set MSVCDir=%VCINSTALLDIR%
 set MSVCDir=C:/Program Files (x86)/Microsoft Visual Studio 11.0/VC
-
+set PATH=%PATH%;C:/Program Files/Side Effects Software/Houdini 14.0.444/bin
 pushd client
 if NOT "%MODE%"=="0" ( rd /S /Q build install )
 mkdir build
