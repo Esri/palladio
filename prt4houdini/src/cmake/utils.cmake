@@ -8,12 +8,6 @@ macro (add_sources)
 endmacro()
 
 
-macro (add_subdirectory_source_group thedir)
-	add_subdirectory(${thedir})
-	add_sf_sources_to_source_group(${thedir})				# msvc sln
-endmacro()
-
-
 macro (add_sf_sources)
 	file(GLOB HDR "*.h")
 	add_sources(${HDR})

@@ -1,14 +1,15 @@
 @ECHO OFF
 
 if "%~1"=="" (
-	echo "build.bat <MODE>: MODE==0: incremental build, MODE==1: clean build, MODE==2: build releaseable package"
+	echo "build.bat <HOUDINI ROOT> <MODE>: MODE==0: incremental build, MODE==1: clean build, MODE==2: build releaseable package"
 	exit /b 1
 )
 
 REM set PRT="-Dprt_DIR=%~dp0\..\prt\com.esri\com.esri.prt.build\cmake"
 set PRT=
 
-set MODE=%~1
+set HOUDINIROOT=%~1
+set MODE=%~2
 if "%MODE%"=="0" (
 	set P4HENC_TARGET=install
 	set P4H_TARGET=install
@@ -26,13 +27,13 @@ set GEN="NMake Makefiles"
 
 setlocal
 pushd codec
-call "%ProgramFiles(x86)%\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" amd64
+call "%ProgramFiles(x86)%\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" amd64
 if NOT "%MODE%"=="0" ( rd /S /Q build install )
 mkdir build
 pushd build
 set BT=Release
 REM set BT=Debug
-cmake -G %GEN% %PRT% -DCMAKE_BUILD_TYPE=%BT% ../src
+cmake -G %GEN% %PRT% -DHOUDINIROOT=%HOUDINIROOT% -DCMAKE_BUILD_TYPE=%BT% ../src
 nmake %P4HENC_TARGET%
 popd
 popd
@@ -44,14 +45,14 @@ REM set BT=Debug
 setlocal
 call "%ProgramFiles(x86)%\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" amd64
 REM set MSVCDir=%VCINSTALLDIR%
-set MSVCDir=C:/Program Files (x86)/Microsoft Visual Studio 11.0/VC
-set PATH=%PATH%;C:/Program Files/Side Effects Software/Houdini 14.0.444/bin
+set MSVCDir="%ProgramFiles(x86)%\Microsoft Visual Studio 11.0\VC"
+set PATH=%PATH%;%HOUDINIROOT%\bin
 pushd client
 if NOT "%MODE%"=="0" ( rd /S /Q build install )
 mkdir build
 pushd build
-cmake -G %GEN% %PRT% -DCMAKE_BUILD_TYPE=%BT% ../src 
-nmake  %P4H_TARGET%
+cmake -G %GEN% %PRT% -DHOUDINIROOT=%HOUDINIROOT% -DCMAKE_BUILD_TYPE=%BT% ../src 
+nmake %P4H_TARGET%
 popd
 popd
 

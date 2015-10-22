@@ -8,8 +8,8 @@
 #		default to the the HOME houdini directory.
 #   ICONS	Name of the icon files to install (optionial)
 
-HFS = @houdini_DIR@
-INCDIRS = -std=c++11 -I@PRT_INCLUDE_PATH@ -I@PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I@CMAKE_CURRENT_SOURCE_DIR@
+HFS = @HOUDINI_ROOT@
+INCDIRS = -std=c++11 -I@PRT_INCLUDE_PATH@ -I@CMAKE_SOURCE_DIR@
 LIBDIRS = -L@PRT_INSTALL_PATH@/bin -lcom.esri.prt.core -Wl,-rpath,@PRT_INSTALL_PATH@/bin
 
 DSONAME = SOP_prt4houdini.so 

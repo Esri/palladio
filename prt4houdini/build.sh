@@ -8,7 +8,7 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-houdini_DIR="/opt/hfs14.0.361"
+houdini_DIR="/opt/hfs14.0.444"
 export PATH="${houdini_DIR}/bin:${PATH}" # to get the custom houdini makefiles to work
 
 MODE=$1

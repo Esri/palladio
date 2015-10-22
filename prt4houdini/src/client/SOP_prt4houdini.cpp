@@ -1,8 +1,8 @@
-#include "SOP_prt4houdini.h"
-#include "logging.h"
-#include "utils.h"
+#include "client/SOP_prt4houdini.h"
+#include "client/logging.h"
+#include "client/utils.h"
 
-#include "HoudiniCallbacks.h"
+#include "codec/encoder/HoudiniCallbacks.h"
 
 #include "prt/API.h"
 #include "prt/FlexLicParams.h"
@@ -51,9 +51,9 @@
 namespace {
 
 // global prt settings
-const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_ERROR;
+//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_ERROR;
 //const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
-//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
 const char*		PRT_LIB_SUBDIR			= "prtlib";
 const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
 const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";

@@ -6,12 +6,15 @@ cmake_policy(SET CMP0015 NEW)
 
 set(PROJECT prt4houdini_codec)
 project(${PROJECT})
-include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/common.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/common.cmake)
 
 
 ### dependencies
 
-prt_get_dependency("thirdparty"	"com.esri" "boost" "1.53.0" "${DEP_OS}-${DEP_TC}-${P4H_ARCH}" "Boost_DIR")
+# TODO: this stuff only works in esri intranet
+set(PRT_DEPENDENCY_CACHE_PATH ${P4H_DEP_CACHE})
+prt_get_dependency("thirdparty"	"org.boost" "boost" "1.53.0esri1" "${P4H_OS}-${P4H_TC}-${P4H_ARCH}" "Boost_DIR")
+
 find_package(Boost NO_MODULE)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
@@ -36,15 +39,4 @@ set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
 
 ### install target
 
-set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/../install") 
-install(TARGETS ${PROJECT} DESTINATION lib EXPORT "${PROJECT}Targets")
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/encoder/HoudiniCallbacks.h DESTINATION include)
-
-
-### install config file and export target
-
-install(EXPORT "${PROJECT}Targets" DESTINATION "cmake")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exportConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}Config.cmake COPYONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}Config.cmake DESTINATION cmake)
-
-
+install(TARGETS ${PROJECT} DESTINATION ${HOUDINI_DSO_PATH}/prtlib)

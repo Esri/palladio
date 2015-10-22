@@ -7,7 +7,7 @@
 
 namespace {
 const int VERSION_MAJOR = 1;
-const int VERSION_MINOR = 3;
+const int VERSION_MINOR = 4; // TODO: pull from prtVersion file
 }
 
 extern "C" {
