@@ -35,6 +35,7 @@ public:
 
 public:
 	static OP_Node* create(OP_Network*, const char*, OP_Operator*);
+	static void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
 
 public:
 	SOP_PRT(OP_Network *net, const char *name, OP_Operator *op);

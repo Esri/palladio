@@ -35,7 +35,7 @@
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/dynamic_bitset.hpp"
-#include "boost/algorithm/string/replace.hpp"
+#include "boost/algorithm/string.hpp"
 
 #ifdef WIN32
 #	include "boost/assign.hpp"
@@ -46,6 +46,7 @@
 #endif
 
 #include <vector>
+#include <cwchar>
 
 
 namespace {
@@ -246,7 +247,10 @@ PRM_Name NODE_PARAM_NAMES[] = {
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+PRM_Default startRuleDefault(0, "Start");
 PRM_Default logDefault(0, "DEBUG");
+
+PRM_ChoiceList startRuleMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &prt4hdn::SOP_PRT::buildStartRuleMenu);
 
 PRM_Name logNames[] = {
 	PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
@@ -263,7 +267,7 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],	PRMoneDefaults),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],	PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	&startRuleDefault,	&startRuleMenu),
 		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
 		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[5], 0, &logMenu),
 		PRM_Template()
@@ -557,21 +561,18 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 		return false;
 	}
 
-	// -- start rule
-	// TODO: search for @StartRule
-	// Default$Footprint
+	// -- style
+	// TODO: list styles dynamically
 	UT_String utStyle;
 	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
 	mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
 
 	// -- start rule
-	// TODO: search for @StartRule
-	// Default$Footprint
 	UT_String utStartRule;
 	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
 	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
-	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
+//	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
 
 	// -- random seed
 	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
@@ -609,7 +610,7 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 			// rebuild attribute UI
 			status = prt::STATUS_UNSPECIFIED_ERROR;
-			LOG_DBG << L"going to get cgbURI: mAssetsMap = " << mAssetsMap << L", mRuleFile = " << mRuleFile;
+//			LOG_DBG << L"going to get cgbURI: mAssetsMap = " << mAssetsMap << L", mRuleFile = " << mRuleFile;
 			if (!mAssetsMap->hasKey(mRuleFile.c_str()))
 				return false;
 
@@ -619,7 +620,7 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 				LOG_ERR << L"failed to resolve rule file '" << mRuleFile << "', aborting.";
 				return false;
 			}
-			LOG_DBG << "going to createRuleFileInfo";
+//			LOG_DBG << "going to createRuleFileInfo";
 			const prt::RuleFileInfo* info = prt::createRuleFileInfo(cgbURI, 0, &status);
 			if (status == prt::STATUS_OK) {
 
@@ -739,6 +740,59 @@ bool SOP_PRT::updateParmsFlags() {
 
 	bool changed = SOP_Node::updateParmsFlags();
 	return changed;
+}
+
+void SOP_PRT::buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+//	LOG_DBG << "buildStartRuleMenu";
+//	LOG_DBG << "   mRPKURI = " << node->mRPKURI;
+//	LOG_DBG << "   mRuleFile = " << node->mRuleFile;
+
+	if (node->mAssetsMap == nullptr || node->mRPKURI.empty() || node->mRuleFile.empty()) return;
+
+	const wchar_t* cgbURI = node->mAssetsMap->getString(node->mRuleFile.c_str());
+	if (cgbURI == nullptr) {
+		LOG_ERR << L"failed to resolve rule file '" << node->mRuleFile << "', aborting.";
+		return;
+	}
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, node->mPRTCache, &status);
+	if (status == prt::STATUS_OK) {
+		std::vector<std::pair<std::string,std::string>> startRules, rules;
+		for (size_t ri = 0; ri < rfi->getNumRules() ; ri++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
+			std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+			std::vector<std::string> tok;
+			boost::split(tok, rn, boost::is_any_of("$"));
+
+			bool hasStartRuleAnnotation = false;
+			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+				if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
+					hasStartRuleAnnotation = true;
+					break;
+				}
+			}
+
+			if (hasStartRuleAnnotation)
+				startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
+			else
+				rules.emplace_back(tok[1], tok[1]);
+		}
+
+		std::sort(startRules.begin(), startRules.end());
+		std::sort(rules.begin(), rules.end());
+		rules.reserve(rules.size() + startRules.size());
+		rules.insert(rules.begin(), startRules.begin(), startRules.end());
+
+		const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
+		for (size_t ri = 0; ri < limit; ri++) {
+			theMenu[ri].setToken(rules[ri].first.c_str());
+			theMenu[ri].setLabel(rules[ri].second.c_str()); // TODO: mark @StartRules
+		}
+		theMenu[limit].setToken(0); // need a null terminator
+		rfi->destroy();
+	}
 }
 
 } // namespace prt4hdn
