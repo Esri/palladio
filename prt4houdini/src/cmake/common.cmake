@@ -32,20 +32,20 @@ elseif(P4H_LINUX)
 endif()
 
 
-### common dependency stuff
+### common dependency settings
 
+set(P4H_DEP_CACHE ${CMAKE_CURRENT_LIST_DIR}/../../depcache) # in parallel to src and build
 
 
 ### PRT dependency
 
 set(PRT_DEP_VER 1.4.2074)
 set(PRT_DEP_URL_BASE "https://github.com/Esri/esri-cityengine-sdk/releases/download")
-set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt.zip")
+set(PRT_DEP_BASENAME "esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt")
+set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/${PRT_DEP_BASENAME}.zip")
 if(NOT EXISTS ${PRT_DEP_ARCHIVE}) 
-	file(DOWNLOAD
-		"${PRT_DEP_URL_BASE}/${PRT_DEP_VER}/esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt.zip"
-		 ${PRT_DEP_ARCHIVE}
-	)
+	message(STATUS "CityEngine SDK not found in depcache, downloading from esri github repo...")
+	file(DOWNLOAD "${PRT_DEP_URL_BASE}/${PRT_DEP_VER}/${PRT_DEP_BASENAME}.zip" ${PRT_DEP_ARCHIVE})
 endif()
 if(NOT EXISTS ${P4H_DEP_CACHE}/esri_ce_sdk/cmake/prtConfig.cmake)
 	execute_process(

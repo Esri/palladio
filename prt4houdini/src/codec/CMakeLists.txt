@@ -11,10 +11,28 @@ include(${CMAKE_CURRENT_LIST_DIR}/../cmake/common.cmake)
 
 ### dependencies
 
-# TODO: this stuff only works in esri intranet
-set(PRT_DEPENDENCY_CACHE_PATH ${P4H_DEP_CACHE})
-prt_get_dependency("thirdparty"	"org.boost" "boost" "1.53.0esri1" "${P4H_OS}-${P4H_TC}-${P4H_ARCH}" "Boost_DIR")
-
+set(BOOST_DEP_BASENAME boost-1.53.0esri1-${P4H_OS}-${P4H_TC}-${P4H_ARCH})
+set(BOOST_DEP_ARCHIVE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}.zip")
+if (P4H_LINUX)
+	set(BOOST_DEP_URL "https://esri.box.com/shared/static/7ib1dnlq4knaman6u500as030cbedg7a.zip")
+elseif(P4H_WINDOWS)
+	set(BOOST_DEP_URL "https://esri.box.com/shared/static/nsly1fgj7rvpvv469jqwn1st4vx1muaa.zip")
+endif()
+if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
+	message(STATUS "Boost not found in depcache, downloading from esri.box.com...")
+	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
+endif()
+if(NOT EXISTS ${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/cmake/boost-config.cmake)
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E tar xf ${BOOST_DEP_ARCHIVE}
+		WORKING_DIRECTORY ${P4H_DEP_CACHE}
+		ERROR_VARIABLE UNZIP_CHECK
+	)
+	if(UNZIP_CHECK)
+		message(FATAL_ERROR "unzip failed")
+	endif()
+endif()
+set(Boost_DIR "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/cmake")
 find_package(Boost NO_MODULE)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
