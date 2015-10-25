@@ -39,7 +39,7 @@ add_custom_target(fwd ALL)
 
 foreach(file_i ${SRC})
 	add_custom_command(TARGET fwd PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${file_i} ${CMAKE_CURRENT_BINARY_DIR}/${file_i}
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file_i} ${CMAKE_CURRENT_BINARY_DIR}/${file_i}
 	)
 endforeach( file_i )
 
