@@ -1,5 +1,4 @@
 #include "client/SOP_prt4houdini.h"
-#include "client/logging.h"
 #include "client/utils.h"
 
 #include "codec/encoder/HoudiniCallbacks.h"
@@ -16,6 +15,7 @@
 #include "GU/GU_PrimPoly.h"
 #include "PRM/PRM_Include.h"
 #include "PRM/PRM_SpareData.h"
+#include "PRM/PRM_ChoiceList.h"
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
 #include "OP/OP_Director.h"
@@ -50,14 +50,14 @@
 
 namespace {
 
+const bool DBG = false;
+
 // global prt settings
-//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_ERROR;
-//const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_WARNING;
-const prt::LogLevel PRT_LOG_LEVEL		= prt::LOG_DEBUG;
-const char*		PRT_LIB_SUBDIR			= "prtlib";
-const char*		FILE_FLEXNET_LIB		= "flexnet_prt";
-const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
-const wchar_t*	FILE_CGA_PRINT			= L"CGAPrint.txt";
+const prt::LogLevel	PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+const char*			PRT_LIB_SUBDIR		= "prtlib";
+const char*			FILE_FLEXNET_LIB	= "flexnet_prt";
+const wchar_t*		FILE_CGA_ERROR		= L"CGAErrors.txt";
+const wchar_t*		FILE_CGA_PRINT		= L"CGAPrint.txt";
 
 // some encoder IDs
 const wchar_t*	ENCODER_ID_CGA_EVALATTR	= L"com.esri.prt.core.AttributeEvalEncoder";
@@ -65,18 +65,13 @@ const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
 const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
 const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 
-// global objects with the same lifetime as the whole
+// objects with same lifetime as PRT process
 const prt::Object* prtLicHandle = 0;
-prt::ConsoleLogHandler*	prtConsoleLog = 0;
 
 void dsoExit(void*) {
 	if (prtLicHandle)
 		prtLicHandle->destroy(); // prt shutdown
-	if (prtConsoleLog)
-		prt::removeLogHandler(prtConsoleLog);
 }
-
-const bool DBG = false;
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
@@ -246,19 +241,31 @@ PRM_Name NODE_PARAM_NAMES[] = {
 		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
 		PRM_Name(NODE_PARAM_STYLE,		"Style"),
 		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
-		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed")//,
-		//PRM_Name(NODE_PARAM_LOG,)		"Log Level")
+		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed"),
+		PRM_Name(NODE_PARAM_LOG,		"Log Level")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+PRM_Default logDefault(0, "DEBUG");
+
+PRM_Name logNames[] = {
+	PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
+	PRM_Name("DEBUG", "debug"),
+	PRM_Name("INFO", "info"),
+	PRM_Name("WARNING", "warning"),
+	PRM_Name("ERROR", "error"),
+	PRM_Name("FATAL", "fatal"),
+	PRM_Name(0)
+};
+PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
 
 PRM_Template NODE_PARAM_TEMPLATES[] = {
-		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],		&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],		PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],		PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],		PRMoneDefaults),
-		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],		PRMoneDefaults),
-		//PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[5],		PRMoneDefaults),
+		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],	PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],	PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults),
+		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
+		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[5], 0, &logMenu),
 		PRM_Template()
 };
 
@@ -268,9 +275,6 @@ PRM_Template NODE_PARAM_TEMPLATES[] = {
 // TODO: add support for multiple nodes
 void newSopOperator(OP_OperatorTable *table) {
 	UT_Exit::addExitCallback(dsoExit);
-
-	prtConsoleLog = prt::ConsoleLogHandler::create(prt::LogHandler::ALL, prt::LogHandler::ALL_COUNT);
-	prt::addLogHandler(prtConsoleLog);
 
 	boost::filesystem::path sopPath;
 	prt4hdn::utils::getPathToCurrentModule(sopPath);
@@ -291,25 +295,29 @@ void newSopOperator(OP_OperatorTable *table) {
 	if (prtLicHandle == 0 || status != prt::STATUS_OK)
 		return;
 
-	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", prt4hdn::SOP_PRT::myConstructor,
-			NODE_PARAM_TEMPLATES, 1, 1, 0)
+	const size_t minSources = 1;
+	const size_t maxSources = 1;
+	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", prt4hdn::SOP_PRT::create,
+			NODE_PARAM_TEMPLATES, minSources, maxSources, 0)
 	);
 }
 
 
 namespace prt4hdn {
 
-OP_Node* SOP_PRT::myConstructor(OP_Network *net, const char *name, OP_Operator *op) {
-	OP_Node* n = new SOP_PRT(net, name, op);
-	return n;
+OP_Node* SOP_PRT::create(OP_Network *net, const char *name, OP_Operator *op) {
+	return new SOP_PRT(net, name, op);
 }
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
+, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_DEBUG))
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
 , mAssetsMap(nullptr)
 , mAttributeSource(prt::AttributeMapBuilder::create())
 {
+	prt::addLogHandler(mLogHandler.get());
+
 	prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
 
 	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
@@ -348,6 +356,8 @@ SOP_PRT::~SOP_PRT() {
 	mCGAPrintOptions->destroy();
 
 	mPRTCache->destroy();
+
+	prt::removeLogHandler(mLogHandler.get());
 }
 
 void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
@@ -563,7 +573,13 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
 
+	// -- random seed
 	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
+
+	// -- logging level
+	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG, 0, now));
+	mLogHandler->setLevel(ll);
+	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
 	// -- rule package
 	UT_String utNextRPKStr;

@@ -24,11 +24,13 @@ if(P4H_WINDOWS)
 	endif()
 	if(P4H_MSVC STREQUAL "vc110sp4")
 		set(P4H_TC "vc110")
+		add_definitions(-DP4H_TC_VC)
 	else()
 		message(FATAL_ERROR "On windows, Visual Studio 2012 Update 4 is required")
 	endif()
 elseif(P4H_LINUX)
 	set(P4H_TC "gcc44")
+	add_definitions(-DP4H_TC_GCC)
 endif()
 
 
