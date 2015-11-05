@@ -19,7 +19,7 @@ elseif(P4H_WINDOWS)
 	set(BOOST_DEP_URL "https://esri.box.com/shared/static/nsly1fgj7rvpvv469jqwn1st4vx1muaa.zip")
 endif()
 if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
-	message(STATUS "Boost not found in depcache, downloading from esri.box.com...")
+	message(STATUS "Boost 1.53 for CE SDK not found in dependency cache, downloading from esri.box.com...")
 	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
 endif()
 if(NOT EXISTS ${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/cmake/boost-config.cmake)
@@ -57,4 +57,4 @@ set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
 
 ### install target
 
-install(TARGETS ${PROJECT} DESTINATION ${HOUDINI_DSO_PATH}/prtlib)
+install(TARGETS ${PROJECT} RUNTIME DESTINATION ${HOUDINI_DSO_PATH}/prtlib)
