@@ -8,8 +8,7 @@
 #		default to the the HOME houdini directory.
 #   ICONS	Name of the icon files to install (optionial)
 
-HFS = @houdini_DIR@
-
+HFS = @HOUDINI_ROOT@
 INCDIRS = -I @PRT_INCLUDE_PATH@ -I @PRT4HOUDINI_CODEC_INCLUDE_PATH@ -I @CMAKE_CURRENT_SOURCE_DIR@
 LIBDIRS = -LIBPATH:@PRT_INSTALL_PATH@/bin com.esri.prt.core.lib -LIBPATH:F:\tmp\boost_1_55_0\lib64-msvc-11.0 libboost_filesystem-vc110-1_55.lib
 

@@ -67,8 +67,10 @@ set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION
 
 ### HOUDINI dependency
 
-if(P4H_WINDOWS)
-	set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini14.0/dso")
-else()
-	set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini14.0/dso")
+if(NOT HOUDINI_DSO_PATH)
+	if(P4H_WINDOWS)
+		set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini14.0/dso")
+	else()
+		set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini14.0/dso")
+	endif()
 endif()
