@@ -204,13 +204,13 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 
 		hc->matSetColor(startFace, faceCount, mat->color_r(), mat->color_g(), mat->color_b());
 
-		std::wstring tex;
-		if(mat->diffuseMap().size() > 0 && mat->diffuseMap()[0]->isValid()) {
-			prtx::URIPtr texURI = mat->diffuseMap()[0]->getURI();
-			log_wtrace(L"trying to set texture uri: %s") % texURI->wstring();
-			std::wstring texPath = texURI->getPath();
-			hc->matSetDiffuseTexture(startFace, faceCount, texPath.c_str());
-		}
+//		std::wstring tex;
+//		if(mat->diffuseMap().size() > 0 && mat->diffuseMap()[0]->isValid()) {
+//			prtx::URIPtr texURI = mat->diffuseMap()[0]->getURI();
+//			log_wtrace(L"trying to set texture uri: %s") % texURI->wstring();
+//			std::wstring texPath = texURI->getPath();
+//			hc->matSetDiffuseTexture(startFace, faceCount, texPath.c_str());
+//		}
 
 		startFace += faceCount;
 	}

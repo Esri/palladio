@@ -1,7 +1,6 @@
-#include "client/SOP_prt4houdini.h"
+#include "client/sop.h"
+#include "client/callbacks.h"
 #include "client/utils.h"
-
-#include "codec/encoder/HoudiniCallbacks.h"
 
 #include "prt/API.h"
 #include "prt/FlexLicParams.h"
@@ -74,124 +73,10 @@ void dsoExit(void*) {
 		prtLicHandle->destroy(); // prt shutdown
 }
 
-class HoudiniGeometry : public HoudiniCallbacks {
-public:
-	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr)
-	: mDetail(gdp), mEvalAttrBuilder(eab), mCurOffset(0) { }
-
-protected:
-	virtual void setVertices(double* vtx, size_t size) {
-		mPoints.reserve(size / 3);
-		for (size_t pi = 0; pi < size; pi += 3)
-			mPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
-	}
-
-	virtual void setNormals(double* nrm, size_t size) {
-		// TODO
-	}
-
-	virtual void setUVs(float* u, float* v, size_t size) {
-//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
-	// TODO
-	}
-
-	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
-		for (size_t ci = 0; ci < countsSize; ci++)
-			mPolyCounts.append(counts[ci]);
-		mIndices.reserve(connectsSize);
-		mIndices.insert(mIndices.end(), connects, connects+connectsSize);
-	}
-
-	virtual void createMesh(const wchar_t* name) {
-		std::string nname = prt4hdn::utils::toOSNarrowFromUTF16(name);
-		mCurGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
-		if (DBG) LOG_DBG << "createMesh: " << nname;
-	}
-
-	virtual void matSetColor(int start, int count, float r, float g, float b) {
-		LOG_DBG << "matSetColor: start = " << start << ", count = " << count << ", rgb = " << r << ", " << g << ", " << b;
-		GA_Offset off = mCurOffset + start;
-		GA_RWHandleV3 c(mDetail->addDiffuseAttribute(GA_ATTRIB_PRIMITIVE));
-		UT_Vector3 color(r, g, b);
-		for (int i = 0; i < count; i++) {
-			c.set(off++, color);
-		}
-	}
-
-	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex) {
-//		LOG_DBG << L"matSetDiffuseTexture: " << start << L", count = " << count << L", tex = " << tex;
-//		GA_RWHandleV3 txth = GA_RWHandleV3(mDetails->addTextureAttribute(GA_ATTRIB_PRIMITIVE));
-//		GA_Offset off = mCurOffset + start;
-//		for (int i = 0; i < count; i++)
-//			txth.set(off++, )
-	}
-
-	virtual void finishMesh() {
-		GA_IndexMap::Marker marker(mDetail->getPrimitiveMap());
-		mCurOffset = GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
-		mCurGroup->addRange(marker.getRange());
-		mPolyCounts.clear();
-		mIndices.clear();
-		mPoints.clear();
-		if (DBG) LOG_DBG << "finishMesh";
-	}
-
-	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
-		LOG_ERR << message;
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
-		LOG_WRN << key << L": " << message;
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
-		LOG_ERR << message;
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status cgaReportBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status cgaReportFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {\
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
-		if (mEvalAttrBuilder != nullptr) {
-			mEvalAttrBuilder->setBool(key, value);
-		}
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-		if (mEvalAttrBuilder != nullptr) {
-			mEvalAttrBuilder->setFloat(key, value);
-		}
-		return prt::STATUS_OK;
-	}
-	virtual prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
-		if (mEvalAttrBuilder != nullptr) {
-			mEvalAttrBuilder->setString(key, value);
-		}
-		return prt::STATUS_OK;
-	}
-
-private:
-	GU_Detail* mDetail;
-	GA_Offset mCurOffset;
-	GA_PrimitiveGroup* mCurGroup;
-	std::vector<UT_Vector3> mPoints;
-	std::vector<int> mIndices;
-	GEO_PolyCounts mPolyCounts;
-
-	prt::AttributeMapBuilder* const mEvalAttrBuilder;
-};
 
 typedef std::vector<const prt::InitialShape*> InitialShapePtrVector;
 typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
+
 
 struct InitialShapeContext {
 	InitialShapeContext(OP_Context& ctx, GU_Detail& detail) : mContext(ctx) {
@@ -201,7 +86,7 @@ struct InitialShapeContext {
 		mISB = prt::InitialShapeBuilder::create();
 
 		// collect all primitive attributes
-		// TODO: GA_AttributeDict is just for bw comp, use GA_AttributeSet
+		// TODO: GA_AttributeDict is deprecated, use GA_AttributeSet
 		for (GA_AttributeDict::iterator it = detail.getAttributeDict(GA_ATTRIB_PRIMITIVE).begin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it) {
 			mPrimitiveAttributes.push_back(GA_ROAttributeRef(it.attrib()));
 			LOG_DBG << "    prim attr: " << mPrimitiveAttributes.back()->getName();
@@ -248,28 +133,30 @@ PRM_Name NODE_PARAM_NAMES[] = {
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
 PRM_Default startRuleDefault(0, "Start");
-PRM_Default logDefault(0, "DEBUG");
+PRM_Default ruleFileDefault(0, "<none>");
+PRM_Default logDefault(0, "ERROR");
 
-PRM_ChoiceList startRuleMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &prt4hdn::SOP_PRT::buildStartRuleMenu);
+PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildRuleFileMenu);
+PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildStartRuleMenu);
 
 PRM_Name logNames[] = {
-	PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
-	PRM_Name("DEBUG", "debug"),
-	PRM_Name("INFO", "info"),
-	PRM_Name("WARNING", "warning"),
-	PRM_Name("ERROR", "error"),
-	PRM_Name("FATAL", "fatal"),
-	PRM_Name(0)
+		PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
+		PRM_Name("DEBUG", "debug"),
+		PRM_Name("INFO", "info"),
+		PRM_Name("WARNING", "warning"),
+		PRM_Name("ERROR", "error"),
+		PRM_Name("FATAL", "fatal"),
+		PRM_Name(0)
 };
 PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
 
 PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],	PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],	PRMoneDefaults, &ruleFileMenu),
 		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],	PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	&startRuleDefault,	&startRuleMenu),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults, &startRuleMenu),
 		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
-		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[5], 0, &logMenu),
+		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[5], &logDefault, &logMenu),
 		PRM_Template()
 };
 
@@ -281,10 +168,10 @@ void newSopOperator(OP_OperatorTable *table) {
 	UT_Exit::addExitCallback(dsoExit);
 
 	boost::filesystem::path sopPath;
-	prt4hdn::utils::getPathToCurrentModule(sopPath);
+	p4h::utils::getPathToCurrentModule(sopPath);
 
 	prt::FlexLicParams flp;
-	std::string libflexnet = prt4hdn::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + prt4hdn::utils::getSharedLibrarySuffix();
+	std::string libflexnet = p4h::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + p4h::utils::getSharedLibrarySuffix();
 	std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
 	flp.mActLibPath = libflexnetPath.c_str();
 	flp.mFeature = "CityEngAdvFx";
@@ -301,13 +188,13 @@ void newSopOperator(OP_OperatorTable *table) {
 
 	const size_t minSources = 1;
 	const size_t maxSources = 1;
-	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", prt4hdn::SOP_PRT::create,
+	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", p4h::SOP_PRT::create,
 			NODE_PARAM_TEMPLATES, minSources, maxSources, 0)
 	);
 }
 
 
-namespace prt4hdn {
+namespace p4h {
 
 OP_Node* SOP_PRT::create(OP_Network *net, const char *name, OP_Operator *op) {
 	return new SOP_PRT(net, name, op);
@@ -315,9 +202,8 @@ OP_Node* SOP_PRT::create(OP_Network *net, const char *name, OP_Operator *op) {
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_DEBUG))
+, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
-, mAssetsMap(nullptr)
 , mAttributeSource(prt::AttributeMapBuilder::create())
 {
 	prt::addLogHandler(mLogHandler.get());
@@ -352,8 +238,7 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 SOP_PRT::~SOP_PRT() {
 	mAttributeSource->destroy();
 
-	if (mAssetsMap != nullptr)
-		mAssetsMap->destroy();
+	mAssetsMap.reset();
 
 	mHoudiniEncoderOptions->destroy();
 	mCGAErrorOptions->destroy();
@@ -371,8 +256,6 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 	if (DBG) {
 		LOG_DBG << "-- creating initial shape geo from group " << group->getName(); // << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
 	}
-
-	fpreal t = isc->mContext.getTime();
 
 	// convert geometry
 	std::vector<double> vtx;
@@ -432,7 +315,7 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 			mSeed,
 			shapeName.c_str(),
 			initialShapeAttrs,
-			mAssetsMap
+			mAssetsMap.get()
 	);
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
@@ -443,15 +326,17 @@ void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
 		return;
 	}
 
-	if (DBG) LOG_DBG << prt4hdn::utils::objectToXML(initialShape);
+	if (DBG) LOG_DBG << p4h::utils::objectToXML(initialShape);
 
 	isc->mInitialShapes.push_back(initialShape);
 	isc->mInitialShapeAttributes.push_back(initialShapeAttrs);
 }
 
 OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
+	LOG_DBG << "cookMySop";
+
 	if (!handleParams(context))
-		return error();
+		return UT_ERROR_ABORT;
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
@@ -461,7 +346,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	duplicateSource(0, context);
 
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
-		UT_AutoInterrupt progress("Generating PRT Geometry...");
+		UT_AutoInterrupt progress("Generating CityEngine Geometry...");
 
 		InitialShapeContext isc(context, *gdp);
 		const char* pattern = "*";
@@ -481,18 +366,19 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 			}
 		}
-
 		select(GU_SPrimitive);
 	}
 
 	unlockInputs();
+
+	LOG_DBG << "cookMySop done";
 	return error();
 }
 
 namespace {
 
 void getParamDef(
-		const prt::RuleFileInfo* info,
+		const RuleFileInfoPtr& info,
 		SOP_PRT::TypedParamNames& createdParams,
 		std::ostream& defStream
 ) {
@@ -543,26 +429,29 @@ const uint32_t 	faceCounts[]			= { 4 };
 const size_t 	faceCountsCount			= 1;
 }
 
-}
+} // anonymous namespace
 
 bool SOP_PRT::handleParams(OP_Context &context) {
-	LOG_DBG << "handleParams()";
+	LOG_DBG << "handleParams begin";
 	fpreal now = context.getTime();
 
+	// -- rule package
+	UT_String utNextRPKStr;
+	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
+	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
+	if (!updateRulePackage(nextRPK, now)) {
+		UT_String val(mRPK.string());
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // reset to current value
+		return false;
+	}
+
 	// -- rule file
-	// TODO: search/list cgbs
-	// mRuleFile = L"bin/Candler Building.cgb";
 	UT_String utRuleFile;
 	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
 	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
 	LOG_DBG << L"got rule file: " << mRuleFile;
-	if (mRuleFile.empty()) {
-		LOG_ERR << "rule file is empty/invalid, cannot continue";
-		return false;
-	}
 
 	// -- style
-	// TODO: list styles dynamically
 	UT_String utStyle;
 	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
 	mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
@@ -572,154 +461,226 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
 	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
-//	LOG_DBG << L"'style = " << mStyle << L", start rule = " << mStartRule;
-
 	// -- random seed
 	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
 
-	// -- logging level
+	// -- logger
 	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG, 0, now));
 	mLogHandler->setLevel(ll);
 	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
-	// -- rule package
-	UT_String utNextRPKStr;
-	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
-	boost::filesystem::path nextRPKPath(utNextRPKStr.toStdString());
-	if (boost::filesystem::exists(nextRPKPath)) {
-		std::wstring nextRPKURI = L"file://" + nextRPKPath.wstring();
-		if (nextRPKURI != mRPKURI) {
-			LOG_DBG << L"detected new RPK path: " << nextRPKURI;
+	LOG_DBG << "handleParams done.";
+	return true;
+}
 
-			// clean up previous rpk context
-			if (mAssetsMap != nullptr) {
-				mAssetsMap->destroy();
-				mAssetsMap = nullptr;
-			}
-			mPRTCache->flushAll();
+namespace {
 
-			boost::filesystem::path unpackPath = boost::filesystem::temp_directory_path();
+void getCGBs(const ResolveMapPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
+	static const wchar_t*	PROJECT		= L"";
+	static const wchar_t*	PATTERN		= L"*.cgb";
+	static const size_t		START_SIZE	= 16 * 1024;
 
-			// rebuild assets map
-			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-			mAssetsMap = prt::createResolveMap(nextRPKURI.c_str(), unpackPath.wstring().c_str(), &status);
-			if(status != prt::STATUS_OK) {
-				LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
-				return false;
-			}
+	size_t resultSize = START_SIZE;
+	wchar_t* result = new wchar_t[resultSize];
+	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
+	if (resultSize >= START_SIZE) {
+		delete[] result;
+		result = new wchar_t[resultSize];
+		rm->searchKey(PROJECT, PATTERN, result, &resultSize);
+	}
+	std::wstring cgbList(result);
+	delete[] result;
+	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
-			// rebuild attribute UI
-			status = prt::STATUS_UNSPECIFIED_ERROR;
-//			LOG_DBG << L"going to get cgbURI: mAssetsMap = " << mAssetsMap << L", mRuleFile = " << mRuleFile;
-			if (!mAssetsMap->hasKey(mRuleFile.c_str()))
-				return false;
+	std::vector<std::wstring> tok;
+	boost::split(tok, cgbList, boost::is_any_of(L";"), boost::algorithm::token_compress_on);
+	for(const std::wstring& t: tok) {
+		if (t.empty()) continue;
+		LOG_DBG << "token: '" << t << "'";
+		const wchar_t* s = rm->getString(t.c_str());
+		if (s != nullptr) {
+			cgbs.emplace_back(t, s);
+			LOG_DBG << L"got cgb: " << cgbs.back().first << L" => " << cgbs.back().second;
+		}
+	}
+}
 
-			const wchar_t* cgbURI = mAssetsMap->getString(mRuleFile.c_str());
-			LOG_DBG << L"got cgbURI = " << cgbURI;
-			if (cgbURI == nullptr) {
-				LOG_ERR << L"failed to resolve rule file '" << mRuleFile << "', aborting.";
-				return false;
-			}
-//			LOG_DBG << "going to createRuleFileInfo";
-			const prt::RuleFileInfo* info = prt::createRuleFileInfo(cgbURI, 0, &status);
-			if (status == prt::STATUS_OK) {
+void getDefaultRuleAttributeValues(
+		prt::AttributeMapBuilder* amb,
+		prt::Cache* cache,
+		const ResolveMapPtr& resolveMap,
+		const std::wstring& cgbKey,
+		const std::wstring& startRule
+) {
+	HoudiniGeometry hg(nullptr, amb);
+	const prt::AttributeMap* emptyAttrMap = amb->createAttributeMapAndReset();
 
-				// eval rule attribute values
-				prt::AttributeMapBuilder* amb = prt::AttributeMapBuilder::create();
-				{
-					HoudiniGeometry hg(nullptr, amb);
-					const prt::AttributeMap* emptyAttrMap = amb->createAttributeMapAndReset();
+	prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
+	isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
+	isb->setAttributes(cgbKey.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap, resolveMap.get());
 
-					prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
-					isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
-					std::wstring startRule = mStyle + L"$" + mStartRule;
-					isb->setAttributes(mRuleFile.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap, mAssetsMap);
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const prt::InitialShape* is = isb->createInitialShapeAndReset(&status);
+	isb->destroy();
+	const prt::InitialShape* iss[1] = { is };
 
-					prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-					const prt::InitialShape* is = isb->createInitialShapeAndReset(&status);
-					isb->destroy();
-					const prt::InitialShape* iss[1] = { is };
+	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR);
+	const prt::AttributeMap* encOpts = nullptr;
+	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
+	encInfo->destroy();
 
-					const prt::EncoderInfo* encInfo = prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR);
-					const prt::AttributeMap* encOpts = nullptr;
-					encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
-					encInfo->destroy();
+	const wchar_t* encs[1] = { ENCODER_ID_CGA_EVALATTR };
+	const prt::AttributeMap* encsOpts[1] = { encOpts };
 
-					const wchar_t* encs[1] = { ENCODER_ID_CGA_EVALATTR };
-					const prt::AttributeMap* encsOpts[1] = { encOpts };
+	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache, nullptr, nullptr);
+	if(stat != prt::STATUS_OK) {
+		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
+	}
 
-					prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, mPRTCache, nullptr, nullptr);
-					if(stat != prt::STATUS_OK) {
-						LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
-					}
+	encOpts->destroy();
+	is->destroy();
+	emptyAttrMap->destroy();
+}
 
-					encOpts->destroy();
-					is->destroy();
-					emptyAttrMap->destroy();
-				}
+} // anonymous namespace
 
-				const prt::AttributeMap* defAttrVals = amb->createAttributeMap();
-				amb->destroy();
-				LOG_DBG << "defAttrVals = " << utils::objectToXML(defAttrVals);
+bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
+	if (nextRPK == mRPK)
+		return true;
+	if (!boost::filesystem::exists(nextRPK))
+		return false;
 
-				// build spare param definition
-				mActiveParams.clear();
-				std::ostringstream paramDef;
-				getParamDef(info, mActiveParams, paramDef);
-				std::string s = paramDef.str();
-				LOG_DBG << " INPUT PARMS" << s;
+	std::wstring nextRPKURI = utils::toFileURI(nextRPK);
+	LOG_DBG << L"nextRPKURI = " << nextRPKURI;
 
-				OP_Director* director = OPgetDirector();
-				director->deleteAllNodeSpareParms(this);
+	// rebuild assets map
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	boost::filesystem::path unpackPath = boost::filesystem::temp_directory_path();
+	ResolveMapPtr nextResolveMap(prt::createResolveMap(nextRPKURI.c_str(), unpackPath.wstring().c_str(), &status));
+	if (!nextResolveMap || status != prt::STATUS_OK) {
+		LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
+		return false;
+	}
 
-				UT_IStream istr(&s[0], s.size(), UT_ISTREAM_ASCII);
-				UT_String errors;
-				director->loadNodeSpareParms(this, istr, errors);
+	// get first rule file
+	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
+	getCGBs(nextResolveMap, cgbs);
+	if (cgbs.empty()) {
+		LOG_ERR << "no rule files found in rule package";
+		return false;
+	}
+	std::wstring cgbKey = cgbs.front().first;
+	std::wstring cgbURI = cgbs.front().second;
+	LOG_DBG << "cgbKey = " << cgbKey;
+	LOG_DBG << "cgbURI = " << cgbURI;
 
-				// setup spare params with rule defaults
-				size_t keyCount = 0;
-				const wchar_t* const* cKeys = defAttrVals->getKeys(&keyCount);
-				for (size_t k = 0; k < keyCount; k++) {
-					const wchar_t* key = cKeys[k];
-					std::string nKey = utils::toOSNarrowFromUTF16(key);
-					nKey = nKey.substr(8); // TODO: better way to remove style for now...
-					switch (defAttrVals->getType(key)) {
-					case prt::AttributeMap::PT_FLOAT: {
-						setFloat(nKey.c_str(), 0, 0.0, defAttrVals->getFloat(key));
-						break;
-					}
-					case prt::AttributeMap::PT_STRING: {
-						UT_String val(utils::toOSNarrowFromUTF16(defAttrVals->getString(key)));
-						setString(val, CH_STRING_LITERAL, nKey.c_str(), 0, 0.0);
-						break;
-					}
-					default: {
-						LOG_WRN << "attribute " << nKey << ": type not handled";
-						break;
-					}
-					}
-				}
+	status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoPtr info(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCache, &status));
+	if (!info || status != prt::STATUS_OK) {
+		LOG_ERR << "failed to get rule file info";
+		return false;
+	}
 
-#if 0
-				std::ostringstream ostr;
-				director->saveNodeSpareParms(this, true, ostr);
-				LOG_DBG << " SAVED PARMS" << ostr.str();
-#endif
+	// get first rule
+	if (info->getNumRules() == 0) {
+		LOG_ERR << "rule file does not contain any rules";
+		return false;
+	}
+	const prt::RuleFileInfo::Entry* re = info->getRule(0);
+	std::wstring fqStartRule = re->getName();
+	std::vector<std::wstring> startRuleComponents;
+	boost::split(startRuleComponents, fqStartRule, boost::is_any_of(L"$"));
+	LOG_DBG << "first start rule: " << fqStartRule;
 
-				defAttrVals->destroy();
-				info->destroy();
-			}
-			else {
-				LOG_ERR << "failed to get rule file info";
-				return false;
-			}
+	// update node
+	mRPK = nextRPK;
+	mAssetsMap.swap(nextResolveMap);
+	mPRTCache->flushAll();
+	{
+		mRuleFile = cgbKey;
+		UT_String val(utils::toOSNarrowFromUTF16(mRuleFile));
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE, 0, time);
+	}
+	{
+		mStyle = startRuleComponents[0];
+		UT_String val(utils::toOSNarrowFromUTF16(mStyle));
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE, 0, time);
+	}
+	{
+		mStartRule = startRuleComponents[1];
+		UT_String val(utils::toOSNarrowFromUTF16(mStartRule));
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE, 0, time);
+	}
+	{
+		mSeed = 0;
+		setInt(NODE_PARAM_SEED, 0, time, mSeed);
+	}
+	LOG_DBG << "updateRulePackage done: mRuleFile = " << mRuleFile << ", mStyle = " << mStyle << ", mStartRule = " << mStartRule;
 
-			// new rpk is ready
-			mRPKURI = nextRPKURI;
+	// regenerate spare params for rule attributes
+	createSpareParams(info, mRuleFile, fqStartRule, time);
+
+	return true;
+}
+
+void SOP_PRT::createSpareParams(
+		const RuleFileInfoPtr& info,
+		const std::wstring& cgbKey,
+		const std::wstring& fqStartRule,
+		fpreal time
+) {
+	// eval rule attribute values
+	prt::AttributeMapBuilder* amb = prt::AttributeMapBuilder::create();
+	getDefaultRuleAttributeValues(amb, mPRTCache, mAssetsMap, cgbKey, fqStartRule);
+	const prt::AttributeMap* defAttrVals = amb->createAttributeMap();
+	amb->destroy();
+	LOG_DBG << "defAttrVals = " << utils::objectToXML(defAttrVals);
+
+	// build spare param definition
+	mActiveParams.clear();
+	std::ostringstream paramDef;
+	getParamDef(info, mActiveParams, paramDef);
+	std::string s = paramDef.str();
+	LOG_DBG << "INPUT PARMS" << s;
+
+	OP_Director* director = OPgetDirector();
+	director->deleteAllNodeSpareParms(this);
+
+	UT_IStream istr(&s[0], s.size(), UT_ISTREAM_ASCII);
+	UT_String errors;
+	director->loadNodeSpareParms(this, istr, errors);
+
+	// setup spare params with rule defaults
+	size_t keyCount = 0;
+	const wchar_t* const* cKeys = defAttrVals->getKeys(&keyCount);
+	for (size_t k = 0; k < keyCount; k++) {
+		const wchar_t* key = cKeys[k];
+		std::string nKey = utils::toOSNarrowFromUTF16(key);
+		nKey = nKey.substr(8); // TODO: better way to remove style for now...
+		switch (defAttrVals->getType(key)) {
+		case prt::AttributeMap::PT_FLOAT: {
+			setFloat(nKey.c_str(), 0, time, defAttrVals->getFloat(key));
+			break;
+		}
+		case prt::AttributeMap::PT_STRING: {
+			UT_String val(utils::toOSNarrowFromUTF16(defAttrVals->getString(key)));
+			setString(val, CH_STRING_LITERAL, nKey.c_str(), 0, time);
+			break;
+		}
+		default: {
+			LOG_WRN << "attribute " << nKey << ": type not handled";
+			break;
+		}
 		}
 	}
 
-	return true;
+#if 0
+	std::ostringstream ostr;
+	director->saveNodeSpareParms(this, true, ostr);
+	LOG_DBG << " SAVED PARMS" << ostr.str();
+#endif
+
+	defAttrVals->destroy();
 }
 
 bool SOP_PRT::updateParmsFlags() {
@@ -742,57 +703,92 @@ bool SOP_PRT::updateParmsFlags() {
 	return changed;
 }
 
+
+namespace {
+
+typedef std::vector<std::pair<std::string,std::string>> StringPairVector;
+
+bool compareSecond (const StringPairVector::value_type& a, const StringPairVector::value_type& b) { return ( a.second < b.second ); }
+
+}
+
 void SOP_PRT::buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+		SOP_PRT* node = static_cast<SOP_PRT*>(data);
+		LOG_DBG << "buildStartRuleMenu";
+		LOG_DBG << "   mRPK = " << node->mRPK;
+		LOG_DBG << "   mRuleFile = " << node->mRuleFile;
+
+		if (node->mAssetsMap == nullptr || node->mRPK.empty() || node->mRuleFile.empty()) {
+			theMenu[0].setToken(0);
+			return;
+		}
+
+		const wchar_t* cgbURI = node->mAssetsMap->getString(node->mRuleFile.c_str());
+		if (cgbURI == nullptr) {
+			LOG_ERR << L"failed to resolve rule file '" << node->mRuleFile << "', aborting.";
+			return;
+		}
+
+		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+		const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, nullptr, &status);
+		if (status == prt::STATUS_OK) {
+			StringPairVector startRules, rules;
+			for (size_t ri = 0; ri < rfi->getNumRules() ; ri++) {
+				const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
+				std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+				std::vector<std::string> tok;
+				boost::split(tok, rn, boost::is_any_of("$"));
+
+				bool hasStartRuleAnnotation = false;
+				for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+					if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
+						hasStartRuleAnnotation = true;
+						break;
+					}
+				}
+
+				if (hasStartRuleAnnotation)
+					startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
+				else
+					rules.emplace_back(tok[1], tok[1]);
+			}
+
+			std::sort(startRules.begin(), startRules.end(), compareSecond);
+			std::sort(rules.begin(), rules.end(), compareSecond);
+			rules.reserve(rules.size() + startRules.size());
+			rules.insert(rules.begin(), startRules.begin(), startRules.end());
+
+			const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
+			for (size_t ri = 0; ri < limit; ri++) {
+				theMenu[ri].setToken(rules[ri].first.c_str());
+				theMenu[ri].setLabel(rules[ri].second.c_str());
+			}
+			theMenu[limit].setToken(0); // need a null terminator
+			rfi->destroy();
+		}
+}
+
+void SOP_PRT::buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	SOP_PRT* node = static_cast<SOP_PRT*>(data);
-//	LOG_DBG << "buildStartRuleMenu";
-//	LOG_DBG << "   mRPKURI = " << node->mRPKURI;
-//	LOG_DBG << "   mRuleFile = " << node->mRuleFile;
+	LOG_DBG << "buildRuleFileMenu";
 
-	if (node->mAssetsMap == nullptr || node->mRPKURI.empty() || node->mRuleFile.empty()) return;
-
-	const wchar_t* cgbURI = node->mAssetsMap->getString(node->mRuleFile.c_str());
-	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << node->mRuleFile << "', aborting.";
+	if (!node->mAssetsMap || node->mRPK.empty()) {
+		theMenu[0].setToken(0);
 		return;
 	}
 
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, node->mPRTCache, &status);
-	if (status == prt::STATUS_OK) {
-		std::vector<std::pair<std::string,std::string>> startRules, rules;
-		for (size_t ri = 0; ri < rfi->getNumRules() ; ri++) {
-			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
-			std::string rn = utils::toOSNarrowFromUTF16(re->getName());
-			std::vector<std::string> tok;
-			boost::split(tok, rn, boost::is_any_of("$"));
+	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
+	getCGBs(node->mAssetsMap, cgbs);
 
-			bool hasStartRuleAnnotation = false;
-			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
-				if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
-					hasStartRuleAnnotation = true;
-					break;
-				}
-			}
-
-			if (hasStartRuleAnnotation)
-				startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
-			else
-				rules.emplace_back(tok[1], tok[1]);
-		}
-
-		std::sort(startRules.begin(), startRules.end());
-		std::sort(rules.begin(), rules.end());
-		rules.reserve(rules.size() + startRules.size());
-		rules.insert(rules.begin(), startRules.begin(), startRules.end());
-
-		const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
-		for (size_t ri = 0; ri < limit; ri++) {
-			theMenu[ri].setToken(rules[ri].first.c_str());
-			theMenu[ri].setLabel(rules[ri].second.c_str()); // TODO: mark @StartRules
-		}
-		theMenu[limit].setToken(0); // need a null terminator
-		rfi->destroy();
+	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
+	for (size_t ri = 0; ri < limit; ri++) {
+		std::string tok = utils::toOSNarrowFromUTF16(cgbs[ri].first);
+		std::string lbl = utils::toOSNarrowFromUTF16(cgbs[ri].first); // TODO
+		theMenu[ri].setToken(tok.c_str());
+		theMenu[ri].setLabel(lbl.c_str());
 	}
+	theMenu[limit].setToken(0); // need a null terminator
 }
 
-} // namespace prt4hdn
+
+} // namespace p4h

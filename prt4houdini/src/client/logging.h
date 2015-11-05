@@ -11,7 +11,7 @@
 #include <iostream>
 
 
-namespace prt4hdn {
+namespace p4h {
 namespace log {
 
 struct Logger { // TODO: use std::ostream as basis
@@ -98,11 +98,11 @@ private:
 };
 
 } // namespace log
-} // namespace prt4hdn
+} // namespace p4h
 
 
 // switch logger here
-#define LT prt4hdn::log::PRTLogger
+#define LT p4h::log::PRTLogger
 
 typedef LT<prt::LOG_DEBUG>		_LOG_DBG;
 typedef LT<prt::LOG_INFO>		_LOG_INF;

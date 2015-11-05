@@ -25,19 +25,19 @@ elseif(P4H_WINDOWS)
 	set(BOOST_INCLUDEDIR "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost")
 	set(BOOST_LIBRARYDIR "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/lib")
 	set(Boost_NO_SYSTEM_PATHS 1)
-endif()
-if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
-	message(STATUS "Boost 1.55 for Houdini not found in dependency cache, downloading from esri.box.com...")
-	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
-endif()
-if(NOT EXISTS ${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp)
-	execute_process(
-		COMMAND ${CMAKE_COMMAND} -E tar xf ${BOOST_DEP_ARCHIVE}
-		WORKING_DIRECTORY ${P4H_DEP_CACHE}
-		ERROR_VARIABLE UNZIP_CHECK
-	)
-	if(UNZIP_CHECK)
-		message(FATAL_ERROR "unzip failed")
+	if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
+		message(STATUS "Boost 1.55 for Houdini not found in dependency cache, downloading from esri.box.com...")
+		file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
+	endif()
+	if(NOT EXISTS ${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp)
+		execute_process(
+			COMMAND ${CMAKE_COMMAND} -E tar xf ${BOOST_DEP_ARCHIVE}
+			WORKING_DIRECTORY ${P4H_DEP_CACHE}
+			ERROR_VARIABLE UNZIP_CHECK
+		)
+		if(UNZIP_CHECK)
+			message(FATAL_ERROR "unzip failed")
+		endif()
 	endif()
 endif()
 
@@ -77,6 +77,8 @@ if(P4H_WINDOWS)
 elseif(P4H_LINUX)
 	set(CMAKE_CXX_FLAGS "-std=c++11 -Wl,-rpath,${HOUDINI_ROOT}/dsolib -m64 -fPIC -Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder -Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated -fno-strict-aliasing")
 	set(CMAKE_CXX_FLAGS_Release "-O2")
+	set(CMAKE_CXX_FLAGS_RelWithDebInfo "-O2 -g")
+	set(CMAKE_CXX_FLAGS_Debug "-O0 -g")
 	add_definitions(${P4H_SESI_TAG} -DMAKING_DSO -DGCC3 -DGCC4 -DAMD64 -DSIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P} -DVERSION=\"14.0.444\" -DDLLEXPORT="" -D_GNU_SOURCE -DLINUX -DSESI_LITTLE_ENDIAN -DENABLE_THREADS -DUSE_PTHREADS -DENABLE_UI_THREADS -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
 endif()
 
@@ -97,7 +99,8 @@ elseif(P4H_LINUX)
 endif()
 
 add_library(${PROJECT} SHARED 
-	SOP_prt4houdini.cpp
+	sop.cpp
+	callbacks.cpp
 	utils.cpp
 )
 

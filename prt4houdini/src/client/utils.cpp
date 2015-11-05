@@ -10,7 +10,7 @@
 #endif
 
 
-namespace prt4hdn {
+namespace p4h {
 namespace utils {
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
@@ -112,6 +112,51 @@ std::wstring toUTF16FromOSNarrow(const std::string& osString) {
 		prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), &temp[0], &size, &status);
 	}
 	return std::wstring(&temp[0]);
+}
+
+std::string toUTF8FromOSNarrow(const std::string& osString) {
+	std::wstring utf16String = toUTF16FromOSNarrow(osString);
+	std::vector<char> temp(utf16String.size());
+	size_t size = temp.size();
+	prt::Status status = prt::STATUS_OK;
+	prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), &temp[0], &size, &status);
+	if(size > temp.size()) {
+		temp.resize(size);
+		prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), &temp[0], &size, &status);
+	}
+	return std::string(&temp[0]);
+}
+
+std::wstring toFileURI(const boost::filesystem::path& p) {
+#ifdef _WIN32
+	static const std::wstring schema = L"file:/";
+#else
+	static const std::wstring schema = L"file:";
+#endif
+	std::string utf8Path = toUTF8FromOSNarrow(p.generic_string());
+	std::wstring pecString = percentEncode(utf8Path);
+	return schema + pecString;
+}
+
+std::wstring percentEncode(const std::string& utf8String) {
+	std::vector<char> temp(2*utf8String.size());
+	size_t size = temp.size();
+	prt::Status status = prt::STATUS_OK;
+	prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
+	if(size > temp.size()) {
+		temp.resize(size);
+		prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
+	}
+
+	std::vector<wchar_t> u16temp(temp.size());
+	size = u16temp.size();
+	prt::StringUtils::toUTF16FromUTF8(temp.data(), &u16temp.front(), &size, &status);
+	if(size > u16temp.size()) {
+		u16temp.resize(size);
+		prt::StringUtils::toUTF16FromUTF8(temp.data(), &u16temp.front(), &size, &status);
+	}
+
+	return std::wstring(&u16temp[0]);
 }
 
 }
