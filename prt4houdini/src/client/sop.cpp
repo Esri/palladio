@@ -115,20 +115,20 @@ struct InitialShapeContext {
 	AttributeMapPtrVector mInitialShapeAttributes;
 };
 
-const char* NODE_PARAM_RPK			= "rpk";
-const char* NODE_PARAM_RULE_FILE	= "ruleFile";
-const char* NODE_PARAM_STYLE		= "style";
-const char* NODE_PARAM_START_RULE	= "startRule";
-const char* NODE_PARAM_SEED			= "seed";
-const char* NODE_PARAM_LOG			= "logLevel";
+const PRM_Name  NODE_PARAM_RPK("rpk","Rule Package");
+const PRM_Name  NODE_PARAM_RULE_FILE("ruleFile","Rule File");
+const PRM_Name  NODE_PARAM_STYLE("style","Style");
+const PRM_Name  NODE_PARAM_START_RULE("startRule","Start Rule");
+const PRM_Name  NODE_PARAM_SEED("seed","Rnd Seed");
+const PRM_Name  NODE_PARAM_LOG("logLevel","Log Level");
 
 PRM_Name NODE_PARAM_NAMES[] = {
-		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
-		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
-		PRM_Name(NODE_PARAM_STYLE,		"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
-		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed"),
-		PRM_Name(NODE_PARAM_LOG,		"Log Level")
+		NODE_PARAM_RPK,
+		NODE_PARAM_RULE_FILE,
+		NODE_PARAM_STYLE,
+		NODE_PARAM_START_RULE,
+		NODE_PARAM_SEED,
+		NODE_PARAM_LOG,
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -437,35 +437,35 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 	// -- rule package
 	UT_String utNextRPKStr;
-	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
+	evalString(utNextRPKStr, NODE_PARAM_RPK.getToken(), 0, now);
 	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 	if (!updateRulePackage(nextRPK, now)) {
 		UT_String val(mRPK.string());
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // reset to current value
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK.getToken(), 0, now); // reset to current value
 		return false;
 	}
 
 	// -- rule file
 	UT_String utRuleFile;
-	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
+	evalString(utRuleFile, NODE_PARAM_RULE_FILE.getToken(), 0, now);
 	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
 	LOG_DBG << L"got rule file: " << mRuleFile;
 
 	// -- style
 	UT_String utStyle;
-	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
+	evalString(utStyle, NODE_PARAM_STYLE.getToken(), 0, now);
 	mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
 
 	// -- start rule
 	UT_String utStartRule;
-	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
+	evalString(utStartRule, NODE_PARAM_START_RULE.getToken(), 0, now);
 	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
 	// -- random seed
-	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
+	mSeed = evalInt(NODE_PARAM_SEED.getToken(), 0, now);
 
 	// -- logger
-	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG, 0, now));
+	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
 	mLogHandler->setLevel(ll);
 	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
@@ -599,21 +599,21 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	{
 		mRuleFile = cgbKey;
 		UT_String val(utils::toOSNarrowFromUTF16(mRuleFile));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE.getToken(), 0, time);
 	}
 	{
 		mStyle = startRuleComponents[0];
 		UT_String val(utils::toOSNarrowFromUTF16(mStyle));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE.getToken(), 0, time);
 	}
 	{
 		mStartRule = startRuleComponents[1];
 		UT_String val(utils::toOSNarrowFromUTF16(mStartRule));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE.getToken(), 0, time);
 	}
 	{
 		mSeed = 0;
-		setInt(NODE_PARAM_SEED, 0, time, mSeed);
+		setInt(NODE_PARAM_SEED.getToken(), 0, time, mSeed);
 	}
 	LOG_DBG << "updateRulePackage done: mRuleFile = " << mRuleFile << ", mStyle = " << mStyle << ", mStartRule = " << mStartRule;
 
