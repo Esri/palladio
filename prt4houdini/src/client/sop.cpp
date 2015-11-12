@@ -440,10 +440,8 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
 	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 	if (!updateRulePackage(nextRPK, now)) {
-		UT_WorkBuffer           buf;
-        buf.sprintf("Given file \"%s\" is not a valid rule package file",
-                     utNextRPKStr.buffer());
-		addError(SOP_MESSAGE,buf.buffer());
+		UT_String val(mRPK.string());
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // reset to current value
 		return false;
 	}
 
