@@ -1,5 +1,6 @@
 #pragma once
 
+#include "client/shapegen.h"
 #include "client/logging.h"
 
 #ifdef P4H_TC_GCC
@@ -19,6 +20,7 @@
 #include "prt/RuleFileInfo.h"
 
 #include "boost/filesystem.hpp"
+#include "shapegen.h"
 
 #include <memory>
 
@@ -32,22 +34,7 @@ class AttributeMapBuilder;
 
 namespace p4h {
 
-struct PRTDestroyer {
-	void operator()(prt::Object const* p) {
-		if (p)
-			p->destroy();
-		else
-			LOG_WRN << "trying to destroy null prt object!";
-	}
-};
-
-typedef std::unique_ptr<const prt::ResolveMap, PRTDestroyer> ResolveMapPtr;
-typedef std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer> RuleFileInfoPtr;
-
 class SOP_PRT : public SOP_Node {
-public:
-	typedef std::map<prt::Attributable::PrimitiveType,std::vector<std::string>> TypedParamNames;
-
 public:
 	static OP_Node* create(OP_Network*, const char*, OP_Operator*);
 	static void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
@@ -62,30 +49,21 @@ protected:
 	virtual bool updateParmsFlags();
 
 private:
-	void createInitialShape(const GA_Group* group, void* ctx);
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
 	void createSpareParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
 
 private:
-	std::unique_ptr<log::LogHandler> mLogHandler;
+	InitialShapeContext     mInitialShapeContext;
+
 	prt::CacheObject* mPRTCache;
-	ResolveMapPtr mAssetsMap;
-
-	boost::filesystem::path	mRPK;
-	std::wstring			mRuleFile;
-	std::wstring			mStyle;
-	std::wstring			mStartRule;
-	int32_t					mSeed;
-	prt::AttributeMapBuilder* mAttributeSource;
-
-	TypedParamNames mActiveParams;
-
 	const prt::AttributeMap* mHoudiniEncoderOptions;
 	const prt::AttributeMap* mCGAPrintOptions;
 	const prt::AttributeMap* mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
 	std::vector<const prt::AttributeMap*> mAllEncoderOptions;
+
+	std::unique_ptr<log::LogHandler> mLogHandler;
 };
 
 } // namespace p4h

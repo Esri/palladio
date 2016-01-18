@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/../..">
+      <sourceFolder url="file://$MODULE_DIR$/client/sop.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/utils.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/sop.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/utils.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/shapegen.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/shapegen.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/codec/houdini.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/codec/encoder/HoudiniEncoder.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/codec/encoder/HoudiniEncoder.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/codec/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/codec/houdini.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/utils.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/common.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/cmake/boost-config.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/cmake/prtConfig.cmake" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Header Search Paths">
+        <CLASSES>
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+          <root url="file:///opt/hfs14.0.474/toolkit/include" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/client" />
+          <root url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/include" />
+          <root url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/include" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+          <root url="file:///opt/hfs14.0.474/toolkit/include" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/codec" />
+          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/client" />
+          <root url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/include" />
+          <root url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/include" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

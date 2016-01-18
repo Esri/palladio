@@ -1,5 +1,7 @@
 #pragma once
 
+#include "client/logging.h"
+
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
 
@@ -17,6 +19,15 @@
 
 namespace p4h {
 namespace utils {
+
+struct PRTDestroyer {
+	void operator()(prt::Object const* p) {
+		if (p)
+			p->destroy();
+		else
+			LOG_WRN << "trying to destroy null prt object!";
+	}
+};
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
 std::string objectToXML(prt::Object const* obj);

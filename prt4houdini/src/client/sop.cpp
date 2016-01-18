@@ -1,4 +1,5 @@
 #include "client/sop.h"
+#include "client/shapegen.h"
 #include "client/callbacks.h"
 #include "client/utils.h"
 
@@ -15,6 +16,7 @@
 #include "PRM/PRM_Include.h"
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_ChoiceList.h"
+#include "PRM/PRM_Parm.h"
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
 #include "OP/OP_Director.h"
@@ -33,7 +35,6 @@
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
-#include "boost/dynamic_bitset.hpp"
 #include "boost/algorithm/string.hpp"
 
 #ifdef WIN32
@@ -73,47 +74,8 @@ void dsoExit(void*) {
 		prtLicHandle->destroy(); // prt shutdown
 }
 
-
-typedef std::vector<const prt::InitialShape*> InitialShapePtrVector;
-typedef std::vector<const prt::AttributeMap*> AttributeMapPtrVector;
-
-
-struct InitialShapeContext {
-	InitialShapeContext(OP_Context& ctx, GU_Detail& detail) : mContext(ctx) {
-		LOG_DBG << "-- creating intial shape context";
-
-		//mAMB = prt::AttributeMapBuilder::create();
-		mISB = prt::InitialShapeBuilder::create();
-
-		// collect all primitive attributes
-		// TODO: GA_AttributeDict is deprecated, use GA_AttributeSet
-		for (GA_AttributeDict::iterator it = detail.getAttributeDict(GA_ATTRIB_PRIMITIVE).begin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it) {
-			mPrimitiveAttributes.push_back(GA_ROAttributeRef(it.attrib()));
-			LOG_DBG << "    prim attr: " << mPrimitiveAttributes.back()->getName();
-		}
-		LOG_DBG << "    got primitive attribute count = " << mPrimitiveAttributes.size();
-
-	}
-
-	~InitialShapeContext() {
-		BOOST_FOREACH(const prt::InitialShape* is, mInitialShapes) {
-			is->destroy();
-		}
-		mISB->destroy();
-		BOOST_FOREACH(const prt::AttributeMap* am, mInitialShapeAttributes) {
-			am->destroy();
-		}
-		//mAMB->destroy();
-	}
-
-	OP_Context& mContext;
-	std::vector<GA_ROAttributeRef> mPrimitiveAttributes;
-
-	prt::InitialShapeBuilder* mISB;
-	InitialShapePtrVector mInitialShapes;
-	//prt::AttributeMapBuilder* mAMB;
-	AttributeMapPtrVector mInitialShapeAttributes;
-};
+const char* NODE_PARAM_SHAPE_CLS_ATTR = "shapeClsAttr";
+const char* NODE_PARAM_SHAPE_CLS_TYPE = "shapeClsType";
 
 const char* NODE_PARAM_RPK			= "rpk";
 const char* NODE_PARAM_RULE_FILE	= "ruleFile";
@@ -123,21 +85,31 @@ const char* NODE_PARAM_SEED			= "seed";
 const char* NODE_PARAM_LOG			= "logLevel";
 
 PRM_Name NODE_PARAM_NAMES[] = {
-		PRM_Name(NODE_PARAM_RPK,		"Rule Package"),
-		PRM_Name(NODE_PARAM_RULE_FILE,	"Rule File"),
-		PRM_Name(NODE_PARAM_STYLE,		"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,	"Start Rule"),
-		PRM_Name(NODE_PARAM_SEED,		"Rnd Seed"),
-		PRM_Name(NODE_PARAM_LOG,		"Log Level")
+		PRM_Name(NODE_PARAM_SHAPE_CLS_ATTR, "Shape Classifier"),
+		PRM_Name(NODE_PARAM_SHAPE_CLS_TYPE, "Shape Classifier Type"),
+		PRM_Name(NODE_PARAM_RPK,			"Rule Package"),
+		PRM_Name(NODE_PARAM_RULE_FILE,		"Rule File"),
+		PRM_Name(NODE_PARAM_STYLE,			"Style"),
+		PRM_Name(NODE_PARAM_START_RULE,		"Start Rule"),
+		PRM_Name(NODE_PARAM_SEED,			"Rnd Seed"),
+		PRM_Name(NODE_PARAM_LOG,			"Log Level")
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
 PRM_Default startRuleDefault(0, "Start");
 PRM_Default ruleFileDefault(0, "<none>");
-PRM_Default logDefault(0, "ERROR");
 
 PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildRuleFileMenu);
 PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildStartRuleMenu);
+
+PRM_Name shapeClsTypes[] = {
+		PRM_Name("STRING", "String"),
+		PRM_Name("INT", "Integer"),
+		PRM_Name("FLOAT", "Float"),
+		PRM_Name(0)
+};
+PRM_ChoiceList shapeClsTypeMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), shapeClsTypes);
+PRM_Default shapeClsTypeDefault(0, "INT");
 
 PRM_Name logNames[] = {
 		PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
@@ -149,14 +121,17 @@ PRM_Name logNames[] = {
 		PRM_Name(0)
 };
 PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
+PRM_Default logDefault(0, "ERROR");
 
 PRM_Template NODE_PARAM_TEMPLATES[] = {
-		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[0],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[1],	PRMoneDefaults, &ruleFileMenu),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[2],	PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults, &startRuleMenu),
-		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
-		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[5], &logDefault, &logMenu),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[0],	PRMoneDefaults),
+		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[1], &shapeClsTypeDefault, &shapeClsTypeMenu),
+		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[2],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults, &ruleFileMenu),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
+		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[5],	PRMoneDefaults, &startRuleMenu),
+		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[6],	PRMoneDefaults),
+		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[7], &logDefault, &logMenu),
 		PRM_Template()
 };
 
@@ -202,13 +177,12 @@ OP_Node* SOP_PRT::create(OP_Network *net, const char *name, OP_Operator *op) {
 
 SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
-, mAttributeSource(prt::AttributeMapBuilder::create())
+, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
 {
 	prt::addLogHandler(mLogHandler.get());
 
-	prt::AttributeMapBuilder* optionsBuilder = prt::AttributeMapBuilder::create();
+	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
 	mHoudiniEncoderOptions = utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
@@ -224,8 +198,6 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 	mCGAPrintOptions = utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
 	printOptions->destroy();
 
-	optionsBuilder->destroy();
-
 #ifdef WIN32
 	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
 	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
@@ -236,100 +208,12 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 }
 
 SOP_PRT::~SOP_PRT() {
-	mAttributeSource->destroy();
-
-	mAssetsMap.reset();
-
 	mHoudiniEncoderOptions->destroy();
 	mCGAErrorOptions->destroy();
 	mCGAPrintOptions->destroy();
 
 	mPRTCache->destroy();
-
 	prt::removeLogHandler(mLogHandler.get());
-}
-
-void SOP_PRT::createInitialShape(const GA_Group* group, void* ctx) {
-	static const bool DBG = false;
-
-	InitialShapeContext* isc = static_cast<InitialShapeContext*>(ctx);
-	if (DBG) {
-		LOG_DBG << "-- creating initial shape geo from group " << group->getName(); // << ": vtx = " << vtx << ", idx = " << idx << ", faceCounts = " << faceCounts;
-	}
-
-	// convert geometry
-	std::vector<double> vtx;
-	std::vector<uint32_t> idx, faceCounts;
-
-	GA_Offset ptoff;
-	GA_FOR_ALL_PTOFF(gdp, ptoff) {
-		UT_Vector3 p = gdp->getPos3(ptoff);
-		vtx.push_back(static_cast<double>(p.x()));
-		vtx.push_back(static_cast<double>(p.y()));
-		vtx.push_back(static_cast<double>(p.z()));
-	}
-
-	// loop over all polygons in the primitive group
-	// in case of multipoly initial shapes, attr on first one wins
-	boost::dynamic_bitset<> setAttributes(isc->mPrimitiveAttributes.size());
-	GA_Primitive* prim = nullptr;
-	GA_FOR_ALL_GROUP_PRIMITIVES(gdp, static_cast<const GA_PrimitiveGroup*>(group), prim) {
-		GU_PrimPoly* face = static_cast<GU_PrimPoly*>(prim);
-		for(GA_Size i = face->getVertexCount()-1; i >= 0 ; i--) {
-			GA_Offset off = face->getPointOffset(i);
-			idx.push_back(static_cast<uint32_t>(off));
-		}
-		faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
-
-		// extract primitive attributes
-		for (size_t ai = 0; ai < isc->mPrimitiveAttributes.size(); ai++) {
-			if (!setAttributes[ai]) {
-				const GA_ROAttributeRef& ar = isc->mPrimitiveAttributes[ai];
-				if (ar.isFloat() || ar.isInt()) {
-					double v = prim->getValue<double>(ar);
-					if (DBG) LOG_DBG << "   setting float attrib " << ar->getName() << " = " << v;
-					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-					mAttributeSource->setFloat(wn.c_str(), v);
-					setAttributes.set(ai);
-				} else if (ar.isString()) {
-					const char* v = prim->getString(ar);
-					if (DBG) LOG_DBG << "   setting string attrib " << ar->getName() << " = " << v;
-					std::wstring wn = utils::toUTF16FromOSNarrow(ar->getName());
-					std::wstring wv = utils::toUTF16FromOSNarrow(v);
-					mAttributeSource->setString(wn.c_str(), wv.c_str());
-					setAttributes.set(ai);
-				}
-			}
-		}
-	}
-
-	const prt::AttributeMap* initialShapeAttrs = mAttributeSource->createAttributeMap();
-
-	isc->mISB->setGeometry(vtx.data(), vtx.size(), idx.data(), idx.size(), faceCounts.data(), faceCounts.size());
-
-	std::wstring shapeName = utils::toUTF16FromOSNarrow(group->getName().toStdString());
-	std::wstring startRule = mStyle + L"$" + mStartRule;
-	isc->mISB->setAttributes(
-			mRuleFile.c_str(),
-			startRule.c_str(),
-			mSeed,
-			shapeName.c_str(),
-			initialShapeAttrs,
-			mAssetsMap.get()
-	);
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	const prt::InitialShape* initialShape = isc->mISB->createInitialShapeAndReset(&status);
-	if (status != prt::STATUS_OK) {
-		LOG_WRN << "ignored input group '" << group->getName() << "': " << prt::getStatusDescription(status);
-		initialShapeAttrs->destroy();
-		return;
-	}
-
-	if (DBG) LOG_DBG << p4h::utils::objectToXML(initialShape);
-
-	isc->mInitialShapes.push_back(initialShape);
-	isc->mInitialShapeAttributes.push_back(initialShapeAttrs);
 }
 
 OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
@@ -348,19 +232,16 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating CityEngine Geometry...");
 
-		InitialShapeContext isc(context, *gdp);
-		const char* pattern = "*";
-		GroupOperation createInitialShapeOp = static_cast<GroupOperation>(&SOP_PRT::createInitialShape);
-		forEachGroupMatchingMask(pattern, createInitialShapeOp, static_cast<void*>(&isc), GA_GROUP_PRIMITIVE, gdp);
-
+		InitialShapeGenerator isc(gdp, mInitialShapeContext);
 		gdp->clearAndDestroy();
-
-		HoudiniGeometry hg(gdp);
 		{
+			HoudiniGeometry hg(gdp);
+			// TODO: add occlusion
+			InitialShapeNOPtrVector& initialShapes = isc.getInitialShapes();
 			prt::Status stat = prt::generate(
-					&isc.mInitialShapes[0], isc.mInitialShapes.size(), 0,
-					&mAllEncoders[0], mAllEncoders.size(), &mAllEncoderOptions[0],
-					&hg, mPRTCache, 0
+					initialShapes.data(), initialShapes.size(), 0,
+					mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
+					&hg, mPRTCache, nullptr
 			);
 			if(stat != prt::STATUS_OK) {
 				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
@@ -379,7 +260,7 @@ namespace {
 
 void getParamDef(
 		const RuleFileInfoPtr& info,
-		SOP_PRT::TypedParamNames& createdParams,
+		TypedParamNames& createdParams,
 		std::ostream& defStream
 ) {
 	for(size_t i = 0; i < info->getNumAttributes(); i++) {
@@ -435,34 +316,51 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	LOG_DBG << "handleParams begin";
 	fpreal now = context.getTime();
 
+	// -- shape classifier attr name
+	evalString(mInitialShapeContext.mShapeClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR, 0, now);
+
+	// -- shape classifier attr type
+	int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE, 0, now);
+	if (shapeClsAttrTypeChoice == 0)
+		mInitialShapeContext.mShapeClsType = GA_STORECLASS_STRING;
+	else if (shapeClsAttrTypeChoice == 1)
+		mInitialShapeContext.mShapeClsType = GA_STORECLASS_INT;
+	else if (shapeClsAttrTypeChoice == 2)
+		mInitialShapeContext.mShapeClsType = GA_STORECLASS_FLOAT;
+
 	// -- rule package
 	UT_String utNextRPKStr;
 	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
 	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 	if (!updateRulePackage(nextRPK, now)) {
-		UT_String val(mRPK.string());
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // reset to current value
+		const PRM_Parm& p = getParm(NODE_PARAM_RPK);
+		UT_String expr;
+		p.getExpressionOnly(now, expr, 0, 0);
+		if (expr.length() == 0) { // if not an expression ...
+			UT_String val(mInitialShapeContext.mRPK.string());
+			setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // ... reset to current value
+		}
 		return false;
 	}
 
 	// -- rule file
 	UT_String utRuleFile;
 	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
-	mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
-	LOG_DBG << L"got rule file: " << mRuleFile;
+	mInitialShapeContext.mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
+	LOG_DBG << L"got rule file: " << mInitialShapeContext.mRuleFile;
 
 	// -- style
 	UT_String utStyle;
 	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
-	mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
+	mInitialShapeContext.mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
 
 	// -- start rule
 	UT_String utStartRule;
 	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
-	mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
+	mInitialShapeContext.mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
 	// -- random seed
-	mSeed = evalInt(NODE_PARAM_SEED, 0, now);
+	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED, 0, now);
 
 	// -- logger
 	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG, 0, now));
@@ -545,7 +443,7 @@ void getDefaultRuleAttributeValues(
 } // anonymous namespace
 
 bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
-	if (nextRPK == mRPK)
+	if (nextRPK == mInitialShapeContext.mRPK)
 		return true;
 	if (!boost::filesystem::exists(nextRPK))
 		return false;
@@ -593,32 +491,32 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	LOG_DBG << "first start rule: " << fqStartRule;
 
 	// update node
-	mRPK = nextRPK;
-	mAssetsMap.swap(nextResolveMap);
+	mInitialShapeContext.mRPK = nextRPK;
+	mInitialShapeContext.mAssetsMap.swap(nextResolveMap);
 	mPRTCache->flushAll();
 	{
-		mRuleFile = cgbKey;
-		UT_String val(utils::toOSNarrowFromUTF16(mRuleFile));
+		mInitialShapeContext.mRuleFile = cgbKey;
+		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mRuleFile));
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE, 0, time);
 	}
 	{
-		mStyle = startRuleComponents[0];
-		UT_String val(utils::toOSNarrowFromUTF16(mStyle));
+		mInitialShapeContext.mStyle = startRuleComponents[0];
+		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStyle));
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE, 0, time);
 	}
 	{
-		mStartRule = startRuleComponents[1];
-		UT_String val(utils::toOSNarrowFromUTF16(mStartRule));
+		mInitialShapeContext.mStartRule = startRuleComponents[1];
+		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStartRule));
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE, 0, time);
 	}
 	{
-		mSeed = 0;
-		setInt(NODE_PARAM_SEED, 0, time, mSeed);
+		mInitialShapeContext.mSeed = 0;
+		setInt(NODE_PARAM_SEED, 0, time, mInitialShapeContext.mSeed);
 	}
-	LOG_DBG << "updateRulePackage done: mRuleFile = " << mRuleFile << ", mStyle = " << mStyle << ", mStartRule = " << mStartRule;
+	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " << mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
 
 	// regenerate spare params for rule attributes
-	createSpareParams(info, mRuleFile, fqStartRule, time);
+	createSpareParams(info, mInitialShapeContext.mRuleFile, fqStartRule, time);
 
 	return true;
 }
@@ -631,15 +529,15 @@ void SOP_PRT::createSpareParams(
 ) {
 	// eval rule attribute values
 	prt::AttributeMapBuilder* amb = prt::AttributeMapBuilder::create();
-	getDefaultRuleAttributeValues(amb, mPRTCache, mAssetsMap, cgbKey, fqStartRule);
+	getDefaultRuleAttributeValues(amb, mPRTCache, mInitialShapeContext.mAssetsMap, cgbKey, fqStartRule);
 	const prt::AttributeMap* defAttrVals = amb->createAttributeMap();
 	amb->destroy();
 	LOG_DBG << "defAttrVals = " << utils::objectToXML(defAttrVals);
 
 	// build spare param definition
-	mActiveParams.clear();
+	mInitialShapeContext.mActiveParams.clear();
 	std::ostringstream paramDef;
-	getParamDef(info, mActiveParams, paramDef);
+	getParamDef(info, mInitialShapeContext.mActiveParams, paramDef);
 	std::string s = paramDef.str();
 	LOG_DBG << "INPUT PARMS" << s;
 
@@ -684,23 +582,23 @@ void SOP_PRT::createSpareParams(
 }
 
 bool SOP_PRT::updateParmsFlags() {
-	for (std::string& p: mActiveParams[prt::AttributeMap::PT_FLOAT]) {
+	for (std::string& p: mInitialShapeContext.mActiveParams[prt::AttributeMap::PT_FLOAT]) {
 		double v = evalFloat(p.c_str(), 0, 0.0); // TODO: time
 		std::wstring wp = utils::toUTF16FromOSNarrow(p);
-		mAttributeSource->setFloat(wp.c_str(), v);
+		mInitialShapeContext.mAttributeSource->setFloat(wp.c_str(), v);
 	}
-	for (std::string& p: mActiveParams[prt::AttributeMap::PT_STRING]) {
+	for (std::string& p: mInitialShapeContext.mActiveParams[prt::AttributeMap::PT_STRING]) {
 		UT_String v;
 		evalString(v, p.c_str(), 0, 0.0); // TODO: time
 		std::wstring wp = utils::toUTF16FromOSNarrow(p);
 		std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
-		mAttributeSource->setString(wp.c_str(), wv.c_str());
+		mInitialShapeContext.mAttributeSource->setString(wp.c_str(), wv.c_str());
 	}
+	// TODO: bool
 
 	forceRecook();
 
-	bool changed = SOP_Node::updateParmsFlags();
-	return changed;
+	return SOP_Node::updateParmsFlags();
 }
 
 
@@ -715,17 +613,17 @@ bool compareSecond (const StringPairVector::value_type& a, const StringPairVecto
 void SOP_PRT::buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 		SOP_PRT* node = static_cast<SOP_PRT*>(data);
 		LOG_DBG << "buildStartRuleMenu";
-		LOG_DBG << "   mRPK = " << node->mRPK;
-		LOG_DBG << "   mRuleFile = " << node->mRuleFile;
+		LOG_DBG << "   mRPK = " << node->mInitialShapeContext.mRPK;
+		LOG_DBG << "   mRuleFile = " << node->mInitialShapeContext.mRuleFile;
 
-		if (node->mAssetsMap == nullptr || node->mRPK.empty() || node->mRuleFile.empty()) {
+		if (node->mInitialShapeContext.mAssetsMap == nullptr || node->mInitialShapeContext.mRPK.empty() || node->mInitialShapeContext.mRuleFile.empty()) {
 			theMenu[0].setToken(0);
 			return;
 		}
 
-		const wchar_t* cgbURI = node->mAssetsMap->getString(node->mRuleFile.c_str());
+		const wchar_t* cgbURI = node->mInitialShapeContext.mAssetsMap->getString(node->mInitialShapeContext.mRuleFile.c_str());
 		if (cgbURI == nullptr) {
-			LOG_ERR << L"failed to resolve rule file '" << node->mRuleFile << "', aborting.";
+			LOG_ERR << L"failed to resolve rule file '" << node->mInitialShapeContext.mRuleFile << "', aborting.";
 			return;
 		}
 
@@ -772,13 +670,13 @@ void SOP_PRT::buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, c
 	SOP_PRT* node = static_cast<SOP_PRT*>(data);
 	LOG_DBG << "buildRuleFileMenu";
 
-	if (!node->mAssetsMap || node->mRPK.empty()) {
+	if (!node->mInitialShapeContext.mAssetsMap || node->mInitialShapeContext.mRPK.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
-	getCGBs(node->mAssetsMap, cgbs);
+	getCGBs(node->mInitialShapeContext.mAssetsMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
 	for (size_t ri = 0; ri < limit; ri++) {

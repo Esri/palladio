@@ -4,3 +4,9 @@ project(prt4houdini)
 
 add_subdirectory(codec)
 add_subdirectory(client)
+
+add_custom_target(install_${PROJECT_NAME}
+    make install
+    DEPENDS ${PROJECT_NAME}
+    COMMENT "Installing ${PROJECT_NAME}"
+)
