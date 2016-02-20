@@ -167,6 +167,7 @@ void InitialShapeGenerator::createInitialShapes(
 
 			// extract primitive attributes
 			// if multi-prim initial shape: the first encounterd value per attribute wins
+			// TODO: only use prim attrs, if node value != rule value, see ticket #10
 			for (size_t ai = 0; ai < primitiveAttributes.size(); ai++) {
 				if (!setAttributes[ai]) {
 					const GA_ROAttributeRef& ar = primitiveAttributes[ai];

@@ -74,25 +74,24 @@ void dsoExit(void*) {
 		prtLicHandle->destroy(); // prt shutdown
 }
 
-const char* NODE_PARAM_SHAPE_CLS_ATTR = "shapeClsAttr";
-const char* NODE_PARAM_SHAPE_CLS_TYPE = "shapeClsType";
-
-const char* NODE_PARAM_RPK			= "rpk";
-const char* NODE_PARAM_RULE_FILE	= "ruleFile";
-const char* NODE_PARAM_STYLE		= "style";
-const char* NODE_PARAM_START_RULE	= "startRule";
-const char* NODE_PARAM_SEED			= "seed";
-const char* NODE_PARAM_LOG			= "logLevel";
+const PRM_Name NODE_PARAM_SHAPE_CLS_ATTR("shapeClsAttr",	"Shape Classifier");
+const PRM_Name NODE_PARAM_SHAPE_CLS_TYPE("shapeClsType",	"Shape Classifier Type");
+const PRM_Name NODE_PARAM_RPK			("rpk",				"Rule Package");
+const PRM_Name NODE_PARAM_RULE_FILE		("ruleFile", 		"Rule File");
+const PRM_Name NODE_PARAM_STYLE			("style",			"Style");
+const PRM_Name NODE_PARAM_START_RULE	("startRule",		"Start Rule");
+const PRM_Name NODE_PARAM_SEED			("seed",			"Random Seed");
+const PRM_Name NODE_PARAM_LOG			("logLevel",		"Log Level");
 
 PRM_Name NODE_PARAM_NAMES[] = {
-		PRM_Name(NODE_PARAM_SHAPE_CLS_ATTR, "Shape Classifier"),
-		PRM_Name(NODE_PARAM_SHAPE_CLS_TYPE, "Shape Classifier Type"),
-		PRM_Name(NODE_PARAM_RPK,			"Rule Package"),
-		PRM_Name(NODE_PARAM_RULE_FILE,		"Rule File"),
-		PRM_Name(NODE_PARAM_STYLE,			"Style"),
-		PRM_Name(NODE_PARAM_START_RULE,		"Start Rule"),
-		PRM_Name(NODE_PARAM_SEED,			"Rnd Seed"),
-		PRM_Name(NODE_PARAM_LOG,			"Log Level")
+	NODE_PARAM_SHAPE_CLS_ATTR,
+	NODE_PARAM_SHAPE_CLS_TYPE,
+	NODE_PARAM_RPK,
+	NODE_PARAM_RULE_FILE,
+	NODE_PARAM_STYLE,
+	NODE_PARAM_START_RULE,
+	NODE_PARAM_SEED,
+	NODE_PARAM_LOG
 };
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
@@ -317,10 +316,10 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 	fpreal now = context.getTime();
 
 	// -- shape classifier attr name
-	evalString(mInitialShapeContext.mShapeClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR, 0, now);
+	evalString(mInitialShapeContext.mShapeClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
 
 	// -- shape classifier attr type
-	int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE, 0, now);
+	int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE.getToken(), 0, now);
 	if (shapeClsAttrTypeChoice == 0)
 		mInitialShapeContext.mShapeClsType = GA_STORECLASS_STRING;
 	else if (shapeClsAttrTypeChoice == 1)
@@ -330,40 +329,40 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 	// -- rule package
 	UT_String utNextRPKStr;
-	evalString(utNextRPKStr, NODE_PARAM_RPK, 0, now);
+	evalString(utNextRPKStr, NODE_PARAM_RPK.getToken(), 0, now);
 	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 	if (!updateRulePackage(nextRPK, now)) {
-		const PRM_Parm& p = getParm(NODE_PARAM_RPK);
+		const PRM_Parm& p = getParm(NODE_PARAM_RPK.getToken());
 		UT_String expr;
 		p.getExpressionOnly(now, expr, 0, 0);
 		if (expr.length() == 0) { // if not an expression ...
 			UT_String val(mInitialShapeContext.mRPK.string());
-			setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK, 0, now); // ... reset to current value
+			setString(val, CH_STRING_LITERAL, NODE_PARAM_RPK.getToken(), 0, now); // ... reset to current value
 		}
 		return false;
 	}
 
 	// -- rule file
 	UT_String utRuleFile;
-	evalString(utRuleFile, NODE_PARAM_RULE_FILE, 0, now);
+	evalString(utRuleFile, NODE_PARAM_RULE_FILE.getToken(), 0, now);
 	mInitialShapeContext.mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
 	LOG_DBG << L"got rule file: " << mInitialShapeContext.mRuleFile;
 
 	// -- style
 	UT_String utStyle;
-	evalString(utStyle, NODE_PARAM_STYLE, 0, now);
+	evalString(utStyle, NODE_PARAM_STYLE.getToken(), 0, now);
 	mInitialShapeContext.mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
 
 	// -- start rule
 	UT_String utStartRule;
-	evalString(utStartRule, NODE_PARAM_START_RULE, 0, now);
+	evalString(utStartRule, NODE_PARAM_START_RULE.getToken(), 0, now);
 	mInitialShapeContext.mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
 
 	// -- random seed
-	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED, 0, now);
+	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED.getToken(), 0, now);
 
 	// -- logger
-	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG, 0, now));
+	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
 	mLogHandler->setLevel(ll);
 	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
@@ -497,21 +496,21 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	{
 		mInitialShapeContext.mRuleFile = cgbKey;
 		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mRuleFile));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE.getToken(), 0, time);
 	}
 	{
 		mInitialShapeContext.mStyle = startRuleComponents[0];
 		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStyle));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE.getToken(), 0, time);
 	}
 	{
 		mInitialShapeContext.mStartRule = startRuleComponents[1];
 		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStartRule));
-		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE, 0, time);
+		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE.getToken(), 0, time);
 	}
 	{
 		mInitialShapeContext.mSeed = 0;
-		setInt(NODE_PARAM_SEED, 0, time, mInitialShapeContext.mSeed);
+		setInt(NODE_PARAM_SEED.getToken(), 0, time, mInitialShapeContext.mSeed);
 	}
 	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " << mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
 
