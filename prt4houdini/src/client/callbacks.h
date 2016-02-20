@@ -7,10 +7,19 @@
 #include "prt/AttributeMap.h"
 #include "prt/Callbacks.h"
 
+#ifdef P4H_TC_GCC
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+
 #include "GEO/GEO_PolyCounts.h"
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
 #include "UT/UT_Vector3.h"
+
+#ifdef P4H_TC_GCC
+#	pragma GCC diagnostic pop
+#endif
 
 #include <string>
 #include <vector>
