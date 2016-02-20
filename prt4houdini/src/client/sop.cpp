@@ -1,7 +1,5 @@
 #include "client/sop.h"
-#include "client/shapegen.h"
 #include "client/callbacks.h"
-#include "client/utils.h"
 
 #include "prt/API.h"
 #include "prt/FlexLicParams.h"
@@ -74,29 +72,19 @@ void dsoExit(void*) {
 		prtLicHandle->destroy(); // prt shutdown
 }
 
-const PRM_Name NODE_PARAM_SHAPE_CLS_ATTR("shapeClsAttr",	"Shape Classifier");
-const PRM_Name NODE_PARAM_SHAPE_CLS_TYPE("shapeClsType",	"Shape Classifier Type");
-const PRM_Name NODE_PARAM_RPK			("rpk",				"Rule Package");
-const PRM_Name NODE_PARAM_RULE_FILE		("ruleFile", 		"Rule File");
-const PRM_Name NODE_PARAM_STYLE			("style",			"Style");
-const PRM_Name NODE_PARAM_START_RULE	("startRule",		"Start Rule");
-const PRM_Name NODE_PARAM_SEED			("seed",			"Random Seed");
-const PRM_Name NODE_PARAM_LOG			("logLevel",		"Log Level");
+PRM_Name NODE_PARAM_SHAPE_CLS_ATTR	("shapeClsAttr",	"Shape Classifier");
+PRM_Name NODE_PARAM_SHAPE_CLS_TYPE	("shapeClsType",	"Shape Classifier Type");
+PRM_Name NODE_PARAM_RPK				("rpk",				"Rule Package");
+PRM_Name NODE_PARAM_RULE_FILE		("ruleFile", 		"Rule File");
+PRM_Name NODE_PARAM_STYLE			("style",			"Style");
+PRM_Name NODE_PARAM_START_RULE		("startRule",		"Start Rule");
+PRM_Name NODE_PARAM_SEED			("seed",			"Random Seed");
+PRM_Name NODE_PARAM_LOG				("logLevel",		"Log Level");
 
-PRM_Name NODE_PARAM_NAMES[] = {
-	NODE_PARAM_SHAPE_CLS_ATTR,
-	NODE_PARAM_SHAPE_CLS_TYPE,
-	NODE_PARAM_RPK,
-	NODE_PARAM_RULE_FILE,
-	NODE_PARAM_STYLE,
-	NODE_PARAM_START_RULE,
-	NODE_PARAM_SEED,
-	NODE_PARAM_LOG
-};
+//PRM_Name NODE_MULTIPARAM_FLOAT_NUM	("numobj",			"Number of Objects");
+//PRM_Name NODE_MULTIPARAM_FLOAT_ATTR	("fltAttr#",		"Float Attr #");
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
-PRM_Default startRuleDefault(0, "Start");
-PRM_Default ruleFileDefault(0, "<none>");
 
 PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildRuleFileMenu);
 PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &p4h::SOP_PRT::buildStartRuleMenu);
@@ -122,15 +110,23 @@ PRM_Name logNames[] = {
 PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
 PRM_Default logDefault(0, "ERROR");
 
+//PRM_Template NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE[] = {
+//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_FLOAT_ATTR, PRMoneDefaults),
+//		PRM_Template()
+//};
+
 PRM_Template NODE_PARAM_TEMPLATES[] = {
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[0],	PRMoneDefaults),
-		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[1], &shapeClsTypeDefault, &shapeClsTypeMenu),
-		PRM_Template(PRM_FILE,		1, &NODE_PARAM_NAMES[2],	&rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[3],	PRMoneDefaults, &ruleFileMenu),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[4],	PRMoneDefaults),
-		PRM_Template(PRM_STRING,	1, &NODE_PARAM_NAMES[5],	PRMoneDefaults, &startRuleMenu),
-		PRM_Template(PRM_INT,		1, &NODE_PARAM_NAMES[6],	PRMoneDefaults),
-		PRM_Template((PRM_Type)PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_NAMES[7], &logDefault, &logMenu),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_SHAPE_CLS_ATTR, PRMoneDefaults),
+		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
+		PRM_Template(PRM_FILE, 1, &NODE_PARAM_RPK, &rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_RULE_FILE, PRMoneDefaults, &ruleFileMenu),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_STYLE, PRMoneDefaults),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_START_RULE, PRMoneDefaults, &startRuleMenu),
+		PRM_Template(PRM_INT, 1, &NODE_PARAM_SEED, PRMoneDefaults),
+		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_LOG, &logDefault, &logMenu),
+
+//		PRM_Template(PRM_MULTITYPE_LIST, NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE, 2, &NODE_MULTIPARAM_FLOAT_NUM, PRMoneDefaults),
+
 		PRM_Template()
 };
 
@@ -256,49 +252,6 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 }
 
 namespace {
-
-void getParamDef(
-		const RuleFileInfoPtr& info,
-		TypedParamNames& createdParams,
-		std::ostream& defStream
-) {
-	for(size_t i = 0; i < info->getNumAttributes(); i++) {
-		if (info->getAttribute(i)->getNumParameters() != 0)
-			continue;
-
-		const wchar_t* attrName = info->getAttribute(i)->getName();
-		std::string nAttrName = utils::toOSNarrowFromUTF16(attrName);
-		nAttrName = nAttrName.substr(8); // TODO: better way to remove style for now...
-
-		defStream << "parm {" << "\n";
-		defStream << "    name  \"" << nAttrName << "\"" << "\n";
-		defStream << "    label \"" << nAttrName << "\"\n";
-
-		switch(info->getAttribute(i)->getReturnType()) {
-		case prt::AAT_BOOL: {
-			defStream << "    type    integer\n";
-			break;
-		}
-		case prt::AAT_FLOAT: {
-			defStream << "    type    float\n";
-			// TODO: handle @RANGE annotation:	parmDef << "range   { 0 10 }\n";
-			createdParams[prt::Attributable::PT_FLOAT].push_back(nAttrName);
-			break;
-		}
-		case prt::AAT_STR: {
-			defStream << "    type    string\n";
-			createdParams[prt::Attributable::PT_STRING].push_back(nAttrName);
-			break;
-		}
-		default:
-			break;
-		}
-
-		defStream << "    size    1\n";
-		defStream << "    export  none\n";
-		defStream << "}\n";
-	}
-}
 
 namespace UnitQuad {
 const double 	vertices[]				= { 0, 0, 0,  0, 0, 1,  1, 0, 1,  1, 0, 0 };
@@ -578,6 +531,49 @@ void SOP_PRT::createSpareParams(
 #endif
 
 	defAttrVals->destroy();
+}
+
+void SOP_PRT::getParamDef(
+		const RuleFileInfoPtr& info,
+		TypedParamNames& createdParams,
+		std::ostream& defStream
+) {
+	for(size_t i = 0; i < info->getNumAttributes(); i++) {
+		if (info->getAttribute(i)->getNumParameters() != 0)
+			continue;
+
+		const wchar_t* attrName = info->getAttribute(i)->getName();
+		std::string nAttrName = utils::toOSNarrowFromUTF16(attrName);
+		nAttrName = nAttrName.substr(8); // TODO: better way to remove style for now...
+
+		defStream << "parm {" << "\n";
+		defStream << "    name  \"" << nAttrName << "\"" << "\n";
+		defStream << "    label \"" << nAttrName << "\"\n";
+
+		switch(info->getAttribute(i)->getReturnType()) {
+			case prt::AAT_BOOL: {
+				defStream << "    type    integer\n";
+				break;
+			}
+			case prt::AAT_FLOAT: {
+				defStream << "    type    float\n";
+				// TODO: handle @RANGE annotation:	parmDef << "range   { 0 10 }\n";
+				createdParams[prt::Attributable::PT_FLOAT].push_back(nAttrName);
+				break;
+			}
+			case prt::AAT_STR: {
+				defStream << "    type    string\n";
+				createdParams[prt::Attributable::PT_STRING].push_back(nAttrName);
+				break;
+			}
+			default:
+				break;
+		}
+
+		defStream << "    size    1\n";
+		defStream << "    export  none\n";
+		defStream << "}\n";
+	}
 }
 
 bool SOP_PRT::updateParmsFlags() {

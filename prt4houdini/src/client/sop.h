@@ -52,7 +52,7 @@ private:
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
 	void createSpareParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
-
+	void getParamDef(const RuleFileInfoPtr& info, TypedParamNames& createdParams, std::ostream& defStream);
 private:
 	InitialShapeContext     mInitialShapeContext;
 
