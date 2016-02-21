@@ -1,6 +1,6 @@
 #pragma once
 
-#include "client/shapegen.h"
+#include "initialshape.h"
 #include "client/logging.h"
 
 #ifdef P4H_TC_GCC
@@ -19,9 +19,6 @@
 #include "prt/ResolveMap.h"
 #include "prt/RuleFileInfo.h"
 
-#include "boost/filesystem.hpp"
-#include "shapegen.h"
-
 #include <memory>
 
 
@@ -37,13 +34,12 @@ namespace p4h {
 class SOP_PRT : public SOP_Node {
 public:
 	static OP_Node* create(OP_Network*, const char*, OP_Operator*);
-	static void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
-	static void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
 
 public:
 	SOP_PRT(OP_Network *net, const char *name, OP_Operator *op);
 	virtual ~SOP_PRT();
 
+	const InitialShapeContext& getInitialShapeCtx() const { return mInitialShapeContext; }
 	void resetUserAttribute(const std::string& token);
 
 protected:
@@ -53,20 +49,19 @@ protected:
 private:
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
-	void createMultiParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
-//	void createSpareParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
-//	void getParamDef(const RuleFileInfoPtr& info, TypedParamNames& createdParams, std::ostream& defStream);
+	void createMultiParams(fpreal time);
+
 private:
-	InitialShapeContext     mInitialShapeContext;
+	InitialShapeContext			mInitialShapeContext;
 
-	prt::CacheObject* mPRTCache;
-	const prt::AttributeMap* mHoudiniEncoderOptions;
-	const prt::AttributeMap* mCGAPrintOptions;
-	const prt::AttributeMap* mCGAErrorOptions;
+	prt::CacheObject* 			mPRTCache;
+	const prt::AttributeMap* 	mHoudiniEncoderOptions;
+	const prt::AttributeMap*	mCGAPrintOptions;
+	const prt::AttributeMap*	mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
-	std::vector<const prt::AttributeMap*> mAllEncoderOptions;
+	AttributeMapNOPtrVector 	mAllEncoderOptions;
 
-	std::unique_ptr<log::LogHandler> mLogHandler;
+	log::LogHandlerPtr 			mLogHandler;
 };
 
 } // namespace p4h

@@ -3,6 +3,8 @@
 #include "prt/API.h"
 #include "prt/StringUtils.h"
 
+#include "boost/algorithm/string.hpp"
+
 #ifdef _WIN32
 #	include <Windows.h>
 #else
@@ -12,6 +14,36 @@
 
 namespace p4h {
 namespace utils {
+
+void getCGBs(const ResolveMapPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
+	static const wchar_t*	PROJECT		= L"";
+	static const wchar_t*	PATTERN		= L"*.cgb";
+	static const size_t		START_SIZE	= 16 * 1024;
+
+	size_t resultSize = START_SIZE;
+	wchar_t* result = new wchar_t[resultSize];
+	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
+	if (resultSize >= START_SIZE) {
+		delete[] result;
+		result = new wchar_t[resultSize];
+		rm->searchKey(PROJECT, PATTERN, result, &resultSize);
+	}
+	std::wstring cgbList(result);
+	delete[] result;
+	LOG_DBG << "   cgbList = '" << cgbList << "'";
+
+	std::vector<std::wstring> tok;
+	boost::split(tok, cgbList, boost::is_any_of(L";"), boost::algorithm::token_compress_on);
+	for(const std::wstring& t: tok) {
+		if (t.empty()) continue;
+		LOG_DBG << "token: '" << t << "'";
+		const wchar_t* s = rm->getString(t.c_str());
+		if (s != nullptr) {
+			cgbs.emplace_back(t, s);
+			LOG_DBG << L"got cgb: " << cgbs.back().first << L" => " << cgbs.back().second;
+		}
+	}
+}
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
 	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(encID);

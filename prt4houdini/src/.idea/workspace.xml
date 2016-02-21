@@ -13,16 +13,19 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="#10: implemented rule attribute strategy and switched from spare params to mult">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../../testdata/hip/testShapeGranularity02.hipnc" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../testdata/hip/testShapeGranularity01.hipnc" afterPath="$PROJECT_DIR$/../../testdata/hip/testShapeGranularity01.hipnc" />
+    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/client/parameter.cpp" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/client/parameter.h" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/client/shapegen.cpp" afterPath="$PROJECT_DIR$/client/initialshape.cpp" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/client/shapegen.h" afterPath="$PROJECT_DIR$/client/initialshape.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/src.iml" afterPath="$PROJECT_DIR$/.idea/src.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/shapegen.cpp" afterPath="$PROJECT_DIR$/client/shapegen.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/shapegen.h" afterPath="$PROJECT_DIR$/client/shapegen.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/CMakeLists.txt" afterPath="$PROJECT_DIR$/client/CMakeLists.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/logging.h" afterPath="$PROJECT_DIR$/client/logging.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/sop.cpp" afterPath="$PROJECT_DIR$/client/sop.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/sop.h" afterPath="$PROJECT_DIR$/client/sop.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/utils.cpp" afterPath="$PROJECT_DIR$/client/utils.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/utils.h" afterPath="$PROJECT_DIR$/client/utils.h" />
     </list>
     <ignored path="src.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -43,115 +46,155 @@
     <favorites_list name="src" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="shapegen.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/client/shapegen.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="66" column="43" selection-start-line="66" selection-start-column="43" selection-end-line="66" selection-end-column="43" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sop.cpp" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/client/sop.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.56490725">
-              <caret line="91" column="88" selection-start-line="91" selection-start-column="88" selection-end-line="91" selection-end-column="88" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#263#288#0" expanded="true" />
-                <element signature="e#986#1014#0" expanded="true" />
-                <element signature="e#1073#1090#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="basic_string.h" pinned="false" current-in-tab="false">
-        <entry file="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include/g++-v4/bits/basic_string.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="2224" column="6" selection-start-line="2224" selection-start-column="6" selection-end-line="2224" selection-end-column="6" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="UT_String.h" pinned="false" current-in-tab="false">
-        <entry file="file:///opt/hfs14.0.474/toolkit/include/UT/UT_String.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="82" column="13" selection-start-line="82" selection-start-column="13" selection-end-line="82" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sop.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/client/sop.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="45" column="0" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PRM_Callback.h" pinned="false" current-in-tab="false">
-        <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Callback.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="40" column="6" selection-start-line="40" selection-start-column="6" selection-end-line="40" selection-end-column="6" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PRM_Parm.h" pinned="false" current-in-tab="false">
-        <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Parm.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="511" column="13" selection-start-line="511" selection-start-column="13" selection-end-line="511" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PRM_Template.h" pinned="false" current-in-tab="false">
-        <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Template.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="76" column="14" selection-start-line="76" selection-start-column="14" selection-end-line="76" selection-end-column="14" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PRM_Type.h" pinned="false" current-in-tab="false">
-        <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Type.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-6.857143">
-              <caret line="743" column="46" selection-start-line="743" selection-start-column="46" selection-end-line="743" selection-end-column="46" />
-              <folding>
-                <element signature="e#513#539#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="shapegen.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/client/shapegen.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <splitter split-orientation="horizontal" split-proportion="0.5">
+      <split-first>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="initialshape.h" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/client/initialshape.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.64336663">
+                  <caret line="33" column="35" selection-start-line="33" selection-start-column="35" selection-end-line="33" selection-end-column="35" />
+                  <folding>
+                    <element signature="e#14#39#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="sop.cpp" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/sop.cpp">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="393" column="22" selection-start-line="393" selection-start-column="22" selection-end-line="393" selection-end-column="22" />
+                  <folding>
+                    <element signature="e#0#23#0" expanded="true" />
+                    <element signature="e#293#318#0" expanded="true" />
+                    <element signature="e#889#917#0" expanded="true" />
+                    <element signature="e#976#993#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="general.hpp" pinned="false" current-in-tab="false">
+            <entry file="file:///opt/hfs14.0.474/toolkit/include/boost/concept/detail/general.hpp">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="70" column="0" selection-start-line="70" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="parameter.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/parameter.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="2" column="0" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#14#37#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="basic_string.h" pinned="false" current-in-tab="false">
+            <entry file="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include/g++-v4/bits/basic_string.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="2224" column="6" selection-start-line="2224" selection-start-column="6" selection-end-line="2224" selection-end-column="6" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="UT_String.h" pinned="false" current-in-tab="false">
+            <entry file="file:///opt/hfs14.0.474/toolkit/include/UT/UT_String.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="82" column="13" selection-start-line="82" selection-start-column="13" selection-end-line="82" selection-end-column="13" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="sop.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/sop.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="51" column="27" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="27" />
+                  <folding>
+                    <element signature="e#14#39#0" expanded="true" />
+                    <element signature="e#310#339#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="PRM_Type.h" pinned="false" current-in-tab="false">
+            <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Type.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="-8.142858">
+                  <caret line="694" column="29" selection-start-line="694" selection-start-column="29" selection-end-line="694" selection-end-column="29" />
+                  <folding>
+                    <element signature="e#513#539#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf>
+          <file leaf-file-name="utils.h" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/client/utils.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.74607706">
+                  <caret line="39" column="32" selection-start-line="39" selection-start-column="32" selection-end-line="39" selection-end-column="32" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="logging.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/logging.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#14#34#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="utils.cpp" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/utils.cpp">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="9" column="5" selection-start-line="9" selection-start-column="5" selection-end-line="9" selection-end-column="5" />
+                  <folding>
+                    <element signature="e#0#25#0" expanded="true" />
+                    <element signature="e#131#152#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="parameter.cpp" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/parameter.cpp">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
@@ -160,10 +203,17 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/client/callbacks.h" />
-        <option value="$PROJECT_DIR$/client/shapegen.h" />
         <option value="$PROJECT_DIR$/client/shapegen.cpp" />
-        <option value="$PROJECT_DIR$/client/sop.h" />
+        <option value="$PROJECT_DIR$/client/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/client/shapegen.h" />
+        <option value="$PROJECT_DIR$/client/utils.h" />
+        <option value="$PROJECT_DIR$/client/utils.cpp" />
+        <option value="$PROJECT_DIR$/client/parameter.cpp" />
+        <option value="$PROJECT_DIR$/client/parameter.h" />
+        <option value="$PROJECT_DIR$/client/logging.h" />
         <option value="$PROJECT_DIR$/client/sop.cpp" />
+        <option value="$PROJECT_DIR$/client/sop.h" />
+        <option value="$PROJECT_DIR$/client/initialshape.h" />
       </list>
     </option>
   </component>
@@ -411,7 +461,13 @@
       <option name="project" value="LOCAL" />
       <updated>1456006237099</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button">
+      <created>1456081734019</created>
+      <option name="number" value="00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1456081734019</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -456,62 +512,14 @@
     <MESSAGE value="#17: post merge cleanup" />
     <MESSAGE value="manually re-applied pull request from seb (e43ff5aa765aacb4a0bb3ce98ccdf1522ca8b6f8)" />
     <MESSAGE value="node param cleanup (also added some deactivated multiparm tests)" />
-    <option name="LAST_COMMIT_MESSAGE" value="node param cleanup (also added some deactivated multiparm tests)" />
+    <MESSAGE value="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button" />
+    <option name="LAST_COMMIT_MESSAGE" value="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/client/callbacks.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="24" column="17" selection-start-line="24" selection-start-column="17" selection-end-line="24" selection-end-column="17" />
-          <folding>
-            <element signature="e#14#41#0" expanded="true" />
-            <element signature="e#284#315#0" expanded="true" />
-            <element signature="e#452#469#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/shapegen.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="29" column="0" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/OP/OP_MultiparmInfo.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="24" column="18" selection-start-line="24" selection-start-column="18" selection-end-line="24" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/OP/OP_Parameters.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="343" column="18" selection-start-line="343" selection-start-column="18" selection-end-line="343" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/sop.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#263#288#0" expanded="true" />
-            <element signature="e#986#1014#0" expanded="true" />
-            <element signature="e#1073#1090#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Template.h">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -549,18 +557,20 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="24" column="17" selection-start-line="24" selection-start-column="17" selection-end-line="24" selection-end-column="17" />
           <folding>
-            <element signature="e#14#41#0" expanded="true" />
-            <element signature="e#284#315#0" expanded="true" />
-            <element signature="e#452#469#0" expanded="true" />
+            <element signature="e#14#41#0" expanded="false" />
+            <element signature="e#284#315#0" expanded="false" />
+            <element signature="e#452#469#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/shapegen.h">
+    <entry file="file://$PROJECT_DIR$/client/initialshape.h">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="29" column="0" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#14#39#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -586,9 +596,9 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#263#288#0" expanded="true" />
-            <element signature="e#986#1014#0" expanded="true" />
-            <element signature="e#1073#1090#0" expanded="true" />
+            <element signature="e#293#318#0" expanded="true" />
+            <element signature="e#889#917#0" expanded="true" />
+            <element signature="e#976#993#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -629,14 +639,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="27" column="0" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/logging.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.27943078">
-          <caret line="20" column="21" selection-start-line="20" selection-start-column="21" selection-end-line="20" selection-end-column="21" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -732,9 +734,9 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="62" column="4" selection-start-line="62" selection-start-column="4" selection-end-line="62" selection-end-column="4" />
           <folding>
-            <element signature="e#14#41#0" expanded="true" />
-            <element signature="e#284#315#0" expanded="true" />
-            <element signature="e#452#469#0" expanded="true" />
+            <element signature="e#14#41#0" expanded="false" />
+            <element signature="e#284#315#0" expanded="false" />
+            <element signature="e#452#469#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -781,7 +783,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/shapegen.cpp">
+    <entry file="file://$PROJECT_DIR$/client/initialshape.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -793,7 +795,26 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="76" column="14" selection-start-line="76" selection-start-column="14" selection-end-line="76" selection-end-column="14" />
-          <folding />
+          <folding>
+            <marker date="1443863358000" expanded="false" signature="801:1020" placeholder="..." />
+            <marker date="1443863358000" expanded="true" signature="1406:16884" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="1804:1896" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="1912:2185" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="8663:8915" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="8962:9208" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="9265:9306" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="9916:10017" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="10875:10967" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="11025:11117" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="11169:11212" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="11272:11319" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13379:13429" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13484:13534" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13579:13633" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13732:13777" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13818:13863" placeholder="{...}" />
+            <marker date="1443863358000" expanded="true" signature="13906:13950" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -805,28 +826,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Type.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-6.857143">
-          <caret line="743" column="46" selection-start-line="743" selection-start-column="46" selection-end-line="743" selection-end-column="46" />
-          <folding>
-            <element signature="e#513#539#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs14.0.474/toolkit/include/OP/OP_Parameters.h">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33286518">
           <caret line="58" column="6" selection-start-line="58" selection-start-column="6" selection-end-line="58" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/shapegen.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="66" column="43" selection-start-line="66" selection-start-column="43" selection-end-line="66" selection-end-column="43" />
           <folding />
         </state>
       </provider>
@@ -839,10 +842,26 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/sop.h">
+    <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/include/prt/RuleFileInfo.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-0.28388017">
+          <caret line="62" column="22" selection-start-line="62" selection-start-column="22" selection-end-line="62" selection-end-column="22" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_SpareData.h">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="45" column="0" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/boost/concept/detail/general.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="70" column="0" selection-start-line="70" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -855,15 +874,109 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_ChoiceList.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-0.5772472">
+          <caret line="50" column="4" selection-start-line="50" selection-start-column="4" selection-end-line="50" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/PRM/PRM_Type.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.142858">
+          <caret line="694" column="29" selection-start-line="694" selection-start-column="29" selection-end-line="694" selection-end-column="29" />
+          <folding>
+            <element signature="e#513#539#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/utils.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="9" column="5" selection-start-line="9" selection-start-column="5" selection-end-line="9" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
+            <element signature="e#131#152#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.42307693">
+          <caret line="95" column="17" selection-start-line="95" selection-start-column="17" selection-end-line="95" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/logging.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+          <folding>
+            <element signature="e#14#34#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/parameter.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="2" column="0" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
+          <folding>
+            <element signature="e#14#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/parameter.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/utils.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.74607706">
+          <caret line="39" column="32" selection-start-line="39" selection-start-column="32" selection-end-line="39" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/client/sop.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.56490725">
-          <caret line="91" column="88" selection-start-line="91" selection-start-column="88" selection-end-line="91" selection-end-column="88" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="393" column="22" selection-start-line="393" selection-start-column="22" selection-end-line="393" selection-end-column="22" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#263#288#0" expanded="true" />
-            <element signature="e#986#1014#0" expanded="true" />
-            <element signature="e#1073#1090#0" expanded="true" />
+            <element signature="e#293#318#0" expanded="true" />
+            <element signature="e#889#917#0" expanded="true" />
+            <element signature="e#976#993#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/sop.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="51" column="27" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="27" />
+          <folding>
+            <element signature="e#14#39#0" expanded="true" />
+            <element signature="e#310#339#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/initialshape.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.64336663">
+          <caret line="33" column="35" selection-start-line="33" selection-start-column="35" selection-end-line="33" selection-end-column="35" />
+          <folding>
+            <element signature="e#14#39#0" expanded="true" />
           </folding>
         </state>
       </provider>

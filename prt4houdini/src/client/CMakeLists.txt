@@ -102,7 +102,8 @@ add_library(${PROJECT} SHARED
 	sop.cpp
 	callbacks.cpp
 	utils.cpp
-	shapegen.cpp
+		initialshape.cpp
+	parameter.cpp
 )
 
 target_link_libraries(${PROJECT} ${HOUDINI_LIBS} ${PRT_LINK_LIBRARIES} ${Boost_LIBRARIES})

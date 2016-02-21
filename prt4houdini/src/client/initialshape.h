@@ -25,22 +25,10 @@
 
 namespace p4h {
 
-typedef std::vector<const prt::InitialShape*> InitialShapeNOPtrVector;
-typedef std::vector<const prt::AttributeMap*> AttributeMapNOPtrVector;
-
-typedef std::unique_ptr<const prt::AttributeMap, utils::PRTDestroyer> AttributeMapPtr;
-typedef std::unique_ptr<prt::AttributeMapBuilder, utils::PRTDestroyer> AttributeMapBuilderPtr;
-typedef std::unique_ptr<const prt::InitialShape, utils::PRTDestroyer> InitialShapePtr;
-typedef std::unique_ptr<prt::InitialShapeBuilder, utils::PRTDestroyer> InitialShapeBuilderPtr;
-typedef std::unique_ptr<const prt::ResolveMap, utils::PRTDestroyer> ResolveMapPtr;
-typedef std::unique_ptr<const prt::RuleFileInfo, utils::PRTDestroyer> RuleFileInfoPtr;
-typedef std::unique_ptr<const prt::EncoderInfo, utils::PRTDestroyer> EncoderInfoPtr;
-
 struct InitialShapeContext {
-	InitialShapeContext() { }
-
 	UT_String				mShapeClsAttrName;
 	GA_StorageClass			mShapeClsType;
+
 	boost::filesystem::path	mRPK;
 	std::wstring			mRuleFile;
 	std::wstring			mStyle;

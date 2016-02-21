@@ -9,7 +9,7 @@
 #include <ostream>
 #include <sstream>
 #include <iostream>
-
+#include <memory>
 
 namespace p4h {
 namespace log {
@@ -52,7 +52,6 @@ template<prt::LogLevel L> struct PRTLogger : public Logger {
 	std::wostringstream wstr;
 };
 
-// TODO: prefix with node name
 class LogHandler : public prt::LogHandler {
 public:
 	LogHandler(const std::wstring& name, prt::LogLevel init) : mName(name), mLevel(init) { }
@@ -96,6 +95,8 @@ private:
 	std::wstring mName;
 	prt::LogLevel mLevel;
 };
+
+typedef std::unique_ptr<log::LogHandler> LogHandlerPtr;
 
 } // namespace log
 } // namespace p4h

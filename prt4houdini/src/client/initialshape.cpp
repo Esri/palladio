@@ -1,4 +1,4 @@
-#include "client/shapegen.h"
+#include "initialshape.h"
 
 #include "GU/GU_PrimPoly.h"
 #include "OP/OP_Operator.h"
