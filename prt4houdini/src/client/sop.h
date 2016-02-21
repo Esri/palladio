@@ -44,6 +44,8 @@ public:
 	SOP_PRT(OP_Network *net, const char *name, OP_Operator *op);
 	virtual ~SOP_PRT();
 
+	void resetUserAttribute(const std::string& token);
+
 protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
 	virtual bool updateParmsFlags();
@@ -51,8 +53,9 @@ protected:
 private:
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
-	void createSpareParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
-	void getParamDef(const RuleFileInfoPtr& info, TypedParamNames& createdParams, std::ostream& defStream);
+	void createMultiParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
+//	void createSpareParams(const RuleFileInfoPtr& info, const std::wstring& cgbKey, const std::wstring& fqStartRule, fpreal time);
+//	void getParamDef(const RuleFileInfoPtr& info, TypedParamNames& createdParams, std::ostream& defStream);
 private:
 	InitialShapeContext     mInitialShapeContext;
 

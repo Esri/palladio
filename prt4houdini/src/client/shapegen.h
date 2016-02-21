@@ -30,13 +30,14 @@ typedef std::vector<const prt::AttributeMap*> AttributeMapNOPtrVector;
 
 typedef std::unique_ptr<const prt::AttributeMap, utils::PRTDestroyer> AttributeMapPtr;
 typedef std::unique_ptr<prt::AttributeMapBuilder, utils::PRTDestroyer> AttributeMapBuilderPtr;
+typedef std::unique_ptr<const prt::InitialShape, utils::PRTDestroyer> InitialShapePtr;
 typedef std::unique_ptr<prt::InitialShapeBuilder, utils::PRTDestroyer> InitialShapeBuilderPtr;
 typedef std::unique_ptr<const prt::ResolveMap, utils::PRTDestroyer> ResolveMapPtr;
 typedef std::unique_ptr<const prt::RuleFileInfo, utils::PRTDestroyer> RuleFileInfoPtr;
-typedef std::map<prt::Attributable::PrimitiveType,std::vector<std::string>> TypedParamNames;
+typedef std::unique_ptr<const prt::EncoderInfo, utils::PRTDestroyer> EncoderInfoPtr;
 
 struct InitialShapeContext {
-	InitialShapeContext() : mAttributeSource(prt::AttributeMapBuilder::create()) { }
+	InitialShapeContext() { }
 
 	UT_String				mShapeClsAttrName;
 	GA_StorageClass			mShapeClsType;
@@ -48,8 +49,8 @@ struct InitialShapeContext {
 
 	ResolveMapPtr			mAssetsMap;
 
-	AttributeMapBuilderPtr	mAttributeSource;
-	TypedParamNames			mActiveParams;
+	AttributeMapPtr			mRuleAttributeValues; // rule attribute values as defined in the rule file
+	AttributeMapPtr			mUserAttributeValues; // holds rule or user attribute values for next generate run
 };
 
 class InitialShapeGenerator {

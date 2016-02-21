@@ -81,8 +81,18 @@ PRM_Name NODE_PARAM_START_RULE		("startRule",		"Start Rule");
 PRM_Name NODE_PARAM_SEED			("seed",			"Random Seed");
 PRM_Name NODE_PARAM_LOG				("logLevel",		"Log Level");
 
-//PRM_Name NODE_MULTIPARAM_FLOAT_NUM	("numobj",			"Number of Objects");
-//PRM_Name NODE_MULTIPARAM_FLOAT_ATTR	("fltAttr#",		"Float Attr #");
+PRM_Name NODE_MULTIPARAM_FLOAT_NUM	("cgaFltNum",		"Number of Float Attributes");
+PRM_Name NODE_MULTIPARAM_FLOAT_ATTR	("cgaFltAttr#",		"Float Attr #");
+PRM_Name NODE_MULTIPARAM_FLOAT_VAL	("cgaFltVal#",		"Float Value #");
+PRM_Name NODE_MULTIPARAM_FLOAT_RESET("cgaFltReset#",	"Reset to Rule");
+PRM_Name NODE_MULTIPARAM_STRING_NUM	("cgaStrNum",		"Number of String Attributes");
+PRM_Name NODE_MULTIPARAM_STRING_ATTR("cgaStrAttr#",		"String Attr #");
+PRM_Name NODE_MULTIPARAM_STRING_VAL	("cgaStrVal#",		"String Value #");
+PRM_Name NODE_MULTIPARAM_STRING_RESET("cgaStrReset#",	"Reset to Rule");
+PRM_Name NODE_MULTIPARAM_BOOL_NUM	("cgaBoolNum",		"Number of Boolean Attributes");
+PRM_Name NODE_MULTIPARAM_BOOL_ATTR	("cgaBoolAttr#",	"Boolean Attr #");
+PRM_Name NODE_MULTIPARAM_BOOL_VAL	("cgaBoolVal#",		"Boolan Value #");
+PRM_Name NODE_MULTIPARAM_BOOL_RESET	("cgaBoolReset#",	"Reset to Rule");
 
 PRM_Default rpkDefault(0, "$HIP/$F.rpk");
 
@@ -110,22 +120,66 @@ PRM_Name logNames[] = {
 PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
 PRM_Default logDefault(0, "ERROR");
 
-//PRM_Template NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE[] = {
-//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_FLOAT_ATTR, PRMoneDefaults),
-//		PRM_Template()
-//};
+int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
+	p4h::SOP_PRT* node = static_cast<p4h::SOP_PRT*>(data);
+
+	UT_String tok;
+	tplate->getToken(tok);
+	const char* suf = tok.suffix();
+	LOG_DBG << "resetRuleAttr: tok = " << tok.toStdString() << ", suf = " << suf;
+	UT_String ruleAttr;
+	if (suf) {
+		int idx = std::atoi(suf);
+		const char* valueTok = nullptr;
+		if (tok.startsWith("cgaFlt"))
+			valueTok = NODE_MULTIPARAM_FLOAT_ATTR.getToken();
+		else if (tok.startsWith("cgaStr"))
+			valueTok = NODE_MULTIPARAM_STRING_ATTR.getToken();
+		else if (tok.startsWith("cgaBool"))
+			valueTok = NODE_MULTIPARAM_BOOL_ATTR.getToken();
+		if (valueTok)
+			node->evalStringInst(valueTok, &idx, ruleAttr, 0, 0.0);
+		LOG_DBG << "    idx = " << idx << ", valueTok = " << valueTok << ", ruleAttr = " << ruleAttr;
+	}
+	if (ruleAttr.length() > 0)
+		node->resetUserAttribute(ruleAttr.toStdString());
+	return 1;
+}
+
+PRM_Template NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE[] = {
+		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_FLOAT_ATTR, PRMoneDefaults),
+		PRM_Template(PRM_FLT, 1, &NODE_MULTIPARAM_FLOAT_VAL, PRMoneDefaults),
+		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_FLOAT_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
+		PRM_Template()
+};
+
+PRM_Template NODE_MULTIPARAM_STRING_ATTR_TEMPLATE[] = {
+		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_STRING_ATTR, PRMoneDefaults),
+		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_STRING_VAL, PRMoneDefaults),
+		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_STRING_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
+		PRM_Template()
+};
+
+PRM_Template NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE[] = {
+		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_BOOL_ATTR, PRMoneDefaults),
+		PRM_Template(PRM_TOGGLE, 1, &NODE_MULTIPARAM_BOOL_VAL, PRMoneDefaults),
+		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_BOOL_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
+		PRM_Template()
+};
 
 PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_SHAPE_CLS_ATTR, PRMoneDefaults),
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
-		PRM_Template(PRM_FILE, 1, &NODE_PARAM_RPK, &rpkDefault, 0, 0, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_FILE, 1, &NODE_PARAM_RPK, &rpkDefault, nullptr, nullptr, 0, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_RULE_FILE, PRMoneDefaults, &ruleFileMenu),
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_STYLE, PRMoneDefaults),
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_START_RULE, PRMoneDefaults, &startRuleMenu),
 		PRM_Template(PRM_INT, 1, &NODE_PARAM_SEED, PRMoneDefaults),
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_LOG, &logDefault, &logMenu),
 
-//		PRM_Template(PRM_MULTITYPE_LIST, NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE, 2, &NODE_MULTIPARAM_FLOAT_NUM, PRMoneDefaults),
+		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_FLOAT_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
+		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_STRING_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_STRING_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
+		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_BOOL_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
 
 		PRM_Template()
 };
@@ -356,28 +410,26 @@ void getCGBs(const ResolveMapPtr& rm, std::vector<std::pair<std::wstring,std::ws
 }
 
 void getDefaultRuleAttributeValues(
-		prt::AttributeMapBuilder* amb,
+		AttributeMapBuilderPtr& amb,
 		prt::Cache* cache,
 		const ResolveMapPtr& resolveMap,
 		const std::wstring& cgbKey,
 		const std::wstring& startRule
 ) {
-	HoudiniGeometry hg(nullptr, amb);
-	const prt::AttributeMap* emptyAttrMap = amb->createAttributeMapAndReset();
+	HoudiniGeometry hg(nullptr, amb.get());
+	AttributeMapPtr emptyAttrMap{amb->createAttributeMapAndReset()};
 
-	prt::InitialShapeBuilder* isb = prt::InitialShapeBuilder::create();
+	InitialShapeBuilderPtr isb{prt::InitialShapeBuilder::create()};
 	isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
-	isb->setAttributes(cgbKey.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap, resolveMap.get());
+	isb->setAttributes(cgbKey.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap.get(), resolveMap.get());
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	const prt::InitialShape* is = isb->createInitialShapeAndReset(&status);
-	isb->destroy();
-	const prt::InitialShape* iss[1] = { is };
+	InitialShapePtr is{isb->createInitialShapeAndReset(&status)};
+	const prt::InitialShape* iss[1] = { is.get() };
 
-	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR);
+	EncoderInfoPtr encInfo{prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR)};
 	const prt::AttributeMap* encOpts = nullptr;
 	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
-	encInfo->destroy();
 
 	const wchar_t* encs[1] = { ENCODER_ID_CGA_EVALATTR };
 	const prt::AttributeMap* encsOpts[1] = { encOpts };
@@ -388,8 +440,6 @@ void getDefaultRuleAttributeValues(
 	}
 
 	encOpts->destroy();
-	is->destroy();
-	emptyAttrMap->destroy();
 }
 
 } // anonymous namespace
@@ -431,12 +481,24 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 		return false;
 	}
 
-	// get first rule
+	// get first rule (start rule if possible)
 	if (info->getNumRules() == 0) {
 		LOG_ERR << "rule file does not contain any rules";
 		return false;
 	}
-	const prt::RuleFileInfo::Entry* re = info->getRule(0);
+	size_t startRuleIdx = size_t(-1);
+	for (size_t ri = 0; ri < info->getNumRules(); ri++) {
+		const prt::RuleFileInfo::Entry* re = info->getRule(ri);
+		for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+			if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
+				startRuleIdx = ri;
+				break;
+			}
+		}
+	}
+	if (startRuleIdx == size_t(-1))
+		startRuleIdx = 0;
+	const prt::RuleFileInfo::Entry* re = info->getRule(startRuleIdx);
 	std::wstring fqStartRule = re->getName();
 	std::vector<std::wstring> startRuleComponents;
 	boost::split(startRuleComponents, fqStartRule, boost::is_any_of(L"$"));
@@ -467,54 +529,91 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	}
 	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " << mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
 
-	// regenerate spare params for rule attributes
-	createSpareParams(info, mInitialShapeContext.mRuleFile, fqStartRule, time);
+	// eval rule attribute values
+	AttributeMapBuilderPtr amb{prt::AttributeMapBuilder::create()};
+	getDefaultRuleAttributeValues(amb, mPRTCache, mInitialShapeContext.mAssetsMap, mInitialShapeContext.mRuleFile, fqStartRule);
+	mInitialShapeContext.mRuleAttributeValues.reset(amb->createAttributeMap());
+	mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap()); // pristine user attribute values
+	LOG_DBG << "mRuleAttributeValues = " << utils::objectToXML(mInitialShapeContext.mRuleAttributeValues.get());
+
+	// update rule attribute UI
+	createMultiParams(info, mInitialShapeContext.mRuleFile, fqStartRule, time);
 
 	return true;
 }
 
-void SOP_PRT::createSpareParams(
+void SOP_PRT::createMultiParams(
 		const RuleFileInfoPtr& info,
 		const std::wstring& cgbKey,
 		const std::wstring& fqStartRule,
 		fpreal time
 ) {
-	// eval rule attribute values
-	prt::AttributeMapBuilder* amb = prt::AttributeMapBuilder::create();
-	getDefaultRuleAttributeValues(amb, mPRTCache, mInitialShapeContext.mAssetsMap, cgbKey, fqStartRule);
-	const prt::AttributeMap* defAttrVals = amb->createAttributeMap();
-	amb->destroy();
-	LOG_DBG << "defAttrVals = " << utils::objectToXML(defAttrVals);
-
-	// build spare param definition
-	mInitialShapeContext.mActiveParams.clear();
-	std::ostringstream paramDef;
-	getParamDef(info, mInitialShapeContext.mActiveParams, paramDef);
-	std::string s = paramDef.str();
-	LOG_DBG << "INPUT PARMS" << s;
-
-	OP_Director* director = OPgetDirector();
-	director->deleteAllNodeSpareParms(this);
-
-	UT_IStream istr(&s[0], s.size(), UT_ISTREAM_ASCII);
-	UT_String errors;
-	director->loadNodeSpareParms(this, istr, errors);
-
-	// setup spare params with rule defaults
 	size_t keyCount = 0;
-	const wchar_t* const* cKeys = defAttrVals->getKeys(&keyCount);
+	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
+
+	size_t numFlt = 0, numStr = 0, numBool = 0;
+	for (size_t k = 0; k < keyCount; k++) {
+		const wchar_t* key = cKeys[k];
+		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
+			case prt::AttributeMap::PT_FLOAT:
+				numFlt++;
+				break;
+			case prt::AttributeMap::PT_STRING:
+				numStr++;
+				break;
+			case prt::AttributeMap::PT_BOOL:
+				numBool++;
+				break;
+			default:
+				break;
+		}
+	}
+
+	setInt(NODE_MULTIPARAM_FLOAT_NUM.getToken(), 0, 0, numFlt);
+	setInt(NODE_MULTIPARAM_STRING_NUM.getToken(), 0, 0, numStr);
+	setInt(NODE_MULTIPARAM_BOOL_NUM.getToken(), 0, 0, numBool);
+
+	int idxFlt = 0, idxStr = 0, idxBool = 0;
 	for (size_t k = 0; k < keyCount; k++) {
 		const wchar_t* key = cKeys[k];
 		std::string nKey = utils::toOSNarrowFromUTF16(key);
-		nKey = nKey.substr(8); // TODO: better way to remove style for now...
-		switch (defAttrVals->getType(key)) {
+		std::string nLabel = nKey.substr(nKey.find_first_of('$')+1); // strip style
+		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
 		case prt::AttributeMap::PT_FLOAT: {
-			setFloat(nKey.c_str(), 0, time, defAttrVals->getFloat(key));
+			double v = mInitialShapeContext.mRuleAttributeValues->getFloat(key);
+
+			setStringInst(UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_FLOAT_ATTR.getToken(), &idxFlt, 0, time);
+			PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_FLOAT_ATTR.getToken(), &idxFlt);
+			if (p) p->setLockedFlag(0, true);
+
+			setFloatInst(v, NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, time);
+
+			idxFlt++;
 			break;
 		}
 		case prt::AttributeMap::PT_STRING: {
-			UT_String val(utils::toOSNarrowFromUTF16(defAttrVals->getString(key)));
-			setString(val, CH_STRING_LITERAL, nKey.c_str(), 0, time);
+			const wchar_t* v = mInitialShapeContext.mRuleAttributeValues->getString(key);
+			std::string nv = utils::toOSNarrowFromUTF16(v);
+
+			setStringInst(UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_ATTR.getToken(), &idxStr, 0, time);
+			PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_STRING_ATTR.getToken(), &idxFlt);
+			if (p) p->setLockedFlag(0, true);
+
+			setStringInst(UT_String(nv), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, 0, time);
+
+			idxStr++;
+			break;
+		}
+		case prt::AttributeMap::PT_BOOL: {
+			bool v = mInitialShapeContext.mRuleAttributeValues->getBool(key);
+
+			setStringInst(UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_BOOL_ATTR.getToken(), &idxBool, 0, time);
+			PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_BOOL_ATTR.getToken(), &idxFlt);
+			if (p) p->setLockedFlag(0, true);
+
+			setIntInst(v ? 1 : 0, NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, time);
+
+			idxBool++;
 			break;
 		}
 		default: {
@@ -523,147 +622,165 @@ void SOP_PRT::createSpareParams(
 		}
 		}
 	}
-
-#if 0
-	std::ostringstream ostr;
-	director->saveNodeSpareParms(this, true, ostr);
-	LOG_DBG << " SAVED PARMS" << ostr.str();
-#endif
-
-	defAttrVals->destroy();
-}
-
-void SOP_PRT::getParamDef(
-		const RuleFileInfoPtr& info,
-		TypedParamNames& createdParams,
-		std::ostream& defStream
-) {
-	for(size_t i = 0; i < info->getNumAttributes(); i++) {
-		if (info->getAttribute(i)->getNumParameters() != 0)
-			continue;
-
-		const wchar_t* attrName = info->getAttribute(i)->getName();
-		std::string nAttrName = utils::toOSNarrowFromUTF16(attrName);
-		nAttrName = nAttrName.substr(8); // TODO: better way to remove style for now...
-
-		defStream << "parm {" << "\n";
-		defStream << "    name  \"" << nAttrName << "\"" << "\n";
-		defStream << "    label \"" << nAttrName << "\"\n";
-
-		switch(info->getAttribute(i)->getReturnType()) {
-			case prt::AAT_BOOL: {
-				defStream << "    type    integer\n";
-				break;
-			}
-			case prt::AAT_FLOAT: {
-				defStream << "    type    float\n";
-				// TODO: handle @RANGE annotation:	parmDef << "range   { 0 10 }\n";
-				createdParams[prt::Attributable::PT_FLOAT].push_back(nAttrName);
-				break;
-			}
-			case prt::AAT_STR: {
-				defStream << "    type    string\n";
-				createdParams[prt::Attributable::PT_STRING].push_back(nAttrName);
-				break;
-			}
-			default:
-				break;
-		}
-
-		defStream << "    size    1\n";
-		defStream << "    export  none\n";
-		defStream << "}\n";
-	}
 }
 
 bool SOP_PRT::updateParmsFlags() {
-	for (std::string& p: mInitialShapeContext.mActiveParams[prt::AttributeMap::PT_FLOAT]) {
-		double v = evalFloat(p.c_str(), 0, 0.0); // TODO: time
-		std::wstring wp = utils::toUTF16FromOSNarrow(p);
-		mInitialShapeContext.mAttributeSource->setFloat(wp.c_str(), v);
-	}
-	for (std::string& p: mInitialShapeContext.mActiveParams[prt::AttributeMap::PT_STRING]) {
-		UT_String v;
-		evalString(v, p.c_str(), 0, 0.0); // TODO: time
-		std::wstring wp = utils::toUTF16FromOSNarrow(p);
-		std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
-		mInitialShapeContext.mAttributeSource->setString(wp.c_str(), wv.c_str());
-	}
-	// TODO: bool
+	// TODO: maybe better to do all of below in createInitialShapes (less distributed state)?
+	if (mInitialShapeContext.mRuleAttributeValues) {
+		AttributeMapBuilderPtr amb{prt::AttributeMapBuilder::createFromAttributeMap(mInitialShapeContext.mRuleAttributeValues.get())};
 
-	forceRecook();
+		int idxFlt = 0, idxStr = 0, idxBool = 0;
+		size_t keyCount = 0;
+		const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
+		for (size_t k = 0; k < keyCount; k++) {
+			const wchar_t* key = cKeys[k];
+			switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
+				case prt::AttributeMap::PT_FLOAT: {
+					double v = evalFloatInst(NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, 0.0); // TODO: time
+					amb->setFloat(key, v);
+					idxFlt++;
+					break;
+				}
+				case prt::AttributeMap::PT_STRING: {
+					UT_String v;
+					evalStringInst(NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, v, 0, 0.0);
+					std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
+					amb->setString(key, wv.c_str());
+					idxStr++;
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL: {
+					bool v = (evalIntInst(NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, 0.0) > 0);
+					amb->setBool(key, v);
+					idxBool++;
+					break;
+				}
+				default: {
+					LOG_WRN << L"attribute " << key << L": type not handled";
+					break;
+				}
+			}
+		}
 
+		mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap());
+		forceRecook();
+	}
 	return SOP_Node::updateParmsFlags();
+}
+
+void SOP_PRT::resetUserAttribute(const std::string& token) {
+	size_t keyCount = 0;
+	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
+
+	int idxFlt = 0, idxStr = 0, idxBool = 0;
+	for (size_t k = 0; k < keyCount; k++) {
+		const wchar_t* key = cKeys[k];
+		std::string nKey = utils::toOSNarrowFromUTF16(key);
+		std::string nLabel = nKey.substr(nKey.find_first_of('$')+1); // strip style
+
+		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
+			case prt::AttributeMap::PT_FLOAT: {
+				if (nLabel.compare(token) == 0) {
+					double v = mInitialShapeContext.mRuleAttributeValues->getFloat(key);
+					setFloatInst(v, NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, 0.0);
+				}
+				idxFlt++;
+				break;
+			}
+			case prt::AttributeMap::PT_STRING: {
+				if (nLabel.compare(token) == 0) {
+					const wchar_t* v = mInitialShapeContext.mRuleAttributeValues->getString(key);
+					std::string nv = utils::toOSNarrowFromUTF16(v);
+					setStringInst(UT_String(nv), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, 0, 0.0);
+				}
+				idxStr++;
+				break;
+			}
+			case prt::AttributeMap::PT_BOOL: {
+				if (nLabel.compare(token) == 0) {
+					bool v = mInitialShapeContext.mRuleAttributeValues->getBool(key);
+					setIntInst(v ? 1 : 0, NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, 0.0);
+				}
+				idxBool++;
+				break;
+			}
+			default: {
+				LOG_WRN << "attribute " << nKey << ": type not handled";
+				break;
+			}
+		}
+	}
 }
 
 
 namespace {
 
 typedef std::vector<std::pair<std::string,std::string>> StringPairVector;
-
 bool compareSecond (const StringPairVector::value_type& a, const StringPairVector::value_type& b) { return ( a.second < b.second ); }
 
-}
+} // namespace
 
 void SOP_PRT::buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-		SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	static const bool DBG = false;
+
+	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
 		LOG_DBG << "   mRPK = " << node->mInitialShapeContext.mRPK;
 		LOG_DBG << "   mRuleFile = " << node->mInitialShapeContext.mRuleFile;
+	}
+	if (node->mInitialShapeContext.mAssetsMap == nullptr || node->mInitialShapeContext.mRPK.empty() || node->mInitialShapeContext.mRuleFile.empty()) {
+		theMenu[0].setToken(0);
+		return;
+	}
 
-		if (node->mInitialShapeContext.mAssetsMap == nullptr || node->mInitialShapeContext.mRPK.empty() || node->mInitialShapeContext.mRuleFile.empty()) {
-			theMenu[0].setToken(0);
-			return;
-		}
+	const wchar_t* cgbURI = node->mInitialShapeContext.mAssetsMap->getString(node->mInitialShapeContext.mRuleFile.c_str());
+	if (cgbURI == nullptr) {
+		LOG_ERR << L"failed to resolve rule file '" << node->mInitialShapeContext.mRuleFile << "', aborting.";
+		return;
+	}
 
-		const wchar_t* cgbURI = node->mInitialShapeContext.mAssetsMap->getString(node->mInitialShapeContext.mRuleFile.c_str());
-		if (cgbURI == nullptr) {
-			LOG_ERR << L"failed to resolve rule file '" << node->mInitialShapeContext.mRuleFile << "', aborting.";
-			return;
-		}
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, nullptr, &status);
+	if (status == prt::STATUS_OK) {
+		StringPairVector startRules, rules;
+		for (size_t ri = 0; ri < rfi->getNumRules() ; ri++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
+			std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+			std::vector<std::string> tok;
+			boost::split(tok, rn, boost::is_any_of("$"));
 
-		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-		const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, nullptr, &status);
-		if (status == prt::STATUS_OK) {
-			StringPairVector startRules, rules;
-			for (size_t ri = 0; ri < rfi->getNumRules() ; ri++) {
-				const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
-				std::string rn = utils::toOSNarrowFromUTF16(re->getName());
-				std::vector<std::string> tok;
-				boost::split(tok, rn, boost::is_any_of("$"));
-
-				bool hasStartRuleAnnotation = false;
-				for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
-					if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
-						hasStartRuleAnnotation = true;
-						break;
-					}
+			bool hasStartRuleAnnotation = false;
+			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+				if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
+					hasStartRuleAnnotation = true;
+					break;
 				}
-
-				if (hasStartRuleAnnotation)
-					startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
-				else
-					rules.emplace_back(tok[1], tok[1]);
 			}
 
-			std::sort(startRules.begin(), startRules.end(), compareSecond);
-			std::sort(rules.begin(), rules.end(), compareSecond);
-			rules.reserve(rules.size() + startRules.size());
-			rules.insert(rules.begin(), startRules.begin(), startRules.end());
-
-			const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
-			for (size_t ri = 0; ri < limit; ri++) {
-				theMenu[ri].setToken(rules[ri].first.c_str());
-				theMenu[ri].setLabel(rules[ri].second.c_str());
-			}
-			theMenu[limit].setToken(0); // need a null terminator
-			rfi->destroy();
+			if (hasStartRuleAnnotation)
+				startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
+			else
+				rules.emplace_back(tok[1], tok[1]);
 		}
+
+		std::sort(startRules.begin(), startRules.end(), compareSecond);
+		std::sort(rules.begin(), rules.end(), compareSecond);
+		rules.reserve(rules.size() + startRules.size());
+		rules.insert(rules.begin(), startRules.begin(), startRules.end());
+
+		const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
+		for (size_t ri = 0; ri < limit; ri++) {
+			theMenu[ri].setToken(rules[ri].first.c_str());
+			theMenu[ri].setLabel(rules[ri].second.c_str());
+		}
+		theMenu[limit].setToken(0); // need a null terminator
+		rfi->destroy();
+	}
 }
 
 void SOP_PRT::buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	SOP_PRT* node = static_cast<SOP_PRT*>(data);
-	LOG_DBG << "buildRuleFileMenu";
 
 	if (!node->mInitialShapeContext.mAssetsMap || node->mInitialShapeContext.mRPK.empty()) {
 		theMenu[0].setToken(0);
