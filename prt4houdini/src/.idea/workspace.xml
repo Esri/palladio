@@ -13,16 +13,9 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="test d">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../README.md" afterPath="$PROJECT_DIR$/../../README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/src.iml" afterPath="$PROJECT_DIR$/.idea/src.iml" />
+    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CMakeLists.txt" afterPath="$PROJECT_DIR$/CMakeLists.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/CMakeLists.txt" afterPath="$PROJECT_DIR$/client/CMakeLists.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/initialshape.cpp" afterPath="$PROJECT_DIR$/client/initialshape.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/sop.cpp" afterPath="$PROJECT_DIR$/client/sop.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake/common.cmake" afterPath="$PROJECT_DIR$/cmake/common.cmake" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/codec/CMakeLists.txt" afterPath="$PROJECT_DIR$/codec/CMakeLists.txt" />
     </list>
     <ignored path="src.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -43,7 +36,7 @@
     <favorites_list name="src" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5">
+    <splitter split-orientation="horizontal" split-proportion="0.45140132">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file leaf-file-name="initialshape.h" pinned="false" current-in-tab="false">
@@ -56,10 +49,10 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.0">
+                <state vertical-scroll-proportion="0.024425287">
                   <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
                   <folding />
                 </state>
@@ -76,10 +69,10 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="sop.cpp" pinned="false" current-in-tab="true">
+          <file leaf-file-name="sop.cpp" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/client/sop.cpp">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.31752872">
+                <state vertical-scroll-proportion="0.0">
                   <caret line="51" column="56" selection-start-line="51" selection-start-column="56" selection-end-line="51" selection-end-column="56" />
                   <folding>
                     <element signature="e#889#917#0" expanded="true" />
@@ -167,20 +160,20 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="common.cmake" pinned="false" current-in-tab="false">
+          <file leaf-file-name="common.cmake" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.0">
-                  <caret line="60" column="11" selection-start-line="60" selection-start-column="11" selection-end-line="60" selection-end-column="11" />
+                <state vertical-scroll-proportion="0.65804595">
+                  <caret line="78" column="91" selection-start-line="78" selection-start-column="91" selection-end-line="78" selection-end-column="91" />
                   <folding />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
+          <file leaf-file-name="README.md" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/../../README.md">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.43328336">
+                <state vertical-scroll-proportion="-9.965517">
                   <caret line="17" column="94" selection-start-line="17" selection-start-column="94" selection-end-line="17" selection-end-column="94" />
                   <folding />
                 </state>
@@ -222,11 +215,11 @@
         <option value="$PROJECT_DIR$/client/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/codec/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/cmake/common.cmake" />
         <option value="$PROJECT_DIR$/client/initialshape.cpp" />
         <option value="$PROJECT_DIR$/client/parameter.h" />
         <option value="$PROJECT_DIR$/../../README.md" />
         <option value="$PROJECT_DIR$/client/sop.cpp" />
+        <option value="$PROJECT_DIR$/cmake/common.cmake" />
       </list>
     </option>
   </component>
@@ -573,7 +566,13 @@
       <option name="project" value="LOCAL" />
       <updated>1456184105440</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="VC11 fixes (not yet all C++11 features are supported)">
+      <created>1456184169853</created>
+      <option name="number" value="00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1456184169853</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -620,7 +619,8 @@
     <MESSAGE value="node param cleanup (also added some deactivated multiparm tests)" />
     <MESSAGE value="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button" />
     <MESSAGE value="updated test hips (relative rpk paths)" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated test hips (relative rpk paths)" />
+    <MESSAGE value="VC11 fixes (not yet all C++11 features are supported)" />
+    <option name="LAST_COMMIT_MESSAGE" value="VC11 fixes (not yet all C++11 features are supported)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -972,14 +972,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1020,17 +1012,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="60" column="11" selection-start-line="60" selection-start-column="11" selection-end-line="60" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../README.md">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.43328336">
+        <state vertical-scroll-proportion="-9.965517">
           <caret line="17" column="94" selection-start-line="17" selection-start-column="94" selection-end-line="17" selection-end-column="94" />
           <folding />
         </state>
@@ -1049,11 +1033,27 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client/sop.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.31752872">
+        <state vertical-scroll-proportion="0.0">
           <caret line="51" column="56" selection-start-line="51" selection-start-column="56" selection-end-line="51" selection-end-column="56" />
           <folding>
             <element signature="e#889#917#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.024425287">
+          <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.65804595">
+          <caret line="78" column="91" selection-start-line="78" selection-start-column="91" selection-end-line="78" selection-end-column="91" />
+          <folding />
         </state>
       </provider>
     </entry>
