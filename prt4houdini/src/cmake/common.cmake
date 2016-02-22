@@ -3,7 +3,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
 
 ### platform configuration
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 	set(P4H_WINDOWS 1)
 	set(P4H_OS "win32")
 	add_definitions(-DP4H_WINDOWS)
@@ -68,11 +67,11 @@ set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION
 
 ### HOUDINI dependency
 
-#TODO: use cached vars for the version
-set(HOUDINI_MAJOR_VERSION "14" CACHE STRING "Houdini Major Version")
-set(HOUDINI_MINOR_VERSION "0" CACHE STRING "Houdini Minor Version")
-set(HOUDINI_BUILD_VERSION "474" CACHE STRING "Houdini Build Version")
-set(HOUDINI_VERSION "${HOUDINI_MAJOR_VERSION}.${HOUDINI_MINOR_VERSION}.${HOUDINI_BUILD_VERSION}")
+set(HOUDINI_VERSION "14.0.474" CACHE STRING "Houdini Version")
+string(REPLACE "." ";" VL ${HOUDINI_VERSION})
+list(GET VL 0 HOUDINI_MAJOR_VERSION)
+list(GET VL 1 HOUDINI_MINOR_VERSION)
+list(GET VL 2 HOUDINI_BUILD_VERSION)
 if(P4H_WINDOWS)
 	set(HOUDINI_ROOT "C:/Program Files/Side Effects Software/Houdini ${HOUDINI_VERSION}" CACHE STRING "Houdini Installation Path")
 else()

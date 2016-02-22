@@ -13,7 +13,7 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="">
+    <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="re-enable overriding of HOUDINI_ROOT location (cmake cache variable)">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake/common.cmake" afterPath="$PROJECT_DIR$/cmake/common.cmake" />
     </list>
@@ -52,7 +52,7 @@
           <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.024425287">
+                <state vertical-scroll-proportion="-0.17097701">
                   <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
                   <folding />
                 </state>
@@ -163,8 +163,8 @@
           <file leaf-file-name="common.cmake" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.65804595">
-                  <caret line="78" column="91" selection-start-line="78" selection-start-column="91" selection-end-line="78" selection-end-column="91" />
+                <state vertical-scroll-proportion="0.46264368">
+                  <caret line="69" column="0" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -572,7 +572,13 @@
       <option name="project" value="LOCAL" />
       <updated>1456184169853</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="re-enable overriding of HOUDINI_ROOT location (cmake cache variable)">
+      <created>1456184802490</created>
+      <option name="number" value="00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1456184802490</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -620,7 +626,8 @@
     <MESSAGE value="#10: implemented rule attribute strategy (user vs rule vs prim attr) and switched from spare params to multiparams, also added a &quot;reset to rule attribute&quot; button" />
     <MESSAGE value="updated test hips (relative rpk paths)" />
     <MESSAGE value="VC11 fixes (not yet all C++11 features are supported)" />
-    <option name="LAST_COMMIT_MESSAGE" value="VC11 fixes (not yet all C++11 features are supported)" />
+    <MESSAGE value="re-enable overriding of HOUDINI_ROOT location (cmake cache variable)" />
+    <option name="LAST_COMMIT_MESSAGE" value="re-enable overriding of HOUDINI_ROOT location (cmake cache variable)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1043,7 +1050,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.024425287">
+        <state vertical-scroll-proportion="-0.17097701">
           <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
           <folding />
         </state>
@@ -1051,8 +1058,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.65804595">
-          <caret line="78" column="91" selection-start-line="78" selection-start-column="91" selection-end-line="78" selection-end-column="91" />
+        <state vertical-scroll-proportion="0.46264368">
+          <caret line="69" column="0" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
           <folding />
         </state>
       </provider>
