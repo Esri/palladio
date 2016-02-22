@@ -144,7 +144,7 @@ void InitialShapeGenerator::createInitialShapes(
 		boost::dynamic_bitset<> setAttributes(userAttrCount);
 
 		// copy global attribute source builder for each initial shape
-		AttributeMapBuilderPtr amb{prt::AttributeMapBuilder::createFromAttributeMap(isCtx.mUserAttributeValues.get())};
+		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(isCtx.mUserAttributeValues.get()));
 
 		// loop over all primitives inside partition
 		for (auto p: pIt->second) {

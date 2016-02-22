@@ -15,7 +15,7 @@
 2. open a visual studio 2012 x64 shell
 3. ```cd <repo root>/prt4houdini```
 4. ```mkdir build && cd build```
-5. ```cmake -G "NMake Makefiles" -DHOUDINI_ROOT="c:\Program Files\Side Effects Software\Houdini 14.0.505" -DCMAKE_BUILD_TYPE=Release ../src``` (adjust HOUDINI_ROOT to your system, and do not forget the '"' quotes if your path contains spaces)
+5. ```cmake -G "NMake Makefiles" -DHOUDINI_BUILD_VERSION=xxx -DCMAKE_BUILD_TYPE=RelWithDebInfo ../src``` (adjust xxx to your houdini 14.0.xxx version)
 6. ```nmake install``` (simply iterate on this one when working on the code)
 
 ### Linux

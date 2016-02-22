@@ -49,7 +49,7 @@ namespace {
 const bool DBG = false;
 
 // global prt settings
-const prt::LogLevel	PRT_LOG_LEVEL		= prt::LOG_DEBUG;
+const prt::LogLevel	PRT_LOG_LEVEL		= prt::LOG_ERROR;
 const char*			PRT_LIB_SUBDIR		= "prtlib";
 const char*			FILE_FLEXNET_LIB	= "flexnet_prt";
 const wchar_t*		FILE_CGA_ERROR		= L"CGAErrors.txt";
@@ -271,17 +271,17 @@ void getDefaultRuleAttributeValues(
 		const std::wstring& startRule
 ) {
 	HoudiniGeometry hg(nullptr, amb.get());
-	AttributeMapPtr emptyAttrMap{amb->createAttributeMapAndReset()};
+	AttributeMapPtr emptyAttrMap(amb->createAttributeMapAndReset());
 
-	InitialShapeBuilderPtr isb{prt::InitialShapeBuilder::create()};
+	InitialShapeBuilderPtr isb(prt::InitialShapeBuilder::create());
 	isb->setGeometry(UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts, UnitQuad::faceCountsCount);
 	isb->setAttributes(cgbKey.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap.get(), resolveMap.get());
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	InitialShapePtr is{isb->createInitialShapeAndReset(&status)};
+	InitialShapePtr is(isb->createInitialShapeAndReset(&status));
 	const prt::InitialShape* iss[1] = { is.get() };
 
-	EncoderInfoPtr encInfo{prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR)};
+	EncoderInfoPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
 	const prt::AttributeMap* encOpts = nullptr;
 	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
 
@@ -384,7 +384,7 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " << mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
 
 	// eval rule attribute values
-	AttributeMapBuilderPtr amb{prt::AttributeMapBuilder::create()};
+	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 	getDefaultRuleAttributeValues(amb, mPRTCache, mInitialShapeContext.mAssetsMap, mInitialShapeContext.mRuleFile, fqStartRule);
 	mInitialShapeContext.mRuleAttributeValues.reset(amb->createAttributeMap());
 	mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap()); // pristine user attribute values
@@ -477,7 +477,7 @@ void SOP_PRT::createMultiParams(fpreal time) {
 bool SOP_PRT::updateParmsFlags() {
 	// TODO: maybe better to do all of below in createInitialShapes (less distributed state)?
 	if (mInitialShapeContext.mRuleAttributeValues) {
-		AttributeMapBuilderPtr amb{prt::AttributeMapBuilder::createFromAttributeMap(mInitialShapeContext.mRuleAttributeValues.get())};
+		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(mInitialShapeContext.mRuleAttributeValues.get()));
 
 		int idxFlt = 0, idxStr = 0, idxBool = 0;
 		size_t keyCount = 0;

@@ -6,7 +6,6 @@ cmake_policy(SET CMP0015 NEW)
 
 set(PROJECT prt4houdini_codec)
 project(${PROJECT})
-include(${CMAKE_CURRENT_LIST_DIR}/../cmake/common.cmake)
 
 
 ### dependencies

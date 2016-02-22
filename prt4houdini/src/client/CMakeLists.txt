@@ -6,7 +6,6 @@ cmake_policy(SET CMP0015 NEW)
 
 set(PROJECT prt4houdini)
 project(${PROJECT})
-include(${CMAKE_CURRENT_LIST_DIR}/../cmake/common.cmake)
 
 set(P4H_VERSION_MAJOR 0)
 set(P4H_VERSION_MINOR 5)
