@@ -42,6 +42,7 @@
 
 #include <vector>
 #include <cwchar>
+#include <thread>
 
 
 namespace {
@@ -118,17 +119,17 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
-	mHoudiniEncoderOptions = utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions);
+	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions));
 	encoderOptions->destroy();
 
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
 	const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAErrorOptions = utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions);
+	mCGAErrorOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions));
 	errOptions->destroy();
 
 	optionsBuilder->setString(L"name", FILE_CGA_PRINT);
 	const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAPrintOptions = utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions);
+	mCGAPrintOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions));
 	printOptions->destroy();
 
 #ifdef WIN32
@@ -136,16 +137,17 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
 #else
 	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
-	mAllEncoderOptions = { mHoudiniEncoderOptions, mCGAErrorOptions, mCGAPrintOptions };
+	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
 #endif
+
+	int32_t cores = std::thread::hardware_concurrency();
+	if (cores == 0) cores = 1;
+	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
+	amb->setInt(L"numberWorkerThreads", cores);
+	mGenerateOptions.reset(amb->createAttributeMapAndReset());
 }
 
 SOP_PRT::~SOP_PRT() {
-	mHoudiniEncoderOptions->destroy();
-	mCGAErrorOptions->destroy();
-	mCGAPrintOptions->destroy();
-
-	mPRTCache->destroy();
 	prt::removeLogHandler(mLogHandler.get());
 }
 
@@ -169,16 +171,25 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		gdp->clearAndDestroy();
 		{
 			HoudiniGeometry hg(gdp);
-			// TODO: add occlusion
 			InitialShapeNOPtrVector& initialShapes = isc.getInitialShapes();
+
+			OcclusionSetPtr occlSet(prt::OcclusionSet::create());
+			std::vector<prt::OcclusionSet::Handle> occlHandles(initialShapes.size());
+			prt::generateOccluders(
+					initialShapes.data(), initialShapes.size(), occlHandles.data(), nullptr, 0,
+					nullptr, &hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
+			);
+
 			prt::Status stat = prt::generate(
 					initialShapes.data(), initialShapes.size(), 0,
 					mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
-					&hg, mPRTCache, nullptr
+					&hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
 			);
 			if(stat != prt::STATUS_OK) {
 				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 			}
+
+			occlSet->dispose(occlHandles.data(), occlHandles.size());
 		}
 		select(GU_SPrimitive);
 	}
@@ -265,7 +276,7 @@ namespace {
 
 void getDefaultRuleAttributeValues(
 		AttributeMapBuilderPtr& amb,
-		prt::Cache* cache,
+		CacheObjectPtr& cache,
 		const ResolveMapPtr& resolveMap,
 		const std::wstring& cgbKey,
 		const std::wstring& startRule
@@ -288,7 +299,7 @@ void getDefaultRuleAttributeValues(
 	const wchar_t* encs[1] = { ENCODER_ID_CGA_EVALATTR };
 	const prt::AttributeMap* encsOpts[1] = { encOpts };
 
-	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache, nullptr, nullptr);
+	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr);
 	if(stat != prt::STATUS_OK) {
 		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}
@@ -329,7 +340,7 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	LOG_DBG << "cgbURI = " << cgbURI;
 
 	status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoPtr info(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCache, &status));
+	RuleFileInfoPtr info(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCache.get(), &status));
 	if (!info || status != prt::STATUS_OK) {
 		LOG_ERR << "failed to get rule file info";
 		return false;

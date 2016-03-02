@@ -31,6 +31,7 @@ struct PRTDestroyer {
 typedef std::vector<const prt::InitialShape*> InitialShapeNOPtrVector;
 typedef std::vector<const prt::AttributeMap*> AttributeMapNOPtrVector;
 
+typedef std::unique_ptr<prt::CacheObject, PRTDestroyer> CacheObjectPtr;
 typedef std::unique_ptr<const prt::AttributeMap, PRTDestroyer> AttributeMapPtr;
 typedef std::unique_ptr<prt::AttributeMapBuilder, PRTDestroyer> AttributeMapBuilderPtr;
 typedef std::unique_ptr<const prt::InitialShape, PRTDestroyer> InitialShapePtr;
@@ -38,9 +39,9 @@ typedef std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer> InitialShapeBuil
 typedef std::unique_ptr<const prt::ResolveMap, PRTDestroyer> ResolveMapPtr;
 typedef std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer> RuleFileInfoPtr;
 typedef std::unique_ptr<const prt::EncoderInfo, PRTDestroyer> EncoderInfoPtr;
+typedef std::unique_ptr<prt::OcclusionSet, PRTDestroyer> OcclusionSetPtr;
 
 namespace utils {
-
 
 void getCGBs(const ResolveMapPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);

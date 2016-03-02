@@ -1,6 +1,6 @@
 #pragma once
 
-#include "initialshape.h"
+#include "client/initialshape.h"
 #include "client/logging.h"
 
 #ifdef P4H_TC_GCC
@@ -54,12 +54,13 @@ private:
 private:
 	InitialShapeContext			mInitialShapeContext;
 
-	prt::CacheObject* 			mPRTCache;
-	const prt::AttributeMap* 	mHoudiniEncoderOptions;
-	const prt::AttributeMap*	mCGAPrintOptions;
-	const prt::AttributeMap*	mCGAErrorOptions;
+	CacheObjectPtr 				mPRTCache;
+	AttributeMapPtr				mHoudiniEncoderOptions;
+	AttributeMapPtr				mCGAPrintOptions;
+	AttributeMapPtr				mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
 	AttributeMapNOPtrVector 	mAllEncoderOptions;
+	AttributeMapPtr				mGenerateOptions;
 
 	log::LogHandlerPtr 			mLogHandler;
 };

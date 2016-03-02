@@ -1,4 +1,4 @@
-#include "initialshape.h"
+#include "client/initialshape.h"
 
 #include "GU/GU_PrimPoly.h"
 #include "OP/OP_Operator.h"
