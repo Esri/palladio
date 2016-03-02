@@ -36,7 +36,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	}
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	const prt::RuleFileInfo* rfi = prt::createRuleFileInfo(cgbURI, nullptr, &status);
+	RuleFileInfoPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
 	if (status == prt::STATUS_OK) {
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
@@ -70,7 +70,6 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 			theMenu[ri].setLabel(rules[ri].second.c_str());
 		}
 		theMenu[limit].setToken(0); // need a null terminator
-		rfi->destroy();
 	}
 }
 
@@ -94,6 +93,51 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 		theMenu[ri].setLabel(lbl.c_str());
 	}
 	theMenu[limit].setToken(0); // need a null terminator
+}
+
+std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
+	std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+	std::vector<std::string> tok;
+	boost::split(tok, rn, boost::is_any_of("$"));
+	return tok[0];
+}
+
+void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
+
+	if (isCtx.mAssetsMap == nullptr || isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
+		theMenu[0].setToken(0);
+		return;
+	}
+
+	const wchar_t* cgbURI = isCtx.mAssetsMap->getString(isCtx.mRuleFile.c_str());
+	if (cgbURI == nullptr) {
+		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
+		return;
+	}
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	if (status == prt::STATUS_OK) {
+		std::set<std::string> styles;
+		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
+			styles.emplace(extractStyle(re));
+		}
+ 		for (size_t ai = 0; ai < rfi->getNumAttributes(); ai++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getAttribute(ai);
+			styles.emplace(extractStyle(re));
+		}
+		const size_t limit = std::min<size_t>(styles.size(), theMaxSize);
+		size_t si = 0;
+		for (const auto& s : styles) {
+			theMenu[si].setToken(s.c_str());
+			theMenu[si].setLabel(s.c_str());
+			si++;
+		}
+		theMenu[limit].setToken(0); // need a null terminator
+	}
 }
 
 int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {

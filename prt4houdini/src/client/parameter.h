@@ -23,6 +23,8 @@ static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIS
 
 // -- STYLE
 static PRM_Name NODE_PARAM_STYLE("style", "Style");
+void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
+static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), &buildStyleMenu);
 
 // -- START RULE
 static PRM_Name NODE_PARAM_START_RULE("startRule", "Start Rule");
@@ -100,7 +102,7 @@ static PRM_Template NODE_PARAM_TEMPLATES[] = {
 		// rpk, rulefile, startrule, ...
 		PRM_Template(PRM_FILE, 1, &NODE_PARAM_RPK, &rpkDefault, nullptr, nullptr, 0, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_RULE_FILE, PRMoneDefaults, &ruleFileMenu),
-		PRM_Template(PRM_STRING, 1, &NODE_PARAM_STYLE, PRMoneDefaults),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_STYLE, PRMoneDefaults, &styleMenu),
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_START_RULE, PRMoneDefaults, &startRuleMenu),
 		PRM_Template(PRM_INT, 1, &NODE_PARAM_SEED, PRMoneDefaults),
 
