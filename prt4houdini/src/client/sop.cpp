@@ -134,7 +134,7 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 
 #ifdef WIN32
 	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
-	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions)(mCGAErrorOptions)(mCGAPrintOptions);
+	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions.get())(mCGAErrorOptions.get())(mCGAPrintOptions.get());
 #else
 	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
 	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
