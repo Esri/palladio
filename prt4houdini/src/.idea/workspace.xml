@@ -14,16 +14,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../../testdata/hip/testPolygonHoles.hipnc" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/callbacks.cpp" afterPath="$PROJECT_DIR$/client/callbacks.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/callbacks.h" afterPath="$PROJECT_DIR$/client/callbacks.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/initialshape.cpp" afterPath="$PROJECT_DIR$/client/initialshape.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/logging.h" afterPath="$PROJECT_DIR$/client/logging.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/parameter.h" afterPath="$PROJECT_DIR$/client/parameter.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/sop.cpp" afterPath="$PROJECT_DIR$/client/sop.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/sop.h" afterPath="$PROJECT_DIR$/client/sop.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h" afterPath="$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" afterPath="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" />
     </list>
     <ignored path="src.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -547,7 +539,13 @@
       <option name="project" value="LOCAL" />
       <updated>1456962115580</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="#9: worked on hole support for initial shapes (does not re-use houdini vertex sharing, not supported by prt)&#10;&#10;also prepared (currently disabled) support for holes in prt output geo. enabling this when poly holes in the HDK are better understood...">
+      <created>1457200631075</created>
+      <option name="number" value="00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1457200631075</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -597,7 +595,8 @@
     <MESSAGE value="cleanup" />
     <MESSAGE value="added support for occlusion statements (generateOccluders)" />
     <MESSAGE value="#8: completed UI for node attributes (implemented style drop-down)" />
-    <option name="LAST_COMMIT_MESSAGE" value="#8: completed UI for node attributes (implemented style drop-down)" />
+    <MESSAGE value="#9: worked on hole support for initial shapes (does not re-use houdini vertex sharing, not supported by prt)&#10;&#10;also prepared (currently disabled) support for holes in prt output geo. enabling this when poly holes in the HDK are better understood..." />
+    <option name="LAST_COMMIT_MESSAGE" value="#9: worked on hole support for initial shapes (does not re-use houdini vertex sharing, not supported by prt)&#10;&#10;also prepared (currently disabled) support for holes in prt output geo. enabling this when poly holes in the HDK are better understood..." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
