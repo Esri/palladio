@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <numeric>
+#include <limits>
 
 #include "prt/prt.h"
 
@@ -60,7 +61,7 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	prtx::EncodePreparatorPtr encPrep = prtx::EncodePreparator::create(true, namePrep, nsMesh, nsMaterial);
 
 	prtx::LeafIteratorPtr li = prtx::LeafIterator::create(context, initialShapeIndex);
-	for (prtx::ShapePtr shape = li->getNext(); shape != 0; shape = li->getNext())
+	for (prtx::ShapePtr shape = li->getNext(); shape; shape = li->getNext())
 		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap());
 
 	prtx::GeometryPtrVector geometries;
@@ -89,18 +90,24 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	convertGeometry(initialShape.getName(), geometries, materials, oh);
 }
 
-void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& mats, HoudiniCallbacks* hc) {
-	std::vector<double> vertices;
-	std::vector<int>    counts;
-	std::vector<int>    connects;
+void HoudiniEncoder::convertGeometry(
+	const wchar_t* isName,
+	const prtx::GeometryPtrVector& geometries,
+	const std::vector<prtx::MaterialPtrVector>& mats,
+	HoudiniCallbacks* hc
+) {
+	std::vector<double> 	vertices;
+	std::vector<int32_t>    counts;
+	std::vector<int32_t>    connects;
+	std::vector<int32_t>	holes;
 	int base    = 0;
 
 	std::vector<double> normals;
 
 	std::vector<float>  tcsU, tcsV;
-	std::vector<int>    uvCounts;
-	std::vector<int>    uvConnects;
-	int uvBase  = 0;
+	std::vector<int32_t>    uvCounts;
+	std::vector<int32_t>    uvConnects;
+	size_t uvBase  = 0;
 
 	for(size_t gi = 0, geoCount = geometries.size(); gi < geoCount; ++gi) {
 		prtx::Geometry* geo = geometries[gi].get();
@@ -111,7 +118,7 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 
 			const prtx::DoubleVector&  verts    = mesh->getVertexCoords();
 			const prtx::DoubleVector&  norms    = mesh->getVertexNormalsCoords();
-			bool                       hasUVs   = mesh->getUVSetsCount() > 0;
+			bool                       hasUVs   = (mesh->getUVSetsCount() > 0);
 			size_t                     uvsCount = 0;
 
 			vertices.reserve(    vertices.size()     + verts.size());
@@ -119,11 +126,8 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 			counts.reserve(      counts.size()       + mesh->getFaceCount());
 			uvCounts.reserve(    uvCounts.size()     + mesh->getFaceCount());
 
-			for(size_t i = 0, size = verts.size(); i < size; ++i)
-				vertices.push_back(verts[i]);
-
-			for(size_t i = 0, size = norms.size(); i < size; ++i)
-				normals.push_back(norms[i]);
+			vertices.insert(vertices.end(), verts.begin(), verts.end());
+			normals.insert(normals.end(), norms.begin(), norms.end());
 
 			if(hasUVs) {
 				const prtx::DoubleVector& uvs = mesh->getUVCoords(0);
@@ -139,13 +143,21 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 			}
 			if (DBG) log_debug("      copied vertex attributes");
 
-			for(size_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
+			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
 				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
 				prtx::IndexVector vidxs(vtxIdx, vtxIdx + mesh->getFaceVertexCount(fi));
 
-				counts.push_back((int)vidxs.size());
-				for(size_t vi = 0, size = vidxs.size(); vi < size; ++vi)
+				counts.push_back(vidxs.size());
+				for (size_t vi = 0, size = vidxs.size(); vi < size; ++vi)
 					connects.push_back(base + vidxs[vi]);
+
+				// collect hole-face indices for each face delimited by max int32_t
+				static const int32_t HOLE_DELIM = std::numeric_limits<int32_t>::max();
+				uint32_t faceHoleCount = mesh->getFaceHolesCount(fi);
+				const uint32_t* faceHoleIndices = mesh->getFaceHolesIndices(fi);
+				if (faceHoleCount > 0)
+					holes.insert(holes.end(), faceHoleIndices, faceHoleIndices + faceHoleCount);
+				holes.push_back(HOLE_DELIM);
 
 				if(hasUVs && mesh->getFaceUVCount(fi, 0) > 0) {
 						//if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
@@ -173,17 +185,21 @@ void HoudiniEncoder::convertGeometry(const wchar_t* isName, const prtx::Geometry
 	bool hasUVS     = tcsU.size() > 0;
 	bool hasNormals = normals.size() > 0;
 
-	hc->setVertices(&vertices[0], vertices.size());
+	hc->setVertices(vertices.data(), vertices.size());
 	if (DBG) log_debug("    set vertices");
-	hc->setUVs(hasUVS ? &tcsU[0] : 0, hasUVS ? &tcsV[0] : 0, tcsU.size());
+
+	hc->setUVs(hasUVS ? tcsU.data() : 0, hasUVS ? tcsV.data() : 0, tcsU.size());
 	if (DBG) log_debug("    set uvs");
 
-	hc->setNormals(hasNormals ? &normals[0] : 0, normals.size());
+	if (!normals.empty())
+		hc->setNormals(normals.data(), normals.size());
+
 	hc->setFaces(
-			&counts[0], counts.size(),
-			&connects[0], connects.size(),
-			hasUVS ? &uvCounts[0]   : 0, hasUVS ? uvCounts.size()   : 0,
-			hasUVS ? &uvConnects[0] : 0, hasUVS ? uvConnects.size() : 0
+			counts.data(), counts.size(),
+			connects.data(), connects.size(),
+			hasUVS ? uvCounts.data()   : 0, uvCounts.size(),
+			hasUVS ? uvConnects.data() : 0, uvConnects.size(),
+			holes.empty() ? 0 : holes.data(), holes.size()
 	);
 	if (DBG) log_debug("set faces");
 

@@ -44,9 +44,9 @@ public:
 
 protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
-	virtual bool updateParmsFlags();
 
 private:
+	void updateUserAttributes();
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
 	void createMultiParams(fpreal time);

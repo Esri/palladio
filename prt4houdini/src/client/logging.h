@@ -73,6 +73,7 @@ public:
 		*level = true;
 	}
 
+	// TODO: with prt 1.6 use prt::setLogLevel to avoid logging below mLevel at all
 	void setLevel(prt::LogLevel level) {
 		mLevel = level;
 	}

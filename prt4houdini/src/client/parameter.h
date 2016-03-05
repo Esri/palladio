@@ -64,14 +64,17 @@ static PRM_Default logDefault(0, "ERROR");
 static PRM_Name NODE_MULTIPARAM_FLOAT_NUM	("cgaFltNum",		"Number of Float Attributes");
 static PRM_Name NODE_MULTIPARAM_FLOAT_ATTR	("cgaFltAttr#",		"Float Attr #");
 static PRM_Name NODE_MULTIPARAM_FLOAT_VAL	("cgaFltVal#",		"Float Value #");
+static PRM_Name NODE_MULTIPARAM_FLOAT_ANN	("cgaFltAnn#",		"Float Annotation #");
 static PRM_Name NODE_MULTIPARAM_FLOAT_RESET	("cgaFltReset#",	"Reset to Rule");
 static PRM_Name NODE_MULTIPARAM_STRING_NUM	("cgaStrNum",		"Number of String Attributes");
 static PRM_Name NODE_MULTIPARAM_STRING_ATTR	("cgaStrAttr#",		"String Attr #");
 static PRM_Name NODE_MULTIPARAM_STRING_VAL	("cgaStrVal#",		"String Value #");
+static PRM_Name NODE_MULTIPARAM_STRING_ANN	("cgaStrAnn#",		"String Annotation #");
 static PRM_Name NODE_MULTIPARAM_STRING_RESET("cgaStrReset#",	"Reset to Rule");
 static PRM_Name NODE_MULTIPARAM_BOOL_NUM	("cgaBoolNum",		"Number of Boolean Attributes");
 static PRM_Name NODE_MULTIPARAM_BOOL_ATTR	("cgaBoolAttr#",	"Boolean Attr #");
-static PRM_Name NODE_MULTIPARAM_BOOL_VAL	("cgaBoolVal#",		"Boolan Value #");
+static PRM_Name NODE_MULTIPARAM_BOOL_VAL	("cgaBoolVal#",		"Boolean Value #");
+static PRM_Name NODE_MULTIPARAM_BOOL_ANN	("cgaBoolAnn#",		"Boolean Annotation #");
 static PRM_Name NODE_MULTIPARAM_BOOL_RESET	("cgaBoolReset#",	"Reset to Rule");
 int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate);
 static PRM_Template NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE[] = {

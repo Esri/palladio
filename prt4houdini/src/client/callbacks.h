@@ -35,7 +35,13 @@ protected:
 	virtual void setVertices(double* vtx, size_t size);
 	virtual void setNormals(double* nrm, size_t size);
 	virtual void setUVs(float* u, float* v, size_t size);
-	virtual void setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize);
+	virtual void setFaces(
+		int32_t* counts, size_t countsSize,
+		int32_t* connects, size_t connectsSize,
+		int32_t* uvCounts, size_t uvCountsSize,
+		int32_t* uvConnects, size_t uvConnectsSize,
+		int32_t* holes, size_t holesSize
+	);
 	virtual void createMesh(const wchar_t* name);
 	virtual void matSetColor(int start, int count, float r, float g, float b);
 	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex);
@@ -57,7 +63,7 @@ private:
 	GA_Offset mCurOffset;
 	GA_PrimitiveGroup* mCurGroup;
 	std::vector<UT_Vector3> mPoints;
-	std::vector<int> mIndices;
+	std::vector<int32_t> mIndices, mHoles;
 	GEO_PolyCounts mPolyCounts;
 
 	prt::AttributeMapBuilder* const mEvalAttrBuilder;

@@ -1,6 +1,7 @@
 #include "client/initialshape.h"
 
 #include "GU/GU_PrimPoly.h"
+#include "GU/GU_HoleInfo.h"
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
 #include "OP/OP_Director.h"
@@ -34,7 +35,7 @@ const bool PDBG = false;
 
 struct PrimitivePartition {
 	typedef boost::variant<UT_String, fpreal64, int64> ClassifierValueType;
-	typedef std::vector<GA_Primitive*> PrimitiveVector;
+	typedef std::vector<const GA_Primitive*> PrimitiveVector;
 	typedef std::map<ClassifierValueType, PrimitiveVector> PartitionMap;
 
 	PrimitivePartition(GA_ROAttributeRef clsAttr, GA_StorageClass clsType)
@@ -123,16 +124,6 @@ void InitialShapeGenerator::createInitialShapes(
 		primPart.add(gdp, prim);
 	}
 
-	// reuse same vertex list for all initial shape (prt throws rest away)
-	std::vector<double> vtx;
-	GA_Offset ptoff;
-	GA_FOR_ALL_PTOFF(gdp, ptoff) {
-		UT_Vector3 p = gdp->getPos3(ptoff);
-		vtx.push_back(static_cast<double>(p.x()));
-		vtx.push_back(static_cast<double>(p.y()));
-		vtx.push_back(static_cast<double>(p.z()));
-	}
-
 	// create initial shape for each primitive partition
 	size_t userAttrCount = 0;
 	const wchar_t* const* cUserAttrKeys = isCtx.mUserAttributeValues->getKeys(&userAttrCount);
@@ -140,21 +131,29 @@ void InitialShapeGenerator::createInitialShapes(
 	size_t isIdx = 0;
 	for (auto pIt = pm.begin(); pIt != pm.end(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
-		std::vector<uint32_t> idx, faceCounts;
+		std::vector<double> vtx;
+		std::vector<uint32_t> idx, faceCounts, holes;
 		boost::dynamic_bitset<> setAttributes(userAttrCount);
 
 		// copy global attribute source builder for each initial shape
 		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(isCtx.mUserAttributeValues.get()));
 
 		// loop over all primitives inside partition
-		for (auto p: pIt->second) {
-			// get face vertex indices & counts
-			GU_PrimPoly* face = static_cast<GU_PrimPoly*>(p);
-			for (GA_Size i = face->getVertexCount() - 1; i >= 0; i--) {
-				GA_Offset off = face->getPointOffset(i);
-				idx.push_back(static_cast<uint32_t>(off));
-			}
-			faceCounts.push_back(static_cast<uint32_t>(face->getVertexCount()));
+		for (const auto& p: pIt->second) {
+			if (DBG) LOG_DBG << "   -- prim index " << p->getMapIndex();
+
+			// naively copying vertices
+			// prt does not support re-using a vertex index (revisit this with prt 1.6)
+			const GU_PrimPoly* face = static_cast<const GU_PrimPoly*>(p);
+				for (GA_Size i = face->getFastVertexCount()-1; i >= 0; i--) {
+					idx.push_back(static_cast<uint32_t>(vtx.size()/3));
+					UT_Vector3 p = gdp->getPos3(face->getPointIndex(i));
+					vtx.push_back(static_cast<double>(p.x()));
+					vtx.push_back(static_cast<double>(p.y()));
+					vtx.push_back(static_cast<double>(p.z()));
+					if (DBG) LOG_DBG << "      vtx idx " << i << ": " << idx.back();
+				}
+			faceCounts.push_back(static_cast<uint32_t>(face->getFastVertexCount()));
 
 			// extract primitive attributes
 			// if multi-prim initial shape: the first encountered value per attribute wins
@@ -221,10 +220,14 @@ void InitialShapeGenerator::createInitialShapes(
 			} // for each user attr
 		} // for each prim
 
-		mISB->setGeometry(vtx.data(), vtx.size(), idx.data(), idx.size(), faceCounts.data(), faceCounts.size());
+		mISB->setGeometry(
+			vtx.data(), vtx.size(),
+			idx.data(), idx.size(),
+			faceCounts.data(), faceCounts.size(),
+			holes.data(), holes.size()
+		);
 
 		const prt::AttributeMap* initialShapeAttrs = amb->createAttributeMap();
-		mInitialShapeAttributes.push_back(initialShapeAttrs);
 
 		std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 		std::wstring startRule = isCtx.mStyle + L"$" + isCtx.mStartRule;
@@ -245,9 +248,10 @@ void InitialShapeGenerator::createInitialShapes(
 			return;
 		}
 		mInitialShapes.push_back(initialShape);
+		mInitialShapeAttributes.push_back(initialShapeAttrs);
 
 		if (DBG) LOG_DBG << p4h::utils::objectToXML(initialShape);
-	} // for each parition
+	} // for each partition
 }
 
 } // namespace p4h

@@ -1,5 +1,7 @@
 #include "client/callbacks.h"
 
+#include "GU/GU_HoleInfo.h"
+
 
 namespace {
 const bool DBG = true;
@@ -25,11 +27,19 @@ void HoudiniGeometry::setUVs(float* u, float* v, size_t size) {
 	// TODO
 }
 
-void HoudiniGeometry::setFaces(int* counts, size_t countsSize, int* connects, size_t connectsSize, int* uvCounts, size_t uvCountsSize, int* uvConnects, size_t uvConnectsSize) {
+void HoudiniGeometry::setFaces(
+	int32_t* counts, size_t countsSize,
+	int32_t* connects, size_t connectsSize,
+	int32_t* uvCounts, size_t uvCountsSize,
+	int32_t* uvConnects, size_t uvConnectsSize,
+	int32_t* holes, size_t holesSize
+) {
 	for (size_t ci = 0; ci < countsSize; ci++)
 		mPolyCounts.append(counts[ci]);
 	mIndices.reserve(connectsSize);
 	mIndices.insert(mIndices.end(), connects, connects+connectsSize);
+	if (holes && holesSize > 0)
+		mHoles.insert(mHoles.end(), holes, holes+holesSize);
 }
 
 void HoudiniGeometry::createMesh(const wchar_t* name) {
@@ -61,6 +71,28 @@ void HoudiniGeometry::finishMesh() {
 	if (DBG) LOG_DBG << "finishMesh begin";
 	GA_IndexMap::Marker marker(mDetail->getPrimitiveMap());
 	mCurOffset = GU_PrimPoly::buildBlock(mDetail, &mPoints[0], mPoints.size(), mPolyCounts, &mIndices[0]);
+
+#if 0 // keep disabled until hole support for initial shapes is completed
+	static const int32_t HOLE_DELIM = std::numeric_limits<int32_t>::max();
+	std::vector<int32_t> holeFaceIndices;
+	int32_t faceIdx = 0;
+	for (size_t hi = 0; hi < mHoles.size(); hi++) {
+		if (mHoles[hi] == HOLE_DELIM) {
+			GEO_Primitive* holeOwner = mDetail->getGEOPrimitiveByIndex(faceIdx);
+			for (int32_t hfi: holeFaceIndices) {
+				GEO_Primitive* holePrim = mDetail->getGEOPrimitiveByIndex(hfi);
+				GU_HoleInfo holeInfo(holePrim);
+				holeInfo.setPromotedFace(static_cast<GEO_Face*>(holeOwner));
+				holeInfo.setReversed();
+			}
+			holeFaceIndices.clear();
+			faceIdx++;
+			continue;
+		}
+		holeFaceIndices.push_back(mHoles[hi]);
+	}
+#endif
+
 	mCurGroup->addRange(marker.getRange());
 	mPolyCounts.clear();
 	mIndices.clear();
