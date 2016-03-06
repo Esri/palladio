@@ -36,7 +36,7 @@ public:
 
 private:
 	void convertGeometry(
-		const wchar_t* isName,
+		const prtx::InitialShape& initialShape,
 		const prtx::GeometryPtrVector& geometries,
 		const std::vector<prtx::MaterialPtrVector>& mat,
 		HoudiniCallbacks* callbacks

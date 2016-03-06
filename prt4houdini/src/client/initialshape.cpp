@@ -143,19 +143,25 @@ void InitialShapeGenerator::createInitialShapes(
 
 		// loop over all primitives inside partition
 		for (const auto& p: pIt->second) {
-			if (DBG) LOG_DBG << "   -- prim index " << p->getMapIndex();
+			if (DBG) {
+				LOG_DBG << "   -- prim index " << p->getMapIndex();
+				LOG_DBG << p->getTypeName() << ", id = " << p->getTypeId().get();
+			}
+
+			if (p->getTypeId() != GA_PRIMPOLYSOUP && p->getTypeId() != GA_PRIMPOLY)
+				continue;
 
 			// naively copying vertices
 			// prt does not support re-using a vertex index (revisit this with prt 1.6)
 			const GU_PrimPoly* face = static_cast<const GU_PrimPoly*>(p);
-				for (GA_Size i = face->getFastVertexCount()-1; i >= 0; i--) {
-					idx.push_back(static_cast<uint32_t>(vtx.size()/3));
-					UT_Vector3 p = gdp->getPos3(face->getPointIndex(i));
-					vtx.push_back(static_cast<double>(p.x()));
-					vtx.push_back(static_cast<double>(p.y()));
-					vtx.push_back(static_cast<double>(p.z()));
-					if (DBG) LOG_DBG << "      vtx idx " << i << ": " << idx.back();
-				}
+			for (GA_Size i = face->getVertexCount()-1; i >= 0; i--) {
+				idx.push_back(static_cast<uint32_t>(vtx.size()/3));
+				UT_Vector3 p = gdp->getPos3(face->getPointOffset(i));
+				vtx.push_back(static_cast<double>(p.x()));
+				vtx.push_back(static_cast<double>(p.y()));
+				vtx.push_back(static_cast<double>(p.z()));
+				if (DBG) LOG_DBG << "      vtx idx " << i << ": " << idx.back();
+			}
 			faceCounts.push_back(static_cast<uint32_t>(face->getFastVertexCount()));
 
 			// extract primitive attributes
@@ -222,6 +228,9 @@ void InitialShapeGenerator::createInitialShapes(
 				} // setAttributes?
 			} // for each user attr
 		} // for each prim
+
+		if (vtx.empty() || idx.empty() || faceCounts.empty())
+			continue;
 
 		mISB->setGeometry(
 			vtx.data(), vtx.size(),

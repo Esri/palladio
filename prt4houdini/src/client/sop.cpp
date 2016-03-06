@@ -62,18 +62,38 @@ const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
 const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
 const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 
-// objects with same lifetime as PRT process
-const prt::Object* prtLicHandle = 0;
+// global objects (= non sop) tied to PRT "lifetime" (actually, the license lifetime)
+struct PRTContext {
+	PRTContext()
+		: mLicHandle(nullptr)
+		, mRPKUnpackPath(boost::filesystem::temp_directory_path() / "prt4houdini")
+	{ }
+
+	~PRTContext() {
+		if (mLicHandle) {
+			mLicHandle->destroy();
+			LOG_INF << "PRT license destroyed.";
+		}
+
+		boost::filesystem::remove_all(mRPKUnpackPath);
+		LOG_INF << "Removed RPK unpack directory.";
+	}
+
+	const prt::Object* mLicHandle; // TODO: use PRTObjectPtr...
+	boost::filesystem::path mRPKUnpackPath;
+};
+
+std::unique_ptr<PRTContext> prtCtx;
 
 void dsoExit(void*) {
-	if (prtLicHandle)
-		prtLicHandle->destroy(); // prt shutdown
+	prtCtx.reset();
 }
 
 } // namespace anonymous
 
 
 void newSopOperator(OP_OperatorTable *table) {
+	if (!prtCtx) prtCtx.reset(new PRTContext());
 	UT_Exit::addExitCallback(dsoExit);
 
 	boost::filesystem::path sopPath;
@@ -90,9 +110,9 @@ void newSopOperator(OP_OperatorTable *table) {
 	const wchar_t* extPaths[] = { libPath.c_str() };
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
+	prtCtx->mLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
 
-	if (prtLicHandle == 0 || status != prt::STATUS_OK)
+	if (!prtCtx->mLicHandle || status != prt::STATUS_OK)
 		return;
 
 	const size_t minSources = 1;
@@ -321,8 +341,7 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 
 	// rebuild assets map
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	boost::filesystem::path unpackPath = boost::filesystem::temp_directory_path();
-	ResolveMapPtr nextResolveMap(prt::createResolveMap(nextRPKURI.c_str(), unpackPath.wstring().c_str(), &status));
+	ResolveMapPtr nextResolveMap(prt::createResolveMap(nextRPKURI.c_str(), prtCtx->mRPKUnpackPath.wstring().c_str(), &status));
 	if (!nextResolveMap || status != prt::STATUS_OK) {
 		LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
 		return false;
@@ -373,6 +392,7 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	// update node
 	mInitialShapeContext.mRPK = nextRPK;
 	mInitialShapeContext.mAssetsMap.swap(nextResolveMap);
+	LOG_DBG << utils::objectToXML(mInitialShapeContext.mAssetsMap.get());
 	mPRTCache->flushAll();
 	{
 		mInitialShapeContext.mRuleFile = cgbKey;

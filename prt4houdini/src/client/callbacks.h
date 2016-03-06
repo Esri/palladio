@@ -32,19 +32,22 @@ public:
 	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr);
 
 protected:
-	virtual void setVertices(double* vtx, size_t size);
-	virtual void setNormals(double* nrm, size_t size);
-	virtual void setUVs(float* u, float* v, size_t size);
+	virtual void setVertices(const double* vtx, size_t size);
+	virtual void setNormals(const double* nrm, size_t size);
+	virtual void setUVs(const double* uvs, size_t size);
 	virtual void setFaces(
 		int32_t* counts, size_t countsSize,
 		int32_t* connects, size_t connectsSize,
-		int32_t* uvCounts, size_t uvCountsSize,
-		int32_t* uvConnects, size_t uvConnectsSize,
+		uint32_t* uvCounts, size_t uvCountsSize,
+		uint32_t* uvConnects, size_t uvConnectsSize,
 		int32_t* holes, size_t holesSize
 	);
+	virtual void setMaterials(
+			const uint32_t* faceRanges,
+			const prt::AttributeMap** materials,
+			size_t size
+	);
 	virtual void createMesh(const wchar_t* name);
-	virtual void matSetColor(int start, int count, float r, float g, float b);
-	virtual void matSetDiffuseTexture(int start, int count, const wchar_t* tex);
 	virtual void finishMesh();
 
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message);
@@ -60,11 +63,12 @@ protected:
 
 private:
 	GU_Detail* mDetail;
-	GA_Offset mCurOffset;
+	GA_Offset mCurrentPrimitiveStartOffset;
 	GA_PrimitiveGroup* mCurGroup;
-	std::vector<UT_Vector3> mPoints;
+	std::vector<UT_Vector3> mPoints, mNormals, mUVs;
 	std::vector<int32_t> mIndices, mHoles;
 	GEO_PolyCounts mPolyCounts;
+	std::vector<uint32_t> mUVCounts, mUVIndices;
 
 	prt::AttributeMapBuilder* const mEvalAttrBuilder;
 };
