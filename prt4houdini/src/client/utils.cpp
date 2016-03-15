@@ -3,7 +3,15 @@
 #include "prt/API.h"
 #include "prt/StringUtils.h"
 
+#ifndef _WIN32
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
 #include "boost/algorithm/string.hpp"
+#include "boost/filesystem.hpp"
+#ifndef _WIN32
+#	pragma GCC diagnostic pop
+#endif
 
 #ifdef _WIN32
 #	include <Windows.h>

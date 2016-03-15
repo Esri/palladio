@@ -5,17 +5,9 @@
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
 
-#ifndef _WIN32
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#include "boost/filesystem.hpp"
-#ifndef _WIN32
-#	pragma GCC diagnostic pop
-#endif
-
 #include <string>
 
+namespace boost { namespace filesystem { class path; } }
 
 namespace p4h {
 
@@ -58,5 +50,5 @@ std::string toUTF8FromOSNarrow(const std::string& osString);
 std::wstring toFileURI(const boost::filesystem::path& p);
 std::wstring percentEncode(const std::string& utf8String);
 
-}
-}
+} // namespace utils
+} // namespace p4h

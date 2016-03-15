@@ -192,7 +192,7 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 
 			occlSet->dispose(occlHandles.data(), occlHandles.size());
 		}
-		select(GU_SPrimitive);
+		select();
 	}
 
 	unlockInputs();
