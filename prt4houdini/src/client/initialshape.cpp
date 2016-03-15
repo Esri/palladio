@@ -47,13 +47,11 @@ struct PrimitivePartition {
 	void add(GA_Detail* gdp, GA_Primitive* p) {
 		if (PDBG) LOG_DBG << "      adding prim: " << gdp->primitiveIndex(p->getMapOffset());
 
-		// if classification attr is missing, we exit early
 		if (mClsAttr.isInvalid()) {
-			if (PDBG) LOG_DBG << "       missing cls attr!";
-			return;
+			mPrimitives[int64_t(-1)].push_back(p);
+			if (PDBG) LOG_DBG << "       missing cls attr: adding prim to fallback shape!";
 		}
-
-		if ((mClsType == GA_STORECLASS_FLOAT) && mClsAttr.isFloat()) {
+		else if ((mClsType == GA_STORECLASS_FLOAT) && mClsAttr.isFloat()) {
 			GA_ROHandleD av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
 			if (av.isValid()) {
 				fpreal64 v = av.get(p->getMapOffset());
@@ -113,7 +111,7 @@ void InitialShapeGenerator::createInitialShapes(
 	// try to find primitive partitioning attribute
 	GA_ROAttributeRef shapeClsAttrRef;
 	GA_ROAttributeRef r(gdp->findPrimitiveAttribute(isCtx.mShapeClsAttrName.buffer()));
-	if (r->getStorageClass() == isCtx.mShapeClsType)
+	if (r.isValid() && r->getStorageClass() == isCtx.mShapeClsType)
 		shapeClsAttrRef = r;
 
 	// partition primitives by shapeClsAttrRef value
