@@ -8,7 +8,7 @@ set(PROJECT prt4houdini)
 project(${PROJECT})
 
 set(P4H_VERSION_MAJOR 0)
-set(P4H_VERSION_MINOR 5)
+set(P4H_VERSION_MINOR 6)
 set(P4H_VERSION_MICRO 0) #TODO
 
 
@@ -74,7 +74,7 @@ if(P4H_WINDOWS)
 	set(CMAKE_CXX_FLAGS_Release "-O2 -DNDEBUG -MD -GR -bigobj")
 	add_definitions(${P4H_SESI_TAG} -DMAKING_DSO -DI386 -DWIN32 -DSWAP_BITFIELDS -D_WIN32_WINNT=0x0502 -DNOMINMAX -DSTRICT -DWIN32_LEAN_AND_MEAN -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DBOOST_ALL_NO_LIB -DSESI_LITTLE_ENDIAN -DAMD64 -DSIZEOF_VOID_P=8 -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
 elseif(P4H_LINUX)
-	set(CMAKE_CXX_FLAGS "-std=c++11 -Wl,-rpath,${HOUDINI_ROOT}/dsolib -m64 -fPIC -Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder -Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated -fno-strict-aliasing")
+	set(CMAKE_CXX_FLAGS "-std=c++11 -Wl,-rpath,${HOUDINI_ROOT}/dsolib -m64 -fPIC -Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder -Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated -fno-strict-aliasing -Wno-unused-local-typedefs")
 	set(CMAKE_CXX_FLAGS_Release "-O2")
 	set(CMAKE_CXX_FLAGS_RelWithDebInfo "-O2 -g")
 	set(CMAKE_CXX_FLAGS_Debug "-O0 -g")
