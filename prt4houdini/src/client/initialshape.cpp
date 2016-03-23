@@ -66,7 +66,7 @@ struct PrimitivePartition {
 			GA_ROHandleID av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
 			if (av.isValid()) {
 				int64 v = av.get(p->getMapOffset());
-				LOG_DBG << "        got int classifier value: " << v;
+				if (PDBG) LOG_DBG << "        got int classifier value: " << v;
 				mPrimitives[v].push_back(p);
 			}
 			else {
@@ -77,9 +77,14 @@ struct PrimitivePartition {
 			GA_ROHandleS av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
 			if (av.isValid()) {
 				const char* v = av.get(p->getMapOffset());
-				assert(v != nullptr);
-				LOG_DBG << "        got string classifier value: " << v;
-				mPrimitives[UT_String(v)].push_back(p);
+				if (v) {
+					if (PDBG) LOG_DBG << "        got string classifier value: " << v;
+					mPrimitives[UT_String(v)].push_back(p);
+				}
+				else {
+					mPrimitives[int64_t(-1)].push_back(p);
+					LOG_WRN << "shape classifier attribute has empty string value -> fallback shape";
+				}
 			}
 			else {
 				if (PDBG) LOG_DBG << "        string: invalid handle!";

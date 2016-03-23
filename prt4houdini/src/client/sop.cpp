@@ -266,7 +266,6 @@ bool SOP_PRT::handleParams(OP_Context &context) {
 
 	// -- logger
 	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
-	std::cout << "got log level = " << ll << std::endl;
 	mLogHandler->setLevel(ll);
 	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
