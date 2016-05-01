@@ -54,7 +54,7 @@ private:
 private:
 	InitialShapeContext			mInitialShapeContext;
 
-	CacheObjectPtr 				mPRTCache;
+	CacheObjectPtr 				mPRTCache; // TODO: global cache better? -> move to PRTContext
 	AttributeMapPtr				mHoudiniEncoderOptions;
 	AttributeMapPtr				mCGAPrintOptions;
 	AttributeMapPtr				mCGAErrorOptions;

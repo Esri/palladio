@@ -16,6 +16,7 @@
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
 #include "UT/UT_Vector3.h"
+#include "UT/UT_Interrupt.h"
 
 #ifdef P4H_TC_GCC
 #	pragma GCC diagnostic pop
@@ -23,13 +24,14 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 
 namespace p4h {
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
-	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr);
+	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr, UT_AutoInterrupt* autoInterrupt = nullptr);
 
 protected:
 	virtual void add(
@@ -57,9 +59,20 @@ protected:
 	virtual prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value);
 	virtual prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value);
 
+	virtual prt::Callbacks::Continuation progress(float percentageCompleted) {
+		if (mAutoInterrupt && mAutoInterrupt->wasInterrupted())
+			return prt::Callbacks::CANCEL_AND_FINISH;
+		return prt::Callbacks::progress(percentageCompleted);
+	}
+
 private:
 	GU_Detail* mDetail;
 	prt::AttributeMapBuilder* const mEvalAttrBuilder;
+	std::mutex mMutex;
+	UT_AutoInterrupt* mAutoInterrupt;
+
+public:
+	double mTime;
 };
 
 } // namespace p4h

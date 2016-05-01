@@ -3,6 +3,8 @@
 
 #include "GU/GU_HoleInfo.h"
 
+#include <chrono>
+
 
 namespace {
 const bool DBG = false;
@@ -76,8 +78,8 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 
 namespace p4h {
 
-HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab)
-: mDetail(gdp), mEvalAttrBuilder(eab) { }
+HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab, UT_AutoInterrupt* autoInterrupt)
+: mDetail(gdp), mEvalAttrBuilder(eab), mAutoInterrupt(autoInterrupt) { }
 
 void HoudiniGeometry::add(
 		const wchar_t* name,
@@ -92,6 +94,10 @@ void HoudiniGeometry::add(
 		const prt::AttributeMap** materials, size_t materialsSize,
 		const uint32_t* faceRanges
 ) {
+	std::lock_guard<std::mutex> guard(mMutex); // protect all mDetail accesses
+
+	std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
 	std::vector<UT_Vector3> utPoints, utNormals, utUVs;
 
 	utPoints.reserve(vtxSize / 3);
@@ -214,6 +220,9 @@ void HoudiniGeometry::add(
 			}
 		}
 	}
+
+	std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+	mTime += std::chrono::duration<double>(end - start).count();
 }
 
 prt::Status HoudiniGeometry::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {

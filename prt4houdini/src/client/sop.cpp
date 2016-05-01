@@ -43,6 +43,8 @@
 #include <vector>
 #include <cwchar>
 #include <thread>
+#include <chrono>
+#include <future>
 
 
 namespace {
@@ -67,7 +69,10 @@ struct PRTContext {
 	PRTContext()
 		: mLicHandle(nullptr)
 		, mRPKUnpackPath(boost::filesystem::temp_directory_path() / "prt4houdini")
-	{ }
+	{
+		mCores = std::thread::hardware_concurrency();
+		mCores = (mCores == 0) ? 1 : mCores;
+	}
 
 	~PRTContext() {
 		if (mLicHandle) {
@@ -81,6 +86,7 @@ struct PRTContext {
 
 	const prt::Object* mLicHandle; // TODO: use PRTObjectPtr...
 	boost::filesystem::path mRPKUnpackPath;
+	int8_t mCores;
 };
 
 std::unique_ptr<PRTContext> prtCtx;
@@ -160,10 +166,8 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
 #endif
 
-	int32_t cores = std::thread::hardware_concurrency();
-	if (cores == 0) cores = 1;
 	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
-	amb->setInt(L"numberWorkerThreads", cores);
+	amb->setInt(L"numberWorkerThreads", prtCtx->mCores);
 	mGenerateOptions.reset(amb->createAttributeMapAndReset());
 }
 
@@ -185,34 +189,76 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 	duplicateSource(0, context);
 
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
-		UT_AutoInterrupt progress("Generating CityEngine Geometry...");
+		UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
+		std::chrono::time_point<std::chrono::system_clock> start, end;
+
+		start = std::chrono::system_clock::now();
 		updateUserAttributes();
+		end = std::chrono::system_clock::now();
+		LOG_INF << "updateUserAttributes took " << std::chrono::duration<double>(end - start).count() << "s\n";
+
+		start = std::chrono::system_clock::now();
 		InitialShapeGenerator isc(gdp, mInitialShapeContext);
-		gdp->clearAndDestroy();
-		{
-			HoudiniGeometry hg(gdp);
-			InitialShapeNOPtrVector& initialShapes = isc.getInitialShapes();
+		end = std::chrono::system_clock::now();
+		LOG_INF << "InitialShapeGenerator took " << std::chrono::duration<double>(end - start).count() << "s\n";
 
-			OcclusionSetPtr occlSet(prt::OcclusionSet::create());
-			std::vector<prt::OcclusionSet::Handle> occlHandles(initialShapes.size());
-			prt::generateOccluders(
-					initialShapes.data(), initialShapes.size(), occlHandles.data(), nullptr, 0,
-					nullptr, &hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
-			);
+		if (!progress.wasInterrupted()) {
+			gdp->clearAndDestroy();
+			{
+				HoudiniGeometry hg(gdp, nullptr, &progress);
+				hg.mTime = 0.0;
 
-			prt::Status stat = prt::generate(
-					initialShapes.data(), initialShapes.size(), 0,
-					mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
-					&hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
-			);
-			if(stat != prt::STATUS_OK) {
-				LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
+				InitialShapeNOPtrVector& is = isc.getInitialShapes();
+
+				start = std::chrono::system_clock::now();
+
+				const uint32_t nThreads = 2 * prtCtx->mCores; // TODO: find good thread load
+				std::vector<std::future<void>> futures;
+				const uint32_t partSize = std::ceil(is.size() / nThreads);
+				LOG_INF << "generate: #initial shapes = " << is.size() << ", #threads = " << nThreads <<
+				", initial shapes per thread = " << partSize;
+				for (int8_t ti = 0; ti < nThreads; ti++) {
+					auto f = std::async(
+							std::launch::async, [this, &hg, ti, &nThreads, &partSize, &is] {
+								auto pb = is.cbegin() + ti * partSize;
+								auto pe = (ti < nThreads - 1) ? is.cbegin() + (ti + 1) * partSize : is.cend();
+								InitialShapeNOPtrVector isPart(pb, pe); // TODO: can be avoided
+
+								LOG_INF << "thread " << ti << ": #is = " << isPart.size();
+
+								// TODO: add occlusion neighborhood!!!
+								OcclusionSetPtr occlSet(prt::OcclusionSet::create());
+								std::vector<prt::OcclusionSet::Handle> occlHandles(isPart.size());
+								prt::generateOccluders(
+										isPart.data(), isPart.size(), occlHandles.data(), nullptr, 0,
+										nullptr, &hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
+								);
+
+								prt::Status stat = prt::generate(
+										isPart.data(), isPart.size(), 0,
+										mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
+										&hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
+								);
+								if (stat != prt::STATUS_OK) {
+									LOG_ERR << "prt::generate() failed with status: '" <<
+									prt::getStatusDescription(stat) << "' (" << stat << ")";
+								}
+
+								occlSet->dispose(occlHandles.data(), occlHandles.size());
+							}
+					);
+					futures.emplace_back(std::move(f));
+				}
+
+				std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
+
+				end = std::chrono::system_clock::now();
+				LOG_INF << "generate took " << std::chrono::duration<double>(end - start).count() <<
+				"s (converting geo took " << hg.mTime << "s)";
 			}
-
-			occlSet->dispose(occlHandles.data(), occlHandles.size());
+			select();
 		}
-		select();
 	}
 
 	unlockInputs();
