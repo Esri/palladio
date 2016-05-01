@@ -32,23 +32,19 @@ public:
 	HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab = nullptr);
 
 protected:
-	virtual void setVertices(const double* vtx, size_t size);
-	virtual void setNormals(const double* nrm, size_t size);
-	virtual void setUVs(const double* uvs, size_t size);
-	virtual void setFaces(
-		int32_t* counts, size_t countsSize,
-		int32_t* connects, size_t connectsSize,
-		uint32_t* uvCounts, size_t uvCountsSize,
-		uint32_t* uvConnects, size_t uvConnectsSize,
-		int32_t* holes, size_t holesSize
+	virtual void add(
+			const wchar_t* name,
+			const double* vtx, size_t vtxSize,
+			const double* nrm, size_t nrmSize,
+			const double* uvs, size_t uvsSize,
+			int32_t* counts, size_t countsSize,
+			int32_t* indices, size_t indicesSize,
+			uint32_t* uvCounts, size_t uvCountsSize,
+			uint32_t* uvIndices, size_t uvIndicesSize,
+			int32_t* holes, size_t holesSize,
+			const prt::AttributeMap** materials, size_t materialsSize,
+			const uint32_t* faceRanges
 	);
-	virtual void setMaterials(
-			const uint32_t* faceRanges,
-			const prt::AttributeMap** materials,
-			size_t size
-	);
-	virtual void createMesh(const wchar_t* name);
-	virtual void finishMesh();
 
 	virtual prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message);
 	virtual prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message);
@@ -63,13 +59,6 @@ protected:
 
 private:
 	GU_Detail* mDetail;
-	GA_Offset mCurrentPrimitiveStartOffset;
-	GA_PrimitiveGroup* mCurGroup;
-	std::vector<UT_Vector3> mPoints, mNormals, mUVs;
-	std::vector<int32_t> mIndices, mHoles;
-	GEO_PolyCounts mPolyCounts;
-	std::vector<uint32_t> mUVCounts, mUVIndices;
-
 	prt::AttributeMapBuilder* const mEvalAttrBuilder;
 };
 

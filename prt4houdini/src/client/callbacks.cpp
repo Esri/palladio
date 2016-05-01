@@ -1,52 +1,11 @@
 #include "client/callbacks.h"
+#include "client/utils.h"
 
 #include "GU/GU_HoleInfo.h"
 
 
 namespace {
 const bool DBG = false;
-}
-
-namespace p4h {
-
-HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab)
-: mDetail(gdp), mEvalAttrBuilder(eab), mCurrentPrimitiveStartOffset{0} { }
-
-void HoudiniGeometry::setVertices(const double* vtx, size_t size) {
-	mPoints.reserve(size / 3);
-	for (size_t pi = 0; pi < size; pi += 3)
-		mPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
-}
-
-void HoudiniGeometry::setNormals(const double* nrm, size_t size) {
-	mNormals.reserve(size / 3);
-	for (size_t pi = 0; pi < size; pi += 3)
-		mNormals.push_back(UT_Vector3(nrm[pi], nrm[pi+1], nrm[pi+2]));
-}
-
-void HoudiniGeometry::setUVs(const double* uvs, size_t size) {
-	mUVs.reserve(size / 2);
-	for (size_t pi = 0; pi < size; pi += 2)
-		mUVs.push_back(UT_Vector3(uvs[pi], uvs[pi+1], 0.0));
-}
-
-void HoudiniGeometry::setFaces(
-	int32_t* counts, size_t countsSize,
-	int32_t* connects, size_t connectsSize,
-	uint32_t* uvCounts, size_t uvCountsSize,
-	uint32_t* uvIndices, size_t uvIndicesSize,
-	int32_t* holes, size_t holesSize
-) {
-	for (size_t ci = 0; ci < countsSize; ci++)
-		mPolyCounts.append(counts[ci]);
-	mIndices.assign(connects, connects+connectsSize);
-	mUVCounts.assign(uvCounts, uvCounts+uvCountsSize);
-	mUVIndices.assign(uvIndices, uvIndices+uvIndicesSize);
-	if (holes && holesSize > 0)
-		mHoles.assign(holes, holes+holesSize);
-}
-
-namespace {
 
 typedef std::map<std::wstring, GA_RWHandleS> StringHandles; // prt string
 typedef std::map<std::wstring, GA_RWHandleI> IntHandles; // prt int32_t -> int32_t
@@ -65,7 +24,7 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 	wchar_t const* const* keys = m->getKeys(&keyCount);
 	for(size_t k = 0; k < keyCount; k++) {
 		wchar_t const* const key = keys[k];
-		std::string nKey = utils::toOSNarrowFromUTF16(key);
+		std::string nKey = p4h::utils::toOSNarrowFromUTF16(key);
 		std::replace(nKey.begin(), nKey.end(), '.', '_');
 		if (DBG) LOG_DBG << "nKey = " << nKey;
 		switch(m->getType(key)) {
@@ -114,92 +73,64 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 
 } // namespace
 
-/**
- * @param faceRanges contains rangeCount+1 values
- * @param materials pre-condition: all materials must have an identical set of keys and types
- */
-void HoudiniGeometry::setMaterials(
-		const uint32_t* faceRanges, // materialsCount+1 values
-		const prt::AttributeMap** materials,
-		size_t materialsCount
+
+namespace p4h {
+
+HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab)
+: mDetail(gdp), mEvalAttrBuilder(eab) { }
+
+void HoudiniGeometry::add(
+		const wchar_t* name,
+		const double* vtx, size_t vtxSize,
+		const double* nrm, size_t nrmSize,
+		const double* uvs, size_t uvsSize,
+		int32_t* counts, size_t countsSize,
+		int32_t* indices, size_t indicesSize,
+		uint32_t* uvCounts, size_t uvCountsSize,
+		uint32_t* uvIndices, size_t uvIndicesSize,
+		int32_t* holes, size_t holesSize,
+		const prt::AttributeMap** materials, size_t materialsSize,
+		const uint32_t* faceRanges
 ) {
-	if (materialsCount == 0)
-		return;
-	if (DBG) LOG_DBG << "setMaterials: materialsCount = " << materialsCount;
+	std::vector<UT_Vector3> utPoints, utNormals, utUVs;
 
-	// setup houdini attribute handles based on first material keys & types
-	HandleMaps hm;
-	setupHandles(mDetail, materials[0], hm);
+	utPoints.reserve(vtxSize / 3);
+	for (size_t pi = 0; pi < vtxSize; pi += 3)
+		utPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
 
-	// assign attribute values per face range
-	for (size_t r = 0; r < materialsCount; r++) {
-		GA_Offset rangeStart = mCurrentPrimitiveStartOffset + faceRanges[r];
-		GA_Offset rangePastEnd = mCurrentPrimitiveStartOffset + faceRanges[r+1]; // faceRanges contains materialsCount+1 values
-		const prt::AttributeMap* m = materials[r];
+	utNormals.reserve(nrmSize / 3);
+	for (size_t pi = 0; pi < nrmSize; pi += 3)
+		utNormals.push_back(UT_Vector3(nrm[pi], nrm[pi+1], nrm[pi+2]));
 
-		for (auto& h: hm.mStrings) {
-			std::string nv;
-			const wchar_t* v = m->getString(h.first.c_str());
-			if (v && std::wcslen(v) > 0) {
-				nv = utils::toOSNarrowFromUTF16(v);
-			}
-			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-				h.second.set(off, nv.c_str());
-			if (DBG) LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangePastEnd << "): " << h.second.getAttribute()->getName() << " = " << nv;
-		}
+	utUVs.reserve(uvsSize / 2);
+	for (size_t pi = 0; pi < uvsSize; pi += 2)
+		utUVs.push_back(UT_Vector3(uvs[pi], uvs[pi+1], 0.0));
 
-		for (auto& h: hm.mFloats) {
-			float v = m->getFloat(h.first.c_str());
-			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-				h.second.set(off, v);
-			if (DBG) LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " << h.second.getAttribute()->getName() << " = " << v;
-		}
+	GEO_PolyCounts geoPolyCounts;
+	for (size_t ci = 0; ci < countsSize; ci++)
+		geoPolyCounts.append(counts[ci]);
 
-		for (auto& h: hm.mInts) {
-			int32_t v = m->getInt(h.first.c_str());
-			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-				h.second.set(off, v);
-			if (DBG) LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " << h.second.getAttribute()->getName() << " = " << v;
-		}
-
-		for (auto& h: hm.mBools) {
-			bool v = m->getBool(h.first.c_str());
-			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-				h.second.set(off, v ? 1 : 0);
-			if (DBG) LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangePastEnd << "): " << h.second.getAttribute()->getName() << " = " << v;
-		}
-	}
-}
-
-/**
- *
- */
-void HoudiniGeometry::createMesh(const wchar_t* name) {
 	std::string nname = p4h::utils::toOSNarrowFromUTF16(name);
-	mCurGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
-	if (DBG) LOG_DBG << "createMesh: " << nname;
-}
+	GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
 
-void HoudiniGeometry::finishMesh() {
-	if (DBG) LOG_DBG << "finishMesh begin";
 	GA_Detail::OffsetMarker marker(*mDetail);
-	mCurrentPrimitiveStartOffset = GU_PrimPoly::buildBlock(mDetail, mPoints.data(), mPoints.size(), mPolyCounts, mIndices.data());
+	GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts, indices);
 
-	if (!mNormals.empty()) {
+	if (!utNormals.empty()) {
 		uint32_t ii = 0;
 		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX));
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++ii) {
-			nrmh.set(it.getOffset(), mNormals[mIndices[ii]]);
+			nrmh.set(it.getOffset(), utNormals[indices[ii]]);
 		}
 	}
 
-	if (!mUVs.empty()) {
+	if (!utUVs.empty()) {
 		GA_RWHandleV3 txth(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX));
 		uint32_t vi = 0;
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
-			uint32_t uvIdx = mUVIndices[vi];
+			uint32_t uvIdx = uvIndices[vi];
 			if (uvIdx < uint32_t(-1)) {
-				const UT_Vector3& v = mUVs[uvIdx];
+				const UT_Vector3& v = utUVs[uvIdx];
 				txth.set(it.getOffset(), v);
 			}
 		}
@@ -227,16 +158,62 @@ void HoudiniGeometry::finishMesh() {
 	}
 #endif
 
-	mCurGroup->addRange(marker.primitiveRange());
-	mPolyCounts.clear();
-	mIndices.clear();
-	mHoles.clear();
-	mUVIndices.clear();
-	mUVCounts.clear();
-	mPoints.clear();
-	mNormals.clear();
-	mUVs.clear();
-	if (DBG) LOG_DBG << "finishMesh done";
+	primGroup->addRange(marker.primitiveRange());
+
+	if (DBG) LOG_DBG << "materials: materialsSize = " << materialsSize;
+	if (materialsSize > 0) {
+
+		// setup houdini attribute handles based on first material keys & types
+		HandleMaps hm;
+		setupHandles(mDetail, materials[0], hm);
+
+		// assign attribute values per face range
+		for (size_t r = 0; r < materialsSize; r++) {
+			GA_Offset rangeStart = primStartOffset + faceRanges[r];
+			GA_Offset rangePastEnd = primStartOffset + faceRanges[r + 1]; // faceRanges contains faceRangeCount+1 values
+			const prt::AttributeMap* m = materials[r];
+
+			for (auto& h: hm.mStrings) {
+				std::string nv;
+				const wchar_t* v = m->getString(h.first.c_str());
+				if (v && std::wcslen(v) > 0) {
+					nv = utils::toOSNarrowFromUTF16(v);
+				}
+				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+					h.second.set(off, nv.c_str());
+				if (DBG)
+					LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+					h.second.getAttribute()->getName() << " = " << nv;
+			}
+
+			for (auto& h: hm.mFloats) {
+				float v = m->getFloat(h.first.c_str());
+				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+					h.second.set(off, v);
+				if (DBG)
+					LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+					h.second.getAttribute()->getName() << " = " << v;
+			}
+
+			for (auto& h: hm.mInts) {
+				int32_t v = m->getInt(h.first.c_str());
+				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+					h.second.set(off, v);
+				if (DBG)
+					LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+					h.second.getAttribute()->getName() << " = " << v;
+			}
+
+			for (auto& h: hm.mBools) {
+				bool v = m->getBool(h.first.c_str());
+				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+					h.second.set(off, v ? 1 : 0);
+				if (DBG)
+					LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+					h.second.getAttribute()->getName() << " = " << v;
+			}
+		}
+	}
 }
 
 prt::Status HoudiniGeometry::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {

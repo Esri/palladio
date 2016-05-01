@@ -256,25 +256,6 @@ void HoudiniEncoder::convertGeometry(
 		}
 	}
 
-	hc->setVertices(coords.data(), coords.size());
-
-	if (!uvCoords.empty())
-		hc->setUVs(uvCoords.data(), uvCoords.size());
-
-	if (!normals.empty())
-		hc->setNormals(normals.data(), normals.size());
-
-	hc->setFaces(
-			faceCounts.data(), faceCounts.size(),
-			vertexIndices.data(), vertexIndices.size(),
-			uvCounts.data(), uvCounts.size(),
-			uvIndices.data(), uvIndices.size(),
-			holes.data(), holes.size()
-	);
-
-	hc->createMesh(initialShape.getName());
-	hc->finishMesh();
-
 	//log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
 	log_debug("encoder #materials = %s") % mats.size();
 
@@ -296,7 +277,19 @@ void HoudiniEncoder::convertGeometry(
 			faceCount += meshes[mi]->getFaceCount();
 	}
 	faceRanges.push_back(faceCount); // close last range
-	hc->setMaterials(faceRanges.data(), matAttrMaps.data(), matAttrMaps.size());
+
+	hc->add(initialShape.getName(),
+			coords.data(), coords.size(),
+			normals.data(), normals.size(),
+			uvCoords.data(), uvCoords.size(),
+			faceCounts.data(), faceCounts.size(),
+			vertexIndices.data(), vertexIndices.size(),
+			uvCounts.data(), uvCounts.size(),
+			uvIndices.data(), uvIndices.size(),
+			holes.data(), holes.size(),
+			matAttrMaps.data(), matAttrMaps.size(),
+			faceRanges.data()
+	);
 
 	for (std::vector<const prt::AttributeMap*>::iterator it = matAttrMaps.begin(); it != matAttrMaps.end(); ++it)
 		(*it)->destroy();
