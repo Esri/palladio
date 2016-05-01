@@ -33,16 +33,14 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs14.0.474/toolkit/include" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/codec" />
-          <root url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/include" />
-          <root url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/include" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Release/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Release/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Debug/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Debug/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/MinSizeRel/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/MinSizeRel/codec" />
         </CLASSES>
         <SOURCES>
           <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include" />
@@ -50,16 +48,14 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs14.0.474/toolkit/include" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Release/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/Debug/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/client" />
-          <root url="file://$USER_HOME$/.CLion12/system/cmake/generated/db3a7ba0/db3a7ba0/MinSizeRel/codec" />
-          <root url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/include" />
-          <root url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/include" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Release/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Release/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Debug/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/Debug/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/RelWithDebInfo/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/RelWithDebInfo/codec" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/MinSizeRel/client" />
+          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-db3a7ba0/db3a7ba0/MinSizeRel/codec" />
         </SOURCES>
       </library>
     </orderEntry>
