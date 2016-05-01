@@ -40,6 +40,7 @@ link_directories(${Boost_LIBRARY_DIR})
 ### build target
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_CXX_FLAGS_Release "${CMAKE_CXX_FLAGS_Release} -O3")
 
 list(APPEND SOURCES houdini.cpp encoder/HoudiniEncoder.cpp)
 add_library(${PROJECT} SHARED ${SOURCES})
