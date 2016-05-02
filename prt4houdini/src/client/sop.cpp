@@ -45,6 +45,7 @@
 #include <thread>
 #include <chrono>
 #include <future>
+#include <algorithm>
 
 
 namespace {
@@ -185,7 +186,6 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		LOG_DBG << "lockInputs error";
 		return error();
 	}
-
 	duplicateSource(0, context);
 
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
@@ -206,39 +206,46 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 		if (!progress.wasInterrupted()) {
 			gdp->clearAndDestroy();
 			{
-				HoudiniGeometry hg(gdp, nullptr, &progress);
-				hg.mTime = 0.0;
-
 				InitialShapeNOPtrVector& is = isc.getInitialShapes();
 
-				start = std::chrono::system_clock::now();
-
+				// establish threads
 				const uint32_t nThreads = 2 * prtCtx->mCores; // TODO: find good thread load
+				const uint32_t isRangeSize = std::ceil(is.size() / nThreads);
+
+				// prt requires one callback instance per generate call
+				std::vector<std::unique_ptr<HoudiniGeometry>> hg(nThreads);
+				std::generate(hg.begin(), hg.end(), [&]() {
+					return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, nullptr, &progress));
+				});
+
+				LOG_INF << "calling generate: #initial shapes = " << is.size()
+				<< ", #threads = " << nThreads << ", initial shapes per thread = " << isRangeSize;
+
+				// kick-off generate threads
+				start = std::chrono::system_clock::now();
 				std::vector<std::future<void>> futures;
-				const uint32_t partSize = std::ceil(is.size() / nThreads);
-				LOG_INF << "generate: #initial shapes = " << is.size() << ", #threads = " << nThreads <<
-				", initial shapes per thread = " << partSize;
 				for (int8_t ti = 0; ti < nThreads; ti++) {
 					auto f = std::async(
-							std::launch::async, [this, &hg, ti, &nThreads, &partSize, &is] {
-								auto pb = is.cbegin() + ti * partSize;
-								auto pe = (ti < nThreads - 1) ? is.cbegin() + (ti + 1) * partSize : is.cend();
-								InitialShapeNOPtrVector isPart(pb, pe); // TODO: can be avoided
+							std::launch::async, [this, &hg, ti, &nThreads, &isRangeSize, &is] {
+								size_t isStartPos = ti * isRangeSize;
+								size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
+								size_t isActualRangeSize = isPastEndPos - isStartPos;
+								auto isRangeStart = &is[isStartPos];
 
-								LOG_INF << "thread " << ti << ": #is = " << isPart.size();
+								LOG_INF << "thread " << ti << ": #is = " << isActualRangeSize;
 
 								// TODO: add occlusion neighborhood!!!
 								OcclusionSetPtr occlSet(prt::OcclusionSet::create());
-								std::vector<prt::OcclusionSet::Handle> occlHandles(isPart.size());
+								std::vector<prt::OcclusionSet::Handle> occlHandles(isActualRangeSize);
 								prt::generateOccluders(
-										isPart.data(), isPart.size(), occlHandles.data(), nullptr, 0,
-										nullptr, &hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
+										isRangeStart, isActualRangeSize, occlHandles.data(), nullptr, 0,
+										nullptr, hg[ti].get(), mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
 								);
 
 								prt::Status stat = prt::generate(
-										isPart.data(), isPart.size(), 0,
+										isRangeStart, isActualRangeSize, 0,
 										mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
-										&hg, mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
+										hg[ti].get(), mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
 								);
 								if (stat != prt::STATUS_OK) {
 									LOG_ERR << "prt::generate() failed with status: '" <<
@@ -250,12 +257,9 @@ OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
 					);
 					futures.emplace_back(std::move(f));
 				}
-
 				std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
-
 				end = std::chrono::system_clock::now();
-				LOG_INF << "generate took " << std::chrono::duration<double>(end - start).count() <<
-				"s (converting geo took " << hg.mTime << "s)";
+				LOG_INF << "generate took " << std::chrono::duration<double>(end - start).count() << "s";
 			}
 			select();
 		}

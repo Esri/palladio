@@ -73,6 +73,8 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 	}
 }
 
+std::mutex mDetailMutex; // guard the houdini detail object
+
 } // namespace
 
 
@@ -94,9 +96,7 @@ void HoudiniGeometry::add(
 		const prt::AttributeMap** materials, size_t materialsSize,
 		const uint32_t* faceRanges
 ) {
-	std::lock_guard<std::mutex> guard(mMutex); // protect all mDetail accesses
-
-	std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
 
 	std::vector<UT_Vector3> utPoints, utNormals, utUVs;
 
@@ -220,9 +220,6 @@ void HoudiniGeometry::add(
 			}
 		}
 	}
-
-	std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-	mTime += std::chrono::duration<double>(end - start).count();
 }
 
 prt::Status HoudiniGeometry::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {

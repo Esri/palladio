@@ -60,7 +60,7 @@ protected:
 	virtual prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value);
 
 	virtual prt::Callbacks::Continuation progress(float percentageCompleted) {
-		if (mAutoInterrupt && mAutoInterrupt->wasInterrupted())
+		if (mAutoInterrupt && mAutoInterrupt->wasInterrupted()) // TODO: is this thread-safe?
 			return prt::Callbacks::CANCEL_AND_FINISH;
 		return prt::Callbacks::progress(percentageCompleted);
 	}
@@ -68,11 +68,7 @@ protected:
 private:
 	GU_Detail* mDetail;
 	prt::AttributeMapBuilder* const mEvalAttrBuilder;
-	std::mutex mMutex;
 	UT_AutoInterrupt* mAutoInterrupt;
-
-public:
-	double mTime;
 };
 
 } // namespace p4h
