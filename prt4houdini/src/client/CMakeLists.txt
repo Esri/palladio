@@ -122,6 +122,7 @@ add_library(${PROJECT} SHARED
 	utils.cpp
 	initialshape.cpp
 	parameter.cpp
+	PRTContext.cpp
 )
 
 target_link_libraries(${PROJECT} ${HOUDINI_LIBS} ${PRT_LINK_LIBRARIES} ${Boost_LIBRARIES})

@@ -10,25 +10,28 @@
       <sourceFolder url="file://$MODULE_DIR$/client/parameter.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/initialshape.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/initialshape.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/sop.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/parameter.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/utils.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/PRTContext.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/callbacks.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/utils.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/sop.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/initialshape.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/PRTContext.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/parameter.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/utils.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/common.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../depcache/boost-1.53.0esri1-rhel6-gcc44-x86_64/cmake/boost-config.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../depcache/esri_ce_sdk/cmake/prtConfig.cmake" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="Header Search Paths">
         <CLASSES>
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include-fixed" />
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs15.0.459/toolkit/include" />
@@ -42,8 +45,8 @@
           <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/client" />
         </CLASSES>
         <SOURCES>
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include-fixed" />
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs15.0.459/toolkit/include" />

@@ -1,9 +1,9 @@
 #include "client/sop.h"
 #include "client/parameter.h"
 #include "client/callbacks.h"
+#include "client/PRTContext.h"
 
 #include "prt/API.h"
-#include "prt/FlexLicParams.h"
 
 #ifndef WIN32
 #	pragma GCC diagnostic push
@@ -28,7 +28,6 @@
 #include "UT/UT_DSOVersion.h"
 #include "SYS/SYS_Math.h"
 
-#include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
 
 #ifdef WIN32
@@ -51,10 +50,6 @@ namespace {
 
 const bool DBG = false;
 
-// global prt settings
-const prt::LogLevel	PRT_LOG_LEVEL		= prt::LOG_DEBUG;
-const char*			PRT_LIB_SUBDIR		= "prtlib";
-const char*			FILE_FLEXNET_LIB	= "flexnet_prt";
 const wchar_t*		FILE_CGA_ERROR		= L"CGAErrors.txt";
 const wchar_t*		FILE_CGA_PRINT		= L"CGAPrint.txt";
 
@@ -64,62 +59,18 @@ const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
 const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
 const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 
-// global objects (= non sop) tied to PRT "lifetime" (actually, the license lifetime)
-struct PRTContext {
-	PRTContext()
-		: mLicHandle(nullptr)
-		, mRPKUnpackPath(boost::filesystem::temp_directory_path() / "prt4houdini")
-	{
-		mCores = std::thread::hardware_concurrency();
-		mCores = (mCores == 0) ? 1 : mCores;
-	}
-
-	~PRTContext() {
-		if (mLicHandle) {
-			mLicHandle->destroy();
-			LOG_INF << "PRT license destroyed.";
-		}
-
-		boost::filesystem::remove_all(mRPKUnpackPath);
-		LOG_INF << "Removed RPK unpack directory.";
-	}
-
-	const prt::Object* mLicHandle; // TODO: use PRTObjectPtr...
-	boost::filesystem::path mRPKUnpackPath;
-	int8_t mCores;
-};
-
-std::unique_ptr<PRTContext> prtCtx;
-
-void dsoExit(void*) {
-	prtCtx.reset();
-}
+// prt lifecycle
+std::unique_ptr<p4h::PRTContext> prtCtx;
 
 } // namespace anonymous
 
 
 void newSopOperator(OP_OperatorTable *table) {
 	assert(!prtCtx);
-	prtCtx.reset(new PRTContext());
-	UT_Exit::addExitCallback(dsoExit);
+	prtCtx.reset(new p4h::PRTContext());
+	UT_Exit::addExitCallback([](void*){ prtCtx.reset(); });
 
-	boost::filesystem::path sopPath;
-	p4h::utils::getPathToCurrentModule(sopPath);
-
-	prt::FlexLicParams flp;
-	std::string libflexnet = p4h::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + p4h::utils::getSharedLibrarySuffix();
-	std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
-	flp.mActLibPath = libflexnetPath.c_str();
-	flp.mFeature = "CityEngAdvFx";
-	flp.mHostName = "";
-
-	std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
-	const wchar_t* extPaths[] = { libPath.c_str() };
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	prtCtx->mLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
-
-	if (!prtCtx->mLicHandle || status != prt::STATUS_OK)
+	if (!prtCtx->mLicHandle)
 		return;
 
 	const size_t minSources = 1;
