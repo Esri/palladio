@@ -25,9 +25,8 @@
 #include "UT/UT_Matrix4.h"
 #include "UT/UT_Exit.h"
 #include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 #include "SYS/SYS_Math.h"
-#include <HOM/HOM_Module.h>
-#include <HOM/HOM_SopNode.h>
 
 #include "boost/foreach.hpp"
 #include "boost/filesystem.hpp"
@@ -100,7 +99,8 @@ void dsoExit(void*) {
 
 
 void newSopOperator(OP_OperatorTable *table) {
-	if (!prtCtx) prtCtx.reset(new PRTContext());
+	assert(!prtCtx);
+	prtCtx.reset(new PRTContext());
 	UT_Exit::addExitCallback(dsoExit);
 
 	boost::filesystem::path sopPath;
@@ -125,8 +125,8 @@ void newSopOperator(OP_OperatorTable *table) {
 	const size_t minSources = 1;
 	const size_t maxSources = 1;
 	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", p4h::SOP_PRT::create,
-			p4h::NODE_PARAM_TEMPLATES, minSources, maxSources, 0)
-	);
+			p4h::NODE_PARAM_TEMPLATES, minSources, maxSources, nullptr, OP_FLAG_GENERATOR
+	));
 }
 
 

@@ -64,7 +64,7 @@ execute_process(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	OUTPUT_VARIABLE P4H_SESI_TAG
 )
-message(STATUS "generated sesi tag: ${P4H_SESI_TAG}")
+message("generated sesi tag: ${P4H_SESI_TAG}")
 
 
 ### setup build target
@@ -74,11 +74,24 @@ if(P4H_WINDOWS)
 	set(CMAKE_CXX_FLAGS_Release "-O2 -DNDEBUG -MD -GR -bigobj")
 	add_definitions(${P4H_SESI_TAG} -DMAKING_DSO -DI386 -DWIN32 -DSWAP_BITFIELDS -D_WIN32_WINNT=0x0502 -DNOMINMAX -DSTRICT -DWIN32_LEAN_AND_MEAN -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DBOOST_ALL_NO_LIB -DSESI_LITTLE_ENDIAN -DAMD64 -DSIZEOF_VOID_P=8 -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
 elseif(P4H_LINUX)
-	set(CMAKE_CXX_FLAGS "-std=c++11 -Wl,-rpath,${HOUDINI_ROOT}/dsolib -m64 -fPIC -Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder -Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated -fno-strict-aliasing -Wno-unused-local-typedefs")
+	set(P4H_CPU "-mtune=generic -m64 -fPIC -mmmx -msse -msse2 -msse3")
+	set(P4H_LNG "-std=c++11")
+	set(P4H_WRN "-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder")
+	set(P4H_WRN "${P4H_WRN} -Wno-uninitialized -Wunused -Wno-unused-parameter")
+	set(P4H_WRN "${P4H_WRN} -fno-strict-aliasing -Wno-unused-local-typedefs")
+	set(P4H_LNK "-Wl,-rpath=\$ORIGIN:${HOUDINI_ROOT}/dsolib")
+
+	set(CMAKE_CXX_FLAGS "${P4H_CPU} ${P4H_LNG} ${P4H_WRN} ${P4H_LNK}")
 	set(CMAKE_CXX_FLAGS_Release "-O3")
 	set(CMAKE_CXX_FLAGS_RelWithDebInfo "-O3 -g")
 	set(CMAKE_CXX_FLAGS_Debug "-O0 -g")
-	add_definitions(${P4H_SESI_TAG} -DMAKING_DSO -DGCC3 -DGCC4 -DAMD64 -DSIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P} -DVERSION=\"${HOUDINI_VERSION}\" -DDLLEXPORT="" -D_GNU_SOURCE -DLINUX -DSESI_LITTLE_ENDIAN -DENABLE_THREADS -DUSE_PTHREADS -DENABLE_UI_THREADS -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
+
+	add_definitions(
+		${P4H_SESI_TAG} -DMAKING_DSO -DGCC3 -DGCC4 -DAMD64
+	 	-DSIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P} -DVERSION=\"${HOUDINI_VERSION}\" -DDLLEXPORT=""
+	 	-D_GNU_SOURCE -DLINUX -DSESI_LITTLE_ENDIAN -DENABLE_THREADS -DUSE_PTHREADS -DENABLE_UI_THREADS
+	 	-DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1 -D_FILE_OFFSET_BITS=64
+	)
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON) # in case we generate source files
@@ -101,7 +114,7 @@ add_library(${PROJECT} SHARED
 	sop.cpp
 	callbacks.cpp
 	utils.cpp
-		initialshape.cpp
+	initialshape.cpp
 	parameter.cpp
 )
 

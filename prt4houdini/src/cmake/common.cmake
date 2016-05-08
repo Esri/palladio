@@ -45,7 +45,7 @@ set(PRT_DEP_VER 1.4.2074)
 set(PRT_DEP_URL_BASE "https://github.com/Esri/esri-cityengine-sdk/releases/download")
 set(PRT_DEP_BASENAME "esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt")
 set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/${PRT_DEP_BASENAME}.zip")
-if(NOT EXISTS ${PRT_DEP_ARCHIVE}) 
+if(NOT EXISTS ${PRT_DEP_ARCHIVE})
 	message(STATUS "CityEngine SDK not found in depcache, downloading from esri github repo...")
 	file(DOWNLOAD "${PRT_DEP_URL_BASE}/${PRT_DEP_VER}/${PRT_DEP_BASENAME}.zip" ${PRT_DEP_ARCHIVE})
 endif()
@@ -67,7 +67,7 @@ set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION
 
 ### HOUDINI dependency
 
-set(HOUDINI_VERSION "14.0.474" CACHE STRING "Houdini Version")
+set(HOUDINI_VERSION "15.0.459" CACHE STRING "Houdini Version")
 string(REPLACE "." ";" VL ${HOUDINI_VERSION})
 list(GET VL 0 HOUDINI_MAJOR_VERSION)
 list(GET VL 1 HOUDINI_MINOR_VERSION)
