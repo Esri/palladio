@@ -73,21 +73,27 @@ void newSopOperator(OP_OperatorTable *table) {
 	if (!prtCtx->mLicHandle)
 		return;
 
-	const size_t minSources = 1;
-	const size_t maxSources = 1;
-	table->addOperator(new OP_Operator("prt4houdini", "prt4houdini", p4h::SOP_PRT::create,
-			p4h::NODE_PARAM_TEMPLATES, minSources, maxSources, nullptr, OP_FLAG_GENERATOR
+	// instantiate assign sop
+	auto createSOPAssign = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
+		return new p4h::SOP_Assign(net, name, op);
+	};
+	table->addOperator(new OP_Operator("ceAssign", "ceAssign", createSOPAssign,
+			p4h::ASSIGN_NODE_PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
+	));
+
+	// instantiate generator sop
+	auto createSOPGenerate = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
+		return new p4h::SOP_Generate(net, name, op);
+	};
+	table->addOperator(new OP_Operator("ceGenerate", "ceGenerate", createSOPGenerate,
+	       p4h::GENERATE_NODE_PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
 	));
 }
 
 
 namespace p4h {
 
-OP_Node* SOP_PRT::create(OP_Network *net, const char *name, OP_Operator *op) {
-	return new SOP_PRT(net, name, op);
-}
-
-SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
+SOP_Assign::SOP_Assign(OP_Network *net, const char *name, OP_Operator *op)
 : SOP_Node(net, name, op)
 , mPRTCache(prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT))
 , mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
@@ -123,11 +129,11 @@ SOP_PRT::SOP_PRT(OP_Network *net, const char *name, OP_Operator *op)
 	mGenerateOptions.reset(amb->createAttributeMapAndReset());
 }
 
-SOP_PRT::~SOP_PRT() {
+SOP_Assign::~SOP_Assign() {
 	prt::removeLogHandler(mLogHandler.get());
 }
 
-OP_ERROR SOP_PRT::cookMySop(OP_Context &context) {
+OP_ERROR SOP_Assign::cookMySop(OP_Context &context) {
 	LOG_DBG << "cookMySop";
 
 	if (!handleParams(context))
@@ -235,7 +241,7 @@ const size_t 	faceCountsCount			= 1;
 
 } // anonymous namespace
 
-bool SOP_PRT::handleParams(OP_Context &context) {
+bool SOP_Assign::handleParams(OP_Context &context) {
 	LOG_DBG << "handleParams begin";
 	fpreal now = context.getTime();
 
@@ -331,7 +337,7 @@ void getDefaultRuleAttributeValues(
 
 } // namespace
 
-bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
+bool SOP_Assign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
 	if (nextRPK == mInitialShapeContext.mRPK)
 		return true;
 	if (!boost::filesystem::exists(nextRPK))
@@ -429,7 +435,7 @@ bool SOP_PRT::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal t
 	return true;
 }
 
-void SOP_PRT::createMultiParams(fpreal time) {
+void SOP_Assign::createMultiParams(fpreal time) {
 	size_t keyCount = 0;
 	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
 
@@ -507,7 +513,7 @@ void SOP_PRT::createMultiParams(fpreal time) {
 	}
 }
 
-void SOP_PRT::updateUserAttributes() {
+void SOP_Assign::updateUserAttributes() {
 	if (!mInitialShapeContext.mRuleAttributeValues)
 		return;
 
@@ -548,7 +554,7 @@ void SOP_PRT::updateUserAttributes() {
 	mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap());
 }
 
-void SOP_PRT::resetUserAttribute(const std::string& token) {
+void SOP_Assign::resetUserAttribute(const std::string& token) {
 	size_t keyCount = 0;
 	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
 
@@ -590,6 +596,17 @@ void SOP_PRT::resetUserAttribute(const std::string& token) {
 			}
 		}
 	}
+}
+
+SOP_Generate::SOP_Generate(OP_Network* net, const char* name, OP_Operator* op)
+: SOP_Node(net, name, op) {
+}
+
+SOP_Generate::~SOP_Generate() {
+}
+
+OP_ERROR SOP_Generate::cookMySop(OP_Context &context) {
+	return error();
 }
 
 } // namespace p4h

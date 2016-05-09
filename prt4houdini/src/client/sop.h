@@ -31,13 +31,10 @@ class AttributeMapBuilder;
 
 namespace p4h {
 
-class SOP_PRT : public SOP_Node {
+class SOP_Assign : public SOP_Node {
 public:
-	static OP_Node* create(OP_Network*, const char*, OP_Operator*);
-
-public:
-	SOP_PRT(OP_Network *net, const char *name, OP_Operator *op);
-	virtual ~SOP_PRT();
+	SOP_Assign(OP_Network *net, const char *name, OP_Operator *op);
+	virtual ~SOP_Assign();
 
 	const InitialShapeContext& getInitialShapeCtx() const { return mInitialShapeContext; }
 	void resetUserAttribute(const std::string& token);
@@ -63,6 +60,15 @@ private:
 	AttributeMapPtr				mGenerateOptions;
 
 	log::LogHandlerPtr 			mLogHandler;
+};
+
+class SOP_Generate : public SOP_Node {
+public:
+	SOP_Generate(OP_Network *net, const char *name, OP_Operator *op);
+	virtual ~SOP_Generate();
+
+protected:
+	virtual OP_ERROR cookMySop(OP_Context &context);
 };
 
 } // namespace p4h

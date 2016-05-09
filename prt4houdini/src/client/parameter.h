@@ -97,7 +97,7 @@ static PRM_Template NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE[] = {
 };
 
 // -- MAIN NODE PARAMETER TEMPLATE
-static PRM_Template NODE_PARAM_TEMPLATES[] = {
+static PRM_Template ASSIGN_NODE_PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
 		PRM_Template(PRM_STRING, 1, &NODE_PARAM_SHAPE_CLS_ATTR, PRMoneDefaults),
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
@@ -117,6 +117,10 @@ static PRM_Template NODE_PARAM_TEMPLATES[] = {
 		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_STRING_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_STRING_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
 		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_BOOL_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
 
+		PRM_Template()
+};
+
+static PRM_Template GENERATE_NODE_PARAM_TEMPLATES[] {
 		PRM_Template()
 };
 

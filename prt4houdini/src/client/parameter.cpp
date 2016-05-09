@@ -15,7 +15,7 @@ namespace p4h {
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	static const bool DBG = false;
 
-	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	SOP_Assign* node = static_cast<SOP_Assign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
 
 	if (DBG) {
@@ -74,7 +74,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 }
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	SOP_Assign* node = static_cast<SOP_Assign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
 
 	if (!isCtx.mAssetsMap || isCtx.mRPK.empty()) {
@@ -103,7 +103,7 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 }
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOP_PRT* node = static_cast<SOP_PRT*>(data);
+	SOP_Assign* node = static_cast<SOP_Assign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
 
 	if (isCtx.mAssetsMap == nullptr || isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
@@ -141,7 +141,7 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 }
 
 int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
-	p4h::SOP_PRT* node = static_cast<p4h::SOP_PRT*>(data);
+	p4h::SOP_Assign* node = static_cast<p4h::SOP_Assign*>(data);
 
 	UT_String tok;
 	tplate->getToken(tok);
