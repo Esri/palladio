@@ -14,35 +14,41 @@ set(P4H_VERSION_MICRO 0) #TODO
 
 ### external dependencies
 
-set(BOOST_DEP_BASENAME boost-1.55.0-${P4H_OS}-${P4H_TC}-${P4H_ARCH})
-set(BOOST_DEP_ARCHIVE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}.zip")
-if (P4H_LINUX)
-	message(STATUS "Using system boost...")
+set(BOOST_VERSION				"1.55.0")
+set(BOOST_DEP_BASENAME			"boost-${BOOST_VERSION}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}")
+set(BOOST_DEP_ARCHIVE			"${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}.zip")
+set(BOOST_ROOT					"${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}")
+set(BOOST_INCLUDEDIR			"${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost")
+set(BOOST_LIBRARYDIR			"${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/lib")
+set(Boost_NO_SYSTEM_PATHS		1)
+set(Boost_USE_STATIC_LIBS		1)
+set(Boost_USE_STATIC_RUNTIME	0)
+
+if(P4H_LINUX)
+	set(BOOST_DEP_URL "https://esri.box.com/shared/static/1uug8lalx526qo77e5dfgyy7zsvw2whg.zip")
+	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/include/boost/config.hpp")
 elseif(P4H_WINDOWS)
 	set(BOOST_DEP_URL "https://esri.box.com/shared/static/c0uauskq22lmm9yp438sloj004rr8apv.zip")
-	set(BOOST_ROOT "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}")
-	set(BOOST_INCLUDEDIR "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost")
-	set(BOOST_LIBRARYDIR "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/lib")
-	set(Boost_NO_SYSTEM_PATHS 1)
-	if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
-		message(STATUS "Boost 1.55 for Houdini not found in dependency cache, downloading from esri.box.com...")
-		file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
-	endif()
-	if(NOT EXISTS ${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp)
-		execute_process(
-			COMMAND ${CMAKE_COMMAND} -E tar xf ${BOOST_DEP_ARCHIVE}
-			WORKING_DIRECTORY ${P4H_DEP_CACHE}
-			ERROR_VARIABLE UNZIP_CHECK
-		)
-		if(UNZIP_CHECK)
-			message(FATAL_ERROR "unzip failed")
-		endif()
+	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp")
+endif()
+
+if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
+	message(STATUS "Boost ${BOOST_VERSION} for Houdini not found in dependency cache, downloading from esri.box.com...")
+	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
+endif()
+
+if(NOT EXISTS ${BOOST_CHECK_FILE})
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E tar xf ${BOOST_DEP_ARCHIVE}
+		WORKING_DIRECTORY ${P4H_DEP_CACHE}
+		ERROR_VARIABLE UNZIP_CHECK
+	)
+	if(UNZIP_CHECK)
+		message(FATAL_ERROR "unzip failed")
 	endif()
 endif()
 
-set(Boost_USE_STATIC_LIBS 1)
-set(Boost_USE_STATIC_RUNTIME 0)
-find_package(Boost 1.55 REQUIRED COMPONENTS filesystem)
+find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS filesystem)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 

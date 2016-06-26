@@ -1,12 +1,4 @@
-#ifndef HOUDINIENCODER_H_
-#define HOUDINIENCODER_H_
-
-#include <string>
-#include <iostream>
-#include <stdexcept>
-
-#include "prt/ContentType.h"
-#include "prt/InitialShape.h"
+#pragma once
 
 #include "prtx/ResolveMap.h"
 #include "prtx/Encoder.h"
@@ -14,6 +6,13 @@
 #include "prtx/EncoderInfoBuilder.h"
 #include "prtx/PRTUtils.h"
 #include "prtx/Singleton.h"
+
+#include "prt/ContentType.h"
+#include "prt/InitialShape.h"
+
+#include <string>
+#include <iostream>
+#include <stdexcept>
 
 
 class HoudiniCallbacks;
@@ -64,6 +63,3 @@ public:
 		return new HoudiniEncoder(getID(), options, callbacks);
 	}
 };
-
-
-#endif /* HOUDINIENCODER_H_ */

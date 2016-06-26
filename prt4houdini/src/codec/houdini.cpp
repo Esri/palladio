@@ -1,13 +1,14 @@
 #include "houdini.h"
 
+#include "encoder/HoudiniEncoder.h"
+
 #include "prtx/prtx.h"
 #include "prtx/ExtensionManager.h"
 
-#include "encoder/HoudiniEncoder.h"
 
 namespace {
-const int VERSION_MAJOR = 1;
-const int VERSION_MINOR = 4; // TODO: pull from prtVersion file
+const int VERSION_MAJOR = PRT_VERSION_MAJOR;
+const int VERSION_MINOR = PRT_VERSION_MINOR;
 }
 
 extern "C" {

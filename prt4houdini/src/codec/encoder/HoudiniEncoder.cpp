@@ -1,10 +1,5 @@
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <numeric>
-#include <limits>
-
-#include "prt/prt.h"
+#include "encoder/HoudiniEncoder.h"
+#include "encoder/HoudiniCallbacks.h"
 
 #include "prtx/Exception.h"
 #include "prtx/Log.h"
@@ -18,12 +13,28 @@
 #include "prtx/Attributable.h"
 #include "prtx/URI.h"
 
-#include "encoder/HoudiniCallbacks.h"
-#include "encoder/HoudiniEncoder.h"
+#include "prt/prt.h"
+
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <numeric>
+#include <limits>
+#include <algorithm>
 
 
 namespace {
 const bool DBG = false;
+
+const prtx::EncodePreparator::PreparationFlags PREP_FLAGS = prtx::EncodePreparator::PreparationFlags()
+	.instancing(false)
+	.mergeByMaterial(true)
+	.triangulate(false)
+	.mergeVertices(true)
+	.cleanupVertexNormals(true)
+	.cleanupUVs(true)
+	.processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
+	.indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SAME_FOR_ALL_VERTEX_ATTRIBUTES);
 
 std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
@@ -152,25 +163,13 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap());
 
 	prtx::GeometryPtrVector geometries;
-	//std::vector<prtx::DoubleVector> trafos;
 	std::vector<prtx::MaterialPtrVector> materials;
 
-	prtx::EncodePreparator::PreparationFlags prepFlags;
-	prepFlags.instancing(false); // TODO
-	prepFlags.mergeByMaterial(true);
-	prepFlags.triangulate(false);
-	prepFlags.mergeVertices(true);
-	prepFlags.cleanupVertexNormals(true);
-	prepFlags.cleanupUVs(true);
-	prepFlags.processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS);
-	prepFlags.indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SAME_FOR_ALL_VERTEX_ATTRIBUTES);
-
 	prtx::EncodePreparator::InstanceVector finalizedInstances;
-	encPrep->fetchFinalizedInstances(finalizedInstances, prepFlags);
-	for (prtx::EncodePreparator::InstanceVector::const_iterator instIt = finalizedInstances.begin(); instIt != finalizedInstances.end(); ++instIt) {
-		geometries.push_back(instIt->getGeometry());
-		//trafos.push_back(instIt->getTransformation());
-		materials.push_back(instIt->getMaterials());
+	encPrep->fetchFinalizedInstances(finalizedInstances, PREP_FLAGS);
+	for (const auto& inst: finalizedInstances) {
+		geometries.push_back(inst.getGeometry());
+		materials.push_back(inst.getMaterials());
 	}
 
 	convertGeometry(initialShape, geometries, materials, oh);
@@ -262,10 +261,10 @@ void HoudiniEncoder::convertGeometry(
 	uint32_t faceCount = 0;
 	std::vector<uint32_t> faceRanges;
 	std::vector<const prt::AttributeMap*> matAttrMaps;
-	for(size_t gi = 0, geoCount = geometries.size(); gi < geoCount; ++gi) {
-		prtx::Geometry* geo = geometries[gi].get();
+	auto matIt = mats.cbegin();
+	for (const auto& geo: geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
-		prtx::MaterialPtr mat = mats[gi].front();
+		const prtx::MaterialPtr& mat = matIt->front();
 
 		prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 		convertAttributabletoAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
@@ -273,8 +272,11 @@ void HoudiniEncoder::convertGeometry(
 		faceRanges.push_back(faceCount);
 		matAttrMaps.push_back(amb->createAttributeMap());
 
-		for(size_t mi = 0, meshCount = meshes.size(); mi < meshCount; mi++)
-			faceCount += meshes[mi]->getFaceCount();
+		std::for_each(meshes.begin(), meshes.end(), [&faceCount](const prtx::MeshPtr& m) {
+			faceCount += m->getFaceCount();
+		});
+
+		++matIt;
 	}
 	faceRanges.push_back(faceCount); // close last range
 

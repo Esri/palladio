@@ -29,7 +29,7 @@ if(P4H_WINDOWS)
 #		message(FATAL_ERROR "On windows, Visual Studio 2012 Update 4 is required")
 #	endif()
 elseif(P4H_LINUX)
-	set(P4H_TC "gcc44")
+	set(P4H_TC "gcc48")
 	add_definitions(-DP4H_TC_GCC)
 endif()
 
@@ -41,7 +41,7 @@ set(P4H_DEP_CACHE ${CMAKE_CURRENT_LIST_DIR}/../../depcache) # in parallel to src
 
 ### PRT dependency
 
-set(PRT_DEP_VER 1.4.2074)
+set(PRT_DEP_VER 1.6.2663)
 set(PRT_DEP_URL_BASE "https://github.com/Esri/esri-cityengine-sdk/releases/download")
 set(PRT_DEP_BASENAME "esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt")
 set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/${PRT_DEP_BASENAME}.zip")
@@ -63,7 +63,7 @@ set(prt_DIR ${P4H_DEP_CACHE}/esri_ce_sdk/cmake)
 find_package(prt CONFIG)
 include_directories(${PRT_INCLUDE_PATH})
 set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION_MICRO}")
-
+message(STATUS "CESDK_VERSION = ${CESDK_VERSION}")
 
 ### HOUDINI dependency
 

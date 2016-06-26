@@ -7,21 +7,19 @@
       <config projectName="prt4houdini" targetName="prt4houdini" />
     </generated>
   </component>
-  <component name="CMakeSettings" AUTO_RELOAD="false" GENERATION_PASS_SYSTEM_ENVIRONMENT="true">
+  <component name="CMakeSettings" AUTO_RELOAD="true" GENERATION_PASS_SYSTEM_ENVIRONMENT="true">
     <ADDITIONAL_GENERATION_ENVIRONMENT>
-      <envs />
+      <envs>
+        <env name="CC" value="/usr/bin/gcc-4.8.5" />
+        <env name="CXX" value="/usr/bin/g++-4.8.5" />
+      </envs>
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="55e42702-7750-435b-ad01-bb9e9f68330d" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../.idea/encodings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../.idea/prt4houdini.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/src.iml" afterPath="$PROJECT_DIR$/.idea/src.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" afterPath="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" />
     </list>
     <ignored path="src.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -49,44 +47,11 @@
           <file leaf-file-name="callbacks.h" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/client/callbacks.h">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="446">
+                <state relative-caret-position="1242">
                   <caret line="69" column="14" selection-start-line="69" selection-start-column="14" selection-end-line="69" selection-end-column="14" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="GEO_PolyCounts.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_PolyCounts.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="3106">
-                  <caret line="202" column="53" selection-start-line="202" selection-start-column="53" selection-end-line="202" selection-end-column="53" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="GU_Detail.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GU/GU_Detail.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="2520">
-                  <caret line="140" column="17" selection-start-line="140" selection-start-column="17" selection-end-line="140" selection-end-column="17" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="sop.cpp" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/client/sop.cpp">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="391">
-                  <caret line="103" column="54" selection-start-line="103" selection-start-column="54" selection-end-line="103" selection-end-column="54" />
                   <folding>
-                    <element signature="e#0#23#0" expanded="true" />
-                    <element signature="e#293#318#0" expanded="true" />
-                    <element signature="e#889#917#0" expanded="true" />
-                    <element signature="e#976#993#0" expanded="true" />
-                    <element signature="e#4657#4883#0" expanded="true" />
+                    <marker date="1462219423331" expanded="false" signature="189:275" ph="..." />
+                    <marker date="1462219423331" expanded="false" signature="445:472" ph="..." />
                   </folding>
                 </state>
               </provider>
@@ -95,21 +60,53 @@
           <file leaf-file-name="HoudiniEncoder.cpp" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="46">
-                  <caret line="200" column="47" selection-start-line="200" selection-start-column="47" selection-end-line="200" selection-end-column="47" />
+                <state relative-caret-position="508">
+                  <caret line="283" column="23" selection-start-line="283" selection-start-column="23" selection-end-line="283" selection-end-column="23" />
                   <folding>
-                    <element signature="e#0#19#0" expanded="true" />
-                    <element signature="e#7759#8170#0" expanded="true" />
+                    <element signature="e#0#35#0" expanded="true" />
+                    <element signature="e#7544#7955#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="URI.h" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/include/prtx/URI.h">
+          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="6480">
-                  <caret line="360" column="3" selection-start-line="360" selection-start-column="3" selection-end-line="360" selection-end-column="3" />
+                <state relative-caret-position="-414">
+                  <caret line="37" column="7" selection-start-line="37" selection-start-column="7" selection-end-line="37" selection-end-column="7" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="utils.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/utils.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="438">
+                  <caret line="51" column="0" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#14#41#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="utils.cpp" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/utils.cpp">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="2808">
+                  <caret line="156" column="38" selection-start-line="156" selection-start-column="38" selection-end-line="156" selection-end-column="38" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="sop.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/client/sop.h">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="864">
+                  <caret line="48" column="24" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
                   <folding />
                 </state>
               </provider>
@@ -118,38 +115,44 @@
           <file leaf-file-name="HoudiniEncoder.h" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniEncoder.h">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="738">
-                  <caret line="41" column="35" selection-start-line="41" selection-start-column="35" selection-end-line="41" selection-end-column="35" />
-                  <folding />
+                <state relative-caret-position="774">
+                  <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#14#42#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="HoudiniCallbacks.h" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h">
+          <file leaf-file-name="houdini.cpp" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/codec/houdini.cpp">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="90">
-                  <caret line="5" column="6" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="6" />
-                  <folding />
+                <state relative-caret-position="162">
+                  <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
+                  <folding>
+                    <element signature="e#0#20#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="GEO_Detail.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_Detail.h">
+          <file leaf-file-name="houdini.h" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/codec/houdini.h">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="20520">
-                  <caret line="1140" column="18" selection-start-line="1140" selection-start-column="18" selection-end-line="1140" selection-end-column="18" />
-                  <folding />
+                <state relative-caret-position="288">
+                  <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#278#338#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="GA_Handle.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Handle.h">
+          <file leaf-file-name="exportConfig.cmake.in" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/codec/exportConfig.cmake.in">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="9396">
-                  <caret line="522" column="32" selection-start-line="522" selection-start-column="32" selection-end-line="522" selection-end-column="32" />
+                <state relative-caret-position="0">
+                  <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -159,14 +162,13 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="callbacks.cpp" pinned="false" current-in-tab="true">
+          <file leaf-file-name="callbacks.cpp" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/client/callbacks.cpp">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="2201">
+                <state relative-caret-position="3690">
                   <caret line="205" column="33" selection-start-line="205" selection-start-column="33" selection-end-line="205" selection-end-column="33" />
                   <folding>
                     <element signature="e#0#29#0" expanded="true" />
-                    <element signature="e#7115#7746#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -175,8 +177,18 @@
           <file leaf-file-name="GA_Detail.h" pinned="false" current-in-tab="false">
             <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Detail.h">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="490">
+                <state relative-caret-position="9558">
                   <caret line="531" column="17" selection-start-line="531" selection-start-column="17" selection-end-line="531" selection-end-column="17" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="144">
+                  <caret line="8" column="47" selection-start-line="8" selection-start-column="47" selection-end-line="8" selection-end-column="47" />
                   <folding />
                 </state>
               </provider>
@@ -202,6 +214,26 @@
               </provider>
             </entry>
           </file>
+          <file leaf-file-name="common.cmake" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="126">
+                  <caret line="7" column="23" selection-start-line="7" selection-start-column="21" selection-end-line="7" selection-end-column="23" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/codec/CMakeLists.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="540">
+                  <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
           <file leaf-file-name="GEO_TriMesh.h" pinned="false" current-in-tab="false">
             <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_TriMesh.h">
               <provider selected="true" editor-type-id="text-editor">
@@ -212,51 +244,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="GA_GBMacros.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_GBMacros.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="666">
-                  <caret line="37" column="8" selection-start-line="37" selection-start-column="8" selection-end-line="37" selection-end-column="8" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
           <file leaf-file-name="parameter.cpp" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/client/parameter.cpp">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="2142">
                   <caret line="119" column="34" selection-start-line="119" selection-start-column="34" selection-end-line="119" selection-end-column="34" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="GA_PrimitiveFactory.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_PrimitiveFactory.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="792">
-                  <caret line="44" column="13" selection-start-line="44" selection-start-column="13" selection-end-line="44" selection-end-column="13" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="GA_PrimitiveDefinition.h" pinned="false" current-in-tab="false">
-            <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_PrimitiveDefinition.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1098">
-                  <caret line="61" column="13" selection-start-line="61" selection-start-column="13" selection-end-line="61" selection-end-column="13" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="sop.h" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/client/sop.h">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="864">
-                  <caret line="48" column="24" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
                   <folding />
                 </state>
               </provider>
@@ -287,24 +279,29 @@
         <option value="$PROJECT_DIR$/client/parameter.h" />
         <option value="$PROJECT_DIR$/client/sop.h" />
         <option value="$PROJECT_DIR$/client/logging.h" />
-        <option value="$PROJECT_DIR$/client/utils.h" />
-        <option value="$PROJECT_DIR$/client/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/cmake/common.cmake" />
         <option value="$PROJECT_DIR$/client/utils.cpp" />
-        <option value="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.h" />
         <option value="$PROJECT_DIR$/client/sop.cpp" />
         <option value="$PROJECT_DIR$/client/initialshape.cpp" />
         <option value="$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h" />
         <option value="$PROJECT_DIR$/client/callbacks.h" />
-        <option value="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" />
         <option value="$PROJECT_DIR$/client/callbacks.cpp" />
+        <option value="$PROJECT_DIR$/codec/houdini.h" />
+        <option value="$PROJECT_DIR$/codec/houdini.cpp" />
+        <option value="$PROJECT_DIR$/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.h" />
+        <option value="$PROJECT_DIR$/cmake/common.cmake" />
+        <option value="$PROJECT_DIR$/codec/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/client/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/client/utils.h" />
+        <option value="$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp" />
       </list>
     </option>
   </component>
-  <component name="JsBuildToolGruntFileManager" detection-done="true" />
-  <component name="JsBuildToolPackageJson" detection-done="true" />
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
   <component name="JsGulpfileManager">
     <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
@@ -436,7 +433,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="js-jscs-nodeInterpreter" value="/usr/bin/node" />
-    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="full.screen.before.presentation.mode" value="true" />
@@ -834,7 +831,21 @@
       <option name="project" value="LOCAL" />
       <updated>1462111273414</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="updated to CE SDK 1.6">
+      <created>1466950273169</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1466950273169</updated>
+    </task>
+    <task id="LOCAL-00031" summary="updated to CE SDK 1.6">
+      <created>1466951480979</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1466951480979</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TodoView">
@@ -852,13 +863,12 @@
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12480253" sideWeight="0.4960091" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328585" sideWeight="0.4981511" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19088319" sideWeight="0.4853801" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22180095" sideWeight="0.49601275" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39126307" sideWeight="0.4853801" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26255924" sideWeight="0.49601275" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24573055" sideWeight="0.5146199" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32857144" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.44444445" sideWeight="0.49069643" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2668566" sideWeight="0.49069643" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24960506" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328585" sideWeight="0.4981511" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3270142" sideWeight="0.4981511" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.12480253" sideWeight="0.5039909" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -866,6 +876,7 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32857144" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
@@ -904,7 +915,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="test scene" />
     <MESSAGE value="#17: post merge cleanup" />
     <MESSAGE value="manually re-applied pull request from seb (e43ff5aa765aacb4a0bb3ce98ccdf1522ca8b6f8)" />
     <MESSAGE value="node param cleanup (also added some deactivated multiparm tests)" />
@@ -929,7 +939,8 @@
     <MESSAGE value="remove rpk unpack path at end" />
     <MESSAGE value="fixed uvs/normals/attribute conversion prt &lt;-&gt; houdini for multiple initial shapes&#10;also fixed texture path conversion uri -&gt; path" />
     <MESSAGE value="added support for mixed faces with/without uvs" />
-    <option name="LAST_COMMIT_MESSAGE" value="added support for mixed faces with/without uvs" />
+    <MESSAGE value="updated to CE SDK 1.6" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated to CE SDK 1.6" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -938,48 +949,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/include/prt/RuleFileInfo.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="54" column="19" selection-start-line="54" selection-start-column="19" selection-end-line="54" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_Face.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="414" column="14" selection-start-line="414" selection-start-column="8" selection-end-line="414" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Range.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="48" column="13" selection-start-line="48" selection-start-column="13" selection-end-line="48" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_GBElement.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="111" column="21" selection-start-line="111" selection-start-column="21" selection-end-line="111" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include/g++-v4/bits/stl_pair.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="101" column="10" selection-start-line="101" selection-start-column="10" selection-end-line="101" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/include/prt/Callbacks.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="42" column="22" selection-start-line="42" selection-start-column="22" selection-end-line="42" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs14.0.474/toolkit/include/GU/GU_HoleInfo.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1001,24 +970,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/client/logging.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1062">
           <caret line="68" column="5" selection-start-line="68" selection-start-column="5" selection-end-line="68" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1584">
-          <caret line="88" column="0" selection-start-line="88" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
         </state>
       </provider>
     </entry>
@@ -1043,13 +998,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1278">
-          <caret line="71" column="36" selection-start-line="71" selection-start-column="36" selection-end-line="71" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs15.0.393/toolkit/include/SOP/SOP_Node.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="12438">
@@ -1064,21 +1012,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/utils.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="14" column="35" selection-start-line="14" selection-start-column="35" selection-end-line="14" selection-end-column="35" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/utils.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="741">
-          <caret line="180" column="13" selection-start-line="180" selection-start-column="13" selection-end-line="180" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Types.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
@@ -1090,7 +1023,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="261">
           <caret line="188" column="13" selection-start-line="188" selection-start-column="13" selection-end-line="188" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1126,7 +1058,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="264">
           <caret line="113" column="33" selection-start-line="113" selection-start-column="33" selection-end-line="113" selection-end-column="33" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1134,7 +1065,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="792">
           <caret line="44" column="13" selection-start-line="44" selection-start-column="13" selection-end-line="44" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1145,19 +1075,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/sop.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="864">
-          <caret line="48" column="24" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_PrimitiveDefinition.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1098">
           <caret line="61" column="13" selection-start-line="61" selection-start-column="13" selection-end-line="61" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1165,7 +1086,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="666">
           <caret line="37" column="8" selection-start-line="37" selection-start-column="8" selection-end-line="37" selection-end-column="8" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1181,7 +1101,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="9396">
           <caret line="522" column="32" selection-start-line="522" selection-start-column="32" selection-end-line="522" selection-end-column="32" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1189,7 +1108,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2520">
           <caret line="140" column="17" selection-start-line="140" selection-start-column="17" selection-end-line="140" selection-end-column="17" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1207,19 +1125,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniEncoder.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="738">
-          <caret line="41" column="35" selection-start-line="41" selection-start-column="35" selection-end-line="41" selection-end-column="35" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/include/prtx/URI.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="6480">
           <caret line="360" column="3" selection-start-line="360" selection-start-column="3" selection-end-line="360" selection-end-column="3" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1243,7 +1152,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="20520">
           <caret line="1140" column="18" selection-start-line="1140" selection-start-column="18" selection-end-line="1140" selection-end-column="18" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1251,7 +1159,79 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="274">
           <caret line="209" column="32" selection-start-line="209" selection-start-column="32" selection-end-line="209" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/sop.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1854">
+          <caret line="103" column="38" selection-start-line="103" selection-start-column="38" selection-end-line="103" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Detail.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9558">
+          <caret line="531" column="17" selection-start-line="531" selection-start-column="17" selection-end-line="531" selection-end-column="17" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_PolyCounts.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3636">
+          <caret line="202" column="53" selection-start-line="202" selection-start-column="53" selection-end-line="202" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/callbacks.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3690">
+          <caret line="205" column="33" selection-start-line="205" selection-start-column="33" selection-end-line="205" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/cmake/prtVersion.properties">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="5" column="6" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/sop.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="864">
+          <caret line="48" column="24" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/utils.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2808">
+          <caret line="156" column="38" selection-start-line="156" selection-start-column="38" selection-end-line="156" selection-end-column="38" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/callbacks.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1242">
+          <caret line="69" column="14" selection-start-line="69" selection-start-column="14" selection-end-line="69" selection-end-column="14" />
+          <folding>
+            <marker date="1462219423331" expanded="false" signature="189:275" ph="..." />
+            <marker date="1462219423331" expanded="false" signature="445:472" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -1263,70 +1243,100 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/sop.cpp">
+    <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniEncoder.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="391">
-          <caret line="103" column="54" selection-start-line="103" selection-start-column="54" selection-end-line="103" selection-end-column="54" />
+        <state relative-caret-position="774">
+          <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#293#318#0" expanded="true" />
-            <element signature="e#889#917#0" expanded="true" />
-            <element signature="e#976#993#0" expanded="true" />
-            <element signature="e#4657#4883#0" expanded="true" />
+            <element signature="e#14#42#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniCallbacks.h">
+    <entry file="file://$PROJECT_DIR$/../depcache/esri_ce_sdk/cmake/prtConfig.cmake">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="5" column="6" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="6" />
+        <state relative-caret-position="-158">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmake/common.cmake">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="7" column="23" selection-start-line="7" selection-start-column="21" selection-end-line="7" selection-end-column="23" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/GA/GA_Detail.h">
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="490">
-          <caret line="531" column="17" selection-start-line="531" selection-start-column="17" selection-end-line="531" selection-end-column="17" />
+        <state relative-caret-position="144">
+          <caret line="8" column="47" selection-start-line="8" selection-start-column="47" selection-end-line="8" selection-end-column="47" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/callbacks.h">
+    <entry file="file://$PROJECT_DIR$/codec/houdini.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="446">
-          <caret line="69" column="14" selection-start-line="69" selection-start-column="14" selection-end-line="69" selection-end-column="14" />
+        <state relative-caret-position="162">
+          <caret line="9" column="36" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/codec/exportConfig.cmake.in">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file:///opt/hfs14.0.474/toolkit/include/GEO/GEO_PolyCounts.h">
+    <entry file="file://$PROJECT_DIR$/codec/houdini.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3106">
-          <caret line="202" column="53" selection-start-line="202" selection-start-column="53" selection-end-line="202" selection-end-column="53" />
+        <state relative-caret-position="288">
+          <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+          <folding>
+            <element signature="e#278#338#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/codec/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-414">
+          <caret line="37" column="7" selection-start-line="37" selection-start-column="7" selection-end-line="37" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/utils.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="438">
+          <caret line="51" column="0" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
+          <folding>
+            <element signature="e#14#41#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/codec/encoder/HoudiniEncoder.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="46">
-          <caret line="200" column="47" selection-start-line="200" selection-start-column="47" selection-end-line="200" selection-end-column="47" />
+        <state relative-caret-position="508">
+          <caret line="283" column="23" selection-start-line="283" selection-start-column="23" selection-end-line="283" selection-end-column="23" />
           <folding>
-            <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#7759#8170#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/callbacks.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2201">
-          <caret line="205" column="33" selection-start-line="205" selection-start-column="33" selection-end-line="205" selection-end-column="33" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-            <element signature="e#7115#7746#0" expanded="true" />
+            <element signature="e#0#35#0" expanded="true" />
+            <element signature="e#7544#7955#0" expanded="true" />
           </folding>
         </state>
       </provider>
