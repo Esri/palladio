@@ -1,12 +1,12 @@
-#include "client/initialshape.h"
+#include "client/InitialShapeGenerator.h"
 
+#include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
 #include "GU/GU_HoleInfo.h"
 #include "OP/OP_Operator.h"
 #include "OP/OP_OperatorTable.h"
 #include "OP/OP_Director.h"
 
-#include "boost/foreach.hpp"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/variant.hpp"
 
@@ -21,12 +21,12 @@ InitialShapeGenerator::InitialShapeGenerator(
 }
 
 InitialShapeGenerator::~InitialShapeGenerator() {
-	BOOST_FOREACH(const prt::InitialShape* is, mInitialShapes) {
-					is->destroy();
-				}
-	BOOST_FOREACH(const prt::AttributeMap* am, mInitialShapeAttributes) {
-					am->destroy();
-				}
+	for (const prt::InitialShape* is: mInitialShapes) {
+		is->destroy();
+	}
+	for (const prt::AttributeMap* am: mInitialShapeAttributes) {
+		am->destroy();
+	}
 }
 
 namespace {
@@ -233,10 +233,10 @@ void InitialShapeGenerator::createInitialShapes(
 			continue;
 
 		mISB->setGeometry(
-			vtx.data(), vtx.size(),
-			idx.data(), idx.size(),
-			faceCounts.data(), faceCounts.size(),
-			holes.data(), holes.size()
+				vtx.data(), vtx.size(),
+				idx.data(), idx.size(),
+				faceCounts.data(), faceCounts.size(),
+				holes.data(), holes.size()
 		);
 
 		const prt::AttributeMap* initialShapeAttrs = amb->createAttributeMap();

@@ -1,6 +1,6 @@
 #include "client/SOPAssign.h"
 #include "client/parameter.h"
-#include "client/initialshape.h"
+#include "client/InitialShapeContext.h"
 
 
 namespace {

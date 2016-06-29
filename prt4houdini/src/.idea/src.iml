@@ -7,22 +7,24 @@
       <sourceFolder url="file://$MODULE_DIR$/codec/encoder/HoudiniEncoder.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/codec/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/codec/houdini.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/InitialShapeGenerator.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/callbacks.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/SOPAssign.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/PRTContext.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/InitialShapeContext.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/parameter.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/InitialShapeGenerator.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/PRTContext.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/SOPAssign.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/utils.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/callbacks.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/sop.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/parameter.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/utils.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/SOPAssign.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/InitialShapeContext.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/CMakeLists.txt" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/initialshape.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/initialshape.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client/SOPAssign.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/SOPGenerate.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/SOPGenerate.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/utils.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/PRTContext.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/utils.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/common.cmake" isTestSource="false" />

@@ -1,4 +1,5 @@
 #include "client/SOPGenerate.h"
+#include "client/InitialShapeGenerator.h"
 #include "client/callbacks.h"
 
 #include "UT/UT_Interrupt.h"
@@ -69,6 +70,12 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 		UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
 		std::chrono::time_point<std::chrono::system_clock> start, end;
+
+
+		// 1. read RPK from plug
+
+		// 2. read prim attrs from gdp
+
 
 		InitialShapeContext isCtx(gdp);
 

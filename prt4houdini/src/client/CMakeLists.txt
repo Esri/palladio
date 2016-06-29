@@ -120,7 +120,8 @@ add_library(${PROJECT} SHARED
 	sop.cpp
 	callbacks.cpp
 	utils.cpp
-	initialshape.cpp
+	InitialShapeContext.cpp
+	InitialShapeGenerator.cpp
 	parameter.cpp
 	PRTContext.cpp
 	SOPAssign.cpp

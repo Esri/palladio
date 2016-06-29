@@ -59,12 +59,10 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		end = std::chrono::system_clock::now();
 		LOG_INF << "updateUserAttributes took " << std::chrono::duration<double>(end - start).count() << "s\n";
 
-
-		// 1. create mInitialShapeContext
-
-		// 2. store on prim attrs
-
-
+		start = std::chrono::system_clock::now();
+		mInitialShapeContext.put(gdp);
+		end = std::chrono::system_clock::now();
+		LOG_INF << "writing isc into gdp took " << std::chrono::duration<double>(end - start).count() << "s\n";
 	}
 
 	unlockInputs();

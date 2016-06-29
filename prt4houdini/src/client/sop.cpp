@@ -5,7 +5,7 @@
 
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"
-#include "UT/UT_DSOVersion.h" // required by houdini runtime
+#include "UT/UT_DSOVersion.h"
 
 
 namespace {
@@ -37,6 +37,6 @@ void newSopOperator(OP_OperatorTable *table) {
 		return new p4h::SOPGenerate(prtCtx, net, name, op);
 	};
 	table->addOperator(new OP_Operator("ceGenerate", "ceGenerate", createSOPGenerate,
-	       p4h::GENERATE_NODE_PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
+	       p4h::GENERATE_NODE_PARAM_TEMPLATES, 3, 3, nullptr, OP_FLAG_GENERATOR
 	));
 }

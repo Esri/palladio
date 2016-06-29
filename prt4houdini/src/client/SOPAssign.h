@@ -1,7 +1,7 @@
 #pragma once
 
 #include "client/PRTContext.h"
-#include "client/initialshape.h"
+#include "client/InitialShapeContext.h"
 #include "client/logging.h"
 
 #include "SOP/SOP_Node.h"
