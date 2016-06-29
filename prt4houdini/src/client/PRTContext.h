@@ -26,11 +26,12 @@ namespace p4h {
 /**
  * manage PRT "lifetime" (actually, the license lifetime)
  */
-struct PRTContext {
+struct PRTContext final {
 	PRTContext()
-	: mLicHandle(nullptr)
-	, mRPKUnpackPath(boost::filesystem::temp_directory_path() / "prt4houdini"
-	) {
+	: mLicHandle{nullptr},
+	  mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}
+	, mRPKUnpackPath{boost::filesystem::temp_directory_path() / "prt4houdini"}
+	{
 		mCores = std::thread::hardware_concurrency();
 		mCores = (mCores == 0) ? 1 : mCores;
 
@@ -51,7 +52,10 @@ struct PRTContext {
 		mLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
 	}
 
-	~PRTContext() {
+	PRTContext(PRTContext&) = delete;
+	PRTContext& operator=(PRTContext&) = delete;
+
+	virtual ~PRTContext() {
 		if (mLicHandle) {
 			mLicHandle->destroy();
 			LOG_INF << "PRT license destroyed.";
@@ -61,9 +65,12 @@ struct PRTContext {
 		LOG_INF << "Removed RPK unpack directory.";
 	}
 
-	const prt::Object* mLicHandle; // TODO: use PRTObjectPtr...
+	const prt::Object*		mLicHandle; // TODO: use PRTObjectPtr...
+	CacheObjectPtr 			mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
-	int8_t mCores;
+	int8_t					mCores;
 };
+
+using PRTContextUPtr = std::unique_ptr<PRTContext>;
 
 } // namespace p4h

@@ -5,17 +5,8 @@
 
 #include "prt/API.h"
 
-#ifdef P4H_TC_GCC
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-
 #include "GU/GU_Detail.h"
 #include "UT/UT_String.h"
-
-#ifdef P4H_TC_GCC
-#	pragma GCC diagnostic pop
-#endif
 
 #include "boost/filesystem/path.hpp"
 
@@ -25,7 +16,16 @@
 
 namespace p4h {
 
+/**
+ * gather attrs from UI, RPK and store as prim attrs
+ */
 struct InitialShapeContext {
+	InitialShapeContext() = default;
+	InitialShapeContext(GU_Detail* detail) {
+		// populate struct from detail
+	}
+	virtual ~InitialShapeContext() = default;
+
 	UT_String				mShapeClsAttrName;
 	GA_StorageClass			mShapeClsType;
 

@@ -123,7 +123,8 @@ add_library(${PROJECT} SHARED
 	initialshape.cpp
 	parameter.cpp
 	PRTContext.cpp
-)
+	SOPAssign.cpp
+	SOPGenerate.cpp)
 
 target_link_libraries(${PROJECT} ${HOUDINI_LIBS} ${PRT_LINK_LIBRARIES} ${Boost_LIBRARIES})
 

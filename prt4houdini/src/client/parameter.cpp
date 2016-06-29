@@ -1,4 +1,6 @@
+#include "client/SOPAssign.h"
 #include "client/parameter.h"
+#include "client/initialshape.h"
 
 
 namespace {
@@ -10,13 +12,14 @@ bool compareSecond (const StringPairVector::value_type& a, const StringPairVecto
 
 } // namespace
 
+
 namespace p4h {
 
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	static const bool DBG = false;
 
-	SOP_Assign* node = static_cast<SOP_Assign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
+	SOPAssign* node = static_cast<SOPAssign*>(data);
+	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
@@ -74,8 +77,8 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 }
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOP_Assign* node = static_cast<SOP_Assign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
+	SOPAssign* node = static_cast<SOPAssign*>(data);
+	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 
 	if (!isCtx.mAssetsMap || isCtx.mRPK.empty()) {
 		theMenu[0].setToken(0);
@@ -103,8 +106,8 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 }
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOP_Assign* node = static_cast<SOP_Assign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeCtx();
+	SOPAssign* node = static_cast<SOPAssign*>(data);
+	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 
 	if (isCtx.mAssetsMap == nullptr || isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
 		theMenu[0].setToken(0);
@@ -141,7 +144,7 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 }
 
 int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
-	p4h::SOP_Assign* node = static_cast<p4h::SOP_Assign*>(data);
+	p4h::SOPAssign* node = static_cast<p4h::SOPAssign*>(data);
 
 	UT_String tok;
 	tplate->getToken(tok);
