@@ -27,8 +27,8 @@ namespace p4h {
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
 : SOP_Node(net, name, op)
+, mLogHandler(new log::LogHandler(L"p4h assign", prt::LOG_ERROR))
 , mPRTCtx(pCtx)
-, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
 {
 	prt::addLogHandler(mLogHandler.get());
 }
@@ -135,7 +135,7 @@ namespace {
 void getDefaultRuleAttributeValues(
 		AttributeMapBuilderPtr& amb,
 		CacheObjectPtr& cache,
-		const ResolveMapPtr& resolveMap,
+		const ResolveMapUPtr& resolveMap,
 		const std::wstring& cgbKey,
 		const std::wstring& startRule
 ) {
@@ -180,17 +180,15 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	LOG_DBG << L"nextRPKURI = " << nextRPKURI;
 
 	// rebuild assets map
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	ResolveMapPtr nextResolveMap(
-			prt::createResolveMap(nextRPKURI.c_str(), mPRTCtx->mRPKUnpackPath.wstring().c_str(), &status));
-	if (!nextResolveMap || status != prt::STATUS_OK) {
+	const ResolveMapUPtr& resolveMap = mPRTCtx->getResolveMap(nextRPKURI);
+	if (!resolveMap ) {
 		LOG_ERR << "failed to create resolve map from '" << nextRPKURI << "', aborting.";
 		return false;
 	}
 
 	// get first rule file
 	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	utils::getCGBs(nextResolveMap, cgbs);
+	utils::getCGBs(resolveMap, cgbs);
 	if (cgbs.empty()) {
 		LOG_ERR << "no rule files found in rule package";
 		return false;
@@ -200,7 +198,7 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	LOG_DBG << "cgbKey = " << cgbKey;
 	LOG_DBG << "cgbURI = " << cgbURI;
 
-	status = prt::STATUS_UNSPECIFIED_ERROR;
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	RuleFileInfoPtr info(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCtx->mPRTCache.get(), &status));
 	if (!info || status != prt::STATUS_OK) {
 		LOG_ERR << "failed to get rule file info";
@@ -232,8 +230,6 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 
 	// update node
 	mInitialShapeContext.mRPK = nextRPK;
-	mInitialShapeContext.mAssetsMap.swap(nextResolveMap);
-	LOG_DBG << utils::objectToXML(mInitialShapeContext.mAssetsMap.get());
 	mPRTCtx->mPRTCache->flushAll();
 	{
 		mInitialShapeContext.mRuleFile = cgbKey;
@@ -260,7 +256,7 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	// eval rule attribute values
 	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 	getDefaultRuleAttributeValues(
-			amb, mPRTCtx->mPRTCache, mInitialShapeContext.mAssetsMap, mInitialShapeContext.mRuleFile, fqStartRule
+			amb, mPRTCtx->mPRTCache, resolveMap, mInitialShapeContext.mRuleFile, fqStartRule
 	);
 	mInitialShapeContext.mRuleAttributeValues.reset(amb->createAttributeMap());
 	mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap()); // pristine user attribute values

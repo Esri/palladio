@@ -23,7 +23,7 @@
 namespace p4h {
 namespace utils {
 
-void getCGBs(const ResolveMapPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
+void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
 	static const wchar_t*	PROJECT		= L"";
 	static const wchar_t*	PATTERN		= L"*.cgb";
 	static const size_t		START_SIZE	= 16 * 1024;

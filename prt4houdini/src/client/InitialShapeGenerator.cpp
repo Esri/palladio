@@ -11,24 +11,6 @@
 #include "boost/variant.hpp"
 
 
-namespace p4h {
-
-InitialShapeGenerator::InitialShapeGenerator(
-		GU_Detail* gdp,
-		InitialShapeContext& isCtx
-) : mISB(prt::InitialShapeBuilder::create()) {
-	createInitialShapes(gdp, isCtx);
-}
-
-InitialShapeGenerator::~InitialShapeGenerator() {
-	for (const prt::InitialShape* is: mInitialShapes) {
-		is->destroy();
-	}
-	for (const prt::AttributeMap* am: mInitialShapeAttributes) {
-		am->destroy();
-	}
-}
-
 namespace {
 
 const bool PDBG = false;
@@ -38,21 +20,32 @@ struct PrimitivePartition {
 	typedef std::vector<const GA_Primitive*> PrimitiveVector;
 	typedef std::map<ClassifierValueType, PrimitiveVector> PartitionMap;
 
-	PrimitivePartition(GA_ROAttributeRef clsAttr, GA_StorageClass clsType)
-			: mClsAttr(clsAttr), mClsType(clsType) {
+	PrimitivePartition(GA_ROAttributeRef clsAttrNameRef, GA_ROAttributeRef clsAttrTypeRef)
+			: mClsAttrNameRef(clsAttrNameRef), mClsAttrTypeRef(clsAttrTypeRef) {
 		if (PDBG)
-			LOG_DBG << "   -- prim part: partition attr = " << (mClsAttr.isValid() ? mClsAttr->getName() : "<invalid>");
+			LOG_DBG << "   -- prim part: partition attr = " << (mClsAttrNameRef.isValid() ? mClsAttrTypeRef->getName() : "<invalid>");
 	}
 
-	void add(GA_Detail* gdp, GA_Primitive* p) {
-		if (PDBG) LOG_DBG << "      adding prim: " << gdp->primitiveIndex(p->getMapOffset());
+	void add(const GA_Detail* detail, const GA_Primitive* p) {
+		if (PDBG) LOG_DBG << "      adding prim: " << detail->primitiveIndex(p->getMapOffset());
 
-		if (mClsAttr.isInvalid()) {
+		GA_ROHandleS clsAttrNameH(mClsAttrNameRef);
+		UT_String clsAttrName = clsAttrNameH.get(p->getMapOffset());
+
+		GA_ROHandleI clsAttrTypeH(mClsAttrTypeRef);
+		GA_StorageClass clsAttrType = static_cast<GA_StorageClass>(clsAttrTypeH.get(p->getMapOffset()));
+
+		GA_ROAttributeRef clsNameRef;
+		GA_ROAttributeRef r(detail->findPrimitiveAttribute(clsAttrName.buffer()));
+		if (r.isValid() && r->getStorageClass() == clsAttrType)
+			clsNameRef = r;
+
+		if (clsNameRef.isInvalid()) {
 			mPrimitives[int64_t(-1)].push_back(p);
-			if (PDBG) LOG_DBG << "       missing cls attr: adding prim to fallback shape!";
+			if (PDBG) LOG_DBG << "       missing cls name: adding prim to fallback shape!";
 		}
-		else if ((mClsType == GA_STORECLASS_FLOAT) && mClsAttr.isFloat()) {
-			GA_ROHandleD av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
+		else if ((clsAttrType == GA_STORECLASS_FLOAT) && clsNameRef.isFloat()) {
+			GA_ROHandleD av(clsNameRef);
 			if (av.isValid()) {
 				fpreal64 v = av.get(p->getMapOffset());
 				if (PDBG) LOG_DBG << "        got float classifier value: " << v;
@@ -62,8 +55,8 @@ struct PrimitivePartition {
 				if (PDBG) LOG_DBG << "        float: invalid handle!";
 			}
 		}
-		else if ((mClsType == GA_STORECLASS_INT) && mClsAttr.isInt()) {
-			GA_ROHandleID av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
+		else if ((clsAttrType == GA_STORECLASS_INT) && clsNameRef.isInt()) {
+			GA_ROHandleID av(clsNameRef);
 			if (av.isValid()) {
 				int64 v = av.get(p->getMapOffset());
 				if (PDBG) LOG_DBG << "        got int classifier value: " << v;
@@ -73,8 +66,8 @@ struct PrimitivePartition {
 				if (PDBG) LOG_DBG << "        int: invalid handle!";
 			}
 		}
-		else if ((mClsType == GA_STORECLASS_STRING) && mClsAttr.isString()) {
-			GA_ROHandleS av(gdp, GA_ATTRIB_PRIMITIVE, mClsAttr->getName());
+		else if ((clsAttrType == GA_STORECLASS_STRING) && clsNameRef.isString()) {
+			GA_ROHandleS av(clsNameRef);
 			if (av.isValid()) {
 				const char* v = av.get(p->getMapOffset());
 				if (v) {
@@ -99,47 +92,62 @@ struct PrimitivePartition {
 		return mPrimitives;
 	}
 
-	GA_ROAttributeRef mClsAttr;
-	GA_StorageClass mClsType;
+	GA_ROAttributeRef mClsAttrNameRef;
+	GA_ROAttributeRef mClsAttrTypeRef;
 	PartitionMap mPrimitives;
 };
 
 } // namespace
 
-void InitialShapeGenerator::createInitialShapes(
-		GU_Detail* gdp,
-		InitialShapeContext& isCtx
-) {
+
+namespace p4h {
+
+InitialShapeGenerator::InitialShapeGenerator(const PRTContextUPtr& prtCtx, const GU_Detail* detail)
+: mISB(prt::InitialShapeBuilder::create()) {
+	createInitialShapes(prtCtx, detail);
+}
+
+InitialShapeGenerator::~InitialShapeGenerator() {
+	std::for_each(mIS.begin(), mIS.end(), [](const prt::InitialShape* is) { is->destroy(); });
+	std::for_each(mISAttrs.begin(), mISAttrs.end(), [](const prt::AttributeMap* am) { am->destroy(); });
+}
+
+void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, const GU_Detail* detail) {
 	static const bool DBG = true;
 	if (DBG) LOG_DBG << "-- createInitialShapes";
 
-	// try to find primitive partitioning attribute
-	GA_ROAttributeRef shapeClsAttrRef;
-	GA_ROAttributeRef r(gdp->findPrimitiveAttribute(isCtx.mShapeClsAttrName.buffer()));
-	if (r.isValid() && r->getStorageClass() == isCtx.mShapeClsType)
-		shapeClsAttrRef = r;
+	GA_ROAttributeRef clsAttrName = InitialShapeContext::getClsName(detail);
+	GA_ROAttributeRef clsAttrType = InitialShapeContext::getClsType(detail);
 
 	// partition primitives by shapeClsAttrRef value
 	// in case shapeClsAttrRef is invalid, all prims end up in the same initial shape
-	PrimitivePartition primPart(shapeClsAttrRef, isCtx.mShapeClsType);
-	GA_Primitive* prim = nullptr;
-	GA_FOR_ALL_PRIMITIVES(gdp, prim) {
-		primPart.add(gdp, prim);
+	PrimitivePartition primPart(clsAttrName, clsAttrType);
+	const GA_Primitive* prim = nullptr;
+	GA_FOR_ALL_PRIMITIVES(detail, prim) {
+		primPart.add(detail, prim);
+	}
+
+	// treat all primitive attributes as InitialShape attributes
+	std::vector<std::pair<GA_ROAttributeRef, std::wstring>> attributes;
+	boost::dynamic_bitset<> attributeTracker(attributes.size());
+	{
+		GA_Attribute* a;
+		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
+			attributes.emplace_back(GA_ROAttributeRef(a), utils::toUTF16FromOSNarrow(a->getName().toStdString()));
+		}
 	}
 
 	// create initial shape for each primitive partition
-	size_t userAttrCount = 0;
-	const wchar_t* const* cUserAttrKeys = isCtx.mUserAttributeValues->getKeys(&userAttrCount);
 	const PrimitivePartition::PartitionMap& pm = primPart.get();
 	size_t isIdx = 0;
 	for (auto pIt = pm.begin(); pIt != pm.end(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 		std::vector<double> vtx;
 		std::vector<uint32_t> idx, faceCounts, holes;
-		boost::dynamic_bitset<> setAttributes(userAttrCount);
+		attributeTracker.reset();
 
-		// copy global attribute source builder for each initial shape
-		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(isCtx.mUserAttributeValues.get()));
+		// each initial shape gets an attribute map
+		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 
 		// loop over all primitives inside partition
 		for (const auto& p: pIt->second) {
@@ -156,7 +164,7 @@ void InitialShapeGenerator::createInitialShapes(
 			const GU_PrimPoly* face = static_cast<const GU_PrimPoly*>(p);
 			for (GA_Size i = face->getVertexCount()-1; i >= 0; i--) {
 				idx.push_back(static_cast<uint32_t>(vtx.size()/3));
-				UT_Vector3 p = gdp->getPos3(face->getPointOffset(i));
+				UT_Vector3 p = detail->getPos3(face->getPointOffset(i));
 				vtx.push_back(static_cast<double>(p.x()));
 				vtx.push_back(static_cast<double>(p.y()));
 				vtx.push_back(static_cast<double>(p.z()));
@@ -166,68 +174,56 @@ void InitialShapeGenerator::createInitialShapes(
 
 			// extract primitive attributes
 			// if multi-prim initial shape: the first encountered value per attribute wins
-			for (size_t k = 0; k < userAttrCount; k++) {
-				if (!setAttributes[k]) {
-					const wchar_t* key = cUserAttrKeys[k];
-					std::string nKey = utils::toOSNarrowFromUTF16(key);
-					std::string nLabel = nKey.substr(nKey.find_first_of('$') + 1); // strip style
+			// TODO: we could pull this out and just look at the first prim
+			size_t k = 0;
+			for (const auto& attr: attributes) {
+				if (!attributeTracker[k]) {
+					const GA_ROAttributeRef& ar = attr.first;
+					const wchar_t* key = attr.second.c_str();
 
-					GA_ROAttributeRef ar(gdp->findPrimitiveAttribute(nLabel.c_str()));
 					if (ar.isInvalid())
 						continue;
 
-					switch (isCtx.mUserAttributeValues->getType(key)) {
-						case prt::AttributeMap::PT_FLOAT: {
-							double userAttrValue = isCtx.mUserAttributeValues->getFloat(key);
-							double ruleAttrValue = isCtx.mRuleAttributeValues->getFloat(key);
-							if (std::abs(userAttrValue - ruleAttrValue) < 1e-5) {
-								GA_ROHandleD av(gdp, GA_ATTRIB_PRIMITIVE, ar->getName());
-								if (av.isValid()) {
-									double v = av.get(p->getMapOffset());
-									if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
-									amb->setFloat(key, v);
-									setAttributes.set(k);
-								}
+					switch (ar.getStorageClass()) {
+						case GA_STORECLASS_FLOAT: {
+							GA_ROHandleD av(ar);
+							if (av.isValid()) {
+								double v = av.get(p->getMapOffset());
+								if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
+								amb->setFloat(key, v);
+								attributeTracker.set(k);
 							}
 							break;
 						}
-						case prt::AttributeMap::PT_STRING: {
-							const wchar_t* userAttrValue = isCtx.mUserAttributeValues->getString(key);
-							const wchar_t* ruleAttrValue = isCtx.mRuleAttributeValues->getString(key);
-							if (std::wcscmp(userAttrValue, ruleAttrValue) == 0) {
-								GA_ROHandleS av(gdp, GA_ATTRIB_PRIMITIVE, ar->getName());
-								if (av.isValid()) {
-									const char* v = av.get(p->getMapOffset());
-									if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
-									std::wstring wv = utils::toUTF16FromOSNarrow(v);
-									amb->setString(key, wv.c_str());
-									setAttributes.set(k);
-								}
+						case GA_STORECLASS_STRING: {
+							GA_ROHandleS av(ar);
+							if (av.isValid()) {
+								const char* v = av.get(p->getMapOffset());
+								if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
+								std::wstring wv = utils::toUTF16FromOSNarrow(v);
+								amb->setString(key, wv.c_str());
+								attributeTracker.set(k);
 							}
 							break;
 						}
-						case prt::AttributeMap::PT_BOOL: {
-							bool userAttrValue = isCtx.mUserAttributeValues->getBool(key);
-							bool ruleAttrValue = isCtx.mRuleAttributeValues->getBool(key);
-							if (userAttrValue != ruleAttrValue) {
-								GA_ROHandleI av(gdp, GA_ATTRIB_PRIMITIVE, ar->getName());
-								if (av.isValid()) {
-									int v = av.get(p->getMapOffset());
-									if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
-									amb->setBool(key, (v > 0));
-									setAttributes.set(k);
-								}
+						case GA_STORECLASS_INT: {
+							GA_ROHandleI av(ar);
+							if (av.isValid()) {
+								int v = av.get(p->getMapOffset());
+								if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
+								amb->setBool(key, (v > 0));
+								attributeTracker.set(k);
 							}
 							break;
 						}
 						default: {
-							LOG_WRN << "attribute " << nKey << ": type not handled";
+							LOG_WRN << "prim attr " << ar->getName() << ": unsupported storage class";
 							break;
 						}
 					} // switch key type
-				} // setAttributes?
+				} // multi-face inital shape
 			} // for each user attr
-		} // for each prim
+		} // for each prim inside partition
 
 		if (vtx.empty() || idx.empty() || faceCounts.empty())
 			continue;
@@ -241,15 +237,51 @@ void InitialShapeGenerator::createInitialShapes(
 
 		const prt::AttributeMap* initialShapeAttrs = amb->createAttributeMap();
 
+		// TODO: get below via INitialShapeContext helper
+		GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("rpk"));
+		if (rpkRef.isInvalid()) continue;
+		GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ruleFile"));
+		if (ruleFileRef.isInvalid()) continue;
+		GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("startRule"));
+		if (startRuleRef.isInvalid()) continue;
+		GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("style"));
+		if (styleRef.isInvalid()) continue;
+		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("seed"));
+		if (seedRef.isInvalid()) continue;
+
+		GA_Offset firstOffset = pIt->second.front()->getMapOffset();
+
+		GA_ROHandleS rpkH(rpkRef);
+		std::string rpk = rpkH.get(firstOffset);
+		std::wstring wrpk = utils::toUTF16FromOSNarrow(rpk);
+
+		GA_ROHandleS ruleFileH(ruleFileRef);
+		std::string ruleFile = ruleFileH.get(firstOffset);
+		std::wstring wRuleFile = utils::toUTF16FromOSNarrow(ruleFile);
+
+		GA_ROHandleS startRuleH(startRuleRef);
+		std::string startRule = startRuleH.get(firstOffset);
+
+		GA_ROHandleS styleH(styleRef);
+		std::string style = styleH.get(firstOffset);
+
+		GA_ROHandleI seedH(seedRef);
+		int32_t seed = seedH.get(firstOffset);
+
 		std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
-		std::wstring startRule = isCtx.mStyle + L"$" + isCtx.mStartRule;
+		std::wstring wStartRule = utils::toUTF16FromOSNarrow(style + "$" + startRule);
+
+		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(wrpk);
+		if (!assetsMap)
+			continue;
+
 		mISB->setAttributes(
-				isCtx.mRuleFile.c_str(),
-				startRule.c_str(),
-				isCtx.mSeed,
+				wRuleFile.c_str(),
+				wStartRule.c_str(),
+				seed,
 				shapeName.c_str(),
 				initialShapeAttrs,
-				isCtx.mAssetsMap.get()
+				assetsMap.get()
 		);
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
@@ -259,8 +291,8 @@ void InitialShapeGenerator::createInitialShapes(
 			initialShapeAttrs->destroy();
 			return;
 		}
-		mInitialShapes.push_back(initialShape);
-		mInitialShapeAttributes.push_back(initialShapeAttrs);
+		mIS.push_back(initialShape);
+		mISAttrs.push_back(initialShapeAttrs);
 
 		if (DBG) LOG_DBG << p4h::utils::objectToXML(initialShape);
 	} // for each partition

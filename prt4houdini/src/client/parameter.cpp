@@ -20,6 +20,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 	SOPAssign* node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
@@ -27,12 +28,13 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		LOG_DBG << "   mRuleFile = " << isCtx.mRuleFile;
 	}
 
-	if (isCtx.mAssetsMap == nullptr || isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
+	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}
 
-	const wchar_t* cgbURI = isCtx.mAssetsMap->getString(isCtx.mRuleFile.c_str());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
 	if (cgbURI == nullptr) {
 		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
 		return;
@@ -79,14 +81,16 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	SOPAssign* node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
-	if (!isCtx.mAssetsMap || isCtx.mRPK.empty()) {
+	if (!isCtx.mRPK.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
-	utils::getCGBs(isCtx.mAssetsMap, cgbs);
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	utils::getCGBs(resolveMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
 	for (size_t ri = 0; ri < limit; ri++) {
@@ -108,13 +112,15 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	SOPAssign* node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
-	if (isCtx.mAssetsMap == nullptr || isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
+	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}
 
-	const wchar_t* cgbURI = isCtx.mAssetsMap->getString(isCtx.mRuleFile.c_str());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
 	if (cgbURI == nullptr) {
 		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
 		return;

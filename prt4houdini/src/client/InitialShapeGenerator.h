@@ -1,5 +1,6 @@
 #pragma once
 
+#include "client/PRTContext.h"
 #include "client/InitialShapeContext.h"
 
 #include "GU/GU_Detail.h"
@@ -9,20 +10,19 @@ namespace p4h {
 
 class InitialShapeGenerator final {
 public:
-	InitialShapeGenerator() = delete;
+	InitialShapeGenerator(const PRTContextUPtr& prtCtx, const GU_Detail* detail);
 	InitialShapeGenerator(const InitialShapeGenerator&) = delete;
 	InitialShapeGenerator& operator=(const InitialShapeGenerator&) = delete;
-	InitialShapeGenerator(GU_Detail* gdp, InitialShapeContext& isCtx);
 	virtual ~InitialShapeGenerator();
 
-	InitialShapeNOPtrVector& getInitialShapes() { return mInitialShapes; } // TODO: fix const
+	InitialShapeNOPtrVector& getInitialShapes() { return mIS; } // TODO: fix const
 
 private:
-	void createInitialShapes(GU_Detail* gdp,InitialShapeContext& isCtx);
+	void createInitialShapes(const PRTContextUPtr& prtCtx, const GU_Detail* detail);
 
 	InitialShapeBuilderPtr	mISB;
-	InitialShapeNOPtrVector mInitialShapes;
-	AttributeMapNOPtrVector mInitialShapeAttributes;
+	InitialShapeNOPtrVector mIS;
+	AttributeMapNOPtrVector mISAttrs;
 };
 
 } // namespace p4h

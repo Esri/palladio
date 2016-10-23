@@ -23,6 +23,8 @@ public:
 	const InitialShapeContext& getInitialShapeContext() const { return mInitialShapeContext; }
 	void resetUserAttribute(const std::string& token);
 
+	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
+
 protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
 
@@ -33,10 +35,9 @@ private:
 	void createMultiParams(fpreal time);
 
 private:
-	const PRTContextUPtr&		mPRTCtx;
-	InitialShapeContext			mInitialShapeContext;
-
-	log::LogHandlerPtr 			mLogHandler;
+	log::LogHandlerPtr    mLogHandler;
+	const PRTContextUPtr& mPRTCtx;
+	InitialShapeContext   mInitialShapeContext;
 };
 
 } // namespace p4h

@@ -34,34 +34,34 @@
     <orderEntry type="module-library">
       <library name="Header Search Paths">
         <CLASSES>
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Release/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Release/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Debug/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Debug/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/client" />
           <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs15.5.480/toolkit/include" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Release/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Release/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Debug/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Debug/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/client" />
         </CLASSES>
         <SOURCES>
-          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Release/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Release/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Debug/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/Debug/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/client" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/codec" />
+          <root url="file:///mnt/revo1/shaegler/.CLion2016.2/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/client" />
           <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/include" />
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/hfs15.5.480/toolkit/include" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Release/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Release/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Debug/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/Debug/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/client" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/RelWithDebInfo/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/codec" />
-          <root url="file://$USER_HOME$/.CLion2016.1/system/cmake/generated/src-95178fc8/95178fc8/MinSizeRel/client" />
         </SOURCES>
       </library>
     </orderEntry>

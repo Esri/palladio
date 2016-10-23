@@ -2,6 +2,7 @@
 
 #include "client/PRTContext.h"
 #include "client/InitialShapeContext.h"
+#include "client/logging.h"
 
 #include "SOP/SOP_Node.h"
 
@@ -17,14 +18,15 @@ protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
 
 private:
-	const PRTContextUPtr&		mPRTCtx;
+	log::LogHandlerPtr          mLogHandler;
+	const PRTContextUPtr&       mPRTCtx;
 
-	AttributeMapPtr				mHoudiniEncoderOptions;
-	AttributeMapPtr				mCGAPrintOptions;
-	AttributeMapPtr				mCGAErrorOptions;
+	AttributeMapPtr             mHoudiniEncoderOptions;
+	AttributeMapPtr             mCGAPrintOptions;
+	AttributeMapPtr             mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
-	AttributeMapNOPtrVector 	mAllEncoderOptions;
-	AttributeMapPtr				mGenerateOptions;
+	AttributeMapNOPtrVector     mAllEncoderOptions;
+	AttributeMapPtr             mGenerateOptions;
 };
 
 } // namespace p4h

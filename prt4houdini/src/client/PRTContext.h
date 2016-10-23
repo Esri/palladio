@@ -9,6 +9,7 @@
 #include "boost/filesystem.hpp"
 
 #include <thread>
+#include <map>
 
 
 namespace {
@@ -28,10 +29,13 @@ namespace p4h {
  */
 struct PRTContext final {
 	PRTContext()
-	: mLicHandle{nullptr},
-	  mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}
+	: mLogHandler(new log::LogHandler(L"p4h global", prt::LOG_ERROR))
+	, mLicHandle{nullptr}
+	, mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}
 	, mRPKUnpackPath{boost::filesystem::temp_directory_path() / "prt4houdini"}
 	{
+		prt::addLogHandler(mLogHandler.get());
+
 		mCores = std::thread::hardware_concurrency();
 		mCores = (mCores == 0) ? 1 : mCores;
 
@@ -50,6 +54,9 @@ struct PRTContext final {
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		mLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
+		if (status != prt::STATUS_OK) {
+			LOG_ERR << "Could not get license: " << prt::getStatusDescription(status);
+		}
 	}
 
 	PRTContext(PRTContext&) = delete;
@@ -63,12 +70,32 @@ struct PRTContext final {
 
 		boost::filesystem::remove_all(mRPKUnpackPath);
 		LOG_INF << "Removed RPK unpack directory.";
+
+		prt::removeLogHandler(mLogHandler.get());
 	}
 
-	const prt::Object*		mLicHandle; // TODO: use PRTObjectPtr...
-	CacheObjectPtr 			mPRTCache;
+	// TODO: make thread-safe
+	const ResolveMapUPtr& getResolveMap(const std::wstring& rpk) {
+		auto it = mResolveMapCache.find(rpk);
+		if (it == mResolveMapCache.end()) {
+			prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+			ResolveMapUPtr rm(prt::createResolveMap(rpk.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
+			if (status != prt::STATUS_OK)
+				return mResolveMapNone;
+			it = mResolveMapCache.emplace(rpk, std::move(rm)).first;
+		}
+		return it->second;
+	}
+
+	log::LogHandlerPtr      mLogHandler;
+	const prt::Object*      mLicHandle; // TODO: use PRTObjectPtr...
+	CacheObjectPtr          mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
-	int8_t					mCores;
+	int8_t                  mCores;
+
+	using ResolveMapCache = std::map<std::wstring, ResolveMapUPtr>;
+	ResolveMapCache         mResolveMapCache;
+	const ResolveMapUPtr	mResolveMapNone;
 };
 
 using PRTContextUPtr = std::unique_ptr<PRTContext>;

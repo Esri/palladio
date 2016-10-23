@@ -23,8 +23,11 @@ namespace p4h {
 
 SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
 : SOP_Node(net, name, op)
+, mLogHandler(new log::LogHandler(L"p4h generate", prt::LOG_ERROR))
 , mPRTCtx(pCtx)
 {
+	prt::addLogHandler(mLogHandler.get());
+
 	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
@@ -45,8 +48,8 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
 	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions.get())(mCGAErrorOptions.get())(mCGAPrintOptions.get());
 #else
-	mAllEncoders = {ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT};
-	mAllEncoderOptions = {mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get()};
+	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
+	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
 #endif
 
 	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
@@ -55,6 +58,7 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 }
 
 SOPGenerate::~SOPGenerate() {
+	prt::removeLogHandler(mLogHandler.get());
 }
 
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
@@ -71,16 +75,8 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 		std::chrono::time_point<std::chrono::system_clock> start, end;
 
-
-		// 1. read RPK from plug
-
-		// 2. read prim attrs from gdp
-
-
-		InitialShapeContext isCtx(gdp);
-
 		start = std::chrono::system_clock::now();
-		InitialShapeGenerator isGen(gdp, isCtx);
+		InitialShapeGenerator isGen(mPRTCtx, gdp);
 		end = std::chrono::system_clock::now();
 		LOG_INF << "InitialShapeGenerator took " << std::chrono::duration<double>(end - start).count() << "s\n";
 

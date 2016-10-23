@@ -97,7 +97,7 @@ private:
 	prt::LogLevel mLevel;
 };
 
-typedef std::unique_ptr<log::LogHandler> LogHandlerPtr;
+using LogHandlerPtr = std::unique_ptr<log::LogHandler>;
 
 } // namespace log
 } // namespace p4h
