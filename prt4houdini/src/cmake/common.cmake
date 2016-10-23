@@ -41,7 +41,7 @@ set(P4H_DEP_CACHE ${CMAKE_CURRENT_LIST_DIR}/../../depcache) # in parallel to src
 
 ### PRT dependency
 
-set(PRT_DEP_VER 1.6.2663)
+set(PRT_DEP_VER 1.7.2915)
 set(PRT_DEP_URL_BASE "https://github.com/Esri/esri-cityengine-sdk/releases/download")
 set(PRT_DEP_BASENAME "esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt")
 set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/${PRT_DEP_BASENAME}.zip")
@@ -67,7 +67,7 @@ message(STATUS "CESDK_VERSION = ${CESDK_VERSION}")
 
 ### HOUDINI dependency
 
-set(HOUDINI_VERSION "15.5.480" CACHE STRING "Houdini Version")
+set(HOUDINI_VERSION "15.5.632" CACHE STRING "Houdini Version")
 string(REPLACE "." ";" VL ${HOUDINI_VERSION})
 list(GET VL 0 HOUDINI_MAJOR_VERSION)
 list(GET VL 1 HOUDINI_MINOR_VERSION)
