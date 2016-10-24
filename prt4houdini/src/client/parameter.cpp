@@ -89,7 +89,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
 	utils::getCGBs(resolveMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
@@ -112,14 +112,14 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	SOPAssign* node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
-	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
 	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
 	if (cgbURI == nullptr) {
 		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";

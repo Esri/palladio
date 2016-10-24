@@ -14,9 +14,10 @@
 namespace {
 
 const bool PDBG = false;
+const int32 INVALID_CLS_VALUE{-1};
 
 struct PrimitivePartition {
-	typedef boost::variant<UT_String, fpreal64, int64> ClassifierValueType;
+	typedef boost::variant<UT_String, fpreal32, int32> ClassifierValueType;
 	typedef std::vector<const GA_Primitive*> PrimitiveVector;
 	typedef std::map<ClassifierValueType, PrimitiveVector> PartitionMap;
 
@@ -41,13 +42,13 @@ struct PrimitivePartition {
 			clsNameRef = r;
 
 		if (clsNameRef.isInvalid()) {
-			mPrimitives[int64_t(-1)].push_back(p);
+			mPrimitives[INVALID_CLS_VALUE].push_back(p);
 			if (PDBG) LOG_DBG << "       missing cls name: adding prim to fallback shape!";
 		}
 		else if ((clsAttrType == GA_STORECLASS_FLOAT) && clsNameRef.isFloat()) {
-			GA_ROHandleD av(clsNameRef);
+			GA_ROHandleF av(clsNameRef);
 			if (av.isValid()) {
-				fpreal64 v = av.get(p->getMapOffset());
+				fpreal32 v = av.get(p->getMapOffset());
 				if (PDBG) LOG_DBG << "        got float classifier value: " << v;
 				mPrimitives[v].push_back(p);
 			}
@@ -56,9 +57,9 @@ struct PrimitivePartition {
 			}
 		}
 		else if ((clsAttrType == GA_STORECLASS_INT) && clsNameRef.isInt()) {
-			GA_ROHandleID av(clsNameRef);
+			GA_ROHandleI av(clsNameRef);
 			if (av.isValid()) {
-				int64 v = av.get(p->getMapOffset());
+				int32 v = av.get(p->getMapOffset());
 				if (PDBG) LOG_DBG << "        got int classifier value: " << v;
 				mPrimitives[v].push_back(p);
 			}
@@ -75,7 +76,7 @@ struct PrimitivePartition {
 					mPrimitives[UT_String(v)].push_back(p);
 				}
 				else {
-					mPrimitives[int64_t(-1)].push_back(p);
+					mPrimitives[INVALID_CLS_VALUE].push_back(p);
 					LOG_WRN << "shape classifier attribute has empty string value -> fallback shape";
 				}
 			}
