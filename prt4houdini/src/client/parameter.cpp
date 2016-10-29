@@ -33,7 +33,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(isCtx.mRPK.wstring());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
 	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
 	if (cgbURI == nullptr) {
 		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
@@ -83,7 +83,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
-	if (!isCtx.mRPK.empty()) {
+	if (isCtx.mRPK.empty()) {
 		theMenu[0].setToken(0);
 		return;
 	}

@@ -130,7 +130,6 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 
 	// treat all primitive attributes as InitialShape attributes
 	std::vector<std::pair<GA_ROAttributeRef, std::wstring>> attributes;
-	boost::dynamic_bitset<> attributeTracker(attributes.size());
 	{
 		GA_Attribute* a;
 		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
@@ -139,6 +138,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 	}
 
 	// create initial shape for each primitive partition
+	boost::dynamic_bitset<> attributeTracker(attributes.size());
 	const PrimitivePartition::PartitionMap& pm = primPart.get();
 	size_t isIdx = 0;
 	for (auto pIt = pm.begin(); pIt != pm.end(); ++pIt, ++isIdx) {
@@ -239,15 +239,15 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 		const prt::AttributeMap* initialShapeAttrs = amb->createAttributeMap();
 
 		// TODO: get below via INitialShapeContext helper
-		GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("rpk"));
+		GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
 		if (rpkRef.isInvalid()) continue;
-		GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ruleFile"));
+		GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ceShapeRuleFile"));
 		if (ruleFileRef.isInvalid()) continue;
-		GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("startRule"));
+		GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("ceShapeStartRule"));
 		if (startRuleRef.isInvalid()) continue;
-		GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("style"));
+		GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("ceShapeStyle"));
 		if (styleRef.isInvalid()) continue;
-		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("seed"));
+		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("ceShapeSeed"));
 		if (seedRef.isInvalid()) continue;
 
 		GA_Offset firstOffset = pIt->second.front()->getMapOffset();
@@ -272,7 +272,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 		std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 		std::wstring wStartRule = utils::toUTF16FromOSNarrow(style + "$" + startRule);
 
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(wrpk);
+		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(utils::toFileURI(wrpk));
 		if (!assetsMap)
 			continue;
 
