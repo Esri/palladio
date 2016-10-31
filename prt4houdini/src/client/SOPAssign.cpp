@@ -76,16 +76,21 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	fpreal now = context.getTime();
 
 	// -- shape classifier attr name
-	evalString(mInitialShapeContext.mShapeClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
+	UT_String utNextClsAttrName;
+	evalString(utNextClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
+	if (utNextClsAttrName.length() > 0)
+		mInitialShapeContext.mShapeClsAttrName = utNextClsAttrName;
+	else
+		setString(mInitialShapeContext.mShapeClsAttrName, CH_STRING_LITERAL, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
 
 	// -- shape classifier attr type
 	int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE.getToken(), 0, now);
-	if (shapeClsAttrTypeChoice == 0)
-		mInitialShapeContext.mShapeClsType = GA_STORECLASS_STRING;
-	else if (shapeClsAttrTypeChoice == 1)
-		mInitialShapeContext.mShapeClsType = GA_STORECLASS_INT;
-	else if (shapeClsAttrTypeChoice == 2)
-		mInitialShapeContext.mShapeClsType = GA_STORECLASS_FLOAT;
+	switch (shapeClsAttrTypeChoice) {
+		case 0: mInitialShapeContext.mShapeClsType = GA_STORECLASS_STRING; break;
+		case 1: mInitialShapeContext.mShapeClsType = GA_STORECLASS_INT;    break;
+		case 2: mInitialShapeContext.mShapeClsType = GA_STORECLASS_FLOAT;  break;
+		default: return false;
+	}
 
 	// -- rule package
 	UT_String utNextRPKStr;

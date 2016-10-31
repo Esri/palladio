@@ -16,10 +16,15 @@ const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
 const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
 const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
+const UT_String DEFAULT_CLS_NAME    = "shapeCls";
+
 } // namespace
 
 
 namespace p4h {
+
+InitialShapeContext::InitialShapeContext()
+	: mShapeClsAttrName(DEFAULT_CLS_NAME), mSeed{0} { }
 
 InitialShapeContext::InitialShapeContext(GU_Detail* detail) {
 //	get(detail);

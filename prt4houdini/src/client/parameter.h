@@ -97,9 +97,10 @@ static PRM_Template NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE[] = {
 };
 
 // -- MAIN NODE PARAMETER TEMPLATE
+static PRM_Default DEFAULT_SHAPE_CLS_ATTR(0.0f, "shapeCls", CH_STRING_LITERAL);
 static PRM_Template ASSIGN_NODE_PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
-		PRM_Template(PRM_STRING, 1, &NODE_PARAM_SHAPE_CLS_ATTR, PRMoneDefaults),
+		PRM_Template(PRM_STRING, 1, &NODE_PARAM_SHAPE_CLS_ATTR, &DEFAULT_SHAPE_CLS_ATTR),
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
 
 		// rpk, rulefile, startrule, ...

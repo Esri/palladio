@@ -21,7 +21,7 @@ using InitialShapeContextUPtr = std::unique_ptr<InitialShapeContext>;
 
 class InitialShapeContext final {
 public:
-	InitialShapeContext() : mSeed{0} { }
+	InitialShapeContext();
 	InitialShapeContext(GU_Detail* detail);
 	InitialShapeContext(const InitialShapeContext&) = delete;
 	InitialShapeContext& operator=(const InitialShapeContext&) = delete;
