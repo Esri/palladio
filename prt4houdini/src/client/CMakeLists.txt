@@ -25,7 +25,7 @@ set(Boost_USE_STATIC_LIBS		1)
 set(Boost_USE_STATIC_RUNTIME	0)
 
 if(P4H_LINUX)
-	set(BOOST_DEP_URL "https://esri.box.com/shared/static/1uug8lalx526qo77e5dfgyy7zsvw2whg.zip")
+	set(BOOST_DEP_URL "https://esri.box.com/shared/static/2ej2hmoqqbg8qkb6j377t8zllq8ge9ln.zip")
 	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/include/boost/config.hpp")
 elseif(P4H_WINDOWS)
 	set(BOOST_DEP_URL "https://esri.box.com/shared/static/c0uauskq22lmm9yp438sloj004rr8apv.zip")

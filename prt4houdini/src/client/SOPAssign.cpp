@@ -79,7 +79,7 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	UT_String utNextClsAttrName;
 	evalString(utNextClsAttrName, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
 	if (utNextClsAttrName.length() > 0)
-		mInitialShapeContext.mShapeClsAttrName = utNextClsAttrName;
+		mInitialShapeContext.mShapeClsAttrName.adopt(utNextClsAttrName);
 	else
 		setString(mInitialShapeContext.mShapeClsAttrName, CH_STRING_LITERAL, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
 
@@ -144,6 +144,11 @@ void getDefaultRuleAttributeValues(
 		const std::wstring& cgbKey,
 		const std::wstring& startRule
 ) {
+    // 1. resolve CGB
+    // 2. get rule info
+    // 3. get hidden annotation
+
+
 	HoudiniGeometry hg(nullptr, amb.get());
 	AttributeMapPtr emptyAttrMap(amb->createAttributeMapAndReset());
 

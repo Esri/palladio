@@ -138,14 +138,14 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 	}
 
 	// create initial shape for each primitive partition
-	boost::dynamic_bitset<> attributeTracker(attributes.size());
+	//boost::dynamic_bitset<> attributeTracker(attributes.size());
 	const PrimitivePartition::PartitionMap& pm = primPart.get();
 	size_t isIdx = 0;
 	for (auto pIt = pm.begin(); pIt != pm.end(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 		std::vector<double> vtx;
 		std::vector<uint32_t> idx, faceCounts, holes;
-		attributeTracker.reset();
+		//attributeTracker.reset();
 
 		// each initial shape gets an attribute map
 		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
@@ -176,9 +176,9 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 			// extract primitive attributes
 			// if multi-prim initial shape: the first encountered value per attribute wins
 			// TODO: we could pull this out and just look at the first prim
-			size_t k = 0;
+			//size_t k = 0;
 			for (const auto& attr: attributes) {
-				if (!attributeTracker[k]) {
+				//if (!attributeTracker[k]) {
 					const GA_ROAttributeRef& ar = attr.first;
 					const wchar_t* key = attr.second.c_str();
 
@@ -192,7 +192,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 								double v = av.get(p->getMapOffset());
 								if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
 								amb->setFloat(key, v);
-								attributeTracker.set(k);
+								//attributeTracker.set(k);
 							}
 							break;
 						}
@@ -203,7 +203,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 								if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
 								std::wstring wv = utils::toUTF16FromOSNarrow(v);
 								amb->setString(key, wv.c_str());
-								attributeTracker.set(k);
+								//attributeTracker.set(k);
 							}
 							break;
 						}
@@ -213,7 +213,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 								int v = av.get(p->getMapOffset());
 								if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
 								amb->setBool(key, (v > 0));
-								attributeTracker.set(k);
+								//attributeTracker.set(k);
 							}
 							break;
 						}
@@ -222,7 +222,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 							break;
 						}
 					} // switch key type
-				} // multi-face inital shape
+				//} // multi-face inital shape
 			} // for each user attr
 		} // for each prim inside partition
 

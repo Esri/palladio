@@ -31,7 +31,9 @@ InitialShapeContext::InitialShapeContext(GU_Detail* detail) {
 }
 
 void InitialShapeContext::put(GU_Detail* detail) {
-	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
+	std::string dummy = mShapeClsAttrName.toStdString();
+
+    GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
 
 	GA_RWAttributeRef clsTypeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_TYPE, 1));
@@ -80,7 +82,14 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		const wchar_t* key = cKeys[k];
 		std::string nKey = utils::toOSNarrowFromUTF16(key);
 
-		boost::replace_all(nKey, "$", "_");
+		// strip away style prefix
+        auto styleDelimPos = nKey.find('$');
+        if (styleDelimPos != std::string::npos)
+            nKey.erase(0, styleDelimPos+1);
+
+        nKey = "ceAssign__" + nKey;
+
+        //boost::replace_all(nKey, "$", "_");
 		boost::replace_all(nKey, ".", "_");
 
 		switch (mRuleAttributeValues->getType(key)) {
@@ -110,19 +119,19 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		clsTypeH.set(off, mShapeClsType);
 
 		// TODO: actual values???
-		switch (mShapeClsType) {
-			case GA_STORECLASS_FLOAT:
-				boost::get<GA_RWHandleF>(clsNameH).set(off, 0.0f); // VALUE??
-				break;
-			case GA_STORECLASS_INT:
-				boost::get<GA_RWHandleI>(clsNameH).set(off, 0);
-				break;
-			case GA_STORECLASS_STRING:
-				boost::get<GA_RWHandleS>(clsNameH).set(off, "");
-				break;
-			default:
-				break;
-		}
+//		switch (mShapeClsType) {
+//			case GA_STORECLASS_FLOAT:
+//				boost::get<GA_RWHandleF>(clsNameH).set(off, 0.0f); // VALUE??
+//				break;
+//			case GA_STORECLASS_INT:
+//				boost::get<GA_RWHandleI>(clsNameH).set(off, 0);
+//				break;
+//			case GA_STORECLASS_STRING:
+//				boost::get<GA_RWHandleS>(clsNameH).set(off, "");
+//				break;
+//			default:
+//				break;
+//		}
 
 		rpkH.set(off, mRPK.string().c_str());
 		ruleFileH.set(off, utils::toOSNarrowFromUTF16(mRuleFile).c_str());

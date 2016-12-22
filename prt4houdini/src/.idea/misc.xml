@@ -4,18 +4,10 @@
     <contentRoot DIR="$PROJECT_DIR$/../.." />
   </component>
   <component name="CidrRootsConfiguration">
-    <sourceRoots />
-    <libraryRoots />
-    <excludeRoots />
-  </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
-    <OptionsSetting value="true" id="Add" />
-    <OptionsSetting value="true" id="Remove" />
-    <OptionsSetting value="true" id="Checkout" />
-    <OptionsSetting value="true" id="Update" />
-    <OptionsSetting value="true" id="Status" />
-    <OptionsSetting value="true" id="Edit" />
-    <ConfirmationsSetting value="0" id="Add" />
-    <ConfirmationsSetting value="0" id="Remove" />
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/../build-relwithdebinfo/CMakeFiles" />
+      <file path="$PROJECT_DIR$/../build/CMakeFiles" />
+      <file path="$PROJECT_DIR$/cmake-build-debug/CMakeFiles" />
+    </excludeRoots>
   </component>
 </project>
