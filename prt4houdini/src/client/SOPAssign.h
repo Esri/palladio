@@ -40,4 +40,12 @@ private:
 	InitialShapeContext   mInitialShapeContext;
 };
 
+void getDefaultRuleAttributeValues(
+		AttributeMapBuilderPtr& amb,
+		CacheObjectPtr& cache,
+		const ResolveMapUPtr& resolveMap,
+		const std::wstring& cgbKey,
+		const std::wstring& startRule
+);
+
 } // namespace p4h

@@ -1,4 +1,5 @@
 #include "client/InitialShapeGenerator.h"
+#include "client/SOPAssign.h"
 
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
@@ -9,6 +10,7 @@
 
 #include "boost/dynamic_bitset.hpp"
 #include "boost/variant.hpp"
+#include "boost/algorithm/string.hpp"
 
 
 namespace {
@@ -138,19 +140,65 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 	}
 
 	// create initial shape for each primitive partition
-	//boost::dynamic_bitset<> attributeTracker(attributes.size());
+	boost::dynamic_bitset<> attributeTracker(attributes.size());
 	const PrimitivePartition::PartitionMap& pm = primPart.get();
 	size_t isIdx = 0;
 	for (auto pIt = pm.begin(); pIt != pm.end(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
-		std::vector<double> vtx;
-		std::vector<uint32_t> idx, faceCounts, holes;
-		//attributeTracker.reset();
 
-		// each initial shape gets an attribute map
+		// get main generation attributes
+		GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
+		if (rpkRef.isInvalid()) continue;
+		GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ceShapeRuleFile"));
+		if (ruleFileRef.isInvalid()) continue;
+		GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("ceShapeStartRule"));
+		if (startRuleRef.isInvalid()) continue;
+		GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("ceShapeStyle"));
+		if (styleRef.isInvalid()) continue;
+		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("ceShapeSeed"));
+		if (seedRef.isInvalid()) continue;
+
+		GA_Offset firstOffset = pIt->second.front()->getMapOffset();
+
+		GA_ROHandleS rpkH(rpkRef);
+		const std::string rpk = rpkH.get(firstOffset);
+		const std::wstring wrpk = utils::toUTF16FromOSNarrow(rpk);
+
+		GA_ROHandleS ruleFileH(ruleFileRef);
+		const std::string ruleFile = ruleFileH.get(firstOffset);
+		const std::wstring wRuleFile = utils::toUTF16FromOSNarrow(ruleFile);
+
+		GA_ROHandleS startRuleH(startRuleRef);
+		const std::string startRule = startRuleH.get(firstOffset);
+
+		GA_ROHandleS styleH(styleRef);
+		const std::string style = styleH.get(firstOffset);
+		const std::wstring wStyle = utils::toUTF16FromOSNarrow(style);
+
+		GA_ROHandleI seedH(seedRef);
+		const int32_t seed = seedH.get(firstOffset);
+
+		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
+		const std::wstring wStartRule = utils::toUTF16FromOSNarrow(style + "$" + startRule);
+
+		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(utils::toFileURI(wrpk));
+		if (!assetsMap)
+			continue;
+
 		AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 
-		// loop over all primitives inside partition
+		// evaluate default attribute values:
+		// only incoming attributes which differ from default must be set
+		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule);
+		AttributeMapPtr defaultAttributes(amb->createAttributeMapAndReset());
+		LOG_DBG << utils::objectToXML(defaultAttributes.get());
+
+		// get geometry
+		std::vector<double> vtx;
+		std::vector<uint32_t> idx, faceCounts, holes;
+
+		// merge primitive geometry inside partition
+		attributeTracker.reset();
 		for (const auto& p: pIt->second) {
 			if (DBG) {
 				LOG_DBG << "   -- prim index " << p->getMapIndex();
@@ -175,12 +223,11 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 
 			// extract primitive attributes
 			// if multi-prim initial shape: the first encountered value per attribute wins
-			// TODO: we could pull this out and just look at the first prim
-			//size_t k = 0;
-			for (const auto& attr: attributes) {
-				//if (!attributeTracker[k]) {
-					const GA_ROAttributeRef& ar = attr.first;
-					const wchar_t* key = attr.second.c_str();
+			for (size_t k = 0; k < attributes.size(); k++) {
+				if (!attributeTracker[k]) {
+					const GA_ROAttributeRef& ar = attributes[k].first;
+					const std::wstring key      = boost::replace_all_copy(attributes[k].second, L"_dot_", L"."); // TODO
+					const std::wstring fqKey    = [&wStyle,&key](){ std::wstring w = wStyle;  w += '$'; w += key; return w; }();
 
 					if (ar.isInvalid())
 						continue;
@@ -190,9 +237,17 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 							GA_ROHandleD av(ar);
 							if (av.isValid()) {
 								double v = av.get(p->getMapOffset());
+
+
+								if (defaultAttributes->hasKey(fqKey.c_str())) {
+									double defVal = defaultAttributes->getFloat(fqKey.c_str());
+									if ( (std::abs(v - defVal) < 1e-6) || (std::isnan(v) && std::isnan(defVal)) )
+										continue;
+								}
+
 								if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
-								amb->setFloat(key, v);
-								//attributeTracker.set(k);
+								amb->setFloat(key.c_str(), v);
+								attributeTracker.set(k);
 							}
 							break;
 						}
@@ -200,10 +255,14 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 							GA_ROHandleS av(ar);
 							if (av.isValid()) {
 								const char* v = av.get(p->getMapOffset());
-								if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
 								std::wstring wv = utils::toUTF16FromOSNarrow(v);
-								amb->setString(key, wv.c_str());
-								//attributeTracker.set(k);
+
+								if (defaultAttributes->hasKey(fqKey.c_str()) && (wv.compare(defaultAttributes->getString(fqKey.c_str())) == 0))
+									continue;
+
+								if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
+								amb->setString(key.c_str(), wv.c_str());
+								attributeTracker.set(k);
 							}
 							break;
 						}
@@ -211,9 +270,14 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 							GA_ROHandleI av(ar);
 							if (av.isValid()) {
 								int v = av.get(p->getMapOffset());
+								bool bv = (v > 0);
+
+								if (defaultAttributes->hasKey(fqKey.c_str()) && (bv == defaultAttributes->getBool(fqKey.c_str())))
+									continue;
+
 								if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
-								amb->setBool(key, (v > 0));
-								//attributeTracker.set(k);
+								amb->setBool(key.c_str(), bv);
+								attributeTracker.set(k);
 							}
 							break;
 						}
@@ -222,7 +286,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 							break;
 						}
 					} // switch key type
-				//} // multi-face inital shape
+				} // multi-face inital shape
 			} // for each user attr
 		} // for each prim inside partition
 
@@ -237,44 +301,6 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 		);
 
 		const prt::AttributeMap* initialShapeAttrs = amb->createAttributeMap();
-
-		// TODO: get below via INitialShapeContext helper
-		GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
-		if (rpkRef.isInvalid()) continue;
-		GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ceShapeRuleFile"));
-		if (ruleFileRef.isInvalid()) continue;
-		GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("ceShapeStartRule"));
-		if (startRuleRef.isInvalid()) continue;
-		GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("ceShapeStyle"));
-		if (styleRef.isInvalid()) continue;
-		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("ceShapeSeed"));
-		if (seedRef.isInvalid()) continue;
-
-		GA_Offset firstOffset = pIt->second.front()->getMapOffset();
-
-		GA_ROHandleS rpkH(rpkRef);
-		std::string rpk = rpkH.get(firstOffset);
-		std::wstring wrpk = utils::toUTF16FromOSNarrow(rpk);
-
-		GA_ROHandleS ruleFileH(ruleFileRef);
-		std::string ruleFile = ruleFileH.get(firstOffset);
-		std::wstring wRuleFile = utils::toUTF16FromOSNarrow(ruleFile);
-
-		GA_ROHandleS startRuleH(startRuleRef);
-		std::string startRule = startRuleH.get(firstOffset);
-
-		GA_ROHandleS styleH(styleRef);
-		std::string style = styleH.get(firstOffset);
-
-		GA_ROHandleI seedH(seedRef);
-		int32_t seed = seedH.get(firstOffset);
-
-		std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
-		std::wstring wStartRule = utils::toUTF16FromOSNarrow(style + "$" + startRule);
-
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(utils::toFileURI(wrpk));
-		if (!assetsMap)
-			continue;
 
 		mISB->setAttributes(
 				wRuleFile.c_str(),

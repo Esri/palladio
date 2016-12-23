@@ -135,7 +135,7 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	return true;
 }
 
-namespace {
+//namespace {
 
 void getDefaultRuleAttributeValues(
 		AttributeMapBuilderPtr& amb,
@@ -178,7 +178,7 @@ void getDefaultRuleAttributeValues(
 	encOpts->destroy();
 }
 
-} // namespace
+//} // namespace
 
 bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
 	if (nextRPK == mInitialShapeContext.mRPK)

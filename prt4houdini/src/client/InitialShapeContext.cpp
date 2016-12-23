@@ -87,10 +87,8 @@ void InitialShapeContext::put(GU_Detail* detail) {
         if (styleDelimPos != std::string::npos)
             nKey.erase(0, styleDelimPos+1);
 
-        nKey = "ceAssign__" + nKey;
-
-        //boost::replace_all(nKey, "$", "_");
-		boost::replace_all(nKey, ".", "_");
+ 	  	//boost::replace_all(nKey, "$", "_");
+		boost::replace_all(nKey, ".", "_dot_"); // TODO: make this robust
 
 		switch (mRuleAttributeValues->getType(key)) {
 			case prt::AttributeMap::PT_FLOAT: {
