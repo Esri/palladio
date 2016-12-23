@@ -8,7 +8,7 @@ set(PROJECT prt4houdini)
 project(${PROJECT})
 
 set(P4H_VERSION_MAJOR 0)
-set(P4H_VERSION_MINOR 6)
+set(P4H_VERSION_MINOR 7)
 set(P4H_VERSION_MICRO 0) #TODO
 
 
