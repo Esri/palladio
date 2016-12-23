@@ -38,6 +38,7 @@ private:
 		const prtx::InitialShape& initialShape,
 		const prtx::GeometryPtrVector& geometries,
 		const std::vector<prtx::MaterialPtrVector>& mat,
+		const std::vector<prtx::ReportsPtr>& reports,
 		HoudiniCallbacks* callbacks
 	);
 };
@@ -45,16 +46,7 @@ private:
 
 class HoudiniEncoderFactory : public prtx::EncoderFactory, public prtx::Singleton<HoudiniEncoderFactory> {
 public:
-	static HoudiniEncoderFactory* createInstance() {
-		prtx::EncoderInfoBuilder encoderInfoBuilder;
-
-		encoderInfoBuilder.setID(HoudiniEncoder::ID);
-		encoderInfoBuilder.setName(HoudiniEncoder::NAME);
-		encoderInfoBuilder.setDescription(HoudiniEncoder::DESCRIPTION);
-		encoderInfoBuilder.setType(prt::CT_GEOMETRY);
-
-		return new HoudiniEncoderFactory(encoderInfoBuilder.create());
-	}
+	static HoudiniEncoderFactory* createInstance();
 
 	HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) { }
 	virtual ~HoudiniEncoderFactory() { }

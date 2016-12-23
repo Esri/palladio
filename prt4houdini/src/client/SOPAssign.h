@@ -21,7 +21,7 @@ public:
 	virtual ~SOPAssign();
 
 	const InitialShapeContext& getInitialShapeContext() const { return mInitialShapeContext; }
-	void resetUserAttribute(const std::string& token);
+	//void resetUserAttribute(const std::string& token);
 
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
 
@@ -29,10 +29,10 @@ protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
 
 private:
-	void updateUserAttributes();
+	//void updateUserAttributes();
 	bool handleParams(OP_Context &context);
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
-	void createMultiParams(fpreal time);
+	//void createMultiParams(fpreal time);
 
 private:
 	log::LogHandlerPtr    mLogHandler;

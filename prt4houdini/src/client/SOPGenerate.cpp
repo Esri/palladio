@@ -1,4 +1,5 @@
 #include "client/SOPGenerate.h"
+#include "client/parameter.h"
 #include "client/InitialShapeGenerator.h"
 #include "client/callbacks.h"
 
@@ -30,10 +31,6 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
-	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
-	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions));
-	encoderOptions->destroy();
-
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
 	const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
 	mCGAErrorOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions));
@@ -44,14 +41,6 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 	mCGAPrintOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions));
 	printOptions->destroy();
 
-#ifdef WIN32
-	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
-	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions.get())(mCGAErrorOptions.get())(mCGAPrintOptions.get());
-#else
-	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
-	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
-#endif
-
 	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 	amb->setInt(L"numberWorkerThreads", mPRTCtx->mCores);
 	mGenerateOptions.reset(amb->createAttributeMapAndReset());
@@ -61,8 +50,43 @@ SOPGenerate::~SOPGenerate() {
 	prt::removeLogHandler(mLogHandler.get());
 }
 
+bool SOPGenerate::handleParams(OP_Context& context) {
+	LOG_DBG << "handleParams begin";
+
+	const auto now = context.getTime();
+	const bool emitAttributes      = (evalInt(GENERATE_NODE_PARAM_EMIT_ATTRS.getToken(), 0, now) > 0);
+	const bool emitMaterial        = (evalInt(GENERATE_NODE_PARAM_EMIT_MATERIAL.getToken(), 0, now) > 0);
+	const bool emitReports         = (evalInt(GENERATE_NODE_PARAM_EMIT_REPORTS.getToken(), 0, now) > 0);
+	const bool emitReportSummaries = (evalInt(GENERATE_NODE_PARAM_EMIT_REPORT_SUMMARIES.getToken(), 0, now) > 0);
+
+	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
+	optionsBuilder->setBool(L"emitAttributes", emitAttributes);
+	optionsBuilder->setBool(L"emitMaterials", emitMaterial);
+	optionsBuilder->setBool(L"emitReports", emitReports);
+	optionsBuilder->setBool(L"emitReportSummaries", emitReportSummaries);
+	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
+	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions));
+	LOG_DBG << utils::objectToXML(mHoudiniEncoderOptions.get());
+
+	encoderOptions->destroy();
+
+#ifdef WIN32
+	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
+	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions.get())(mCGAErrorOptions.get())(mCGAPrintOptions.get());
+#else
+	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
+	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
+#endif
+
+	LOG_DBG << "handleParams done.";
+	return true;
+}
+
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	LOG_DBG << "SOPGenerate::cookMySop";
+
+	if (!handleParams(context))
+		return UT_ERROR_ABORT;
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";

@@ -191,7 +191,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 		// only incoming attributes which differ from default must be set
 		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule);
 		AttributeMapPtr defaultAttributes(amb->createAttributeMapAndReset());
-		LOG_DBG << utils::objectToXML(defaultAttributes.get());
+		//LOG_DBG << utils::objectToXML(defaultAttributes.get());
 
 		// get geometry
 		std::vector<double> vtx;

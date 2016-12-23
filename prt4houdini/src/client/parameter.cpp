@@ -149,30 +149,30 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 	}
 }
 
-int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
-	p4h::SOPAssign* node = static_cast<p4h::SOPAssign*>(data);
-
-	UT_String tok;
-	tplate->getToken(tok);
-	const char* suf = tok.suffix();
-	LOG_DBG << "resetRuleAttr: tok = " << tok.toStdString() << ", suf = " << suf;
-	UT_String ruleAttr;
-	if (suf) {
-		int idx = std::atoi(suf);
-		const char* valueTok = nullptr;
-		if (tok.startsWith("cgaFlt"))
-			valueTok = NODE_MULTIPARAM_FLOAT_ATTR.getToken();
-		else if (tok.startsWith("cgaStr"))
-			valueTok = NODE_MULTIPARAM_STRING_ATTR.getToken();
-		else if (tok.startsWith("cgaBool"))
-			valueTok = NODE_MULTIPARAM_BOOL_ATTR.getToken();
-		if (valueTok)
-			node->evalStringInst(valueTok, &idx, ruleAttr, 0, 0.0);
-		LOG_DBG << "    idx = " << idx << ", valueTok = " << valueTok << ", ruleAttr = " << ruleAttr;
-	}
-	if (ruleAttr.length() > 0)
-		node->resetUserAttribute(ruleAttr.toStdString());
-	return 1;
-}
+//int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
+//	p4h::SOPAssign* node = static_cast<p4h::SOPAssign*>(data);
+//
+//	UT_String tok;
+//	tplate->getToken(tok);
+//	const char* suf = tok.suffix();
+//	LOG_DBG << "resetRuleAttr: tok = " << tok.toStdString() << ", suf = " << suf;
+//	UT_String ruleAttr;
+//	if (suf) {
+//		int idx = std::atoi(suf);
+//		const char* valueTok = nullptr;
+//		if (tok.startsWith("cgaFlt"))
+//			valueTok = NODE_MULTIPARAM_FLOAT_ATTR.getToken();
+//		else if (tok.startsWith("cgaStr"))
+//			valueTok = NODE_MULTIPARAM_STRING_ATTR.getToken();
+//		else if (tok.startsWith("cgaBool"))
+//			valueTok = NODE_MULTIPARAM_BOOL_ATTR.getToken();
+//		if (valueTok)
+//			node->evalStringInst(valueTok, &idx, ruleAttr, 0, 0.0);
+//		LOG_DBG << "    idx = " << idx << ", valueTok = " << valueTok << ", ruleAttr = " << ruleAttr;
+//	}
+//	if (ruleAttr.length() > 0)
+//		node->resetUserAttribute(ruleAttr.toStdString());
+//	return 1;
+//}
 
 } // namespace p4h

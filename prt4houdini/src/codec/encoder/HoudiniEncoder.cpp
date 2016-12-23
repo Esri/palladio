@@ -12,6 +12,7 @@
 #include "prtx/GenerateContext.h"
 #include "prtx/Attributable.h"
 #include "prtx/URI.h"
+#include "prtx/ReportsCollector.h"
 
 #include "prt/prt.h"
 
@@ -25,6 +26,11 @@
 
 namespace {
 const bool DBG = false;
+
+const std::wstring EO_EMIT_ATTRIBUTES       = L"emitAttributes";
+const std::wstring EO_EMIT_MATERIALS        = L"emitMaterials";
+const std::wstring EO_EMIT_REPORTS          = L"emitReports";
+const std::wstring EO_EMIT_REPORT_SUMMARIES = L"emitReportSummaries";
 
 const prtx::EncodePreparator::PreparationFlags PREP_FLAGS = prtx::EncodePreparator::PreparationFlags()
 	.instancing(false)
@@ -158,29 +164,38 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 
 	prtx::EncodePreparatorPtr encPrep = prtx::EncodePreparator::create(true, namePrep, nsMesh, nsMaterial);
 
+	prtx::ReportsAccumulatorPtr reportsAccumulator{prtx::WriteFirstReportsAccumulator::create()};
+	prtx::ReportingStrategyPtr reportsCollector{prtx::LeafShapeReportingStrategy::create(context, initialShapeIndex, reportsAccumulator)};
 	prtx::LeafIteratorPtr li = prtx::LeafIterator::create(context, initialShapeIndex);
-	for (prtx::ShapePtr shape = li->getNext(); shape; shape = li->getNext())
-		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap());
+	for (prtx::ShapePtr shape = li->getNext(); shape; shape = li->getNext()) {
+		prtx::ReportsPtr r = reportsCollector->getReports(shape->getID());
+		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap(), r);
+	}
 
 	prtx::GeometryPtrVector geometries;
 	std::vector<prtx::MaterialPtrVector> materials;
+	std::vector<prtx::ReportsPtr> reports;
 
 	prtx::EncodePreparator::InstanceVector finalizedInstances;
 	encPrep->fetchFinalizedInstances(finalizedInstances, PREP_FLAGS);
 	for (const auto& inst: finalizedInstances) {
 		geometries.push_back(inst.getGeometry());
 		materials.push_back(inst.getMaterials());
+		reports.push_back(inst.getReports());
 	}
 
-	convertGeometry(initialShape, geometries, materials, oh);
+	convertGeometry(initialShape, geometries, materials, reports, oh);
 }
 
 void HoudiniEncoder::convertGeometry(
 	const prtx::InitialShape& initialShape,
 	const prtx::GeometryPtrVector& geometries,
 	const std::vector<prtx::MaterialPtrVector>& mats,
+	const std::vector<prtx::ReportsPtr>& reports,
 	HoudiniCallbacks* hc
 ) {
+	const bool emitMaterials = getOptions()->getBool(EO_EMIT_MATERIALS.c_str());
+
 	std::vector<double> coords, normals, uvCoords;
 	std::vector<int32_t> faceCounts;
 	std::vector<int32_t> vertexIndices;
@@ -262,16 +277,22 @@ void HoudiniEncoder::convertGeometry(
 	std::vector<uint32_t> faceRanges;
 	std::vector<const prt::AttributeMap*> matAttrMaps;
 	auto matIt = mats.cbegin();
+	auto repIt = reports.cbegin();
 	for (const auto& geo: geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
 		const prtx::MaterialPtr& mat = matIt->front();
 
-		prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
-		convertAttributabletoAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
+		// TODO: shape attributes (!)
+
+		if (emitMaterials) {
+			prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
+			convertAttributabletoAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
+			matAttrMaps.push_back(amb->createAttributeMap());
+		}
+
+		// TODO: reports
 
 		faceRanges.push_back(faceCount);
-		matAttrMaps.push_back(amb->createAttributeMap());
-
 		std::for_each(meshes.begin(), meshes.end(), [&faceCount](const prtx::MeshPtr& m) {
 			faceCount += m->getFaceCount();
 		});
@@ -299,7 +320,24 @@ void HoudiniEncoder::convertGeometry(
 	if (DBG) log_debug("HoudiniEncoder::convertGeometry: end");
 }
 
-
 void HoudiniEncoder::finish(prtx::GenerateContext& /*context*/) {
 }
 
+
+HoudiniEncoderFactory* HoudiniEncoderFactory::createInstance() {
+	prtx::EncoderInfoBuilder encoderInfoBuilder;
+
+	encoderInfoBuilder.setID(HoudiniEncoder::ID);
+	encoderInfoBuilder.setName(HoudiniEncoder::NAME);
+	encoderInfoBuilder.setDescription(HoudiniEncoder::DESCRIPTION);
+	encoderInfoBuilder.setType(prt::CT_GEOMETRY);
+
+	prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
+	amb->setBool(EO_EMIT_ATTRIBUTES.c_str(),       prtx::PRTX_FALSE);
+	amb->setBool(EO_EMIT_MATERIALS.c_str(),        prtx::PRTX_TRUE);
+	amb->setBool(EO_EMIT_REPORTS.c_str(),          prtx::PRTX_FALSE);
+	amb->setBool(EO_EMIT_REPORT_SUMMARIES.c_str(), prtx::PRTX_FALSE);
+	encoderInfoBuilder.setDefaultOptions(amb->createAttributeMap());
+
+	return new HoudiniEncoderFactory(encoderInfoBuilder.create());
+}

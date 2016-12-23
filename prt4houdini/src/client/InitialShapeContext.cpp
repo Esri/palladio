@@ -31,8 +31,15 @@ InitialShapeContext::InitialShapeContext(GU_Detail* detail) {
 }
 
 void InitialShapeContext::put(GU_Detail* detail) {
-	std::string dummy = mShapeClsAttrName.toStdString();
+	std::set<std::string> existingPrimitiveAttributes;
+	{
+		GA_Attribute* a;
+		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
+			existingPrimitiveAttributes.emplace(a->getName().toStdString());
+		}
+	}
 
+	// set main generation attributes (potentially overwrite existing attributes)
     GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
 
@@ -87,7 +94,10 @@ void InitialShapeContext::put(GU_Detail* detail) {
         if (styleDelimPos != std::string::npos)
             nKey.erase(0, styleDelimPos+1);
 
- 	  	//boost::replace_all(nKey, "$", "_");
+		// treat incoming attributes which exist as rule attributes as "user overrides"
+		if (existingPrimitiveAttributes.count(nKey) > 0)
+			continue;
+
 		boost::replace_all(nKey, ".", "_dot_"); // TODO: make this robust
 
 		switch (mRuleAttributeValues->getType(key)) {
@@ -116,21 +126,6 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		clsAttrNameH.set(off, mShapeClsAttrName.c_str());
 		clsTypeH.set(off, mShapeClsType);
 
-		// TODO: actual values???
-//		switch (mShapeClsType) {
-//			case GA_STORECLASS_FLOAT:
-//				boost::get<GA_RWHandleF>(clsNameH).set(off, 0.0f); // VALUE??
-//				break;
-//			case GA_STORECLASS_INT:
-//				boost::get<GA_RWHandleI>(clsNameH).set(off, 0);
-//				break;
-//			case GA_STORECLASS_STRING:
-//				boost::get<GA_RWHandleS>(clsNameH).set(off, "");
-//				break;
-//			default:
-//				break;
-//		}
-
 		rpkH.set(off, mRPK.string().c_str());
 		ruleFileH.set(off, utils::toOSNarrowFromUTF16(mRuleFile).c_str());
 		startRuleH.set(off, utils::toOSNarrowFromUTF16(mStartRule).c_str());
@@ -142,24 +137,34 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		for (size_t k = 0; k < keyCount; k++) {
 			const wchar_t* key = cKeys[k];
 			std::string nKey = utils::toOSNarrowFromUTF16(key);
+
+			// strip away style prefix
+			auto styleDelimPos = nKey.find('$');
+			if (styleDelimPos != std::string::npos)
+				nKey.erase(0, styleDelimPos+1);
+
+			// treat incoming attributes which exist as rule attributes as "user overrides"
+			if (existingPrimitiveAttributes.count(nKey) > 0)
+				continue;
+
 			switch (mRuleAttributeValues->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
 					GA_RWHandleF av(mAttrRefs.at(key));
 					if (av.isValid()) {
-						double userAttrValue = mUserAttributeValues->getFloat(key);
+						double userAttrValue = mRuleAttributeValues->getFloat(key);
 						av.set(off, (fpreal32) userAttrValue);
 					}
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
 					GA_RWHandleI av(mAttrRefs.at(key));
-					bool userAttrValue = mUserAttributeValues->getBool(key);
+					bool userAttrValue = mRuleAttributeValues->getBool(key);
 					av.set(off, userAttrValue ? 1 : 0);
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
 					GA_RWHandleS av(mAttrRefs.at(key));
-					const wchar_t* userAttrValue = mUserAttributeValues->getString(key);
+					const wchar_t* userAttrValue = mRuleAttributeValues->getString(key);
 					std::string nVal = utils::toOSNarrowFromUTF16(userAttrValue);
 					av.set(off, nVal.c_str());
 					break;

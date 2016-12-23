@@ -18,6 +18,9 @@ protected:
 	virtual OP_ERROR cookMySop(OP_Context &context);
 
 private:
+	bool handleParams(OP_Context& context);
+
+private:
 	log::LogHandlerPtr          mLogHandler;
 	const PRTContextUPtr&       mPRTCtx;
 

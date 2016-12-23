@@ -42,7 +42,7 @@ public:
 	int32_t					mSeed;
 
 	AttributeMapPtr			mRuleAttributeValues; // rule attribute values as defined in the rule file
-	AttributeMapPtr			mUserAttributeValues; // holds rule or user attribute values for next generate run
+	//AttributeMapPtr			mUserAttributeValues; // holds rule or user attribute values for next generate run
 };
 
 } // namespace p4h
