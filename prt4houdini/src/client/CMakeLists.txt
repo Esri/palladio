@@ -1,15 +1,10 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.6)
 cmake_policy(SET CMP0015 NEW)
 
 
 ### project definition
 
-set(PROJECT prt4houdini)
-project(${PROJECT})
-
-set(P4H_VERSION_MAJOR 0)
-set(P4H_VERSION_MINOR 7)
-set(P4H_VERSION_MICRO 0) #TODO
+project(prt4houdini)
 
 
 ### external dependencies
@@ -25,16 +20,17 @@ set(Boost_USE_STATIC_LIBS		1)
 set(Boost_USE_STATIC_RUNTIME	0)
 
 if(P4H_LINUX)
-	set(BOOST_DEP_URL "https://esri.box.com/shared/static/2ej2hmoqqbg8qkb6j377t8zllq8ge9ln.zip")
+	set(BOOST_DEP_URL "https://esri.box.com/shared/static/30ndq8k2pauxsni5your8pq3xcoscn9g.zip")
 	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/include/boost/config.hpp")
 elseif(P4H_WINDOWS)
 	set(BOOST_DEP_URL "https://esri.box.com/shared/static/c0uauskq22lmm9yp438sloj004rr8apv.zip")
 	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp")
 endif()
 
+message(${BOOST_DEP_ARCHIVE})
 if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
 	message(STATUS "Boost ${BOOST_VERSION} for Houdini not found in dependency cache, downloading from esri.box.com...")
-	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE})
+	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE} SHOW_PROGRESS LOG BOOST_LOG)
 endif()
 
 if(NOT EXISTS ${BOOST_CHECK_FILE})
@@ -44,7 +40,7 @@ if(NOT EXISTS ${BOOST_CHECK_FILE})
 		ERROR_VARIABLE UNZIP_CHECK
 	)
 	if(UNZIP_CHECK)
-		message(FATAL_ERROR "unzip failed")
+		message(FATAL_ERROR "failed to extract boost")
 	endif()
 endif()
 
@@ -116,7 +112,7 @@ elseif(P4H_LINUX)
 	set(HOUDINI_LIBS "HoudiniUI;HoudiniOPZ;HoudiniOP3;HoudiniOP2;HoudiniOP1;HoudiniSIM;HoudiniGEO;HoudiniPRM;HoudiniUT;GLU;GL;X11;Xext;Xi;dl;pthread")
 endif()
 
-add_library(${PROJECT} SHARED
+add_library(${PROJECT_NAME} SHARED
 	sop.cpp
 	callbacks.cpp
 	utils.cpp
@@ -127,27 +123,20 @@ add_library(${PROJECT} SHARED
 	SOPAssign.cpp
 	SOPGenerate.cpp)
 
-target_link_libraries(${PROJECT} ${HOUDINI_LIBS} ${PRT_LINK_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${HOUDINI_LIBS} ${PRT_LINK_LIBRARIES} ${Boost_LIBRARIES})
 
 if(P4H_WINDOWS)
-	#target_link_libraries(${PROJECT} IPHlpApi Psapi DbgHelp)
+	#target_link_libraries(${PROJECT_NAME} IPHlpApi Psapi DbgHelp)
 elseif(P4H_LINUX)
-	set_target_properties(${PROJECT} PROPERTIES PREFIX "")
+	set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 endif()
-set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 
 ### setup install target
 
-install(TARGETS ${PROJECT}
-	RUNTIME DESTINATION ${HOUDINI_DSO_PATH}
-	LIBRARY DESTINATION ${HOUDINI_DSO_PATH}
-)
-install(FILES ${PRT_LIBRARIES} DESTINATION ${HOUDINI_DSO_PATH})
-install(FILES ${PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_DSO_PATH}/prtlib")
-
-
-# install some test data
-
-#file(GLOB TESTDATA "${CMAKE_CURRENT_LIST_DIR}/../../../testdata/*.rpk")
-#install(FILES ${TESTDATA} DESTINATION "${HOUDINI_DSO_PATH}/prtdata")
+install(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION .
+	LIBRARY DESTINATION .)
+install(FILES ${PRT_LIBRARIES} DESTINATION .)
+install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)

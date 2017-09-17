@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.6)
 cmake_policy(SET CMP0015 NEW)
 
 
 ### project definition
 
-set(PROJECT prt4houdini_codec)
-project(${PROJECT})
+project(prt4houdini_codec)
 
 
 ### build target
@@ -17,7 +16,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=nocona -fvisibility=hi
 set(CMAKE_CXX_FLAGS_Release "${CMAKE_CXX_FLAGS_Release} -O3")
 
 list(APPEND SOURCES houdini.cpp encoder/HoudiniEncoder.cpp)
-add_library(${PROJECT} SHARED ${SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 #if(PRT_WINDOWS)
 #	target_link_libraries(${PROJECT} IPHlpApi Psapi DbgHelp)
@@ -25,13 +24,12 @@ add_library(${PROJECT} SHARED ${SOURCES})
 #	target_link_libraries(${PROJECT} z pthread dl rt)
 #endif()
 
-target_link_libraries(${PROJECT} ${PRT_LINK_LIBRARIES})
-set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(${PROJECT_NAME} ${PRT_LINK_LIBRARIES})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 
 ### install target
 
-install(TARGETS ${PROJECT}
-	RUNTIME DESTINATION ${HOUDINI_DSO_PATH}/prtlib
-	LIBRARY DESTINATION ${HOUDINI_DSO_PATH}/prtlib
-)
+install(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION prtlib
+	LIBRARY DESTINATION prtlib)

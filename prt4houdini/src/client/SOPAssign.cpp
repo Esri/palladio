@@ -2,6 +2,8 @@
 #include "client/callbacks.h"
 #include "client/parameter.h"
 
+#include "prt/API.h"
+
 #include "UT/UT_Interrupt.h"
 
 
@@ -170,7 +172,7 @@ void getDefaultRuleAttributeValues(
 	const wchar_t* encs[1] = {ENCODER_ID_CGA_EVALATTR};
 	const prt::AttributeMap* encsOpts[1] = {encOpts};
 
-	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr);
+	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}

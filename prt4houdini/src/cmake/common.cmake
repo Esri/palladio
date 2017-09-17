@@ -41,7 +41,7 @@ set(P4H_DEP_CACHE ${CMAKE_CURRENT_LIST_DIR}/../../depcache) # in parallel to src
 
 ### PRT dependency
 
-set(PRT_DEP_VER 1.7.2915)
+set(PRT_DEP_VER 1.8.3501)
 set(PRT_DEP_URL_BASE "https://github.com/Esri/esri-cityengine-sdk/releases/download")
 set(PRT_DEP_BASENAME "esri_ce_sdk-${PRT_DEP_VER}-${P4H_OS}-${P4H_TC}-${P4H_ARCH}-rel-opt")
 set(PRT_DEP_ARCHIVE "${P4H_DEP_CACHE}/${PRT_DEP_BASENAME}.zip")
@@ -65,9 +65,12 @@ include_directories(${PRT_INCLUDE_PATH})
 set(CESDK_VERSION "cesdk_${PRT_VERSION_MAJOR}_${PRT_VERSION_MINOR}_${PRT_VERSION_MICRO}")
 message(STATUS "CESDK_VERSION = ${CESDK_VERSION}")
 
+
 ### HOUDINI dependency
 
-set(HOUDINI_VERSION "15.5.673")
+if (NOT HOUDINI_VERSION)
+	set(HOUDINI_VERSION "16.0.705")
+endif()
 string(REPLACE "." ";" VL ${HOUDINI_VERSION})
 list(GET VL 0 HOUDINI_MAJOR_VERSION)
 list(GET VL 1 HOUDINI_MINOR_VERSION)
@@ -84,3 +87,8 @@ else()
 endif()
 message(STATUS "HOUDINI_ROOT     = ${HOUDINI_ROOT}")
 message(STATUS "HOUDINI_DSO_PATH = ${HOUDINI_DSO_PATH}")
+
+
+### default installation location
+
+set(CMAKE_INSTALL_PREFIX ${HOUDINI_DSO_PATH})
