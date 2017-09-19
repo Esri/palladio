@@ -99,4 +99,5 @@ message(STATUS "HOUDINI_DSO_PATH = ${HOUDINI_DSO_PATH}")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set (CMAKE_INSTALL_PREFIX "${HOUDINI_DSO_PATH}" CACHE PATH "default install path" FORCE )
+	message(STATUS "set default install prefix: ${CMAKE_INSTALL_PREFIX}")
 endif()

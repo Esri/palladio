@@ -27,7 +27,6 @@ elseif(P4H_WINDOWS)
 	set(BOOST_CHECK_FILE "${P4H_DEP_CACHE}/${BOOST_DEP_BASENAME}/boost/config.hpp")
 endif()
 
-message(${BOOST_DEP_ARCHIVE})
 if(NOT EXISTS ${BOOST_DEP_ARCHIVE})
 	message(STATUS "Boost ${BOOST_VERSION} for Houdini not found in dependency cache, downloading from esri.box.com...")
 	file(DOWNLOAD "${BOOST_DEP_URL}" ${BOOST_DEP_ARCHIVE} SHOW_PROGRESS LOG BOOST_LOG)
@@ -66,7 +65,7 @@ execute_process(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	OUTPUT_VARIABLE P4H_SESI_TAG
 )
-message("generated sesi tag: ${P4H_SESI_TAG}")
+message(STATUS "generated sesi tag: ${P4H_SESI_TAG}")
 
 
 ### setup build target
