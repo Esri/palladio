@@ -25,12 +25,16 @@
 
 
 namespace {
-const bool DBG = false;
+	constexpr bool DBG = false;
 
-const std::wstring EO_EMIT_ATTRIBUTES       = L"emitAttributes";
-const std::wstring EO_EMIT_MATERIALS        = L"emitMaterials";
-const std::wstring EO_EMIT_REPORTS          = L"emitReports";
-const std::wstring EO_EMIT_REPORT_SUMMARIES = L"emitReportSummaries";
+	constexpr const wchar_t* ENC_ID          	= L"HoudiniEncoder";
+	constexpr const wchar_t* ENC_NAME        	= L"SideFX(tm) Houdini(tm) Encoder";
+	constexpr const wchar_t* ENC_DESCRIPTION	= L"Encodes geometry into the Houdini format.";
+
+	constexpr const wchar_t* EO_EMIT_ATTRIBUTES       = L"emitAttributes";
+	constexpr const wchar_t* EO_EMIT_MATERIALS        = L"emitMaterials";
+	constexpr const wchar_t* EO_EMIT_REPORTS          = L"emitReports";
+	constexpr const wchar_t* EO_EMIT_REPORT_SUMMARIES = L"emitReportSummaries";
 
 const prtx::EncodePreparator::PreparationFlags PREP_FLAGS = prtx::EncodePreparator::PreparationFlags()
 	.instancing(false)
@@ -55,22 +59,22 @@ void convertAttributabletoAttributeMap(
 		const prtx::WStringVector& keys,
 		const prt::ResolveMap* rm
 ) {
-	for(size_t k=0; k<keys.size(); k++) {
-		switch(prtxAttr.getType(keys[k])) {
+	for(const auto& key : keys) {
+		switch(prtxAttr.getType(key)) {
 			case prt::Attributable::PT_BOOL:
-				aBuilder->setBool(keys[k].c_str(), prtxAttr.getBool(keys[k]) == prtx::PRTX_TRUE);
+				aBuilder->setBool(key.c_str(), prtxAttr.getBool(key) == prtx::PRTX_TRUE);
 				break;
 
 			case prt::Attributable::PT_FLOAT:
-				aBuilder->setFloat(keys[k].c_str(), prtxAttr.getFloat(keys[k]));
+				aBuilder->setFloat(key.c_str(), prtxAttr.getFloat(key));
 				break;
 
 			case prt::Attributable::PT_INT:
-				aBuilder->setInt(keys[k].c_str(), prtxAttr.getInt(keys[k]));
+				aBuilder->setInt(key.c_str(), prtxAttr.getInt(key));
 				break;
 
 			case prt::Attributable::PT_STRING: {
-				const wchar_t* tv = prtxAttr.getString(keys[k]).c_str();
+				const wchar_t* tv = prtxAttr.getString(key).c_str();
 				if (tv && wcslen(tv) > 0) {
 					std::wstring v(tv);
 
@@ -79,10 +83,9 @@ void convertAttributabletoAttributeMap(
 					rmKeys.push_back(v);
 					rmKeys.push_back(L"assets/" + v);
 
-					for (size_t ki = 0; ki < rmKeys.size(); ki++) {
-						const std::wstring& k = rmKeys[ki];
-						if (rm->hasKey(k.c_str())) {
-							const wchar_t* tmp = rm->getString(k.c_str());
+					for (const auto& rmKey: rmKeys) {
+						if (rm->hasKey(rmKey.c_str())) {
+							const wchar_t* tmp = rm->getString(rmKey.c_str());
 							if (tmp && std::wcslen(tmp) > 0) {
 								prtx::URIPtr u(prtx::URI::create(tmp));
 								v = u->getPath();
@@ -90,43 +93,43 @@ void convertAttributabletoAttributeMap(
 							break;
 						}
 					}
-					aBuilder->setString(keys[k].c_str(), v.c_str());
+					aBuilder->setString(key.c_str(), v.c_str());
 				}
 				break;
 			}
 			case prt::Attributable::PT_BOOL_ARRAY: {
-				const std::vector<uint8_t>& ba = prtxAttr.getBoolArray(keys[k]);
-				bool* boo = new bool[ba.size()];
+				const std::vector<uint8_t>& ba = prtxAttr.getBoolArray(key);
+				auto* boo = new bool[ba.size()];
 				for (size_t i = 0; i < ba.size(); i++)
 					boo[i] = (ba[i] == prtx::PRTX_TRUE);
-				aBuilder->setBoolArray(keys[k].c_str(), boo, ba.size());
+				aBuilder->setBoolArray(key.c_str(), boo, ba.size());
 				delete [] boo;
 				break;
 			}
 
 			case prt::Attributable::PT_INT_ARRAY: {
-				const std::vector<int32_t>& array = prtxAttr.getIntArray(keys[k]);
-				aBuilder->setIntArray(keys[k].c_str(), &array[0], array.size());
+				const std::vector<int32_t>& array = prtxAttr.getIntArray(key);
+				aBuilder->setIntArray(key.c_str(), &array[0], array.size());
 				break;
 			}
 
 			case prt::Attributable::PT_FLOAT_ARRAY: {
-				const std::vector<double>& array = prtxAttr.getFloatArray(keys[k]);
-				aBuilder->setFloatArray(keys[k].c_str(), array.data(), array.size());
+				const std::vector<double>& array = prtxAttr.getFloatArray(key);
+				aBuilder->setFloatArray(key.c_str(), array.data(), array.size());
 				break;
 			}
 
 			case prt::Attributable::PT_STRING_ARRAY:{
-				const prtx::WStringVector& a = prtxAttr.getStringArray(keys[k]);
+				const prtx::WStringVector& a = prtxAttr.getStringArray(key);
 				std::vector<const wchar_t*> pw = toPtrVec(a);
-				aBuilder->setStringArray(keys[k].c_str(), pw.data(), pw.size());
+				aBuilder->setStringArray(key.c_str(), pw.data(), pw.size());
 				break;
 			}
 
 			// TODO: convert texture members...
 
 			default:
-				log_wdebug(L"ignored atttribute '%s' with type %d") % keys[k] % prtxAttr.getType(keys[k]);
+				log_wdebug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
 				break;
 		}
 	}
@@ -135,28 +138,21 @@ void convertAttributabletoAttributeMap(
 } // namespace
 
 
-const std::wstring HoudiniEncoder::ID          	= L"HoudiniEncoder";
-const std::wstring HoudiniEncoder::NAME        	= L"SideFX(tm) Houdini(tm) Encoder";
-const std::wstring HoudiniEncoder::DESCRIPTION	= L"Encodes geometry into the Houdini format.";
-
-
 HoudiniEncoder::HoudiniEncoder(const std::wstring& id, const prt::AttributeMap* options, prt::Callbacks* callbacks)
 : prtx::GeometryEncoder(id, options, callbacks)
 {  }
 
-HoudiniEncoder::~HoudiniEncoder() {  }
-
 void HoudiniEncoder::init(prtx::GenerateContext&) {
 	prt::Callbacks* cb = getCallbacks();
 	if (DBG) log_debug("HoudiniEncoder::init: cb = %x") % (size_t)cb;
-	HoudiniCallbacks* oh = dynamic_cast<HoudiniCallbacks*>(cb);
+	auto* oh = dynamic_cast<HoudiniCallbacks*>(cb);
 	if (DBG) log_debug("                   oh = %x") % (size_t)oh;
-	if(oh == 0) throw(prtx::StatusException(prt::STATUS_ILLEGAL_CALLBACK_OBJECT));
+	if(oh == nullptr) throw(prtx::StatusException(prt::STATUS_ILLEGAL_CALLBACK_OBJECT));
 }
 
 void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeIndex) {
 	const prtx::InitialShape& initialShape = *context.getInitialShape(initialShapeIndex);
-	HoudiniCallbacks* oh = dynamic_cast<HoudiniCallbacks*>(getCallbacks());
+	auto* oh = dynamic_cast<HoudiniCallbacks*>(getCallbacks());
 
 	prtx::DefaultNamePreparator        namePrep;
 	prtx::NamePreparator::NamespacePtr nsMesh     = namePrep.newNamespace();
@@ -194,7 +190,7 @@ void HoudiniEncoder::convertGeometry(
 	const std::vector<prtx::ReportsPtr>& reports,
 	HoudiniCallbacks* hc
 ) {
-	const bool emitMaterials = getOptions()->getBool(EO_EMIT_MATERIALS.c_str());
+	const bool emitMaterials = getOptions()->getBool(EO_EMIT_MATERIALS);
 
 	std::vector<double> coords, normals, uvCoords;
 	std::vector<int32_t> faceCounts;
@@ -327,16 +323,16 @@ void HoudiniEncoder::finish(prtx::GenerateContext& /*context*/) {
 HoudiniEncoderFactory* HoudiniEncoderFactory::createInstance() {
 	prtx::EncoderInfoBuilder encoderInfoBuilder;
 
-	encoderInfoBuilder.setID(HoudiniEncoder::ID);
-	encoderInfoBuilder.setName(HoudiniEncoder::NAME);
-	encoderInfoBuilder.setDescription(HoudiniEncoder::DESCRIPTION);
+	encoderInfoBuilder.setID(ENC_ID);
+	encoderInfoBuilder.setName(ENC_NAME);
+	encoderInfoBuilder.setDescription(ENC_DESCRIPTION);
 	encoderInfoBuilder.setType(prt::CT_GEOMETRY);
 
 	prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
-	amb->setBool(EO_EMIT_ATTRIBUTES.c_str(),       prtx::PRTX_FALSE);
-	amb->setBool(EO_EMIT_MATERIALS.c_str(),        prtx::PRTX_TRUE);
-	amb->setBool(EO_EMIT_REPORTS.c_str(),          prtx::PRTX_FALSE);
-	amb->setBool(EO_EMIT_REPORT_SUMMARIES.c_str(), prtx::PRTX_FALSE);
+	amb->setBool(EO_EMIT_ATTRIBUTES,       prtx::PRTX_FALSE);
+	amb->setBool(EO_EMIT_MATERIALS,        prtx::PRTX_TRUE);
+	amb->setBool(EO_EMIT_REPORTS,          prtx::PRTX_FALSE);
+	amb->setBool(EO_EMIT_REPORT_SUMMARIES, prtx::PRTX_FALSE);
 	encoderInfoBuilder.setDefaultOptions(amb->createAttributeMap());
 
 	return new HoudiniEncoderFactory(encoderInfoBuilder.create());

@@ -1,5 +1,5 @@
-#include "client/InitialShapeGenerator.h"
-#include "client/SOPAssign.h"
+#include "InitialShapeGenerator.h"
+#include "SOPAssign.h"
 
 #include "GU/GU_Detail.h"
 #include "GU/GU_PrimPoly.h"
@@ -36,7 +36,7 @@ struct PrimitivePartition {
 		UT_String clsAttrName = clsAttrNameH.get(p->getMapOffset());
 
 		GA_ROHandleI clsAttrTypeH(mClsAttrTypeRef);
-		GA_StorageClass clsAttrType = static_cast<GA_StorageClass>(clsAttrTypeH.get(p->getMapOffset()));
+		auto clsAttrType = static_cast<GA_StorageClass>(clsAttrTypeH.get(p->getMapOffset()));
 
 		GA_ROAttributeRef clsNameRef;
 		GA_ROAttributeRef r(detail->findPrimitiveAttribute(clsAttrName.buffer()));
@@ -210,7 +210,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 
 			// naively copying vertices
 			// prt does not support re-using a vertex index (revisit this with prt 1.6)
-			const GU_PrimPoly* face = static_cast<const GU_PrimPoly*>(p);
+			const auto * face = static_cast<const GU_PrimPoly*>(p);
 			for (GA_Size i = face->getVertexCount()-1; i >= 0; i--) {
 				idx.push_back(static_cast<uint32_t>(vtx.size()/3));
 				UT_Vector3 p = detail->getPos3(face->getPointOffset(i));

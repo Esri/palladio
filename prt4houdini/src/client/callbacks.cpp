@@ -1,5 +1,5 @@
-#include "client/callbacks.h"
-#include "client/utils.h"
+#include "callbacks.h"
+#include "utils.h"
 
 #include "GU/GU_HoleInfo.h"
 
@@ -102,22 +102,22 @@ void HoudiniGeometry::add(
 
 	utPoints.reserve(vtxSize / 3);
 	for (size_t pi = 0; pi < vtxSize; pi += 3)
-		utPoints.push_back(UT_Vector3(vtx[pi], vtx[pi+1], vtx[pi+2]));
+		utPoints.emplace_back(vtx[pi], vtx[pi+1], vtx[pi+2]);
 
 	utNormals.reserve(nrmSize / 3);
 	for (size_t pi = 0; pi < nrmSize; pi += 3)
-		utNormals.push_back(UT_Vector3(nrm[pi], nrm[pi+1], nrm[pi+2]));
+		utNormals.emplace_back(nrm[pi], nrm[pi+1], nrm[pi+2]);
 
 	utUVs.reserve(uvsSize / 2);
 	for (size_t pi = 0; pi < uvsSize; pi += 2)
-		utUVs.push_back(UT_Vector3(uvs[pi], uvs[pi+1], 0.0));
+		utUVs.emplace_back(uvs[pi], uvs[pi+1], 0.0);
 
 	GEO_PolyCounts geoPolyCounts;
 	for (size_t ci = 0; ci < countsSize; ci++)
 		geoPolyCounts.append(counts[ci]);
 
 	std::string nname = p4h::utils::toOSNarrowFromUTF16(name);
-	GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
+	GA_PrimitiveGroup* primGroup = dynamic_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
 
 	GA_Detail::OffsetMarker marker(*mDetail);
 	GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts, indices);

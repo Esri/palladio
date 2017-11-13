@@ -1,6 +1,6 @@
-#include "client/SOPAssign.h"
-#include "client/parameter.h"
-#include "client/InitialShapeContext.h"
+#include "SOPAssign.h"
+#include "parameter.h"
+#include "InitialShapeContext.h"
 
 
 namespace {
@@ -18,7 +18,7 @@ namespace p4h {
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	static const bool DBG = false;
 
-	SOPAssign* node = static_cast<SOPAssign*>(data);
+	auto * node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
@@ -29,7 +29,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	}
 
 	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
-		theMenu[0].setToken(0);
+		theMenu[0].setToken(nullptr);
 		return;
 	}
 
@@ -74,17 +74,17 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 			theMenu[ri].setToken(rules[ri].first.c_str());
 			theMenu[ri].setLabel(rules[ri].second.c_str());
 		}
-		theMenu[limit].setToken(0); // need a null terminator
+		theMenu[limit].setToken(nullptr); // need a null terminator
 	}
 }
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOPAssign* node = static_cast<SOPAssign*>(data);
+	auto * node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	if (isCtx.mRPK.empty()) {
-		theMenu[0].setToken(0);
+		theMenu[0].setToken(nullptr);
 		return;
 	}
 
@@ -99,7 +99,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 		theMenu[ri].setToken(tok.c_str());
 		theMenu[ri].setLabel(lbl.c_str());
 	}
-	theMenu[limit].setToken(0); // need a null terminator
+	theMenu[limit].setToken(nullptr); // need a null terminator
 }
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
@@ -110,11 +110,11 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 }
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	SOPAssign* node = static_cast<SOPAssign*>(data);
+	auto * node = static_cast<SOPAssign*>(data);
 	const InitialShapeContext& isCtx = node->getInitialShapeContext();
 
 	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
-		theMenu[0].setToken(0);
+		theMenu[0].setToken(nullptr);
 		return;
 	}
 
@@ -145,7 +145,7 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 			theMenu[si].setLabel(s.c_str());
 			si++;
 		}
-		theMenu[limit].setToken(0); // need a null terminator
+		theMenu[limit].setToken(nullptr); // need a null terminator
 	}
 }
 

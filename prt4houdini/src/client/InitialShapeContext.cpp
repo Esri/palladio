@@ -1,4 +1,4 @@
-#include "client/InitialShapeContext.h"
+#include "InitialShapeContext.h"
 
 #include "GU/GU_Detail.h"
 
@@ -7,17 +7,15 @@
 
 
 namespace {
+	const UT_String CE_SHAPE_CLS_NAME   = "ceShapeClsName";
+	const UT_String CE_SHAPE_CLS_TYPE   = "ceShapeClsType"; // ordinal of GA_StorageClass
+	const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
+	const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
+	const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
+	const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
+	const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
-const UT_String CE_SHAPE_CLS_NAME   = "ceShapeClsName";
-const UT_String CE_SHAPE_CLS_TYPE   = "ceShapeClsType"; // ordinal of GA_StorageClass
-const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
-const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
-const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
-const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
-const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
-
-const UT_String DEFAULT_CLS_NAME    = "shapeCls";
-
+	const UT_String DEFAULT_CLS_NAME    = "shapeCls";
 } // namespace
 
 
@@ -178,11 +176,11 @@ void InitialShapeContext::put(GU_Detail* detail) {
 }
 
 GA_ROAttributeRef InitialShapeContext::getClsName(const GU_Detail* detail) {
-	return GA_ROAttributeRef(detail->findPrimitiveAttribute(CE_SHAPE_CLS_NAME));
+	return detail->findPrimitiveAttribute(CE_SHAPE_CLS_NAME);
 }
 
 GA_ROAttributeRef InitialShapeContext::getClsType(const GU_Detail* detail) {
-	return GA_ROAttributeRef(detail->findPrimitiveAttribute(CE_SHAPE_CLS_TYPE));
+	return detail->findPrimitiveAttribute(CE_SHAPE_CLS_TYPE);
 }
 
 //std::vector<InitialShapeContextUPtr> InitialShapeContext::get(GU_Detail* detail) {

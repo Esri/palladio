@@ -1,4 +1,4 @@
-#include "client/utils.h"
+#include "utils.h"
 
 #include "prt/API.h"
 #include "prt/StringUtils.h"
@@ -29,7 +29,7 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 	static const size_t		START_SIZE	= 16 * 1024;
 
 	size_t resultSize = START_SIZE;
-	wchar_t* result = new wchar_t[resultSize];
+	auto * result = new wchar_t[resultSize];
 	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
 	if (resultSize >= START_SIZE) {
 		delete[] result;
@@ -55,8 +55,8 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
 	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(encID);
-	const prt::AttributeMap* validatedOptions = 0;
-	const prt::AttributeMap* optionStates = 0;
+	const prt::AttributeMap* validatedOptions = nullptr;
+	const prt::AttributeMap* optionStates = nullptr;
 	encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
 	optionStates->destroy();
 	encInfo->destroy();
@@ -64,7 +64,7 @@ const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt:
 }
 
 std::string objectToXML(prt::Object const* obj) {
-	if (obj == 0)
+	if (obj == nullptr)
 		throw std::invalid_argument("object pointer is not valid");
 	const size_t siz = 4096;
 	size_t actualSiz = siz;

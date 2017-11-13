@@ -1,8 +1,8 @@
 #pragma once
 
-#include "client/PRTContext.h"
-#include "client/InitialShapeContext.h"
-#include "client/logging.h"
+#include "PRTContext.h"
+#include "InitialShapeContext.h"
+#include "logging.h"
 
 #include "SOP/SOP_Node.h"
 
@@ -12,10 +12,10 @@ namespace p4h {
 class SOPGenerate : public SOP_Node {
 public:
 	SOPGenerate(const PRTContextUPtr& pCtx, OP_Network *net, const char *name, OP_Operator *op);
-	virtual ~SOPGenerate();
+	~SOPGenerate() override;
 
 protected:
-	virtual OP_ERROR cookMySop(OP_Context &context);
+	OP_ERROR cookMySop(OP_Context &context) override;
 
 private:
 	bool handleParams(OP_Context& context);

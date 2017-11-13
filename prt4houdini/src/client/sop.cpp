@@ -1,7 +1,7 @@
-#include "client/SOPAssign.h"
-#include "client/SOPGenerate.h"
-#include "client/PRTContext.h"
-#include "client/parameter.h"
+#include "SOPAssign.h"
+#include "SOPGenerate.h"
+#include "PRTContext.h"
+#include "parameter.h"
 
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"

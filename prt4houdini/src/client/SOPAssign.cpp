@@ -1,6 +1,6 @@
-#include "client/SOPAssign.h"
-#include "client/callbacks.h"
-#include "client/parameter.h"
+#include "SOPAssign.h"
+#include "callbacks.h"
+#include "parameter.h"
 
 #include "prt/API.h"
 
@@ -129,7 +129,7 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED.getToken(), 0, now);
 
 	// -- logger
-	prt::LogLevel ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
+	auto ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
 	mLogHandler->setLevel(ll);
 	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
@@ -222,7 +222,7 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 		LOG_ERR << "rule file does not contain any rules";
 		return false;
 	}
-	size_t startRuleIdx = size_t(-1);
+	auto startRuleIdx = size_t(-1);
 	for (size_t ri = 0; ri < info->getNumRules(); ri++) {
 		const prt::RuleFileInfo::Entry* re = info->getRule(ri);
 		for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
@@ -270,188 +270,9 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	getDefaultRuleAttributeValues(amb, mPRTCtx->mPRTCache, resolveMap, mInitialShapeContext.mRuleFile, fqStartRule);
 	mInitialShapeContext.mRuleAttributeValues.reset(amb->createAttributeMap());
 
-	//mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap()); // pristine user attribute values
-
 	LOG_DBG << "mRuleAttributeValues = " << utils::objectToXML(mInitialShapeContext.mRuleAttributeValues.get());
-
-	// update rule attribute UI
-	//createMultiParams(time);
 
 	return true;
 }
-
-//void SOPAssign::createMultiParams(fpreal time) {
-//	size_t keyCount = 0;
-//	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
-//
-//	// count type cardinality
-//	size_t numFlt = 0, numStr = 0, numBool = 0;
-//	for (size_t k = 0; k < keyCount; k++) {
-//		const wchar_t* key = cKeys[k];
-//		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
-//			case prt::AttributeMap::PT_FLOAT:
-//				numFlt++;
-//				break;
-//			case prt::AttributeMap::PT_STRING:
-//				numStr++;
-//				break;
-//			case prt::AttributeMap::PT_BOOL:
-//				numBool++;
-//				break;
-//			default:
-//				break;
-//		}
-//	}
-//
-//	setInt(NODE_MULTIPARAM_FLOAT_NUM.getToken(), 0, time, numFlt);
-//	setInt(NODE_MULTIPARAM_STRING_NUM.getToken(), 0, time, numStr);
-//	setInt(NODE_MULTIPARAM_BOOL_NUM.getToken(), 0, time, numBool);
-//
-//	int idxFlt = 0, idxStr = 0, idxBool = 0;
-//	for (size_t k = 0; k < keyCount; k++) {
-//		const wchar_t* key = cKeys[k];
-//		std::string nKey = utils::toOSNarrowFromUTF16(key);
-//		std::string nLabel = nKey.substr(nKey.find_first_of('$') + 1); // strip style
-//		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
-//			case prt::AttributeMap::PT_FLOAT: {
-//				double v = mInitialShapeContext.mRuleAttributeValues->getFloat(key);
-//
-//				setStringInst(
-//						UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_FLOAT_ATTR.getToken(), &idxFlt, 0, time
-//				);
-//				PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_FLOAT_ATTR.getToken(), &idxFlt);
-//				if (p) p->setLockedFlag(0, true);
-//
-//				setFloatInst(v, NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, time);
-//
-//				idxFlt++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_STRING: {
-//				const wchar_t* v = mInitialShapeContext.mRuleAttributeValues->getString(key);
-//				std::string nv = utils::toOSNarrowFromUTF16(v);
-//
-//				setStringInst(
-//						UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_ATTR.getToken(), &idxStr, 0, time
-//				);
-//				PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_STRING_ATTR.getToken(), &idxFlt);
-//				if (p) p->setLockedFlag(0, true);
-//
-//				setStringInst(
-//						UT_String(nv), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, 0, time
-//				);
-//
-//				idxStr++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_BOOL: {
-//				bool v = mInitialShapeContext.mRuleAttributeValues->getBool(key);
-//
-//				setStringInst(
-//						UT_String(nLabel), CH_STRING_LITERAL, NODE_MULTIPARAM_BOOL_ATTR.getToken(), &idxBool, 0, time
-//				);
-//				PRM_Parm* p = getParmPtrInst(NODE_MULTIPARAM_BOOL_ATTR.getToken(), &idxFlt);
-//				if (p) p->setLockedFlag(0, true);
-//
-//				setIntInst(v ? 1 : 0, NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, time);
-//
-//				idxBool++;
-//				break;
-//			}
-//			default: {
-//				LOG_WRN << "attribute " << nKey << ": type not handled";
-//				break;
-//			}
-//		}
-//	}
-//}
-
-//void SOPAssign::updateUserAttributes() {
-//	if (!mInitialShapeContext.mRuleAttributeValues)
-//		return;
-//
-//	AttributeMapBuilderPtr amb(
-//			prt::AttributeMapBuilder::createFromAttributeMap(mInitialShapeContext.mRuleAttributeValues.get()));
-//
-//	int idxFlt = 0, idxStr = 0, idxBool = 0;
-//	size_t keyCount = 0;
-//	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
-//	for (size_t k = 0; k < keyCount; k++) {
-//		const wchar_t* key = cKeys[k];
-//		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
-//			case prt::AttributeMap::PT_FLOAT: {
-//				double v = evalFloatInst(NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, 0.0); // TODO: time
-//				amb->setFloat(key, v);
-//				idxFlt++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_STRING: {
-//				UT_String v;
-//				evalStringInst(NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, v, 0, 0.0);
-//				std::wstring wv = utils::toUTF16FromOSNarrow(v.toStdString());
-//				amb->setString(key, wv.c_str());
-//				idxStr++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_BOOL: {
-//				bool v = (evalIntInst(NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, 0.0) > 0);
-//				amb->setBool(key, v);
-//				idxBool++;
-//				break;
-//			}
-//			default: {
-//				LOG_WRN << L"attribute " << key << L": type not handled";
-//				break;
-//			}
-//		}
-//	}
-//	mInitialShapeContext.mUserAttributeValues.reset(amb->createAttributeMap());
-//}
-
-//void SOPAssign::resetUserAttribute(const std::string& token) {
-//	size_t keyCount = 0;
-//	const wchar_t* const* cKeys = mInitialShapeContext.mRuleAttributeValues->getKeys(&keyCount);
-//
-//	int idxFlt = 0, idxStr = 0, idxBool = 0;
-//	for (size_t k = 0; k < keyCount; k++) {
-//		const wchar_t* key = cKeys[k];
-//		std::string nKey = utils::toOSNarrowFromUTF16(key);
-//		std::string nLabel = nKey.substr(nKey.find_first_of('$') + 1); // strip style
-//
-//		switch (mInitialShapeContext.mRuleAttributeValues->getType(key)) {
-//			case prt::AttributeMap::PT_FLOAT: {
-//				if (nLabel.compare(token) == 0) {
-//					double v = mInitialShapeContext.mRuleAttributeValues->getFloat(key);
-//					setFloatInst(v, NODE_MULTIPARAM_FLOAT_VAL.getToken(), &idxFlt, 0, 0.0);
-//				}
-//				idxFlt++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_STRING: {
-//				if (nLabel.compare(token) == 0) {
-//					const wchar_t* v = mInitialShapeContext.mRuleAttributeValues->getString(key);
-//					std::string nv = utils::toOSNarrowFromUTF16(v);
-//					setStringInst(
-//							UT_String(nv), CH_STRING_LITERAL, NODE_MULTIPARAM_STRING_VAL.getToken(), &idxStr, 0, 0.0
-//					);
-//				}
-//				idxStr++;
-//				break;
-//			}
-//			case prt::AttributeMap::PT_BOOL: {
-//				if (nLabel.compare(token) == 0) {
-//					bool v = mInitialShapeContext.mRuleAttributeValues->getBool(key);
-//					setIntInst(v ? 1 : 0, NODE_MULTIPARAM_BOOL_VAL.getToken(), &idxBool, 0, 0.0);
-//				}
-//				idxBool++;
-//				break;
-//			}
-//			default: {
-//				LOG_WRN << "attribute " << nKey << ": type not handled";
-//				break;
-//			}
-//		}
-//	}
-//}
 
 } // namespace p4h

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "client/PRTContext.h"
-#include "client/InitialShapeContext.h"
+#include "PRTContext.h"
+#include "InitialShapeContext.h"
 
 #include "GU/GU_Detail.h"
 

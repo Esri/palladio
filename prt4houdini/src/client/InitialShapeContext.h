@@ -1,6 +1,6 @@
 #pragma once
 
-#include "client/utils.h"
+#include "utils.h"
 
 #include "GA/GA_Types.h"
 #include "GA/GA_AttributeRef.h"
@@ -22,7 +22,7 @@ using InitialShapeContextUPtr = std::unique_ptr<InitialShapeContext>;
 class InitialShapeContext final {
 public:
 	InitialShapeContext();
-	InitialShapeContext(GU_Detail* detail);
+	explicit InitialShapeContext(GU_Detail* detail);
 	InitialShapeContext(const InitialShapeContext&) = delete;
 	InitialShapeContext& operator=(const InitialShapeContext&) = delete;
 	virtual ~InitialShapeContext() = default;

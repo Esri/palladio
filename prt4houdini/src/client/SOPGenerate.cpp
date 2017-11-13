@@ -1,7 +1,7 @@
-#include "client/SOPGenerate.h"
-#include "client/parameter.h"
-#include "client/InitialShapeGenerator.h"
-#include "client/callbacks.h"
+#include "SOPGenerate.h"
+#include "parameter.h"
+#include "InitialShapeGenerator.h"
+#include "callbacks.h"
 
 #include "UT/UT_Interrupt.h"
 

@@ -20,18 +20,14 @@ class HoudiniCallbacks;
 
 class HoudiniEncoder : public prtx::GeometryEncoder {
 public:
-	static const std::wstring ID;
-	static const std::wstring NAME;
-	static const std::wstring DESCRIPTION;
-
-public:
 	HoudiniEncoder(const std::wstring& id, const prt::AttributeMap* options, prt::Callbacks* callbacks);
-	virtual ~HoudiniEncoder();
+
+	~HoudiniEncoder() override = default;
 
 public:
-	virtual void init(prtx::GenerateContext& context);
-	virtual void encode(prtx::GenerateContext& context, size_t initialShapeIndex);
-	virtual void finish(prtx::GenerateContext& context);
+	void init(prtx::GenerateContext& context) override;
+	void encode(prtx::GenerateContext& context, size_t initialShapeIndex) override;
+	void finish(prtx::GenerateContext& context) override;
 
 private:
 	void convertGeometry(
@@ -48,10 +44,11 @@ class HoudiniEncoderFactory : public prtx::EncoderFactory, public prtx::Singleto
 public:
 	static HoudiniEncoderFactory* createInstance();
 
-	HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) { }
-	virtual ~HoudiniEncoderFactory() { }
+	explicit HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) { }
 
-	virtual HoudiniEncoder* create(const prt::AttributeMap* options, prt::Callbacks* callbacks) const {
+	~HoudiniEncoderFactory() override = default;
+
+	HoudiniEncoder* create(const prt::AttributeMap* options, prt::Callbacks* callbacks) const override {
 		return new HoudiniEncoder(getID(), options, callbacks);
 	}
 };
