@@ -1,0 +1,6 @@
+[requires]
+cesdk/1.9.3786@esri-rd-zurich/stable
+houdini-apprentice/16.0.705@sidefx/stable
+
+[generators]
+cmake

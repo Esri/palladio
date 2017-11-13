@@ -8,6 +8,10 @@ set(P4H_VERSION_MICRO 0) #TODO
 ### root project
 
 project(prt4houdini)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup() # TODO: use TARGETS mode for modern cmake
+
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/common.cmake)
 
 add_subdirectory(codec)
