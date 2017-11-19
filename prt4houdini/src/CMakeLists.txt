@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.8)
 
 set(P4H_VERSION_MAJOR 0)
 set(P4H_VERSION_MINOR 7)
@@ -10,12 +10,13 @@ set(P4H_VERSION_MICRO 0) #TODO
 project(prt4houdini)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup() # TODO: use TARGETS mode for modern cmake
+conan_basic_setup(TARGETS) # TODO: use TARGETS mode for modern cmake
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/common.cmake)
 
 add_subdirectory(codec)
 add_subdirectory(client)
+add_subdirectory(test)
 
 add_dependencies(prt4houdini prt4houdini_codec)
 
