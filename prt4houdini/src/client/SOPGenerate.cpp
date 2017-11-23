@@ -110,7 +110,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				InitialShapeNOPtrVector& is = isGen.getInitialShapes();
 
 				// establish threads
-				const uint32_t nThreads = 2 * mPRTCtx->mCores; // TODO: find good thread load
+				const uint32_t nThreads = mPRTCtx->mCores;
 				const uint32_t isRangeSize = std::ceil(is.size() / nThreads);
 
 				// prt requires one callback instance per generate call
@@ -127,6 +127,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				// kick-off generate threads
 				start = std::chrono::system_clock::now();
 				std::vector<std::future<void>> futures;
+				futures.reserve(nThreads);
 				for (int8_t ti = 0; ti < nThreads; ti++) {
 					auto f = std::async(
 							std::launch::async, [this, &hg, ti, &nThreads, &isRangeSize, &is] {
