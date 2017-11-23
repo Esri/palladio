@@ -33,5 +33,8 @@ class HoudiniConan(ConanFile):
             raise Exception("platform not supported!")
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self, folder="dsolib")
-        self.user_info.version = self.version # TODO: raise conan github issue to get that info by default
+        self.cpp_info.libdirs = ['dsolib']
+        self.cpp_info.libs = [ 'HoudiniUI', 'HoudiniOPZ', 'HoudiniOP3', 'HoudiniOP2', 'HoudiniOP1', 'HoudiniGEO', 'HoudiniPRM', 'HoudiniUT']
+        # TODO: provide cpp flags required by houdini
+        # TODO: raise conan github issue to get version info by default
+        self.user_info.version = self.version
