@@ -29,7 +29,7 @@ namespace p4h {
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
 : SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(L"p4h assign", prt::LOG_ERROR))
+, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
 , mPRTCtx(pCtx)
 {
 	prt::addLogHandler(mLogHandler.get());

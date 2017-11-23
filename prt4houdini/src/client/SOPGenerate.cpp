@@ -24,7 +24,7 @@ namespace p4h {
 
 SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
 : SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(L"p4h generate", prt::LOG_ERROR))
+, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR)) // TODO: FIX logger name
 , mPRTCtx(pCtx)
 {
 	prt::addLogHandler(mLogHandler.get());
@@ -52,6 +52,9 @@ SOPGenerate::~SOPGenerate() {
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	LOG_DBG << "handleParams begin";
+
+	// TODO: add separate log level for generate node
+	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
 
 	const auto now = context.getTime();
 	const bool emitAttributes      = (evalInt(GENERATE_NODE_PARAM_EMIT_ATTRS.getToken(), 0, now) > 0);
