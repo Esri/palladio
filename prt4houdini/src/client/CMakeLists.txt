@@ -55,6 +55,8 @@ elseif(P4H_LINUX)
 		target_compile_options(${PROJECT_NAME} PRIVATE -O0 -g)
 	endif()
 
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+			INSTALL_RPATH "\$ORIGIN")
 
 elseif(P4H_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
