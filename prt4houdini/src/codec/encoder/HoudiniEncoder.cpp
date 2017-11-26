@@ -196,7 +196,6 @@ void HoudiniEncoder::convertGeometry(
 	std::vector<int32_t> faceCounts;
 	std::vector<int32_t> vertexIndices;
 	std::vector<int32_t> holes;
-	std::vector<uint32_t> uvCounts; // unused
 	std::vector<uint32_t> uvIndices;
 	int32_t base = 0;
 	int32_t uvBase  = 0;
@@ -213,7 +212,6 @@ void HoudiniEncoder::convertGeometry(
 			const prtx::DoubleVector&	uvs			= hasUVs ? mesh->getUVCoords(0) : prtx::DoubleVector();
 
 			faceCounts.reserve(faceCounts.size() + mesh->getFaceCount());
-			uvCounts.reserve(uvCounts.size() + mesh->getFaceCount());
 
 			coords.insert(coords.end(), verts.begin(), verts.end());
 			normals.insert(normals.end(), norms.begin(), norms.end());
@@ -238,25 +236,25 @@ void HoudiniEncoder::convertGeometry(
 					holes.insert(holes.end(), faceHoleIndices, faceHoleIndices + faceHoleCount);
 				holes.push_back(HOLE_DELIM);
 #endif
-
-				if (hasUVs && mesh->getFaceUVCount(fi, 0) > 0) {
+				const uint32_t uv0Count = hasUVs ? mesh->getFaceUVCount(fi, 0) : 0u;
+				if (uv0Count > 0) {
 						//if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
 						//if (DBG) log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
-						assert(mesh->getFaceUVCount(fi, 0) == mesh->getFaceVertexCount(fi));
+						assert(uv0Count == vtxCnt);
 
 						const uint32_t* uv0Idx = mesh->getFaceUVIndices(fi, 0);
-						uvCounts.push_back(mesh->getFaceUVCount(fi, 0));
-						for (uint32_t vi = 0, size = uvCounts.back(); vi < size; ++vi) {
+						for (uint32_t vi = 0; vi < vtxCnt; ++vi) {
 							//if (DBG) log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
-							uvIndices.push_back(uvBase + uv0Idx[vi]);
+							uvIndices.push_back(uvBase + uv0Idx[vtxCnt-vi-1]);
 						}
 				}
 				else {
-					uvCounts.push_back(vtxCnt);
 					for (uint32_t vi = 0; vi < vtxCnt; ++vi) {
 						uvIndices.push_back(uint32_t(-1)); // no uv
 					}
 				}
+
+				// TODO: more uv sets
 			}
 
 			base   += (int32_t)verts.size() / 3u;
@@ -303,7 +301,6 @@ void HoudiniEncoder::convertGeometry(
 			uvCoords.data(), uvCoords.size(),
 			faceCounts.data(), faceCounts.size(),
 			vertexIndices.data(), vertexIndices.size(),
-			uvCounts.data(), uvCounts.size(),
 			uvIndices.data(), uvIndices.size(),
 			holes.data(), holes.size(),
 			matAttrMaps.data(), matAttrMaps.size(),

@@ -90,7 +90,6 @@ void HoudiniGeometry::add(
 		const double* uvs, size_t uvsSize,
 		int32_t* counts, size_t countsSize,
 		int32_t* indices, size_t indicesSize,
-		uint32_t* uvCounts, size_t uvCountsSize,
 		uint32_t* uvIndices, size_t uvIndicesSize,
 		int32_t* holes, size_t holesSize,
 		const prt::AttributeMap** materials, size_t materialsSize,
@@ -98,19 +97,10 @@ void HoudiniGeometry::add(
 ) {
 	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
 
-	std::vector<UT_Vector3> utPoints, utNormals, utUVs;
-
+	std::vector<UT_Vector3F> utPoints; // fpreal32
 	utPoints.reserve(vtxSize / 3);
 	for (size_t pi = 0; pi < vtxSize; pi += 3)
-		utPoints.emplace_back(vtx[pi], vtx[pi+1], vtx[pi+2]);
-
-	utNormals.reserve(nrmSize / 3);
-	for (size_t pi = 0; pi < nrmSize; pi += 3)
-		utNormals.emplace_back(nrm[pi], nrm[pi+1], nrm[pi+2]);
-
-	utUVs.reserve(uvsSize / 2);
-	for (size_t pi = 0; pi < uvsSize; pi += 2)
-		utUVs.emplace_back(uvs[pi], uvs[pi+1], 0.0);
+		utPoints.emplace_back(vtx[pi], vtx[pi+1], vtx[pi+2]); // double -> float
 
 	GEO_PolyCounts geoPolyCounts;
 	for (size_t ci = 0; ci < countsSize; ci++)
@@ -122,22 +112,22 @@ void HoudiniGeometry::add(
 	GA_Detail::OffsetMarker marker(*mDetail);
 	GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts, indices);
 
-	if (!utNormals.empty()) {
-		uint32_t ii = 0;
-		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX));
-		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++ii) {
-			nrmh.set(it.getOffset(), utNormals[indices[ii]]);
+	if (nrmSize > 0) {
+		uint32_t vi = 0;
+		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
+		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
+			auto nrmIdx = indices[vi];
+			nrmh.set(it.getOffset(), UT_Vector3F(nrm[nrmIdx*3], nrm[nrmIdx*3+1], nrm[nrmIdx*3+2])); // double -> float
 		}
 	}
 
-	if (!utUVs.empty()) {
-		GA_RWHandleV3 txth(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX));
+	if (uvsSize > 0) {
+		GA_RWHandleV3 txth(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
 		uint32_t vi = 0;
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
-			uint32_t uvIdx = uvIndices[vi];
+			const uint32_t uvIdx = uvIndices[vi];
 			if (uvIdx < uint32_t(-1)) {
-				const UT_Vector3& v = utUVs[uvIdx];
-				txth.set(it.getOffset(), v);
+				txth.set(it.getOffset(), UT_Vector3F(uvs[uvIdx*2], uvs[uvIdx*2+1], 0.0f)); // double -> float
 			}
 		}
 		// TODO: multiple UV sets

@@ -18,7 +18,6 @@ public:
 			const double* uvs, size_t uvsSize,
 			int32_t* counts, size_t countsSize,
 			int32_t* indices, size_t indicesSize,
-			uint32_t* uvCounts, size_t uvCountsSize,
 			uint32_t* uvIndices, size_t uvIndicesSize,
 			int32_t* holes, size_t holesSize,
 			const prt::AttributeMap** materials, size_t materialsSize,
