@@ -74,9 +74,8 @@ void convertAttributabletoAttributeMap(
 				break;
 
 			case prt::Attributable::PT_STRING: {
-				const wchar_t* tv = prtxAttr.getString(key).c_str();
-				if (tv && wcslen(tv) > 0) {
-					std::wstring v(tv);
+				std::wstring v = prtxAttr.getString(key); // explicit copy
+				if (v.length() > 0) {
 
 					// resolvemap search heuristic
 					std::vector<std::wstring> rmKeys;
@@ -86,15 +85,15 @@ void convertAttributabletoAttributeMap(
 					for (const auto& rmKey: rmKeys) {
 						if (rm->hasKey(rmKey.c_str())) {
 							const wchar_t* tmp = rm->getString(rmKey.c_str());
-							if (tmp && std::wcslen(tmp) > 0) {
+							if (tmp && (std::wcslen(tmp) > 0)) {
 								prtx::URIPtr u(prtx::URI::create(tmp));
 								v = u->getPath();
 							}
 							break;
 						}
 					}
-					aBuilder->setString(key.c_str(), v.c_str());
 				}
+				aBuilder->setString(key.c_str(), v.c_str()); // also passing on empty strings
 				break;
 			}
 			case prt::Attributable::PT_BOOL_ARRAY: {

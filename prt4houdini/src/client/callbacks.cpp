@@ -161,7 +161,7 @@ void HoudiniGeometry::add(
 
 		// setup houdini attribute handles based on first material keys & types
 		HandleMaps hm;
-		setupHandles(mDetail, materials[0], hm);
+		setupHandles(mDetail, materials[0], hm); // TODO: bad strategy, either scan for all handles or lazily create handles
 
 		// assign attribute values per face range
 		for (size_t r = 0; r < materialsSize; r++) {
