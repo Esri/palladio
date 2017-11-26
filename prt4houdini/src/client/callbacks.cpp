@@ -126,7 +126,7 @@ void HoudiniGeometry::add(
 		uint32_t vi = 0;
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
 			const uint32_t uvIdx = uvIndices[vi];
-			if (uvIdx < uint32_t(-1)) {
+			if (uvIdx != UV_IDX_NO_VALUE) {
 				txth.set(it.getOffset(), UT_Vector3F(uvs[uvIdx*2], uvs[uvIdx*2+1], 0.0f)); // double -> float
 			}
 		}

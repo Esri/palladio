@@ -21,7 +21,6 @@ class HoudiniCallbacks;
 class HoudiniEncoder : public prtx::GeometryEncoder {
 public:
 	HoudiniEncoder(const std::wstring& id, const prt::AttributeMap* options, prt::Callbacks* callbacks);
-
 	~HoudiniEncoder() override = default;
 
 public:
@@ -45,7 +44,6 @@ public:
 	static HoudiniEncoderFactory* createInstance();
 
 	explicit HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) { }
-
 	~HoudiniEncoderFactory() override = default;
 
 	HoudiniEncoder* create(const prt::AttributeMap* options, prt::Callbacks* callbacks) const override {

@@ -15,8 +15,9 @@
 
 namespace {
 
-const bool PDBG = false;
-const int32 INVALID_CLS_VALUE{-1};
+constexpr bool  DBG  = true;
+constexpr bool  PDBG = false;
+constexpr int32 INVALID_CLS_VALUE{-1};
 
 struct PrimitivePartition {
 	typedef boost::variant<UT_String, fpreal32, int32> ClassifierValueType;
@@ -116,7 +117,6 @@ InitialShapeGenerator::~InitialShapeGenerator() {
 }
 
 void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, const GU_Detail* detail) {
-	static const bool DBG = true;
 	if (DBG) LOG_DBG << "-- createInitialShapes";
 
 	GA_ROAttributeRef clsAttrName = InitialShapeContext::getClsName(detail);
@@ -189,7 +189,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 
 		// evaluate default attribute values:
 		// only incoming attributes which differ from default must be set
-		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule);
+		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule.c_str());
 		AttributeMapPtr defaultAttributes(amb->createAttributeMapAndReset());
 		//LOG_DBG << utils::objectToXML(defaultAttributes.get());
 

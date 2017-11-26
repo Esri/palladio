@@ -9,35 +9,25 @@
 
 namespace {
 
-const bool DBG = false;
-
-const wchar_t*	ENCODER_ID_CGA_EVALATTR	= L"com.esri.prt.core.AttributeEvalEncoder";
+constexpr bool           DBG                     = false;
+constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.AttributeEvalEncoder";
 
 namespace UnitQuad {
-const double vertices[] = {0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0};
-const size_t vertexCount = 12;
-const uint32_t indices[] = {0, 1, 2, 3};
-const size_t indexCount = 4;
-const uint32_t faceCounts[] = {4};
-const size_t faceCountsCount = 1;
+	constexpr double   VERTICES[]        = { 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0 };
+	constexpr size_t   VERTICES_COUNT    = sizeof(VERTICES)/sizeof(VERTICES[0]);
+	constexpr uint32_t INDICES[]         = { 0, 1, 2, 3 };
+	constexpr size_t   INDICES_COUNT     = sizeof(INDICES)/sizeof(INDICES[0]);
+	constexpr uint32_t FACE_COUNTS[]     = { 4 };
+	constexpr size_t   FACE_COUNTS_COUNT = sizeof(FACE_COUNTS)/sizeof(FACE_COUNTS[0]);
 } // namespace UnitQuad
 
-} // namespace anonymous
+} // namespace
 
 
 namespace p4h {
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
-: SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR))
-, mPRTCtx(pCtx)
-{
-	prt::addLogHandler(mLogHandler.get());
-}
-
-SOPAssign::~SOPAssign() {
-	prt::removeLogHandler(mLogHandler.get());
-}
+: SOP_Node(net, name, op), mPRTCtx(pCtx) { }
 
 OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	LOG_DBG << "SOPAssign::cookMySop";
@@ -56,11 +46,6 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 		std::chrono::time_point<std::chrono::system_clock> start, end;
 
-//		start = std::chrono::system_clock::now();
-//		updateUserAttributes();
-//		end = std::chrono::system_clock::now();
-//		LOG_INF << "updateUserAttributes took " << std::chrono::duration<double>(end - start).count() << "s\n";
-
 		start = std::chrono::system_clock::now();
 		mInitialShapeContext.put(gdp);
 		end = std::chrono::system_clock::now();
@@ -76,6 +61,10 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 bool SOPAssign::handleParams(OP_Context& context) {
 	LOG_DBG << "handleParams begin";
 	fpreal now = context.getTime();
+
+	// -- logger
+	auto ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
+	mPRTCtx->mLogHandler->setLevel(ll);
 
 	// -- shape classifier attr name
 	UT_String utNextClsAttrName;
@@ -128,59 +117,9 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	// -- random seed
 	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED.getToken(), 0, now);
 
-	// -- logger
-	auto ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
-	mLogHandler->setLevel(ll);
-	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
-
 	LOG_DBG << "handleParams done.";
 	return true;
 }
-
-//namespace {
-
-void getDefaultRuleAttributeValues(
-		AttributeMapBuilderPtr& amb,
-		CacheObjectPtr& cache,
-		const ResolveMapUPtr& resolveMap,
-		const std::wstring& cgbKey,
-		const std::wstring& startRule
-) {
-    // 1. resolve CGB
-    // 2. get rule info
-    // 3. get hidden annotation
-
-
-	HoudiniGeometry hg(nullptr, amb.get());
-	AttributeMapPtr emptyAttrMap(amb->createAttributeMapAndReset());
-
-	InitialShapeBuilderPtr isb(prt::InitialShapeBuilder::create());
-	isb->setGeometry(
-			UnitQuad::vertices, UnitQuad::vertexCount, UnitQuad::indices, UnitQuad::indexCount, UnitQuad::faceCounts,
-			UnitQuad::faceCountsCount
-	);
-	isb->setAttributes(cgbKey.c_str(), startRule.c_str(), 666, L"temp", emptyAttrMap.get(), resolveMap.get());
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	InitialShapePtr is(isb->createInitialShapeAndReset(&status));
-	const prt::InitialShape* iss[1] = {is.get()};
-
-	EncoderInfoPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
-	const prt::AttributeMap* encOpts = nullptr;
-	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
-
-	const wchar_t* encs[1] = {ENCODER_ID_CGA_EVALATTR};
-	const prt::AttributeMap* encsOpts[1] = {encOpts};
-
-	prt::Status stat = prt::generate(iss, 1, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr, nullptr);
-	if (stat != prt::STATUS_OK) {
-		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
-	}
-
-	encOpts->destroy();
-}
-
-//} // namespace
 
 bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time) {
 	if (nextRPK == mInitialShapeContext.mRPK)
@@ -235,7 +174,7 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	if (startRuleIdx == size_t(-1))
 		startRuleIdx = 0;
 	const prt::RuleFileInfo::Entry* re = info->getRule(startRuleIdx);
-	std::wstring fqStartRule = re->getName();
+	const wchar_t* fqStartRule = re->getName();
 	std::vector<std::wstring> startRuleComponents;
 	boost::split(startRuleComponents, fqStartRule, boost::is_any_of(L"$"));
 	LOG_DBG << "first start rule: " << fqStartRule;
@@ -273,6 +212,47 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	LOG_DBG << "mRuleAttributeValues = " << utils::objectToXML(mInitialShapeContext.mRuleAttributeValues.get());
 
 	return true;
+}
+
+void getDefaultRuleAttributeValues(
+		AttributeMapBuilderPtr& amb,
+		CacheObjectPtr& cache,
+		const ResolveMapUPtr& resolveMap,
+		const std::wstring& cgbKey,
+		const wchar_t* startRule
+) {
+    // 1. resolve CGB
+    // 2. get rule info
+    // 3. get hidden annotation
+
+	HoudiniGeometry hg(nullptr, amb.get());
+	AttributeMapPtr emptyAttrMap(amb->createAttributeMapAndReset());
+
+	InitialShapeBuilderPtr isb(prt::InitialShapeBuilder::create());
+	isb->setGeometry(
+			UnitQuad::VERTICES, UnitQuad::VERTICES_COUNT,
+			UnitQuad::INDICES, UnitQuad::INDICES_COUNT,
+			UnitQuad::FACE_COUNTS, UnitQuad::FACE_COUNTS_COUNT);
+	isb->setAttributes(cgbKey.c_str(), startRule, 666, L"temp", emptyAttrMap.get(), resolveMap.get());
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	InitialShapePtr is(isb->createInitialShapeAndReset(&status));
+	const prt::InitialShape* iss[] = { is.get() };
+	const size_t issCounts = sizeof(iss) / sizeof(iss[0]);
+
+	EncoderInfoPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
+	const prt::AttributeMap* encOpts = nullptr;
+	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
+
+	constexpr const wchar_t* encs[] = { ENCODER_ID_CGA_EVALATTR };
+	const prt::AttributeMap* encsOpts[] = { encOpts };
+
+	prt::Status stat = prt::generate(iss, issCounts, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr, nullptr);
+	if (stat != prt::STATUS_OK) {
+		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
+	}
+
+	encOpts->destroy();
 }
 
 } // namespace p4h

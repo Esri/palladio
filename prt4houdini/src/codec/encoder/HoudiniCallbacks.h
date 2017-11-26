@@ -3,9 +3,12 @@
 #include "prt/Callbacks.h"
 
 
+constexpr uint32_t UV_IDX_NO_VALUE = -1;
+
 class HoudiniCallbacks : public prt::Callbacks {
 public:
-	virtual ~HoudiniCallbacks() { }
+
+	virtual ~HoudiniCallbacks() override = default;
 
 	/**
 	 * @param materials pre-condition: all materials must have an identical set of keys and types

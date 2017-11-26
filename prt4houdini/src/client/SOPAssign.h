@@ -18,7 +18,7 @@ namespace p4h {
 class SOPAssign : public SOP_Node {
 public:
 	SOPAssign(const PRTContextUPtr& pCtx, OP_Network *net, const char *name, OP_Operator *op);
-	~SOPAssign() override;
+	~SOPAssign() override = default;
 
 	const InitialShapeContext& getInitialShapeContext() const { return mInitialShapeContext; }
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
@@ -31,7 +31,6 @@ private:
 	bool updateRulePackage(const boost::filesystem::path& nextRPK, fpreal time);
 
 private:
-	log::LogHandlerPtr    mLogHandler;
 	const PRTContextUPtr& mPRTCtx;
 	InitialShapeContext   mInitialShapeContext;
 };
@@ -41,7 +40,7 @@ void getDefaultRuleAttributeValues(
 		CacheObjectPtr& cache,
 		const ResolveMapUPtr& resolveMap,
 		const std::wstring& cgbKey,
-		const std::wstring& startRule
+		const wchar_t* startRule
 );
 
 } // namespace p4h

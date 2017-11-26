@@ -22,7 +22,6 @@ using InitialShapeContextUPtr = std::unique_ptr<InitialShapeContext>;
 class InitialShapeContext final {
 public:
 	InitialShapeContext();
-	explicit InitialShapeContext(GU_Detail* detail);
 	InitialShapeContext(const InitialShapeContext&) = delete;
 	InitialShapeContext& operator=(const InitialShapeContext&) = delete;
 	virtual ~InitialShapeContext() = default;
@@ -42,7 +41,6 @@ public:
 	int32_t					mSeed;
 
 	AttributeMapPtr			mRuleAttributeValues; // rule attribute values as defined in the rule file
-	//AttributeMapPtr			mUserAttributeValues; // holds rule or user attribute values for next generate run
 };
 
 } // namespace p4h

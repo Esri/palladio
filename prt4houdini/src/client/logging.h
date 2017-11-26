@@ -14,14 +14,13 @@
 namespace p4h {
 namespace log {
 
-struct Logger { // TODO: use std::ostream as basis
-};
+struct Logger { };
 
 const std::string LEVELS[] = { "trace", "debug", "info", "warning", "error", "fatal" };
 const std::wstring WLEVELS[] = { L"trace", L"debug", L"info", L"warning", L"error", L"fatal" };
 
 // log to std streams
-template<prt::LogLevel L> struct StreamLogger : public Logger {
+template<prt::LogLevel L> struct StreamLogger : Logger {
 	StreamLogger(std::wostream& out = std::wcout) : Logger(), mOut(out) { mOut << prefix(); }
 	virtual ~StreamLogger() { mOut << std::endl; }
 	StreamLogger<L>& operator<<(std::wostream&(*x)(std::wostream&)) { mOut << x; return *this; }
@@ -32,7 +31,7 @@ template<prt::LogLevel L> struct StreamLogger : public Logger {
 };
 
 // log through the prt logger
-template<prt::LogLevel L> struct PRTLogger : public Logger {
+template<prt::LogLevel L> struct PRTLogger : Logger {
 	PRTLogger() : Logger() { }
 	virtual ~PRTLogger() { prt::log(wstr.str().c_str(), L); }
 	PRTLogger<L>& operator<<(std::wostream&(*x)(std::wostream&)) { wstr << x;  return *this; }
@@ -54,38 +53,27 @@ template<prt::LogLevel L> struct PRTLogger : public Logger {
 
 class LogHandler : public prt::LogHandler {
 public:
-	LogHandler(const std::wstring& name, prt::LogLevel init) : mName(name), mLevel(init) { }
-
-	virtual void handleLogEvent(const wchar_t* msg, prt::LogLevel level) {
-		if (level >= mLevel) {
-			// probably not the best idea - is there a houdini logging framework?
-			std::wcout << L"[" << mName << L"] " << msg << std::endl;
-		}
+	LogHandler(const std::wstring& name, prt::LogLevel init) : mName(name) {
+		setLevel(init);
 	}
 
-	virtual const prt::LogLevel* getLevels(size_t* count) {
+	virtual void handleLogEvent(const wchar_t* msg, prt::LogLevel level) override {
+		// probably not the best idea - is there a houdini logging framework?
+		std::wcout << L"[" << mName << L"] " << msg << std::endl;
+	}
+
+	virtual const prt::LogLevel* getLevels(size_t* count) override {
 		*count = prt::LogHandler::ALL_COUNT;
 		return prt::LogHandler::ALL;
 	}
 
-	virtual void getFormat(bool* dateTime, bool* level) {
+	virtual void getFormat(bool* dateTime, bool* level) override {
 		*dateTime = true;
 		*level = true;
 	}
 
-	// TODO: with prt 1.6 use prt::setLogLevel to avoid logging below mLevel at all
 	void setLevel(prt::LogLevel level) {
-		mLevel = level;
-	}
-
-	void setLevel(const std::string& ls) {
-		for (size_t i = 0; i < 6; i++) {
-			if (ls == LEVELS[i]) {
-				mLevel = static_cast<prt::LogLevel>(i);
-				return;
-			}
-		}
-		mLevel = prt::LOG_ERROR;
+		prt::setLogLevel(level);
 	}
 
 	void setName(const std::wstring& n) {
@@ -94,7 +82,6 @@ public:
 
 private:
 	std::wstring mName;
-	prt::LogLevel mLevel;
 };
 
 using LogHandlerPtr = std::unique_ptr<log::LogHandler>;
@@ -106,10 +93,10 @@ using LogHandlerPtr = std::unique_ptr<log::LogHandler>;
 // switch logger here
 #define LT p4h::log::PRTLogger
 
-typedef LT<prt::LOG_DEBUG>		_LOG_DBG;
-typedef LT<prt::LOG_INFO>		_LOG_INF;
-typedef LT<prt::LOG_WARNING>	_LOG_WRN;
-typedef LT<prt::LOG_ERROR>		_LOG_ERR;
+using _LOG_DBG = LT<prt::LOG_DEBUG>;
+using _LOG_INF = LT<prt::LOG_INFO>;
+using _LOG_WRN = LT<prt::LOG_WARNING>;
+using _LOG_ERR = LT<prt::LOG_ERROR>;
 
 // convenience shortcuts in global namespace
 #define LOG_DBG _LOG_DBG()

@@ -6,9 +6,9 @@
 namespace {
 
 // global prt settings
-constexpr const prt::LogLevel PRT_LOG_LEVEL    = prt::LOG_DEBUG;
-constexpr const char*         PRT_LIB_SUBDIR   = "prtlib";
-constexpr const char*         FILE_FLEXNET_LIB = "flexnet_prt";
+constexpr const prt::LogLevel PRT_INIT_LOG_LEVEL = prt::LOG_INFO; // TODO: connect to HOUDINI_DSO_ERROR env var
+constexpr const char*         PRT_LIB_SUBDIR     = "prtlib";
+constexpr const char*         FILE_FLEXNET_LIB   = "flexnet_prt";
 
 } // namespace
 
@@ -16,7 +16,7 @@ constexpr const char*         FILE_FLEXNET_LIB = "flexnet_prt";
 namespace p4h {
 
 PRTContext::PRTContext()
-        : mLogHandler(new log::LogHandler(L"p4h global", prt::LOG_ERROR)), mLicHandle{nullptr},
+        : mLogHandler(new log::LogHandler(L"p4h", PRT_INIT_LOG_LEVEL)), mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
           mRPKUnpackPath{boost::filesystem::temp_directory_path() / "prt4houdini"}
 {
@@ -29,18 +29,18 @@ PRTContext::PRTContext()
     p4h::utils::getPathToCurrentModule(sopPath);
 
     prt::FlexLicParams flp;
-    std::string libflexnet =
-            p4h::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + p4h::utils::getSharedLibrarySuffix();
-    std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
+    const std::string libflexnet = p4h::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + p4h::utils::getSharedLibrarySuffix();
+    const std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
     flp.mActLibPath = libflexnetPath.c_str();
     flp.mFeature = "CityEngAdvFx";
     flp.mHostName = "";
 
-    std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
-    const wchar_t *extPaths[] = {libPath.c_str()};
+    const std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
+    const wchar_t* extPaths[] = { libPath.c_str() };
+    const size_t extPathsCount = sizeof(extPaths)/sizeof(extPaths[0]);
 
     prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-    mLicHandle = prt::init(extPaths, 1, PRT_LOG_LEVEL, &flp, &status); // TODO: add UI for log level control
+    mLicHandle = prt::init(extPaths, extPathsCount, PRT_INIT_LOG_LEVEL, &flp, &status);
     if (status != prt::STATUS_OK) {
         LOG_ERR << "Could not get license: " << prt::getStatusDescription(status);
     }
@@ -58,7 +58,7 @@ PRTContext::~PRTContext() {
     prt::removeLogHandler(mLogHandler.get());
 }
 
-// TODO: make thread-safe
+// TODO: make thread-safe to support multiple assign nodes
 const ResolveMapUPtr &PRTContext::getResolveMap(const std::wstring &rpk) {
     auto it = mResolveMapCache.find(rpk);
     if (it == mResolveMapCache.end()) {

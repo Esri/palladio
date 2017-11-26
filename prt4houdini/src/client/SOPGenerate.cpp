@@ -10,12 +10,12 @@
 
 namespace {
 
-const wchar_t*	FILE_CGA_ERROR			= L"CGAErrors.txt";
-const wchar_t*	FILE_CGA_PRINT			= L"CGAPrint.txt";
+constexpr const wchar_t* FILE_CGA_ERROR       = L"CGAErrors.txt";
+constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
 
-const wchar_t*	ENCODER_ID_CGA_ERROR	= L"com.esri.prt.core.CGAErrorEncoder";
-const wchar_t*	ENCODER_ID_CGA_PRINT	= L"com.esri.prt.core.CGAPrintEncoder";
-const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
+constexpr const wchar_t* ENCODER_ID_CGA_ERROR = L"com.esri.prt.core.CGAErrorEncoder";
+constexpr const wchar_t* ENCODER_ID_CGA_PRINT = L"com.esri.prt.core.CGAPrintEncoder";
+constexpr const wchar_t* ENCODER_ID_HOUDINI   = L"HoudiniEncoder";
 
 } // namespace
 
@@ -23,12 +23,8 @@ const wchar_t*	ENCODER_ID_HOUDINI		= L"HoudiniEncoder";
 namespace p4h {
 
 SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
-: SOP_Node(net, name, op)
-, mLogHandler(new log::LogHandler(utils::toUTF16FromOSNarrow(name), prt::LOG_ERROR)) // TODO: FIX logger name
-, mPRTCtx(pCtx)
+: SOP_Node(net, name, op), mPRTCtx(pCtx)
 {
-	prt::addLogHandler(mLogHandler.get());
-
 	AttributeMapBuilderPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
@@ -46,16 +42,7 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 	mGenerateOptions.reset(amb->createAttributeMapAndReset());
 }
 
-SOPGenerate::~SOPGenerate() {
-	prt::removeLogHandler(mLogHandler.get());
-}
-
 bool SOPGenerate::handleParams(OP_Context& context) {
-	LOG_DBG << "handleParams begin";
-
-	// TODO: add separate log level for generate node
-	mLogHandler->setName(utils::toUTF16FromOSNarrow(getName().toStdString()));
-
 	const auto now = context.getTime();
 	const bool emitAttributes      = (evalInt(GENERATE_NODE_PARAM_EMIT_ATTRS.getToken(), 0, now) > 0);
 	const bool emitMaterial        = (evalInt(GENERATE_NODE_PARAM_EMIT_MATERIAL.getToken(), 0, now) > 0);
@@ -67,32 +54,20 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	optionsBuilder->setBool(L"emitMaterials", emitMaterial);
 	optionsBuilder->setBool(L"emitReports", emitReports);
 	optionsBuilder->setBool(L"emitReportSummaries", emitReportSummaries);
-	const prt::AttributeMap* encoderOptions = optionsBuilder->createAttributeMapAndReset();
-	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions));
-	LOG_DBG << utils::objectToXML(mHoudiniEncoderOptions.get());
+	AttributeMapPtr encoderOptions(optionsBuilder->createAttributeMapAndReset());
+	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions.get()));
 
-	encoderOptions->destroy();
-
-#ifdef WIN32
-	mAllEncoders = boost::assign::list_of(ENCODER_ID_HOUDINI)(ENCODER_ID_CGA_ERROR)(ENCODER_ID_CGA_PRINT);
-	mAllEncoderOptions = boost::assign::list_of(mHoudiniEncoderOptions.get())(mCGAErrorOptions.get())(mCGAPrintOptions.get());
-#else
 	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
 	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
-#endif
 
-	LOG_DBG << "handleParams done.";
 	return true;
 }
 
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
-	LOG_DBG << "SOPGenerate::cookMySop";
-
 	if (!handleParams(context))
 		return UT_ERROR_ABORT;
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
-		LOG_DBG << "lockInputs error";
 		return error();
 	}
 	duplicateSource(0, context);
@@ -110,7 +85,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 		if (!progress.wasInterrupted()) {
 			gdp->clearAndDestroy();
 			{
-				InitialShapeNOPtrVector& is = isGen.getInitialShapes();
+				const InitialShapeNOPtrVector& is = isGen.getInitialShapes();
 
 				// establish threads
 				const uint32_t nThreads = mPRTCtx->mCores;
@@ -118,14 +93,12 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 				// prt requires one callback instance per generate call
 				std::vector<std::unique_ptr<HoudiniGeometry>> hg(nThreads);
-				std::generate(
-						hg.begin(), hg.end(), [&]() {
-							return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, nullptr, &progress));
-						}
+				std::generate(hg.begin(), hg.end(), [&]() {
+						return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, nullptr, &progress));
+					}
 				);
 
-				LOG_INF << "calling generate: #initial shapes = " << is.size()
-				<< ", #threads = " << nThreads << ", initial shapes per thread = " << isRangeSize;
+				LOG_INF << "calling generate: #initial shapes = " << is.size() << ", #threads = " << nThreads << ", initial shapes per thread = " << isRangeSize;
 
 				// kick-off generate threads
 				start = std::chrono::system_clock::now();
@@ -174,7 +147,6 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	unlockInputs();
 
-	LOG_DBG << "SOPGenerate::cookMySop done";
 	return error();
 }
 

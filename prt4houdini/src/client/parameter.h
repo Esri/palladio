@@ -60,44 +60,7 @@ static PRM_Name logNames[] = {
 static PRM_ChoiceList logMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
 static PRM_Default logDefault(0, "ERROR");
 
-// -- MULTI PARMS FOR DYNAMIC RULE ATTRIBUTE PARAMETER
-//static PRM_Name NODE_MULTIPARAM_FLOAT_NUM	("cgaFltNum",		"Number of Float Attributes");
-//static PRM_Name NODE_MULTIPARAM_FLOAT_ATTR	("cgaFltAttr#",		"Float Attr #");
-//static PRM_Name NODE_MULTIPARAM_FLOAT_VAL	("cgaFltVal#",		"Float Value #");
-//static PRM_Name NODE_MULTIPARAM_FLOAT_ANN	("cgaFltAnn#",		"Float Annotation #");
-//static PRM_Name NODE_MULTIPARAM_FLOAT_RESET	("cgaFltReset#",	"Reset to Rule");
-//static PRM_Name NODE_MULTIPARAM_STRING_NUM	("cgaStrNum",		"Number of String Attributes");
-//static PRM_Name NODE_MULTIPARAM_STRING_ATTR	("cgaStrAttr#",		"String Attr #");
-//static PRM_Name NODE_MULTIPARAM_STRING_VAL	("cgaStrVal#",		"String Value #");
-//static PRM_Name NODE_MULTIPARAM_STRING_ANN	("cgaStrAnn#",		"String Annotation #");
-//static PRM_Name NODE_MULTIPARAM_STRING_RESET("cgaStrReset#",	"Reset to Rule");
-//static PRM_Name NODE_MULTIPARAM_BOOL_NUM	("cgaBoolNum",		"Number of Boolean Attributes");
-//static PRM_Name NODE_MULTIPARAM_BOOL_ATTR	("cgaBoolAttr#",	"Boolean Attr #");
-//static PRM_Name NODE_MULTIPARAM_BOOL_VAL	("cgaBoolVal#",		"Boolean Value #");
-//static PRM_Name NODE_MULTIPARAM_BOOL_ANN	("cgaBoolAnn#",		"Boolean Annotation #");
-//static PRM_Name NODE_MULTIPARAM_BOOL_RESET	("cgaBoolReset#",	"Reset to Rule");
-//int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate);
-//static PRM_Template NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE[] = {
-//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_FLOAT_ATTR, PRMoneDefaults),
-//		PRM_Template(PRM_FLT, 1, &NODE_MULTIPARAM_FLOAT_VAL, PRMoneDefaults),
-//		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_FLOAT_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
-//		PRM_Template()
-//};
-//static PRM_Template NODE_MULTIPARAM_STRING_ATTR_TEMPLATE[] = {
-//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_STRING_ATTR, PRMoneDefaults),
-//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_STRING_VAL, PRMoneDefaults),
-//		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_STRING_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
-//		PRM_Template()
-//};
-//static PRM_Template NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE[] = {
-//		PRM_Template(PRM_STRING, 1, &NODE_MULTIPARAM_BOOL_ATTR, PRMoneDefaults),
-//		PRM_Template(PRM_TOGGLE, 1, &NODE_MULTIPARAM_BOOL_VAL, PRMoneDefaults),
-//		PRM_Template(PRM_CALLBACK_NOREFRESH, 1, &NODE_MULTIPARAM_BOOL_RESET, PRMoneDefaults, nullptr, nullptr, PRM_Callback(&resetRuleAttr)),
-//		PRM_Template()
-//};
-
-
-// -- MAIN NODE PARAMETER TEMPLATE
+// -- ASSIGN NODE PARAMETER TEMPLATE
 static PRM_Default DEFAULT_SHAPE_CLS_ATTR(0.0f, "shapeCls", CH_STRING_LITERAL);
 static PRM_Template ASSIGN_NODE_PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
@@ -114,28 +77,19 @@ static PRM_Template ASSIGN_NODE_PARAM_TEMPLATES[] = {
 		// logger
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &NODE_PARAM_LOG, &logDefault, &logMenu),
 
-		// rule attribute multiparm
-//		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_FLOAT_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_FLOAT_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
-//		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_STRING_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_STRING_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
-//		PRM_Template((PRM_MultiType)(PRM_MULTITYPE_LIST | PRM_MULTITYPE_NO_CONTROL_UI), NODE_MULTIPARAM_BOOL_ATTR_TEMPLATE, 1, &NODE_MULTIPARAM_BOOL_NUM, PRMoneDefaults, nullptr, &PRM_SpareData::multiStartOffsetZero),
-
 		PRM_Template()
 };
 
+// -- GENERATE NODE PARAMETER TEMPLATE
 static PRM_Name    GENERATE_NODE_PARAM_EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
 static PRM_Name    GENERATE_NODE_PARAM_EMIT_MATERIAL("emitMaterials", "Emit material attributes");
 static PRM_Name    GENERATE_NODE_PARAM_EMIT_REPORTS("emitReports", "Emit CGA reports");
 static PRM_Name    GENERATE_NODE_PARAM_EMIT_REPORT_SUMMARIES("emitReportSummaries", "Emit CGA report summaries");
-
-//PRM_Default GENERATE_NODE_PARAM_WRITE_ATTRS_DEFAULT(0, "$HIP/$F.rpk");
-
 static PRM_Template GENERATE_NODE_PARAM_TEMPLATES[] {
 		PRM_Template(PRM_TOGGLE, 1, &GENERATE_NODE_PARAM_EMIT_ATTRS),
 		PRM_Template(PRM_TOGGLE, 1, &GENERATE_NODE_PARAM_EMIT_MATERIAL),
 		PRM_Template(PRM_TOGGLE, 1, &GENERATE_NODE_PARAM_EMIT_REPORTS),
 		PRM_Template(PRM_TOGGLE, 1, &GENERATE_NODE_PARAM_EMIT_REPORT_SUMMARIES),
-
-		// TODO: add separate logging control
 		PRM_Template()
 };
 

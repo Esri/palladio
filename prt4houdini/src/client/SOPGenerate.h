@@ -12,7 +12,7 @@ namespace p4h {
 class SOPGenerate : public SOP_Node {
 public:
 	SOPGenerate(const PRTContextUPtr& pCtx, OP_Network *net, const char *name, OP_Operator *op);
-	~SOPGenerate() override;
+	~SOPGenerate() override = default;
 
 protected:
 	OP_ERROR cookMySop(OP_Context &context) override;
@@ -21,7 +21,6 @@ private:
 	bool handleParams(OP_Context& context);
 
 private:
-	log::LogHandlerPtr          mLogHandler;
 	const PRTContextUPtr&       mPRTCtx;
 
 	AttributeMapPtr             mHoudiniEncoderOptions;

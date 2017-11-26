@@ -27,9 +27,9 @@
 namespace {
 	constexpr bool DBG = false;
 
-	constexpr const wchar_t* ENC_ID          	= L"HoudiniEncoder";
-	constexpr const wchar_t* ENC_NAME        	= L"SideFX(tm) Houdini(tm) Encoder";
-	constexpr const wchar_t* ENC_DESCRIPTION	= L"Encodes geometry into the Houdini format.";
+	constexpr const wchar_t* ENC_ID                   = L"HoudiniEncoder";
+	constexpr const wchar_t* ENC_NAME                 = L"SideFX(tm) Houdini(tm) Encoder";
+	constexpr const wchar_t* ENC_DESCRIPTION          = L"Encodes geometry into the Houdini format.";
 
 	constexpr const wchar_t* EO_EMIT_ATTRIBUTES       = L"emitAttributes";
 	constexpr const wchar_t* EO_EMIT_MATERIALS        = L"emitMaterials";
@@ -205,10 +205,10 @@ void HoudiniEncoder::convertGeometry(
 		for(size_t mi = 0, meshCount = meshes.size(); mi < meshCount; mi++) {
 			prtx::MeshPtr mesh = meshes[mi];
 
-			const prtx::DoubleVector&	verts		= mesh->getVertexCoords();
-			const prtx::DoubleVector&	norms   	= mesh->getVertexNormalsCoords();
-			bool                      	hasUVs		= (mesh->getUVSetsCount() > 0);
-			const prtx::DoubleVector&	uvs			= hasUVs ? mesh->getUVCoords(0) : prtx::DoubleVector();
+			const prtx::DoubleVector& verts  = mesh->getVertexCoords();
+			const prtx::DoubleVector& norms  = mesh->getVertexNormalsCoords();
+			bool                      hasUVs = (mesh->getUVSetsCount() > 0);
+			const prtx::DoubleVector& uvs    = hasUVs ? mesh->getUVCoords(0) : prtx::DoubleVector();
 
 			faceCounts.reserve(faceCounts.size() + mesh->getFaceCount());
 
@@ -237,13 +237,13 @@ void HoudiniEncoder::convertGeometry(
 #endif
 				const uint32_t uv0Count = hasUVs ? mesh->getFaceUVCount(fi, 0) : 0u;
 				if (uv0Count > 0) {
-						//if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
-						//if (DBG) log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
+						if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
+						if (DBG) log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
 						assert(uv0Count == vtxCnt);
 
 						const uint32_t* uv0Idx = mesh->getFaceUVIndices(fi, 0);
 						for (uint32_t vi = 0; vi < vtxCnt; ++vi) {
-							//if (DBG) log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
+							if (DBG) log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
 							uvIndices.push_back(uvBase + uv0Idx[vtxCnt-vi-1]);
 						}
 				}
@@ -263,7 +263,7 @@ void HoudiniEncoder::convertGeometry(
 		}
 	}
 
-	//log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
+	if (DBG) log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
 	log_debug("encoder #materials = %s") % mats.size();
 
 	uint32_t faceCount = 0;

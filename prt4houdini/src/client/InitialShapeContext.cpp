@@ -24,10 +24,6 @@ namespace p4h {
 InitialShapeContext::InitialShapeContext()
 	: mShapeClsAttrName(DEFAULT_CLS_NAME), mSeed{0} { }
 
-InitialShapeContext::InitialShapeContext(GU_Detail* detail) {
-//	get(detail);
-}
-
 void InitialShapeContext::put(GU_Detail* detail) {
 	std::set<std::string> existingPrimitiveAttributes;
 	{
@@ -128,7 +124,7 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		ruleFileH.set(off, utils::toOSNarrowFromUTF16(mRuleFile).c_str());
 		startRuleH.set(off, utils::toOSNarrowFromUTF16(mStartRule).c_str());
 		styleH.set(off, utils::toOSNarrowFromUTF16(mStyle).c_str());
-		seedH.set(off, mSeed);
+		seedH.set(off, mSeed); // TODO: setting all initial shape primitives to same seed is not what we want (how does CE do it?)
 
 		size_t keyCount = 0;
 		const wchar_t* const* cKeys = mRuleAttributeValues->getKeys(&keyCount);
@@ -147,10 +143,10 @@ void InitialShapeContext::put(GU_Detail* detail) {
 
 			switch (mRuleAttributeValues->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
-					GA_RWHandleF av(mAttrRefs.at(key));
+					GA_RWHandleF av(mAttrRefs.at(key)); // TODO: we should stay in double precision here
 					if (av.isValid()) {
 						double userAttrValue = mRuleAttributeValues->getFloat(key);
-						av.set(off, (fpreal32) userAttrValue);
+						av.set(off, (fpreal32) userAttrValue); // TODO: again, stay in double precision
 					}
 					break;
 				}
@@ -182,17 +178,6 @@ GA_ROAttributeRef InitialShapeContext::getClsName(const GU_Detail* detail) {
 GA_ROAttributeRef InitialShapeContext::getClsType(const GU_Detail* detail) {
 	return detail->findPrimitiveAttribute(CE_SHAPE_CLS_TYPE);
 }
-
-//std::vector<InitialShapeContextUPtr> InitialShapeContext::get(GU_Detail* detail) {
-//	GA_ROAttributeRef ar(detail->findPrimitiveAttribute(CE_SHAPE_CLS_NAME));
-//	GA_ROHandleS ah(detail, GA_ATTRIB_PRIMITIVE, ar->getName());
-//
-//	std::map<boost::filesystem::path, InitialShapeContextUPtr> ctx;
-//
-//	// read the value from the first primitive
-//	// loop over prims, put into multiple ISCs, one per RPK
-//	//mShapeClsAttrName = ah.get()
-//}
 
 } // namespace p4h
 
