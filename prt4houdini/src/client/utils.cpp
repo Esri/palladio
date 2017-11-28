@@ -24,12 +24,12 @@ namespace p4h {
 namespace utils {
 
 void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
-	static const wchar_t*	PROJECT		= L"";
-	static const wchar_t*	PATTERN		= L"*.cgb";
-	static const size_t		START_SIZE	= 16 * 1024;
+	constexpr const wchar_t* PROJECT    = L"";
+	constexpr const wchar_t* PATTERN    = L"*.cgb";
+	constexpr const size_t   START_SIZE = 16 * 1024;
 
 	size_t resultSize = START_SIZE;
-	auto * result = new wchar_t[resultSize];
+	auto * result = new wchar_t[resultSize]; // TODO: use std::array
 	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
 	if (resultSize >= START_SIZE) {
 		delete[] result;
