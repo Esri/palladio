@@ -1,26 +1,23 @@
 # houdini-cityengine-plugin
 
 ## Requirements
-- Houdini hfs14.0.444 or later
-- CityEngine Node-Locked License
-- Windows 7 or later with Visual Studio 2012 Update 4
-- RHEL6 (and compatible) with GCC 4.8
-- cmake 3.2 or later
-- RHEL only: Boost 1.55 (Houdini does not include all boost libs)
+- [SideFX Houdini 16.0](https://sidefx.com/download) (apprentice edition is supported)
+- [Esri CityEngine](http://www.esri.com/software/cityengine) with node-locked license
+- RHEL 6/7 (or compatible) with GCC 4.8
+- [cmake 3.8 or later](https://cmake.org/download)
+- [conan 0.29.1 or later](https://www.conan.io/downloads)
 
 ## Build Instructions
 
-### Windows
-1. clone the repo
-2. open a visual studio 2012 x64 shell
-3. ```cd <repo root>/prt4houdini```
-4. ```mkdir build && cd build```
-5. ```cmake -G "NMake Makefiles" -DHOUDINI_BUILD_VERSION=xxx -DCMAKE_BUILD_TYPE=RelWithDebInfo ../src``` (adjust xxx to your houdini 14.0.xxx version)
-6. ```nmake install``` (simply iterate on this one when working on the code)
+### Preparation
+1. ```git clone git@github.com:Esri/houdini-cityengine-plugin.git```
+1. ```cd <repo root>/prt4houdini```
+1. fetch CityEngine SDK: ```cd conan/cesdk && conan create cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8```
+1. package Houdini (adjust XXX and YYY): ```cd conan/houdini && conan create houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=YYY```
+1. in ```<repo root>/prt4houdini/conanfile.txt``` adjust ```houdini-flavor``` to your houdini (apprentice, indie, core, fx)
 
-### Linux
-1. clone the repo
-2. ```cd <repo root>/prt4houdini```
-3. ```mkdir build && cd build```
-4. ```cmake -DHOUDINI_ROOT=/opt/hfs14.0.444 -DCMAKE_BUILD_TYPE=Release ../src``` (adjust HOUDINI_ROOT to your system)
-5. ```make install``` (simply iterate on this one when working on the code)
+### Building
+1. ```mkdir build/release && cd build/release```
+1. ```conan install ../../src```
+1. ```cmake -DCMAKE_BUILD_TYPE=Release ../src```
+1. ```make install``` (simply iterate on this one when working on the code)
