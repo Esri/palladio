@@ -94,7 +94,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				// prt requires one callback instance per generate call
 				std::vector<std::unique_ptr<HoudiniGeometry>> hg(nThreads);
 				std::generate(hg.begin(), hg.end(), [&]() {
-						return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, nullptr, &progress));
+						return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, &progress));
 					}
 				);
 

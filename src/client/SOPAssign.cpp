@@ -9,8 +9,10 @@
 
 namespace {
 
-constexpr bool           DBG                     = false;
-constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.AttributeEvalEncoder";
+constexpr bool           DBG                       = false;
+constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR   = L"com.esri.prt.core.AttributeEvalEncoder";
+constexpr const wchar_t* CGA_ANNOTATION_START_RULE = L"@StartRule";
+constexpr const size_t   CGA_NO_START_RULE_FOUND   = size_t(-1);
 
 namespace UnitQuad {
 	constexpr double   VERTICES[]        = { 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0 };
@@ -60,7 +62,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 bool SOPAssign::handleParams(OP_Context& context) {
 	LOG_DBG << "handleParams begin";
-	fpreal now = context.getTime();
+	const fpreal now = context.getTime();
 
 	// -- logger
 	auto ll = static_cast<prt::LogLevel>(evalInt(NODE_PARAM_LOG.getToken(), 0, now));
@@ -75,7 +77,7 @@ bool SOPAssign::handleParams(OP_Context& context) {
 		setString(mInitialShapeContext.mShapeClsAttrName, CH_STRING_LITERAL, NODE_PARAM_SHAPE_CLS_ATTR.getToken(), 0, now);
 
 	// -- shape classifier attr type
-	int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE.getToken(), 0, now);
+	const int shapeClsAttrTypeChoice = evalInt(NODE_PARAM_SHAPE_CLS_TYPE.getToken(), 0, now);
 	switch (shapeClsAttrTypeChoice) {
 		case 0: mInitialShapeContext.mShapeClsType = GA_STORECLASS_STRING; break;
 		case 1: mInitialShapeContext.mShapeClsType = GA_STORECLASS_INT;    break;
@@ -84,9 +86,11 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	}
 
 	// -- rule package
-	UT_String utNextRPKStr;
-	evalString(utNextRPKStr, NODE_PARAM_RPK.getToken(), 0, now);
-	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
+	const auto nextRPK = [this,now](){
+		UT_String utNextRPKStr;
+		evalString(utNextRPKStr, NODE_PARAM_RPK.getToken(), 0, now);
+		return boost::filesystem::path(utNextRPKStr.toStdString());
+	}();
 	if (!updateRulePackage(nextRPK, now)) {
 		const PRM_Parm& p = getParm(NODE_PARAM_RPK.getToken());
 		UT_String expr;
@@ -99,20 +103,26 @@ bool SOPAssign::handleParams(OP_Context& context) {
 	}
 
 	// -- rule file
-	UT_String utRuleFile;
-	evalString(utRuleFile, NODE_PARAM_RULE_FILE.getToken(), 0, now);
-	mInitialShapeContext.mRuleFile = utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
+	mInitialShapeContext.mRuleFile = [this,now](){
+		UT_String utRuleFile;
+		evalString(utRuleFile, NODE_PARAM_RULE_FILE.getToken(), 0, now);
+		return utils::toUTF16FromOSNarrow(utRuleFile.toStdString());
+	}();
 	LOG_DBG << L"got rule file: " << mInitialShapeContext.mRuleFile;
 
 	// -- style
-	UT_String utStyle;
-	evalString(utStyle, NODE_PARAM_STYLE.getToken(), 0, now);
-	mInitialShapeContext.mStyle = utils::toUTF16FromOSNarrow(utStyle.toStdString());
+	mInitialShapeContext.mStyle = [this,now](){
+		UT_String utStyle;
+		evalString(utStyle, NODE_PARAM_STYLE.getToken(), 0, now);
+		return utils::toUTF16FromOSNarrow(utStyle.toStdString());
+	}();
 
 	// -- start rule
-	UT_String utStartRule;
-	evalString(utStartRule, NODE_PARAM_START_RULE.getToken(), 0, now);
-	mInitialShapeContext.mStartRule = utils::toUTF16FromOSNarrow(utStartRule.toStdString());
+	mInitialShapeContext.mStartRule = [this,now](){
+		UT_String utStartRule;
+		evalString(utStartRule, NODE_PARAM_START_RULE.getToken(), 0, now);
+		return utils::toUTF16FromOSNarrow(utStartRule.toStdString());
+	}();
 
 	// -- random seed
 	mInitialShapeContext.mSeed = evalInt(NODE_PARAM_SEED.getToken(), 0, now);
@@ -127,7 +137,7 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 	if (!boost::filesystem::exists(nextRPK))
 		return false;
 
-	std::wstring nextRPKURI = utils::toFileURI(nextRPK);
+	const std::wstring nextRPKURI = utils::toFileURI(nextRPK);
 	LOG_DBG << L"nextRPKURI = " << nextRPKURI;
 
 	// rebuild assets map
@@ -144,40 +154,44 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 		LOG_ERR << "no rule files found in rule package";
 		return false;
 	}
-	std::wstring cgbKey = cgbs.front().first;
-	std::wstring cgbURI = cgbs.front().second;
-	LOG_DBG << "cgbKey = " << cgbKey;
-	LOG_DBG << "cgbURI = " << cgbURI;
+	const std::wstring cgbKey = cgbs.front().first;
+	const std::wstring cgbURI = cgbs.front().second;
+	LOG_DBG << "cgbKey = " << cgbKey << ", " << "cgbURI = " << cgbURI;
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoPtr info(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCtx->mPRTCache.get(), &status));
-	if (!info || status != prt::STATUS_OK) {
-		LOG_ERR << "failed to get rule file info";
+	const RuleFileInfoPtr ruleFileInfo(prt::createRuleFileInfo(cgbURI.c_str(), mPRTCtx->mPRTCache.get(), &status));
+	if (!ruleFileInfo || (status != prt::STATUS_OK) || (ruleFileInfo->getNumRules() == 0)) {
+		LOG_ERR << "failed to get rule file info or rule file does not contain any rules";
 		return false;
 	}
 
-	// get first rule (start rule if possible)
-	if (info->getNumRules() == 0) {
-		LOG_ERR << "rule file does not contain any rules";
-		return false;
-	}
-	auto startRuleIdx = size_t(-1);
-	for (size_t ri = 0; ri < info->getNumRules(); ri++) {
-		const prt::RuleFileInfo::Entry* re = info->getRule(ri);
-		for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
-			if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
-				startRuleIdx = ri;
-				break;
+	// find start rule (first annotated start rule or just first rule as fallback)
+	auto findStartRule = [](const RuleFileInfoPtr& info) -> std::wstring {
+		auto startRuleIdx = CGA_NO_START_RULE_FOUND;
+		for (size_t ri = 0; ri < info->getNumRules(); ri++) {
+			const prt::RuleFileInfo::Entry *re = info->getRule(ri);
+			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+				if (std::wcscmp(re->getAnnotation(ai)->getName(), CGA_ANNOTATION_START_RULE) == 0) {
+					startRuleIdx = ri;
+					break;
+				}
 			}
 		}
-	}
-	if (startRuleIdx == size_t(-1))
-		startRuleIdx = 0;
-	const prt::RuleFileInfo::Entry* re = info->getRule(startRuleIdx);
-	const wchar_t* fqStartRule = re->getName();
-	std::vector<std::wstring> startRuleComponents;
-	boost::split(startRuleComponents, fqStartRule, boost::is_any_of(L"$"));
-	LOG_DBG << "first start rule: " << fqStartRule;
+		if (startRuleIdx == CGA_NO_START_RULE_FOUND)
+			startRuleIdx = 0;
+		const prt::RuleFileInfo::Entry *re = info->getRule(startRuleIdx);
+		return { re->getName() };
+	};
+	const std::wstring fqStartRule = findStartRule(ruleFileInfo);
+
+	// get style/name from start rule
+	auto getStartRuleComponents = [](const std::wstring& fqRule) -> std::pair<std::wstring,std::wstring> {
+		std::vector<std::wstring> startRuleComponents;
+		boost::split(startRuleComponents, fqRule, boost::is_any_of(L"$")); // TODO: split is overkill
+		return { startRuleComponents[0], startRuleComponents[1]};
+	};
+	const auto startRuleComponents = getStartRuleComponents(fqStartRule);
+	LOG_DBG << "start rule: style = " << startRuleComponents.first << ", name = " << startRuleComponents.second;
 
 	// update node
 	mInitialShapeContext.mRPK = nextRPK;
@@ -188,12 +202,12 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_RULE_FILE.getToken(), 0, time);
 	}
 	{
-		mInitialShapeContext.mStyle = startRuleComponents[0];
+		mInitialShapeContext.mStyle = startRuleComponents.first;
 		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStyle));
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_STYLE.getToken(), 0, time);
 	}
 	{
-		mInitialShapeContext.mStartRule = startRuleComponents[1];
+		mInitialShapeContext.mStartRule = startRuleComponents.second;
 		UT_String val(utils::toOSNarrowFromUTF16(mInitialShapeContext.mStartRule));
 		setString(val, CH_STRING_LITERAL, NODE_PARAM_START_RULE.getToken(), 0, time);
 	}
@@ -201,12 +215,11 @@ bool SOPAssign::updateRulePackage(const boost::filesystem::path& nextRPK, fpreal
 		mInitialShapeContext.mSeed = 0;
 		setInt(NODE_PARAM_SEED.getToken(), 0, time, mInitialShapeContext.mSeed);
 	}
-	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " <<
-	mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
+	LOG_DBG << "updateRulePackage done: mRuleFile = " << mInitialShapeContext.mRuleFile << ", mStyle = " << mInitialShapeContext.mStyle << ", mStartRule = " << mInitialShapeContext.mStartRule;
 
-	// eval rule attribute values
+	// evaluate default rule attribute values
 	AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
-	getDefaultRuleAttributeValues(amb, mPRTCtx->mPRTCache, resolveMap, mInitialShapeContext.mRuleFile, fqStartRule);
+	getDefaultRuleAttributeValues(amb, mPRTCtx->mPRTCache, resolveMap, mInitialShapeContext.mRuleFile, fqStartRule, ruleFileInfo);
 	mInitialShapeContext.mRuleAttributeValues.reset(amb->createAttributeMap());
 
 	LOG_DBG << "mRuleAttributeValues = " << utils::objectToXML(mInitialShapeContext.mRuleAttributeValues.get());
@@ -219,13 +232,10 @@ void getDefaultRuleAttributeValues(
 		CacheObjectPtr& cache,
 		const ResolveMapUPtr& resolveMap,
 		const std::wstring& cgbKey,
-		const wchar_t* startRule
+		const std::wstring& fqStartRule,
+		const RuleFileInfoPtr& ruleFileInfo
 ) {
-    // 1. resolve CGB
-    // 2. get rule info
-    // 3. get hidden annotation
-
-	HoudiniGeometry hg(nullptr, amb.get());
+	AttrEvalCallbacks aec(amb, ruleFileInfo);
 	AttributeMapPtr emptyAttrMap(amb->createAttributeMapAndReset());
 
 	InitialShapeBuilderPtr isb(prt::InitialShapeBuilder::create());
@@ -233,21 +243,21 @@ void getDefaultRuleAttributeValues(
 			UnitQuad::VERTICES, UnitQuad::VERTICES_COUNT,
 			UnitQuad::INDICES, UnitQuad::INDICES_COUNT,
 			UnitQuad::FACE_COUNTS, UnitQuad::FACE_COUNTS_COUNT);
-	isb->setAttributes(cgbKey.c_str(), startRule, 666, L"temp", emptyAttrMap.get(), resolveMap.get());
+	isb->setAttributes(cgbKey.c_str(), fqStartRule.c_str(), 666, L"temp", emptyAttrMap.get(), resolveMap.get());
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	InitialShapePtr is(isb->createInitialShapeAndReset(&status));
+	const InitialShapePtr is(isb->createInitialShapeAndReset(&status));
 	const prt::InitialShape* iss[] = { is.get() };
 	const size_t issCounts = sizeof(iss) / sizeof(iss[0]);
 
-	EncoderInfoPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
+	const EncoderInfoPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
 	const prt::AttributeMap* encOpts = nullptr;
 	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
 
 	constexpr const wchar_t* encs[] = { ENCODER_ID_CGA_EVALATTR };
 	const prt::AttributeMap* encsOpts[] = { encOpts };
 
-	prt::Status stat = prt::generate(iss, issCounts, nullptr, encs, 1, encsOpts, &hg, cache.get(), nullptr, nullptr, nullptr);
+	const prt::Status stat = prt::generate(iss, issCounts, nullptr, encs, 1, encsOpts, &aec, cache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}

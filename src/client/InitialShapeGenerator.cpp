@@ -189,7 +189,7 @@ void InitialShapeGenerator::createInitialShapes(const PRTContextUPtr& prtCtx, co
 
 		// evaluate default attribute values:
 		// only incoming attributes which differ from default must be set
-		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule.c_str());
+		getDefaultRuleAttributeValues(amb, prtCtx->mPRTCache, assetsMap, wRuleFile, wStartRule, RuleFileInfoPtr{});
 		AttributeMapPtr defaultAttributes(amb->createAttributeMapAndReset());
 		//LOG_DBG << utils::objectToXML(defaultAttributes.get());
 

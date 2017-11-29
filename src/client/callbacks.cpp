@@ -7,7 +7,10 @@
 
 
 namespace {
-const bool DBG = false;
+
+constexpr bool DBG = false;
+
+constexpr const wchar_t* CGA_ANNOTATION_HIDDEN = L"@Hidden";
 
 typedef std::map<std::wstring, GA_RWHandleS> StringHandles; // prt string
 typedef std::map<std::wstring, GA_RWHandleI> IntHandles; // prt int32_t -> int32_t
@@ -80,8 +83,65 @@ std::mutex mDetailMutex; // guard the houdini detail object
 
 namespace p4h {
 
-HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, prt::AttributeMapBuilder* eab, UT_AutoInterrupt* autoInterrupt)
-: mDetail(gdp), mEvalAttrBuilder(eab), mAutoInterrupt(autoInterrupt) { }
+prt::Status AttrEvalCallbacks::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
+	LOG_ERR << message;
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::cgaReportBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::cgaReportFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
+	return prt::STATUS_OK;
+}
+prt::Status AttrEvalCallbacks::cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+	return prt::STATUS_OK;
+}
+
+bool isHiddenAttribute(const RuleFileInfoPtr& ruleFileInfo, const wchar_t* key) {
+	for (size_t ai = 0, numAttrs = ruleFileInfo->getNumAttributes(); ai < numAttrs; ai++) {
+		const auto attr = ruleFileInfo->getAttribute(ai);
+		if (std::wcscmp(key, attr->getName()) == 0) {
+			for (size_t k = 0, numAnns = attr->getNumAnnotations(); k < numAnns; k++) {
+				if (std::wcscmp(attr->getAnnotation(k)->getName(), CGA_ANNOTATION_HIDDEN) == 0)
+					return true;
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+prt::Status AttrEvalCallbacks::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
+	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
+		mAMB->setBool(key, value);
+	return prt::STATUS_OK;
+}
+
+prt::Status AttrEvalCallbacks::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
+	LOG_DBG << "attrFloat: " << key << " = " << value;
+	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
+		mAMB->setFloat(key, value);
+	return prt::STATUS_OK;
+}
+
+prt::Status AttrEvalCallbacks::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
+		mAMB->setString(key, value);
+	return prt::STATUS_OK;
+}
+
+
+HoudiniGeometry::HoudiniGeometry(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt)
+: mDetail(gdp), mAutoInterrupt(autoInterrupt) { }
 
 void HoudiniGeometry::add(
 		const wchar_t* name,
@@ -216,46 +276,43 @@ prt::Status HoudiniGeometry::generateError(size_t isIndex, prt::Status status, c
 	LOG_ERR << message;
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
-	//LOG_WRN << key << L": " << message;
+	LOG_WRN << key << L": " << message;
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
 	LOG_ERR << message;
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::cgaReportBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::cgaReportFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
 	return prt::STATUS_OK;
 }
+
 prt::Status HoudiniGeometry::cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
 	return prt::STATUS_OK;
 }
 
 prt::Status HoudiniGeometry::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
-	if (mEvalAttrBuilder != nullptr) {
-		mEvalAttrBuilder->setBool(key, value);
-	}
 	return prt::STATUS_OK;
 }
 
 prt::Status HoudiniGeometry::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-	if (mEvalAttrBuilder != nullptr) {
-		mEvalAttrBuilder->setFloat(key, value);
-	}
 	return prt::STATUS_OK;
 }
 
 prt::Status HoudiniGeometry::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
-	if (mEvalAttrBuilder != nullptr) {
-		mEvalAttrBuilder->setString(key, value);
-	}
 	return prt::STATUS_OK;
 }
 
-}
+} // namespace p4h

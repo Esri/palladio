@@ -129,11 +129,11 @@ void InitialShapeContext::put(GU_Detail* detail) {
 		size_t keyCount = 0;
 		const wchar_t* const* cKeys = mRuleAttributeValues->getKeys(&keyCount);
 		for (size_t k = 0; k < keyCount; k++) {
-			const wchar_t* key = cKeys[k];
+			const wchar_t* const key = cKeys[k];
 			std::string nKey = utils::toOSNarrowFromUTF16(key);
 
 			// strip away style prefix
-			auto styleDelimPos = nKey.find('$');
+			const auto styleDelimPos = nKey.find('$');
 			if (styleDelimPos != std::string::npos)
 				nKey.erase(0, styleDelimPos+1);
 
@@ -145,22 +145,22 @@ void InitialShapeContext::put(GU_Detail* detail) {
 				case prt::AttributeMap::PT_FLOAT: {
 					GA_RWHandleF av(mAttrRefs.at(key)); // TODO: we should stay in double precision here
 					if (av.isValid()) {
-						double userAttrValue = mRuleAttributeValues->getFloat(key);
-						av.set(off, (fpreal32) userAttrValue); // TODO: again, stay in double precision
+						const double defVal = mRuleAttributeValues->getFloat(key);
+						av.set(off, (fpreal32) defVal); // TODO: again, stay in double precision
 					}
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
 					GA_RWHandleI av(mAttrRefs.at(key));
-					bool userAttrValue = mRuleAttributeValues->getBool(key);
-					av.set(off, userAttrValue ? 1 : 0);
+					const bool defVal = mRuleAttributeValues->getBool(key);
+					av.set(off, defVal ? 1 : 0);
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
 					GA_RWHandleS av(mAttrRefs.at(key));
-					const wchar_t* userAttrValue = mRuleAttributeValues->getString(key);
-					std::string nVal = utils::toOSNarrowFromUTF16(userAttrValue);
-					av.set(off, nVal.c_str());
+					const wchar_t* const defVal = mRuleAttributeValues->getString(key);
+					const std::string nDefVal = utils::toOSNarrowFromUTF16(defVal); // !!!
+					av.set(off, nDefVal.c_str());
 					break;
 				}
 				default: {

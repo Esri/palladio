@@ -40,7 +40,8 @@ void getDefaultRuleAttributeValues(
 		CacheObjectPtr& cache,
 		const ResolveMapUPtr& resolveMap,
 		const std::wstring& cgbKey,
-		const wchar_t* startRule
+		const std::wstring& startRule,
+		const RuleFileInfoPtr& ruleFileInfo
 );
 
 } // namespace p4h
