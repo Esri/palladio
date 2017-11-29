@@ -20,4 +20,7 @@
 1. ```mkdir build/release && cd build/release```
 1. ```conan install ../../src```
 1. ```cmake -DCMAKE_BUILD_TYPE=Release ../src```
-1. ```make install``` (simply iterate on this one when working on the code)
+1. ```make install``` (the plugin is installed into your ~/houdini16/dso directory)
+
+### Running
+1. ```LD_LIBRARY_PATH=/opt/hfs16.0.XXX/dsolib houdini```
