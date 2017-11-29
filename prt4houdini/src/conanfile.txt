@@ -1,7 +1,10 @@
 [requires]
 cesdk/1.9.3786@esri-rd-zurich/stable
-houdini-apprentice/16.0.705@sidefx/stable
+houdini/[>16.0.0,<16.5.0]@sidefx/stable
 Catch/2.0.1@bincrafters/stable
+
+[options]
+houdini:houdini-flavor=apprentice
 
 [generators]
 cmake

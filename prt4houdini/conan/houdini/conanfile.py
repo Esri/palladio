@@ -3,15 +3,14 @@ from conans import tools
 
 # this recipe creates a houdini conan package from a locally installed houdini
 
-# usage on linux: conan create houdini-apprentice/16.0.705@sidefx/stable -s compiler=gcc -s compiler.version=4.8
-
-# TODO: create a FindHoudini function, see http://conanio.readthedocs.io/en/latest/integrations/cmake/find_packages.html
+# usage: conan create houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=apprentice
+#        replace XXX with your houdini version and replace houdini-type with your houdini flavor
 
 class HoudiniConan(ConanFile):
-    name        = "houdini-apprentice"
-    version     = "16.0.705"
+    name        = "houdini"
     settings    = "os", "compiler", "build_type", "arch"
-    description = "Houdini Apprentice is a free version of Houdini FX which can be used by students, artists and hobbyists to create personal non-commercial projects."
+    options     = { "houdini-flavor": ["apprentice", "indie", "core", "fx"] }
+    description = "Houdini is a 3D animation application software developed by Side Effects Software based in Toronto."
     url         = "https://www.sidefx.com/products/houdini-apprentice/"
     license     = "SIDE EFFECTS SOFTWARE LICENSE AGREEMENT, https://www.sidefx.com/legal/license-agreement"
 
