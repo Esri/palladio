@@ -31,7 +31,7 @@ namespace p4h {
 
 class AttrEvalCallbacks: public prt::Callbacks {
 public:
-	explicit AttrEvalCallbacks(AttributeMapBuilderPtr& amb, const RuleFileInfoPtr& ruleFileInfo) : mAMB(amb), mRuleFileInfo(ruleFileInfo) { }
+	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const RuleFileInfoUPtr& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
 	virtual ~AttrEvalCallbacks() = default;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
@@ -46,8 +46,8 @@ public:
 	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
 
 private:
-	AttributeMapBuilderPtr& mAMB;
-	const RuleFileInfoPtr& mRuleFileInfo;
+	AttributeMapBuilderVector& mAMBS;
+	const RuleFileInfoUPtr& mRuleFileInfo;
 };
 
 class HoudiniGeometry : public HoudiniCallbacks {

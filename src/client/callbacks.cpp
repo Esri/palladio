@@ -106,7 +106,7 @@ prt::Status AttrEvalCallbacks::cgaReportString(size_t isIndex, int32_t shapeID, 
 	return prt::STATUS_OK;
 }
 
-bool isHiddenAttribute(const RuleFileInfoPtr& ruleFileInfo, const wchar_t* key) {
+bool isHiddenAttribute(const RuleFileInfoUPtr& ruleFileInfo, const wchar_t* key) {
 	for (size_t ai = 0, numAttrs = ruleFileInfo->getNumAttributes(); ai < numAttrs; ai++) {
 		const auto attr = ruleFileInfo->getAttribute(ai);
 		if (std::wcscmp(key, attr->getName()) == 0) {
@@ -122,20 +122,20 @@ bool isHiddenAttribute(const RuleFileInfoPtr& ruleFileInfo, const wchar_t* key) 
 
 prt::Status AttrEvalCallbacks::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
-		mAMB->setBool(key, value);
+		mAMBS[isIndex]->setBool(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
 	LOG_DBG << "attrFloat: " << key << " = " << value;
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
-		mAMB->setFloat(key, value);
+		mAMBS[isIndex]->setFloat(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
-		mAMB->setString(key, value);
+		mAMBS[isIndex]->setString(key, value);
 	return prt::STATUS_OK;
 }
 

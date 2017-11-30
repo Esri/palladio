@@ -24,15 +24,15 @@ struct PRTContext final {
 	PRTContext& operator=(PRTContext&&) = delete;
 	~PRTContext();
 
-	const ResolveMapUPtr& getResolveMap(const std::wstring& rpk);
+	const ResolveMapUPtr& getResolveMap(const boost::filesystem::path& rpk);
 
 	log::LogHandlerPtr      mLogHandler;
 	const prt::Object*      mLicHandle; // TODO: use PRTObjectPtr...
-	CacheObjectPtr          mPRTCache;
+	CacheObjectUPtr         mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
 	int8_t                  mCores;
 
-	using ResolveMapCache = std::map<std::wstring, ResolveMapUPtr>;
+	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapUPtr>;
 	ResolveMapCache         mResolveMapCache;
 	const ResolveMapUPtr    mResolveMapNone;
 };

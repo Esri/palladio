@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "InitialShapeContext.h"
+#include "ShapeData.h"
 #include "logging.h"
 
 #include "SOP/SOP_Node.h"
@@ -23,12 +23,12 @@ private:
 private:
 	const PRTContextUPtr&       mPRTCtx;
 
-	AttributeMapPtr             mHoudiniEncoderOptions;
-	AttributeMapPtr             mCGAPrintOptions;
-	AttributeMapPtr             mCGAErrorOptions;
+	AttributeMapUPtr            mHoudiniEncoderOptions;
+	AttributeMapUPtr            mCGAPrintOptions;
+	AttributeMapUPtr            mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
 	AttributeMapNOPtrVector     mAllEncoderOptions;
-	AttributeMapPtr             mGenerateOptions;
+	AttributeMapUPtr            mGenerateOptions;
 };
 
 } // namespace p4h

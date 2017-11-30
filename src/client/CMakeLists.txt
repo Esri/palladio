@@ -12,12 +12,13 @@ add_library(${PROJECT_NAME} SHARED
 		sop.cpp
 		callbacks.cpp
 		utils.cpp
-		InitialShapeContext.cpp
+        ShapeData.cpp
 		InitialShapeGenerator.cpp
 		parameter.cpp
 		PRTContext.cpp
 		SOPAssign.cpp
-		SOPGenerate.cpp)
+		SOPGenerate.cpp
+		PrimitivePartition.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${PRT_INCLUDE_PATH}

@@ -16,9 +16,10 @@ constexpr const char*         FILE_FLEXNET_LIB   = "flexnet_prt";
 namespace p4h {
 
 PRTContext::PRTContext()
-        : mLogHandler(new log::LogHandler(L"p4h", PRT_INIT_LOG_LEVEL)), mLicHandle{nullptr},
+        : mLogHandler(new log::LogHandler(L"p4h", PRT_INIT_LOG_LEVEL)),
+          mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
-          mRPKUnpackPath{boost::filesystem::temp_directory_path() / "prt4houdini"}
+          mRPKUnpackPath{boost::filesystem::temp_directory_path() / ("prt4houdini_" + std::to_string(::getpid()))}
 {
     prt::addLogHandler(mLogHandler.get());
 
@@ -59,11 +60,15 @@ PRTContext::~PRTContext() {
 }
 
 // TODO: make thread-safe to support multiple assign nodes
-const ResolveMapUPtr &PRTContext::getResolveMap(const std::wstring &rpk) {
+const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& rpk) {
+    if (rpk.empty())
+        return mResolveMapNone;
+
     auto it = mResolveMapCache.find(rpk);
     if (it == mResolveMapCache.end()) {
         prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-        ResolveMapUPtr rm(prt::createResolveMap(rpk.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
+        const auto rpkURI = utils::toFileURI(rpk);
+        ResolveMapUPtr rm(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
         if (status != prt::STATUS_OK)
             return mResolveMapNone;
         it = mResolveMapCache.emplace(rpk, std::move(rm)).first;

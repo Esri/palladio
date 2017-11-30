@@ -23,13 +23,15 @@ struct PRTDestroyer {
 typedef std::vector<const prt::InitialShape*> InitialShapeNOPtrVector;
 typedef std::vector<const prt::AttributeMap*> AttributeMapNOPtrVector;
 
-typedef std::unique_ptr<prt::CacheObject, PRTDestroyer> CacheObjectPtr;
-typedef std::unique_ptr<const prt::AttributeMap, PRTDestroyer> AttributeMapPtr;
-typedef std::unique_ptr<prt::AttributeMapBuilder, PRTDestroyer> AttributeMapBuilderPtr;
-typedef std::unique_ptr<const prt::InitialShape, PRTDestroyer> InitialShapePtr;
-typedef std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer> InitialShapeBuilderPtr;
-typedef std::unique_ptr<const prt::ResolveMap, PRTDestroyer> ResolveMapUPtr;
-typedef std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer> RuleFileInfoPtr;
+using CacheObjectUPtr           = std::unique_ptr<prt::CacheObject, PRTDestroyer>;
+using AttributeMapUPtr          = std::unique_ptr<const prt::AttributeMap, PRTDestroyer>;
+using AttributeMapVector        = std::vector<AttributeMapUPtr>;
+using AttributeMapBuilderUPtr   = std::unique_ptr<prt::AttributeMapBuilder, PRTDestroyer>;
+using AttributeMapBuilderVector = std::vector<p4h::AttributeMapBuilderUPtr>;
+using InitialShapeBuilderUPtr   = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
+using InitialShapeBuilderVector = std::vector<InitialShapeBuilderUPtr>;
+using ResolveMapUPtr            = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
+using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 typedef std::unique_ptr<const prt::EncoderInfo, PRTDestroyer> EncoderInfoPtr;
 typedef std::unique_ptr<prt::OcclusionSet, PRTDestroyer> OcclusionSetPtr;
 

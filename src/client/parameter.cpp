@@ -1,6 +1,6 @@
 #include "SOPAssign.h"
 #include "parameter.h"
-#include "InitialShapeContext.h"
+#include "ShapeData.h"
 
 
 namespace {
@@ -18,30 +18,30 @@ namespace p4h {
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	static const bool DBG = false;
 
-	auto * node = static_cast<SOPAssign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeContext();
+	const auto* node = static_cast<SOPAssign*>(data);
+	const auto& ssd = node->getSharedShapeData();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
-		LOG_DBG << "   mRPK = " << isCtx.mRPK;
-		LOG_DBG << "   mRuleFile = " << isCtx.mRuleFile;
+		LOG_DBG << "   mRPK = " << ssd->mRPK;
+		LOG_DBG << "   mRuleFile = " << ssd->mRuleFile;
 	}
 
-	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
+	if (ssd->mRPK.empty() || ssd->mRuleFile.empty()) {
 		theMenu[0].setToken(nullptr);
 		return;
 	}
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
-	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
 	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
+		LOG_ERR << L"failed to resolve rule file '" << ssd->mRuleFile << "', aborting.";
 		return;
 	}
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status)); // TODO: caching
 	if (status == prt::STATUS_OK) {
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
@@ -79,17 +79,17 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 }
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	auto * node = static_cast<SOPAssign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeContext();
-	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+	const auto* node = static_cast<SOPAssign*>(data);
+	const auto& ssd = node->getSharedShapeData();
+	const auto& prtCtx = node->getPRTCtx();
 
-	if (isCtx.mRPK.empty()) {
+	if (ssd->mRPK.empty()) {
 		theMenu[0].setToken(nullptr);
 		return;
 	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
 	utils::getCGBs(resolveMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
@@ -110,24 +110,24 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 }
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	auto * node = static_cast<SOPAssign*>(data);
-	const InitialShapeContext& isCtx = node->getInitialShapeContext();
+	const auto* node = static_cast<SOPAssign*>(data);
+	const auto& ssd = node->getSharedShapeData();
 
-	if (isCtx.mRPK.empty() || isCtx.mRuleFile.empty()) {
+	if (ssd->mRPK.empty() || ssd->mRuleFile.empty()) {
 		theMenu[0].setToken(nullptr);
 		return;
 	}
 
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(utils::toFileURI(isCtx.mRPK));
-	const wchar_t* cgbURI = resolveMap->getString(isCtx.mRuleFile.c_str());
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
 	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << isCtx.mRuleFile << "', aborting.";
+		LOG_ERR << L"failed to resolve rule file '" << ssd->mRuleFile << "', aborting.";
 		return;
 	}
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status)); // TODO: caching
 	if (status == prt::STATUS_OK) {
 		std::set<std::string> styles;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
@@ -148,31 +148,5 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 		theMenu[limit].setToken(nullptr); // need a null terminator
 	}
 }
-
-//int	resetRuleAttr(void *data, int index, fpreal64 time, const PRM_Template *tplate) {
-//	p4h::SOPAssign* node = static_cast<p4h::SOPAssign*>(data);
-//
-//	UT_String tok;
-//	tplate->getToken(tok);
-//	const char* suf = tok.suffix();
-//	LOG_DBG << "resetRuleAttr: tok = " << tok.toStdString() << ", suf = " << suf;
-//	UT_String ruleAttr;
-//	if (suf) {
-//		int idx = std::atoi(suf);
-//		const char* valueTok = nullptr;
-//		if (tok.startsWith("cgaFlt"))
-//			valueTok = NODE_MULTIPARAM_FLOAT_ATTR.getToken();
-//		else if (tok.startsWith("cgaStr"))
-//			valueTok = NODE_MULTIPARAM_STRING_ATTR.getToken();
-//		else if (tok.startsWith("cgaBool"))
-//			valueTok = NODE_MULTIPARAM_BOOL_ATTR.getToken();
-//		if (valueTok)
-//			node->evalStringInst(valueTok, &idx, ruleAttr, 0, 0.0);
-//		LOG_DBG << "    idx = " << idx << ", valueTok = " << valueTok << ", ruleAttr = " << ruleAttr;
-//	}
-//	if (ruleAttr.length() > 0)
-//		node->resetUserAttribute(ruleAttr.toStdString());
-//	return 1;
-//}
 
 } // namespace p4h
