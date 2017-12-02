@@ -1,6 +1,6 @@
 #include "SOPAssign.h"
-#include "parameter.h"
-#include "ShapeData.h"
+#include "NodeParameter.h"
+#include "ShapeConverter.h"
 
 
 namespace {
@@ -13,7 +13,7 @@ bool compareSecond (const StringPairVector::value_type& a, const StringPairVecto
 } // namespace
 
 
-namespace p4h {
+namespace AssignNodeParams {
 
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	static const bool DBG = false;
@@ -46,7 +46,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
 			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
-			std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+			std::string rn = toOSNarrowFromUTF16(re->getName());
 			std::vector<std::string> tok;
 			boost::split(tok, rn, boost::is_any_of("$"));
 
@@ -90,12 +90,12 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
-	utils::getCGBs(resolveMap, cgbs);
+	getCGBs(resolveMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
 	for (size_t ri = 0; ri < limit; ri++) {
-		std::string tok = utils::toOSNarrowFromUTF16(cgbs[ri].first);
-		std::string lbl = utils::toOSNarrowFromUTF16(cgbs[ri].first); // TODO
+		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
+		std::string lbl = toOSNarrowFromUTF16(cgbs[ri].first); // TODO
 		theMenu[ri].setToken(tok.c_str());
 		theMenu[ri].setLabel(lbl.c_str());
 	}
@@ -103,7 +103,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 }
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
-	std::string rn = utils::toOSNarrowFromUTF16(re->getName());
+	std::string rn = toOSNarrowFromUTF16(re->getName());
 	std::vector<std::string> tok;
 	boost::split(tok, rn, boost::is_any_of("$"));
 	return tok[0];

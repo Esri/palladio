@@ -1,6 +1,6 @@
 #include "SOPGenerate.h"
-#include "parameter.h"
-#include "InitialShapeGenerator.h"
+#include "NodeParameter.h"
+#include "ShapeGenerator.h"
 #include "callbacks.h"
 
 #include "UT/UT_Interrupt.h"
@@ -22,8 +22,6 @@ constexpr const wchar_t* ENCODER_ID_HOUDINI   = L"HoudiniEncoder";
 } // namespace
 
 
-namespace p4h {
-
 SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
 : SOP_Node(net, name, op), mPRTCtx(pCtx)
 {
@@ -31,12 +29,12 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
 	const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAErrorOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions));
+	mCGAErrorOptions.reset(createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions));
 	errOptions->destroy();
 
 	optionsBuilder->setString(L"name", FILE_CGA_PRINT);
 	const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAPrintOptions.reset(utils::createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions));
+	mCGAPrintOptions.reset(createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions));
 	printOptions->destroy();
 
 	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
@@ -46,10 +44,10 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
-	const bool emitAttributes      = (evalInt(GENERATE_NODE_PARAM_EMIT_ATTRS.getToken(), 0, now) > 0);
-	const bool emitMaterial        = (evalInt(GENERATE_NODE_PARAM_EMIT_MATERIAL.getToken(), 0, now) > 0);
-	const bool emitReports         = (evalInt(GENERATE_NODE_PARAM_EMIT_REPORTS.getToken(), 0, now) > 0);
-	const bool emitReportSummaries = (evalInt(GENERATE_NODE_PARAM_EMIT_REPORT_SUMMARIES.getToken(), 0, now) > 0);
+	const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
+	const bool emitMaterial        = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
+	const bool emitReports         = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
+	const bool emitReportSummaries = (evalInt(GenerateNodeParams::EMIT_REPORT_SUMMARIES.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(L"emitAttributes", emitAttributes);
@@ -57,7 +55,7 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	optionsBuilder->setBool(L"emitReports", emitReports);
 	optionsBuilder->setBool(L"emitReportSummaries", emitReportSummaries);
 	AttributeMapUPtr encoderOptions(optionsBuilder->createAttributeMapAndReset());
-	mHoudiniEncoderOptions.reset(utils::createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions.get()));
+	mHoudiniEncoderOptions.reset(createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions.get()));
 
 	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
 	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
@@ -68,31 +66,30 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 
-//	if (gdp->getNumPrimitives() == 0)
-//		return error();
-
 	if (!handleParams(context))
 		return UT_ERROR_ABORT;
 
-	if (lockInputs(context) >= UT_ERROR_ABORT) {
+	if (lockInputs(context) >= UT_ERROR_ABORT)
 		return error();
-	}
+
 	duplicateSource(0, context);
 
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
+		ShapeData shapeData;
+		ShapeGenerator shapeGen;
+
 		start = std::chrono::system_clock::now();
-		const InitialShapeGenerator isGen(mPRTCtx, gdp);
+		shapeGen.get(gdp, shapeData, mPRTCtx);
 		end = std::chrono::system_clock::now();
-		LOG_INF << getName() << ": fetching initial shapes from detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
+		LOG_INF << getName() << ": creating initial shapes from detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
 
 		if (!progress.wasInterrupted()) {
 			gdp->clearAndDestroy();
 			{
-				const InitialShapeNOPtrVector& is = isGen.getInitialShapes();
-
 				// establish threads
+				const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
 				const uint32_t nThreads = std::min<uint32_t>(mPRTCtx->mCores, is.size());
 				const uint32_t isRangeSize = std::ceil(is.size() / nThreads);
 
@@ -119,7 +116,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 								LOG_INF << "thread " << ti << ": #is = " << isActualRangeSize;
 
-								OcclusionSetPtr occlSet;
+								OcclusionSetUPtr occlSet;
 								std::vector<prt::OcclusionSet::Handle> occlHandles;
 								if (ENABLE_OCCLUSION) {
 									// TODO: add occlusion neighborhood!!!
@@ -160,5 +157,3 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	return error();
 }
-
-} // namespace p4h

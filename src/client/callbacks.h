@@ -27,8 +27,6 @@
 #include <mutex>
 
 
-namespace p4h {
-
 class AttrEvalCallbacks: public prt::Callbacks {
 public:
 	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const RuleFileInfoUPtr& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
@@ -49,6 +47,7 @@ private:
 	AttributeMapBuilderVector& mAMBS;
 	const RuleFileInfoUPtr& mRuleFileInfo;
 };
+
 
 class HoudiniGeometry : public HoudiniCallbacks {
 public:
@@ -89,7 +88,3 @@ private:
 	GU_Detail* mDetail;
 	UT_AutoInterrupt* mAutoInterrupt;
 };
-
-
-
-} // namespace p4h

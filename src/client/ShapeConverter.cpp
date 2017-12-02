@@ -1,4 +1,4 @@
-#include "ShapeData.h"
+#include "ShapeConverter.h"
 #include "PrimitivePartition.h"
 
 #include "GU/GU_Detail.h"
@@ -20,11 +20,7 @@ const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 } // namespace
 
 
-namespace p4h {
-
-SharedShapeData::SharedShapeData() : mSeed{0} { }
-
-void SharedShapeData::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
+void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
 	// partition primitives into initial shapes by shape classifier values
 	PrimitivePartition primPart(detail, mShapeClsAttrName, mShapeClsType);
 	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
@@ -74,7 +70,7 @@ void SharedShapeData::get(const GU_Detail* detail, ShapeData& shapeData, const P
 	} // for each primitive partition
 }
 
-void SharedShapeData::put(GU_Detail* detail, ShapeData& shapeData) {
+void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 	// setup main attributes handles (potentially overwrite existing attributes)
     GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
@@ -130,7 +126,7 @@ void SharedShapeData::put(GU_Detail* detail, ShapeData& shapeData) {
 		const wchar_t* const* cKeys = dra->getKeys(&keyCount);
 		for (size_t k = 0; k < keyCount; k++) {
 			const wchar_t* key = cKeys[k];
-			std::string nKey = utils::toOSNarrowFromUTF16(key);
+			std::string nKey = toOSNarrowFromUTF16(key);
 
 			// strip away style prefix
 	        auto styleDelimPos = nKey.find('$');
@@ -175,16 +171,16 @@ void SharedShapeData::put(GU_Detail* detail, ShapeData& shapeData) {
 			clsTypeH.set(off, mShapeClsType);
 
 			rpkH.set(off, mRPK.string().c_str());
-			ruleFileH.set(off, utils::toOSNarrowFromUTF16(mRuleFile).c_str());
-			startRuleH.set(off, utils::toOSNarrowFromUTF16(mStartRule).c_str());
-			styleH.set(off, utils::toOSNarrowFromUTF16(mStyle).c_str());
+			ruleFileH.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
+			startRuleH.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
+			styleH.set(off, toOSNarrowFromUTF16(mStyle).c_str());
 			seedH.set(off, mSeed);
 
 			size_t keyCount = 0;
 			const wchar_t *const *cKeys = defaultRuleAttributes->getKeys(&keyCount);
 			for (size_t k = 0; k < keyCount; k++) {
 				const wchar_t *const key = cKeys[k];
-				std::string nKey = utils::toOSNarrowFromUTF16(key);
+				std::string nKey = toOSNarrowFromUTF16(key);
 
 				// strip away style prefix
 				const auto styleDelimPos = nKey.find('$');
@@ -209,7 +205,7 @@ void SharedShapeData::put(GU_Detail* detail, ShapeData& shapeData) {
 					case prt::AttributeMap::PT_STRING: {
 						GA_RWHandleS av(mAttrRefs.at(key));
 						const wchar_t *const defVal = defaultRuleAttributes->getString(key);
-						const std::string nDefVal = utils::toOSNarrowFromUTF16(defVal); // !!!
+						const std::string nDefVal = toOSNarrowFromUTF16(defVal); // !!!
 						av.set(off, nDefVal.c_str());
 						break;
 					}
@@ -221,6 +217,4 @@ void SharedShapeData::put(GU_Detail* detail, ShapeData& shapeData) {
 		} // for all primitives in initial shape
 	} // for all initial shapes
 }
-
-} // namespace p4h
 

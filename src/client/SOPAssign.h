@@ -1,12 +1,10 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "ShapeData.h"
+#include "ShapeConverter.h"
 
 #include "SOP/SOP_Node.h"
 
-
-namespace p4h {
 
 class SOPAssign : public SOP_Node {
 public:
@@ -14,7 +12,7 @@ public:
 	virtual ~SOPAssign() override = default;
 
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
-	const SharedShapeDataUPtr& getSharedShapeData() const { return mSharedShapeData; }
+	const ShapeConverterUPtr& getSharedShapeData() const { return mSharedShapeData; }
 
 protected:
 	OP_ERROR cookMySop(OP_Context &context) override;
@@ -25,7 +23,5 @@ private:
 
 private:
 	const PRTContextUPtr& mPRTCtx;
-	SharedShapeDataUPtr   mSharedShapeData;
+	ShapeConverterUPtr   mSharedShapeData;
 };
-
-} // namespace p4h

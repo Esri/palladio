@@ -13,10 +13,8 @@ constexpr const char*         FILE_FLEXNET_LIB   = "flexnet_prt";
 } // namespace
 
 
-namespace p4h {
-
 PRTContext::PRTContext()
-        : mLogHandler(new log::LogHandler(L"p4h", PRT_INIT_LOG_LEVEL)),
+        : mLogHandler(new p4h_log::LogHandler(L"p4h", PRT_INIT_LOG_LEVEL)),
           mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
           mRPKUnpackPath{boost::filesystem::temp_directory_path() / ("prt4houdini_" + std::to_string(::getpid()))}
@@ -27,10 +25,10 @@ PRTContext::PRTContext()
     mCores = (mCores == 0) ? 1 : mCores;
 
     boost::filesystem::path sopPath;
-    p4h::utils::getPathToCurrentModule(sopPath);
+    getPathToCurrentModule(sopPath);
 
     prt::FlexLicParams flp;
-    const std::string libflexnet = p4h::utils::getSharedLibraryPrefix() + FILE_FLEXNET_LIB + p4h::utils::getSharedLibrarySuffix();
+    const std::string libflexnet = getSharedLibraryPrefix() + FILE_FLEXNET_LIB + getSharedLibrarySuffix();
     const std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
     flp.mActLibPath = libflexnetPath.c_str();
     flp.mFeature = "CityEngAdvFx";
@@ -67,7 +65,7 @@ const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& r
     auto it = mResolveMapCache.find(rpk);
     if (it == mResolveMapCache.end()) {
         prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-        const auto rpkURI = utils::toFileURI(rpk);
+        const auto rpkURI = toFileURI(rpk);
         ResolveMapUPtr rm(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
         if (status != prt::STATUS_OK)
             return mResolveMapNone;
@@ -75,5 +73,3 @@ const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& r
     }
     return it->second;
 }
-
-} // namespace p4h

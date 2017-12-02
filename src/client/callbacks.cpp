@@ -29,7 +29,7 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 	wchar_t const* const* keys = m->getKeys(&keyCount);
 	for(size_t k = 0; k < keyCount; k++) {
 		wchar_t const* const key = keys[k];
-		std::string nKey = p4h::utils::toOSNarrowFromUTF16(key);
+		std::string nKey = toOSNarrowFromUTF16(key);
 		std::replace(nKey.begin(), nKey.end(), '.', '_');
 		if (DBG) LOG_DBG << "nKey = " << nKey;
 		switch(m->getType(key)) {
@@ -80,8 +80,6 @@ std::mutex mDetailMutex; // guard the houdini detail object
 
 } // namespace
 
-
-namespace p4h {
 
 prt::Status AttrEvalCallbacks::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
 	return prt::STATUS_OK;
@@ -166,7 +164,7 @@ void HoudiniGeometry::add(
 	for (size_t ci = 0; ci < countsSize; ci++)
 		geoPolyCounts.append(counts[ci]);
 
-	std::string nname = p4h::utils::toOSNarrowFromUTF16(name);
+	std::string nname = toOSNarrowFromUTF16(name);
 	GA_PrimitiveGroup* primGroup = dynamic_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
 
 	GA_Detail::OffsetMarker marker(*mDetail);
@@ -233,7 +231,7 @@ void HoudiniGeometry::add(
 				std::string nv;
 				const wchar_t* v = m->getString(h.first.c_str());
 				if (v && std::wcslen(v) > 0) {
-					nv = utils::toOSNarrowFromUTF16(v);
+					nv = toOSNarrowFromUTF16(v);
 				}
 				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
 					h.second.set(off, nv.c_str());
@@ -314,5 +312,3 @@ prt::Status HoudiniGeometry::attrFloat(size_t isIndex, int32_t shapeID, const wc
 prt::Status HoudiniGeometry::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
 	return prt::STATUS_OK;
 }
-
-} // namespace p4h

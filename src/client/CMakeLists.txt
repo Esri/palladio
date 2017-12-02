@@ -12,9 +12,9 @@ add_library(${PROJECT_NAME} SHARED
 		sop.cpp
 		callbacks.cpp
 		utils.cpp
-        ShapeData.cpp
-		InitialShapeGenerator.cpp
-		parameter.cpp
+        ShapeConverter.cpp
+		ShapeGenerator.cpp
+        NodeParameter.cpp
 		PRTContext.cpp
 		SOPAssign.cpp
 		SOPGenerate.cpp

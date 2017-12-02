@@ -1,4 +1,4 @@
-#include "InitialShapeGenerator.h"
+#include "ShapeGenerator.h"
 
 #include "GU/GU_Detail.h"
 #include "GA/GA_Primitive.h"
@@ -10,20 +10,7 @@ namespace {
 
 constexpr bool DBG = true;
 
-} // namespace
-
-
-namespace p4h {
-
-InitialShapeGenerator::InitialShapeGenerator(const PRTContextUPtr& prtCtx, const GU_Detail* detail) {
-	createInitialShapes(prtCtx, detail);
-}
-
-InitialShapeGenerator::~InitialShapeGenerator() {
-	std::for_each(mIS.begin(), mIS.end(), [](const prt::InitialShape* is) { is->destroy(); });
-}
-
-bool extractMainAttributes(SharedShapeData& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
+bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
 	if (rpkRef.isInvalid())
 		return false;
@@ -52,15 +39,15 @@ bool extractMainAttributes(SharedShapeData& ssd, const GA_Primitive* prim, const
 
 	GA_ROHandleS ruleFileH(ruleFileRef);
 	const std::string ruleFile = ruleFileH.get(firstOffset);
-	ssd.mRuleFile = utils::toUTF16FromOSNarrow(ruleFile);
+	ssd.mRuleFile = toUTF16FromOSNarrow(ruleFile);
 
 	GA_ROHandleS startRuleH(startRuleRef);
 	const std::string startRule = startRuleH.get(firstOffset);
-	ssd.mStartRule = utils::toUTF16FromOSNarrow(startRule);
+	ssd.mStartRule = toUTF16FromOSNarrow(startRule);
 
 	GA_ROHandleS styleH(styleRef);
 	const std::string style = styleH.get(firstOffset);
-	ssd.mStyle = utils::toUTF16FromOSNarrow(style);
+	ssd.mStyle = toUTF16FromOSNarrow(style);
 
 	GA_ROHandleI seedH(seedRef);
 	ssd.mSeed = seedH.get(firstOffset);
@@ -68,22 +55,25 @@ bool extractMainAttributes(SharedShapeData& ssd, const GA_Primitive* prim, const
 	return true;
 }
 
-void InitialShapeGenerator::createInitialShapes(
-		const PRTContextUPtr& prtCtx,
-		const GU_Detail* detail
+} // namespace
+
+
+void ShapeGenerator::get(
+	const GU_Detail* detail,
+	ShapeData& shapeData,
+	const PRTContextUPtr& prtCtx
 ) {
 	if (DBG) LOG_DBG << "-- createInitialShapes";
 
 	// extract initial shape geometry
-	SharedShapeData ssd;
-	ssd.get(detail, shapeData, prtCtx);
+	ShapeConverter::get(detail, shapeData, prtCtx);
 
 	// collect all primitive attributes
 	std::vector<std::pair<GA_ROAttributeRef, std::wstring>> attributes;
 	{
 		GA_Attribute* a;
 		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
-			attributes.emplace_back(GA_ROAttributeRef(a), utils::toUTF16FromOSNarrow(a->getName().toStdString()));
+			attributes.emplace_back(GA_ROAttributeRef(a), toUTF16FromOSNarrow(a->getName().toStdString()));
 		}
 	}
 
@@ -96,10 +86,10 @@ void InitialShapeGenerator::createInitialShapes(
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pv.size();
 
 		// extract main attrs from first prim in initial shape prim group
-		if (!extractMainAttributes(ssd, firstPrimitive, detail))
+		if (!extractMainAttributes(*this, firstPrimitive, detail))
 			continue;
 
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(ssd.mRPK);
+		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(mRPK);
 		if (!assetsMap)
 			continue;
 
@@ -129,7 +119,7 @@ void InitialShapeGenerator::createInitialShapes(
 					GA_ROHandleS av(ar);
 					if (av.isValid()) {
 						const char* v = av.get(primitiveMapOffset);
-						const std::wstring wv = utils::toUTF16FromOSNarrow(v);
+						const std::wstring wv = toUTF16FromOSNarrow(v);
 						//if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
 						amb->setString(key.c_str(), wv.c_str());
 					}
@@ -157,11 +147,11 @@ void InitialShapeGenerator::createInitialShapes(
 		shapeData.mRuleAttributes.emplace_back(amb->createAttributeMap());
 
 		auto& isb = shapeData.mInitialShapeBuilders[isIdx];
-		const auto fqStartRule = ssd.getFullyQualifiedStartRule();
+		const auto fqStartRule = getFullyQualifiedStartRule();
 		isb->setAttributes(
-				ssd.mRuleFile.c_str(),
+				mRuleFile.c_str(),
 				fqStartRule.c_str(),
-				ssd.mSeed,
+				mSeed,
 				shapeName.c_str(),
 				shapeData.mRuleAttributes.back().get(),
 				assetsMap.get()
@@ -173,12 +163,10 @@ void InitialShapeGenerator::createInitialShapes(
 			LOG_WRN << "failed to create initial shape: " << prt::getStatusDescription(status);
 			return;
 		}
-		LOG_DBG << utils::objectToXML(initialShape);
+		LOG_DBG << objectToXML(initialShape);
 
-		mIS.push_back(initialShape);
+		shapeData.mInitialShapes.emplace_back(initialShape);
 
-		if (DBG) LOG_DBG << p4h::utils::objectToXML(initialShape);
+		if (DBG) LOG_DBG << objectToXML(initialShape);
 	} // for each partition
 }
-
-} // namespace p4h

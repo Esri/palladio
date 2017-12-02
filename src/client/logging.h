@@ -11,8 +11,8 @@
 #include <iostream>
 #include <memory>
 
-namespace p4h {
-namespace log {
+
+namespace p4h_log {
 
 struct Logger { };
 
@@ -84,14 +84,13 @@ private:
 	std::wstring mName;
 };
 
-using LogHandlerPtr = std::unique_ptr<log::LogHandler>;
+using LogHandlerPtr = std::unique_ptr<LogHandler>;
 
 } // namespace log
-} // namespace p4h
 
 
 // switch logger here
-#define LT p4h::log::PRTLogger
+#define LT p4h_log::PRTLogger
 
 using _LOG_DBG = LT<prt::LOG_DEBUG>;
 using _LOG_INF = LT<prt::LOG_INFO>;

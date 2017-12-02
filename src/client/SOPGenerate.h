@@ -1,13 +1,12 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "ShapeData.h"
+#include "ShapeConverter.h"
 #include "logging.h"
+#include "utils.h"
 
 #include "SOP/SOP_Node.h"
 
-
-namespace p4h {
 
 class SOPGenerate : public SOP_Node {
 public:
@@ -30,5 +29,3 @@ private:
 	AttributeMapNOPtrVector     mAllEncoderOptions;
 	AttributeMapUPtr            mGenerateOptions;
 };
-
-} // namespace p4h

@@ -146,7 +146,7 @@ void HoudiniEncoder::init(prtx::GenerateContext&) {
 	if (DBG) log_debug("HoudiniEncoder::init: cb = %x") % (size_t)cb;
 	auto* oh = dynamic_cast<HoudiniCallbacks*>(cb);
 	if (DBG) log_debug("                   oh = %x") % (size_t)oh;
-	if(oh == nullptr) throw(prtx::StatusException(prt::STATUS_ILLEGAL_CALLBACK_OBJECT));
+	if(oh == nullptr) throw prtx::StatusException(prt::STATUS_ILLEGAL_CALLBACK_OBJECT);
 }
 
 void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeIndex) {

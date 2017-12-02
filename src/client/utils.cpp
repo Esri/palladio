@@ -20,9 +20,6 @@
 #endif
 
 
-namespace p4h {
-namespace utils {
-
 void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
 	constexpr const wchar_t* PROJECT    = L"";
 	constexpr const wchar_t* PATTERN    = L"*.cgb";
@@ -197,7 +194,4 @@ std::wstring percentEncode(const std::string& utf8String) {
 	}
 
 	return std::wstring(&u16temp[0]);
-}
-
-}
 }
