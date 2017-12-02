@@ -63,14 +63,14 @@ const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt:
 std::string objectToXML(prt::Object const* obj) {
 	if (obj == nullptr)
 		throw std::invalid_argument("object pointer is not valid");
-	const size_t siz = 4096;
-	size_t actualSiz = siz;
-	std::string buffer(siz, ' ');
-	obj->toXML((char*)&buffer[0], &actualSiz);
-	buffer.resize(actualSiz-1); // ignore terminating 0
-	if(siz < actualSiz)
-		obj->toXML((char*)&buffer[0], &actualSiz);
-	return buffer;
+	constexpr size_t SIZE = 4096;
+	size_t actualSize = SIZE;
+	std::vector<char> buffer(SIZE, ' ');
+	obj->toXML(buffer.data(), &actualSize);
+	buffer.resize(actualSize);
+	if(actualSize > SIZE)
+		obj->toXML(buffer.data(), &actualSize);
+	return std::string(buffer.data());
 }
 
 void getPathToCurrentModule(boost::filesystem::path& path) {

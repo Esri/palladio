@@ -2,6 +2,7 @@
 #include "PrimitivePartition.h"
 
 #include "GU/GU_Detail.h"
+#include "UT/UT_String.h"
 
 #include "boost/variant.hpp"
 #include "boost/algorithm/string.hpp"
@@ -129,16 +130,16 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 			std::string nKey = toOSNarrowFromUTF16(key);
 
 			// strip away style prefix
+			// TODO: is this correct?
 	        auto styleDelimPos = nKey.find('$');
 	        if (styleDelimPos != std::string::npos)
 	            nKey.erase(0, styleDelimPos+1);
 
-			// dots are not allowed in houdini primitive attribute names
-			boost::replace_all(nKey, ".", "_dot_"); // TODO: make this robust
-
 			// make sure to only generate an attribute handle once
 			if (!defaultRuleAttributeNames.insert(nKey).second)
 				continue;
+
+			UT_String primAttrName = toPrimAttr(nKey);
 
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
@@ -218,3 +219,15 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 	} // for all initial shapes
 }
 
+std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
+	return mStyle + L'$' + mStartRule;
+}
+
+UT_String ShapeConverter::toPrimAttr(const std::string& name) const {
+	return UT_String(boost::replace_all_copy(name, ".", "_dot_"));
+}
+
+std::wstring ShapeConverter::toRuleAttr(const UT_StringHolder& name) const {
+	const auto wn = toUTF16FromOSNarrow(name.toStdString());
+	return boost::replace_all_copy(wn, L"_dot_", L".");
+}

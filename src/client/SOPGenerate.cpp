@@ -90,8 +90,8 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			{
 				// establish threads
 				const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
-				const uint32_t nThreads = std::min<uint32_t>(mPRTCtx->mCores, is.size());
-				const uint32_t isRangeSize = std::ceil(is.size() / nThreads);
+				const size_t nThreads = std::min<size_t>(mPRTCtx->mCores, is.size());
+				const size_t isRangeSize = std::ceil(is.size() / nThreads);
 
 				// prt requires one callback instance per generate call
 				std::vector<std::unique_ptr<HoudiniGeometry>> hg(nThreads);
@@ -130,7 +130,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 								}
 
 								prt::Status stat = prt::generate(
-										isRangeStart, isActualRangeSize, 0,
+										isRangeStart, isActualRangeSize, occlHandles.data(),
 										mAllEncoders.data(), mAllEncoders.size(), mAllEncoderOptions.data(),
 										hg[ti].get(), mPRTCtx->mPRTCache.get(), occlSet.get(), mGenerateOptions.get()
 								);

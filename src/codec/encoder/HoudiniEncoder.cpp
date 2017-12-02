@@ -199,12 +199,9 @@ void HoudiniEncoder::convertGeometry(
 	int32_t base = 0;
 	int32_t uvBase  = 0;
 
-	for(size_t gi = 0, geoCount = geometries.size(); gi < geoCount; ++gi) {
-		prtx::Geometry* geo = geometries[gi].get();
+	for (const auto& geo: geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
-		for(size_t mi = 0, meshCount = meshes.size(); mi < meshCount; mi++) {
-			prtx::MeshPtr mesh = meshes[mi];
-
+		for (const auto& mesh: meshes) {
 			const prtx::DoubleVector& verts  = mesh->getVertexCoords();
 			const prtx::DoubleVector& norms  = mesh->getVertexNormalsCoords();
 			bool                      hasUVs = (mesh->getUVSetsCount() > 0);
@@ -306,8 +303,8 @@ void HoudiniEncoder::convertGeometry(
 			faceRanges.data()
 	);
 
-	for (std::vector<const prt::AttributeMap*>::iterator it = matAttrMaps.begin(); it != matAttrMaps.end(); ++it)
-		(*it)->destroy();
+	for (const auto& m: matAttrMaps)
+		m->destroy();
 
 	if (DBG) log_debug("HoudiniEncoder::convertGeometry: end");
 }

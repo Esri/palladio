@@ -155,10 +155,14 @@ void HoudiniGeometry::add(
 ) {
 	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
 
-	std::vector<UT_Vector3F> utPoints; // fpreal32
+	std::vector<UT_Vector3F> utPoints;
 	utPoints.reserve(vtxSize / 3);
-	for (size_t pi = 0; pi < vtxSize; pi += 3)
-		utPoints.emplace_back(vtx[pi], vtx[pi+1], vtx[pi+2]); // double -> float
+	for (size_t pi = 0; pi < vtxSize; pi += 3) {
+		const auto x = static_cast<fpreal32>(vtx[pi + 0]);
+		const auto y = static_cast<fpreal32>(vtx[pi + 1]);
+		const auto z = static_cast<fpreal32>(vtx[pi + 2]);
+		utPoints.emplace_back(x, y, z);
+	}
 
 	GEO_PolyCounts geoPolyCounts;
 	for (size_t ci = 0; ci < countsSize; ci++)
@@ -175,7 +179,10 @@ void HoudiniGeometry::add(
 		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
 			auto nrmIdx = indices[vi];
-			nrmh.set(it.getOffset(), UT_Vector3F(nrm[nrmIdx*3], nrm[nrmIdx*3+1], nrm[nrmIdx*3+2])); // double -> float
+			const auto nx = static_cast<fpreal32>(nrm[nrmIdx*3 + 0]);
+			const auto ny = static_cast<fpreal32>(nrm[nrmIdx*3 + 1]);
+			const auto nz = static_cast<fpreal32>(nrm[nrmIdx*3 + 2]);
+			nrmh.set(it.getOffset(), UT_Vector3F(nx, ny, nz));
 		}
 	}
 
@@ -185,7 +192,9 @@ void HoudiniGeometry::add(
 		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
 			const uint32_t uvIdx = uvIndices[vi];
 			if (uvIdx != UV_IDX_NO_VALUE) {
-				txth.set(it.getOffset(), UT_Vector3F(uvs[uvIdx*2], uvs[uvIdx*2+1], 0.0f)); // double -> float
+				const auto u = static_cast<fpreal32>(uvs[uvIdx*2 + 0]);
+				const auto v = static_cast<fpreal32>(uvs[uvIdx*2 + 1]);
+				txth.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
 			}
 		}
 		// TODO: multiple UV sets
@@ -223,8 +232,8 @@ void HoudiniGeometry::add(
 
 		// assign attribute values per face range
 		for (size_t r = 0; r < materialsSize; r++) {
-			GA_Offset rangeStart = primStartOffset + faceRanges[r];
-			GA_Offset rangePastEnd = primStartOffset + faceRanges[r + 1]; // faceRanges contains faceRangeCount+1 values
+			const GA_Offset rangeStart = primStartOffset + faceRanges[r];
+			const GA_Offset rangePastEnd = primStartOffset + faceRanges[r + 1]; // faceRanges contains faceRangeCount+1 values
 			const prt::AttributeMap* m = materials[r];
 
 			for (auto& h: hm.mStrings) {
@@ -241,16 +250,16 @@ void HoudiniGeometry::add(
 			}
 
 			for (auto& h: hm.mFloats) {
-				float v = m->getFloat(h.first.c_str());
+				const auto v = m->getFloat(h.first.c_str());
 				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, v);
+					h.second.set(off, static_cast<fpreal32 >(v));
 				if (DBG)
 					LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
 					h.second.getAttribute()->getName() << " = " << v;
 			}
 
 			for (auto& h: hm.mInts) {
-				int32_t v = m->getInt(h.first.c_str());
+				const int32_t v = m->getInt(h.first.c_str());
 				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
 					h.second.set(off, v);
 				if (DBG)
@@ -259,9 +268,11 @@ void HoudiniGeometry::add(
 			}
 
 			for (auto& h: hm.mBools) {
-				bool v = m->getBool(h.first.c_str());
+				const bool v = m->getBool(h.first.c_str());
+				constexpr int8_t valFalse = 0;
+				constexpr int8_t valTrue  = 1;
 				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, v ? 1 : 0);
+					h.second.set(off, v ? valTrue : valFalse);
 				if (DBG)
 					LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
 					h.second.getAttribute()->getName() << " = " << v;

@@ -7,9 +7,13 @@ add_executable(${PROJECT_NAME} tests.cpp)
 target_compile_options(${PROJECT_NAME} PRIVATE
         -std=c++11)
 
+target_include_directories(${PROJECT_NAME} PRIVATE
+		${PRT_INCLUDE_PATH}
+		${PRT4HOUDINI_CODEC_INCLUDE_PATH})
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        CONAN_PKG::Catch
-        CONAN_PKG::cesdk
-        prt4houdini)
+        prt4houdini
+        ${PRT_LINK_LIBRARIES}
+        CONAN_PKG::Catch)
 
 p4h_add_dependency_houdini(${PROJECT_NAME})

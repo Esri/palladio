@@ -131,7 +131,7 @@ bool SOPAssign::updateSharedShapeDataFromParams(OP_Context &context) {
 		setString(mSharedShapeData->mShapeClsAttrName, CH_STRING_LITERAL, AssignNodeParams::SHAPE_CLS_ATTR.getToken(), 0, now);
 
 	// -- shape classifier attr type
-	const int shapeClsAttrTypeChoice = evalInt(AssignNodeParams::SHAPE_CLS_TYPE.getToken(), 0, now);
+	const auto shapeClsAttrTypeChoice = evalInt(AssignNodeParams::SHAPE_CLS_TYPE.getToken(), 0, now);
 	switch (shapeClsAttrTypeChoice) {
 		case 0: mSharedShapeData->mShapeClsType = GA_STORECLASS_STRING; break;
 		case 1: mSharedShapeData->mShapeClsType = GA_STORECLASS_INT;    break;

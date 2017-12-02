@@ -8,5 +8,5 @@
 class GU_Detail;
 
 struct ShapeGenerator final : ShapeConverter {
-    virtual void get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) override;
+    void get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) override;
 };

@@ -3,8 +3,6 @@
 #include "GU/GU_Detail.h"
 #include "GA/GA_Primitive.h"
 
-#include "boost/algorithm/string.hpp"
-
 
 namespace {
 
@@ -69,11 +67,11 @@ void ShapeGenerator::get(
 	ShapeConverter::get(detail, shapeData, prtCtx);
 
 	// collect all primitive attributes
-	std::vector<std::pair<GA_ROAttributeRef, std::wstring>> attributes;
+	std::vector<std::pair<GA_ROAttributeRef, UT_StringHolder>> attributes;
 	{
 		GA_Attribute* a;
 		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
-			attributes.emplace_back(GA_ROAttributeRef(a), toUTF16FromOSNarrow(a->getName().toStdString()));
+			attributes.emplace_back(GA_ROAttributeRef(a), a->getName());
 		}
 	}
 
@@ -96,9 +94,9 @@ void ShapeGenerator::get(
 		// extract primitive attributes
 		shapeData.mRuleAttributeBuilders.emplace_back(prt::AttributeMapBuilder::create());
 		auto& amb = shapeData.mRuleAttributeBuilders.back();
-		for (size_t k = 0; k < attributes.size(); k++) {
-			const GA_ROAttributeRef& ar = attributes[k].first;
-			const std::wstring key      = boost::replace_all_copy(attributes[k].second, L"_dot_", L"."); // TODO
+		for (const auto& k: attributes) {
+			const GA_ROAttributeRef& ar = k.first;
+			const std::wstring key      = toRuleAttr(k.second);
 
 			if (ar.isInvalid())
 				continue;

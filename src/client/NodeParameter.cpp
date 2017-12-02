@@ -69,7 +69,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		rules.reserve(rules.size() + startRules.size());
 		rules.insert(rules.begin(), startRules.begin(), startRules.end());
 
-		const size_t limit = std::min<size_t>(rules.size(), theMaxSize);
+		const size_t limit = std::min<size_t>(rules.size(), static_cast<size_t>(theMaxSize));
 		for (size_t ri = 0; ri < limit; ri++) {
 			theMenu[ri].setToken(rules[ri].first.c_str());
 			theMenu[ri].setLabel(rules[ri].second.c_str());
@@ -92,7 +92,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
 	getCGBs(resolveMap, cgbs);
 
-	const size_t limit = std::min<size_t>(cgbs.size(), theMaxSize);
+	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
 	for (size_t ri = 0; ri < limit; ri++) {
 		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
 		std::string lbl = toOSNarrowFromUTF16(cgbs[ri].first); // TODO
@@ -138,13 +138,13 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 			const prt::RuleFileInfo::Entry* re = rfi->getAttribute(ai);
 			styles.emplace(extractStyle(re));
 		}
-		const size_t limit = std::min<size_t>(styles.size(), theMaxSize);
 		size_t si = 0;
 		for (const auto& s : styles) {
 			theMenu[si].setToken(s.c_str());
 			theMenu[si].setLabel(s.c_str());
 			si++;
 		}
+		const size_t limit = std::min<size_t>(styles.size(), static_cast<size_t>(theMaxSize));
 		theMenu[limit].setToken(nullptr); // need a null terminator
 	}
 }

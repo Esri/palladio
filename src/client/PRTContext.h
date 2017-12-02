@@ -28,7 +28,7 @@ struct PRTContext final {
 	const prt::Object*      mLicHandle; // TODO: use PRTObjectPtr...
 	CacheObjectUPtr         mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
-	int8_t                  mCores;
+	uint32_t                mCores;
 
 	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapUPtr>;
 	ResolveMapCache         mResolveMapCache;

@@ -9,7 +9,7 @@
 class SOPAssign : public SOP_Node {
 public:
 	SOPAssign(const PRTContextUPtr& pCtx, OP_Network *net, const char *name, OP_Operator *op);
-	virtual ~SOPAssign() override = default;
+	~SOPAssign() override = default;
 
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
 	const ShapeConverterUPtr& getSharedShapeData() const { return mSharedShapeData; }
