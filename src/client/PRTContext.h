@@ -11,8 +11,6 @@
 #include <map>
 
 
-namespace p4h {
-
 /**
  * manage PRT "lifetime" (actually, the license lifetime)
  */
@@ -24,19 +22,17 @@ struct PRTContext final {
 	PRTContext& operator=(PRTContext&&) = delete;
 	~PRTContext();
 
-	const ResolveMapUPtr& getResolveMap(const std::wstring& rpk);
+	const ResolveMapUPtr& getResolveMap(const boost::filesystem::path& rpk);
 
-	log::LogHandlerPtr      mLogHandler;
+	p4h_log::LogHandlerPtr  mLogHandler;
 	const prt::Object*      mLicHandle; // TODO: use PRTObjectPtr...
-	CacheObjectPtr          mPRTCache;
+	CacheObjectUPtr         mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
-	int8_t                  mCores;
+	uint32_t                mCores;
 
-	using ResolveMapCache = std::map<std::wstring, ResolveMapUPtr>;
+	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapUPtr>;
 	ResolveMapCache         mResolveMapCache;
 	const ResolveMapUPtr    mResolveMapNone;
 };
 
 using PRTContextUPtr = std::unique_ptr<PRTContext>;
-
-} // namespace p4h

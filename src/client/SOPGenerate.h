@@ -1,13 +1,12 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "InitialShapeContext.h"
+#include "ShapeConverter.h"
 #include "logging.h"
+#include "utils.h"
 
 #include "SOP/SOP_Node.h"
 
-
-namespace p4h {
 
 class SOPGenerate : public SOP_Node {
 public:
@@ -23,12 +22,10 @@ private:
 private:
 	const PRTContextUPtr&       mPRTCtx;
 
-	AttributeMapPtr             mHoudiniEncoderOptions;
-	AttributeMapPtr             mCGAPrintOptions;
-	AttributeMapPtr             mCGAErrorOptions;
+	AttributeMapUPtr            mHoudiniEncoderOptions;
+	AttributeMapUPtr            mCGAPrintOptions;
+	AttributeMapUPtr            mCGAErrorOptions;
 	std::vector<const wchar_t*> mAllEncoders;
 	AttributeMapNOPtrVector     mAllEncoderOptions;
-	AttributeMapPtr             mGenerateOptions;
+	AttributeMapUPtr            mGenerateOptions;
 };
-
-} // namespace p4h
