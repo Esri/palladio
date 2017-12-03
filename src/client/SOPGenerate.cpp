@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr bool ENABLE_OCCLUSION = false;
+constexpr bool ENABLE_OCCLUSION = true;
 
 constexpr const wchar_t* FILE_CGA_ERROR       = L"CGAErrors.txt";
 constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
@@ -119,7 +119,6 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 								OcclusionSetUPtr occlSet;
 								std::vector<prt::OcclusionSet::Handle> occlHandles;
 								if (ENABLE_OCCLUSION) {
-									// TODO: add occlusion neighborhood!!!
 									occlSet.reset(prt::OcclusionSet::create());
 									occlHandles.resize(isActualRangeSize);
 									prt::generateOccluders(
