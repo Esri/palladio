@@ -1,6 +1,6 @@
 #pragma once
 
-#include "logging.h"
+#include "LogHandler.h"
 
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"

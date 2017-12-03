@@ -1,5 +1,5 @@
 #include "PrimitivePartition.h"
-#include "logging.h"
+#include "LogHandler.h"
 
 
 namespace {

@@ -1,13 +1,9 @@
 #pragma once
 
-#include "utils.h"
-
 #include "PRM/PRM_ChoiceList.h"
 #include "PRM/PRM_Parm.h"
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_Shared.h"
-
-#include "boost/algorithm/string.hpp"
 
 
 namespace AssignNodeParams {

@@ -1,11 +1,14 @@
 #include "SOPAssign.h"
+#include "AttrEvalCallbacks.h"
 #include "ShapeGenerator.h"
-#include "callbacks.h"
+#include "ModelConverter.h"
 #include "NodeParameter.h"
 
 #include "prt/API.h"
 
 #include "UT/UT_Interrupt.h"
+
+#include "boost/algorithm/string.hpp"
 
 
 namespace {

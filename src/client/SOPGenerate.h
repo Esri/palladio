@@ -2,7 +2,7 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
-#include "logging.h"
+#include "LogHandler.h"
 #include "utils.h"
 
 #include "SOP/SOP_Node.h"

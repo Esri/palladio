@@ -1,6 +1,6 @@
 #pragma once
 
-#include "logging.h"
+#include "LogHandler.h"
 #include "utils.h"
 #include "../codec/encoder/HoudiniCallbacks.h"
 
@@ -27,31 +27,9 @@
 #include <mutex>
 
 
-class AttrEvalCallbacks: public prt::Callbacks {
+class ModelConverter : public HoudiniCallbacks {
 public:
-	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const RuleFileInfoUPtr& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
-	virtual ~AttrEvalCallbacks() = default;
-
-	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
-	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) override;
-	prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) override;
-	prt::Status cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) override;
-	prt::Status cgaReportBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) override;
-	prt::Status cgaReportFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
-	prt::Status cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
-	prt::Status attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) override;
-	prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
-	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
-
-private:
-	AttributeMapBuilderVector& mAMBS;
-	const RuleFileInfoUPtr& mRuleFileInfo;
-};
-
-
-class HoudiniGeometry : public HoudiniCallbacks {
-public:
-	explicit HoudiniGeometry(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt = nullptr);
+	explicit ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt = nullptr);
 
 protected:
 	void add(

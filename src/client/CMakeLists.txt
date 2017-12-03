@@ -9,16 +9,17 @@ project(prt4houdini CXX)
 ### target definition
 
 add_library(${PROJECT_NAME} SHARED
-		sop.cpp
-		callbacks.cpp
+		main.cpp
+		ModelConverter.cpp
 		utils.cpp
-        ShapeConverter.cpp
+		ShapeConverter.cpp
 		ShapeGenerator.cpp
         NodeParameter.cpp
 		PRTContext.cpp
 		SOPAssign.cpp
 		SOPGenerate.cpp
-		PrimitivePartition.cpp)
+		PrimitivePartition.cpp
+		AttrEvalCallbacks.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${PRT_INCLUDE_PATH}

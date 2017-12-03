@@ -1,7 +1,7 @@
 #include "SOPGenerate.h"
 #include "NodeParameter.h"
 #include "ShapeGenerator.h"
-#include "callbacks.h"
+#include "ModelConverter.h"
 
 #include "UT/UT_Interrupt.h"
 
@@ -94,9 +94,9 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				const size_t isRangeSize = std::ceil(is.size() / nThreads);
 
 				// prt requires one callback instance per generate call
-				std::vector<std::unique_ptr<HoudiniGeometry>> hg(nThreads);
+				std::vector<std::unique_ptr<ModelConverter>> hg(nThreads);
 				std::generate(hg.begin(), hg.end(), [&]() {
-						return std::unique_ptr<HoudiniGeometry>(new HoudiniGeometry(gdp, &progress));
+						return std::unique_ptr<ModelConverter>(new ModelConverter(gdp, &progress));
 					}
 				);
 

@@ -1,6 +1,14 @@
 #include "SOPAssign.h"
 #include "NodeParameter.h"
 #include "ShapeConverter.h"
+#include "utils.h"
+
+#include "prt/API.h"
+
+#include "boost/algorithm/string.hpp"
+
+#include <string>
+#include <vector>
 
 
 namespace {
@@ -40,8 +48,9 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
+	// TODO: deduplicate with SOPAssign::updateRulePackage
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status)); // TODO: caching
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
 	if (status == prt::STATUS_OK) {
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
