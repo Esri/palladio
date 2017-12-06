@@ -13,9 +13,37 @@
 
 namespace {
 
+constexpr const wchar_t* CGA_ANNOTATION_START_RULE = L"@StartRule";
+constexpr const size_t   CGA_NO_START_RULE_FOUND   = size_t(-1);
+
 typedef std::vector<std::pair<std::string,std::string>> StringPairVector;
 bool compareSecond (const StringPairVector::value_type& a, const StringPairVector::value_type& b) {
 	return ( a.second < b.second );
+}
+
+/**
+ * find start rule (first annotated start rule or just first rule as fallback)
+ */
+std::wstring findStartRule(const RuleFileInfoUPtr& info) {
+	const size_t numRules = info->getNumRules();
+	assert(numRules > 0);
+
+	auto startRuleIdx = CGA_NO_START_RULE_FOUND;
+	for (size_t ri = 0; ri < numRules; ri++) {
+		const prt::RuleFileInfo::Entry *re = info->getRule(ri);
+		for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
+			if (std::wcscmp(re->getAnnotation(ai)->getName(), CGA_ANNOTATION_START_RULE) == 0) {
+				startRuleIdx = ri;
+				break;
+			}
+		}
+	}
+
+	if (startRuleIdx == CGA_NO_START_RULE_FOUND)
+		startRuleIdx = 0; // use first rule as fallback
+
+	const prt::RuleFileInfo::Entry *re = info->getRule(startRuleIdx);
+	return { re->getName() };
 }
 
 } // namespace
@@ -23,11 +51,81 @@ bool compareSecond (const StringPairVector::value_type& a, const StringPairVecto
 
 namespace AssignNodeParams {
 
+/**
+ * validates and updates all parameters/states depending on the rule package
+ */
+int resetRuleParameter(void *data, int, fpreal32 time, const PRM_Template*) {
+	constexpr const int NOT_CHANGED = 0;
+	constexpr const int CHANGED     = 1;
+
+	auto* node = static_cast<SOPAssign*>(data);
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+
+	UT_String utNextRPKStr;
+	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, time);
+	boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
+
+	// -- early exit if rpk path is not valid
+	if (!boost::filesystem::exists(nextRPK))
+		return NOT_CHANGED;
+
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(nextRPK);
+	if (!resolveMap )
+		return NOT_CHANGED;
+
+	// -- try get first rule file
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
+	getCGBs(resolveMap, cgbs);
+	if (cgbs.empty()) {
+		LOG_ERR << "no rule files found in rule package";
+		return NOT_CHANGED;
+	}
+	const std::wstring cgbKey = cgbs.front().first;
+	const std::wstring cgbURI = cgbs.front().second;
+	LOG_DBG << "cgbKey = " << cgbKey << ", " << "cgbURI = " << cgbURI;
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoUPtr ruleFileInfo(prt::createRuleFileInfo(cgbURI.c_str(), prtCtx->mPRTCache.get(), &status)); // TODO: cache
+	if (!ruleFileInfo || (status != prt::STATUS_OK) || (ruleFileInfo->getNumRules() == 0)) {
+		LOG_ERR << "failed to get rule file info or rule file does not contain any rules";
+		return NOT_CHANGED;
+	}
+	const std::wstring fqStartRule = findStartRule(ruleFileInfo);
+
+	// -- get style/name from start rule
+	auto getStartRuleComponents = [](const std::wstring& fqRule) -> std::pair<std::wstring,std::wstring> {
+		std::vector<std::wstring> startRuleComponents;
+		boost::split(startRuleComponents, fqRule, boost::is_any_of(L"$")); // TODO: split is overkill
+		return { startRuleComponents[0], startRuleComponents[1]};
+	};
+	const auto startRuleComponents = getStartRuleComponents(fqStartRule);
+	LOG_DBG << "start rule: style = " << startRuleComponents.first << ", name = " << startRuleComponents.second;
+
+	// -- update the node
+	{
+		UT_String val(toOSNarrowFromUTF16(cgbKey));
+		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::RULE_FILE.getToken(), 0, time);
+	}
+	{
+		UT_String val(toOSNarrowFromUTF16(startRuleComponents.first));
+		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::STYLE.getToken(), 0, time);
+	}
+	{
+		UT_String val(toOSNarrowFromUTF16(startRuleComponents.second));
+		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::START_RULE.getToken(), 0, time);
+	}
+
+	// reset was successful, try to optimize the cache
+	prtCtx->mPRTCache->flushAll();
+
+	return CHANGED;
+}
+
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	static const bool DBG = false;
+	constexpr const bool DBG = false;
 
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getSharedShapeData();
+	const auto& ssd = node->getShapeConverter();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	if (DBG) {
@@ -48,7 +146,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	// TODO: deduplicate with SOPAssign::updateRulePackage
+	// TODO: deduplicate with SOPAssign::resetRulePackage
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
 	if (status == prt::STATUS_OK) {
@@ -89,7 +187,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getSharedShapeData();
+	const auto& ssd = node->getShapeConverter();
 	const auto& prtCtx = node->getPRTCtx();
 
 	if (ssd->mRPK.empty()) {
@@ -120,7 +218,7 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getSharedShapeData();
+	const auto& ssd = node->getShapeConverter();
 
 	if (ssd->mRPK.empty() || ssd->mRuleFile.empty()) {
 		theMenu[0].setToken(nullptr);

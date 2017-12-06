@@ -219,6 +219,15 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 	} // for all initial shapes
 }
 
+RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
+	const auto cgbURI = resolveMap->getString(mRuleFile.c_str());
+	if (cgbURI == nullptr)
+		return {};
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	return RuleFileInfoUPtr(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+}
+
 std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
 	return mStyle + L'$' + mStartRule;
 }

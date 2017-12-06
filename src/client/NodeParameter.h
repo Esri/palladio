@@ -4,6 +4,7 @@
 #include "PRM/PRM_Parm.h"
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_Shared.h"
+#include "PRM/PRM_Callback.h"
 
 
 namespace AssignNodeParams {
@@ -11,6 +12,8 @@ namespace AssignNodeParams {
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
 static PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+int resetRuleParameter(void *data, int index, fpreal32 time, const PRM_Template *tplate);
+static PRM_Callback rpkCallback(&resetRuleParameter);
 
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
@@ -73,7 +76,7 @@ static PRM_Template PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
 
 		// rpk, rulefile, startrule, ...
-		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault, nullptr, nullptr, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault,    nullptr, nullptr, rpkCallback, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults, &ruleFileMenu),
 		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults, &styleMenu),
 		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu),

@@ -27,14 +27,17 @@ struct ShapeData final {
 };
 
 
-struct ShapeConverter {
-    virtual void get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx);
+class ShapeConverter {
+public:
+	virtual void get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx);
 	void put(GU_Detail* detail, const ShapeData& shapeData) const;
 
+	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;
 	UT_String toPrimAttr(const std::string& name) const;
 	std::wstring toRuleAttr(const UT_StringHolder& name) const;
 
+public:
 	UT_String               mShapeClsAttrName;
 	GA_StorageClass	        mShapeClsType;
 
@@ -42,9 +45,8 @@ struct ShapeConverter {
 	std::wstring            mRuleFile;
 	std::wstring            mStyle;
 	std::wstring            mStartRule;
-	int64_t                 mSeed = 0;
 
-	RuleFileInfoUPtr        mRuleFileInfo;
+	int64_t                 mSeed = 0;
 };
 
 using ShapeConverterUPtr = std::unique_ptr<ShapeConverter>;
