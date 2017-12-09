@@ -6,8 +6,9 @@
 
 namespace {
 
-constexpr bool DBG = true;
+constexpr bool DBG = false;
 
+// TODO: factor this out into a MainAttributeHandler or such
 bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
 	if (rpkRef.isInvalid())
@@ -96,19 +97,19 @@ void ShapeGenerator::get(
 		auto& amb = shapeData.mRuleAttributeBuilders.back();
 		for (const auto& k: attributes) {
 			const GA_ROAttributeRef& ar = k.first;
-			const std::wstring key      = toRuleAttr(k.second);
 
 			if (ar.isInvalid())
 				continue;
+
+			const std::string nKey = toRuleAttr(k.second);
+			const std::wstring key = toUTF16FromOSNarrow(nKey);
 
 			switch (ar.getStorageClass()) {
 				case GA_STORECLASS_FLOAT: {
 					GA_ROHandleD av(ar);
 					if (av.isValid()) {
 						double v = av.get(primitiveMapOffset);
-						if (DBG)
-							if (key == L"distanceToCenter")
-								LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
+						if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
 						amb->setFloat(key.c_str(), v);
 					}
 					break;
@@ -118,7 +119,7 @@ void ShapeGenerator::get(
 					if (av.isValid()) {
 						const char* v = av.get(primitiveMapOffset);
 						const std::wstring wv = toUTF16FromOSNarrow(v);
-						//if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
+						if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
 						amb->setString(key.c_str(), wv.c_str());
 					}
 					break;
@@ -128,7 +129,7 @@ void ShapeGenerator::get(
 					if (av.isValid()) {
 						const int v = av.get(primitiveMapOffset);
 						const bool bv = (v > 0);
-						//if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
+						if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
 						amb->setBool(key.c_str(), bv);
 					}
 					break;

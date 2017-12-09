@@ -62,7 +62,9 @@ void evaluateDefaultRuleAttributes(
 	}
 
 	// run generate to evaluate default rule attributes
-	AttrEvalCallbacks aec(shapeData.mRuleAttributeBuilders, shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
+	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
+	AttrEvalCallbacks aec(shapeData.mRuleAttributeBuilders, ruleFileInfo);
+	// TODO: should we run this in parallel batches as well? much to gain?
 	const prt::Status stat = prt::generate(iss.data(), iss.size(), nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";

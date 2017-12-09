@@ -22,7 +22,7 @@ struct ShapeData final {
 	AttributeMapVector                mRuleAttributes;
 
 	~ShapeData() {
-		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is) { is->destroy(); });
+		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is){ is->destroy(); });
 	}
 };
 
@@ -35,7 +35,7 @@ public:
 	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;
 	UT_String toPrimAttr(const std::string& name) const;
-	std::wstring toRuleAttr(const UT_StringHolder& name) const;
+	std::string toRuleAttr(const UT_StringHolder& name) const;
 
 public:
 	UT_String               mShapeClsAttrName;

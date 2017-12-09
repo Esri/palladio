@@ -15,10 +15,11 @@ set(P4H_VERSION "${P4H_VERSION_MAJOR}.${P4H_VERSION_MINOR}.${P4H_VERSION_PATCH}+
 
 ### root project
 
-project(prt4houdini)
+project(prt4houdini CXX)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
+# TODO: use full conan integration, i.e. avoid the manual "conan install" step
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/common.cmake)
 
