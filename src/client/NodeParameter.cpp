@@ -16,7 +16,7 @@ namespace {
 constexpr const wchar_t* CGA_ANNOTATION_START_RULE = L"@StartRule";
 constexpr const size_t   CGA_NO_START_RULE_FOUND   = size_t(-1);
 
-typedef std::vector<std::pair<std::string,std::string>> StringPairVector;
+using StringPairVector = std::vector<std::pair<std::string,std::string>>;
 bool compareSecond (const StringPairVector::value_type& a, const StringPairVector::value_type& b) {
 	return ( a.second < b.second );
 }
@@ -159,7 +159,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 			bool hasStartRuleAnnotation = false;
 			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
-				if (std::wcscmp(re->getAnnotation(ai)->getName(), L"@StartRule") == 0) {
+				if (std::wcscmp(re->getAnnotation(ai)->getName(), CGA_ANNOTATION_START_RULE) == 0) {
 					hasStartRuleAnnotation = true;
 					break;
 				}
@@ -190,19 +190,17 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	const auto& ssd = node->getShapeConverter();
 	const auto& prtCtx = node->getPRTCtx();
 
-	if (ssd->mRPK.empty()) {
-		theMenu[0].setToken(nullptr);
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+	if (!resolveMap)
 		return;
-	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
 	getCGBs(resolveMap, cgbs);
 
 	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
 	for (size_t ri = 0; ri < limit; ri++) {
 		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
-		std::string lbl = toOSNarrowFromUTF16(cgbs[ri].first); // TODO
+		std::string lbl = toOSNarrowFromUTF16(cgbs[ri].first);
 		theMenu[ri].setToken(tok.c_str());
 		theMenu[ri].setLabel(lbl.c_str());
 	}
@@ -219,23 +217,19 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
 	const auto& ssd = node->getShapeConverter();
-
-	if (ssd->mRPK.empty() || ssd->mRuleFile.empty()) {
-		theMenu[0].setToken(nullptr);
-		return;
-	}
-
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
-	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
-	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << ssd->mRuleFile << "', aborting.";
+	if (!resolveMap)
 		return;
-	}
+
+	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
+	if (cgbURI == nullptr)
+		return;
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status)); // TODO: caching
-	if (status == prt::STATUS_OK) {
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	if (rfi && (status == prt::STATUS_OK)) {
 		std::set<std::string> styles;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
 			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);

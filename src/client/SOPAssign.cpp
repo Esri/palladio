@@ -13,29 +13,39 @@
 
 namespace {
 
-constexpr bool           DBG                       = false;
-constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR   = L"com.esri.prt.core.AttributeEvalEncoder";
+constexpr bool           DBG                     = false;
+constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.AttributeEvalEncoder";
 
-void evaluateDefaultRuleAttributes(
+AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
+	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
+	const prt::AttributeMap* encOpts = nullptr;
+	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts);
+	return AttributeMapUPtr(encOpts);
+}
+
+bool evaluateDefaultRuleAttributes(
 		ShapeData& shapeData,
 		const ShapeConverterUPtr& shapeConverter,
 		const PRTContextUPtr& prtCtx
 ) {
+	assert(shapeData.isValid());
+
 	// setup encoder options for attribute evaluation encoder
-	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(ENCODER_ID_CGA_EVALATTR));
-	const prt::AttributeMap* encOpts = nullptr;
-	encInfo->createValidatedOptionsAndStates(nullptr, &encOpts); // TODO: move into uptr
 	constexpr const wchar_t* encs[] = { ENCODER_ID_CGA_EVALATTR };
 	constexpr size_t encsCount = sizeof(encs) / sizeof(encs[0]);
-	const prt::AttributeMap* encsOpts[] = { encOpts };
+	const AttributeMapUPtr encOpts = getValidEncoderInfo(ENCODER_ID_CGA_EVALATTR);
+	const prt::AttributeMap* encsOpts[] = { encOpts.get() };
 
-	// try to get a resolve map, might be empty (nullptr)
+	// try to get a resolve map
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
+	if (!resolveMap) {
+		LOG_WRN << "could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
+		return false;
+	}
 
 	// create initial shapes
-	InitialShapeNOPtrVector iss;
-	iss.reserve(shapeData.mInitialShapeBuilders.size());
 	uint32_t isIdx = 0;
+	shapeData.mInitialShapes.reserve(shapeData.mInitialShapeBuilders.size());
 	for (auto& isb: shapeData.mInitialShapeBuilders) {
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx++);
 
@@ -56,22 +66,26 @@ void evaluateDefaultRuleAttributes(
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
 		if (status != prt::STATUS_OK) {
 			LOG_WRN << "failed to create initial shape: " << prt::getStatusDescription(status);
-			continue;
+			shapeData.mInitialShapes.emplace_back(nullptr);
 		}
-		iss.emplace_back(initialShape);
+		else
+			shapeData.mInitialShapes.emplace_back(initialShape);
 	}
+
+	assert(shapeData.isValid());
 
 	// run generate to evaluate default rule attributes
 	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
 	AttrEvalCallbacks aec(shapeData.mRuleAttributeBuilders, ruleFileInfo);
 	// TODO: should we run this in parallel batches as well? much to gain?
-	const prt::Status stat = prt::generate(iss.data(), iss.size(), nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
+	const prt::Status stat = prt::generate(shapeData.mInitialShapes.data(), shapeData.mInitialShapes.size(), nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}
 
-	if (encOpts)
-		encOpts->destroy();
+	assert(shapeData.isValid());
+
+	return true;
 }
 
 } // namespace
@@ -103,9 +117,14 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		LOG_INF << getName() << ": extracting shapes from detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
 
 		start = std::chrono::system_clock::now();
-		evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
+		const bool canContinue = evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
 		end = std::chrono::system_clock::now();
 		LOG_INF << getName() << ": evaluating default rule attributes on shapes: " << std::chrono::duration<double>(end - start).count() << "s\n";
+
+		if (!canContinue) {
+			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
+			return UT_ERROR_ABORT;
+		}
 
 		start = std::chrono::system_clock::now();
 		mShapeConverter->put(gdp, shapeData);
@@ -120,10 +139,6 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 bool SOPAssign::updateSharedShapeDataFromParams(OP_Context &context) {
 	const fpreal now = context.getTime();
-
-	// -- minimally emitted logging level
-	auto ll = static_cast<prt::LogLevel>(evalInt(AssignNodeParams::LOG.getToken(), 0, now));
-	mPRTCtx->mLogHandler->setLevel(ll);
 
 	// -- shape classifier attr name
 	// TODO: move to param callbacks

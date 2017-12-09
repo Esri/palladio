@@ -53,8 +53,7 @@ template<prt::LogLevel L> struct PRTLogger : Logger {
 
 class LogHandler : public prt::LogHandler {
 public:
-	LogHandler(const std::wstring& name, prt::LogLevel init) : mName(name) {
-		setLevel(init);
+	LogHandler(const std::wstring& name) : mName(name) {
 	}
 
 	virtual void handleLogEvent(const wchar_t* msg, prt::LogLevel level) override {
@@ -70,10 +69,6 @@ public:
 	virtual void getFormat(bool* dateTime, bool* level) override {
 		*dateTime = true;
 		*level = true;
-	}
-
-	void setLevel(prt::LogLevel level) {
-		prt::setLogLevel(level);
 	}
 
 	void setName(const std::wstring& n) {

@@ -22,6 +22,8 @@ const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
 
 void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
+	assert(shapeData.isValid());
+
 	// partition primitives into initial shapes by shape classifier values
 	PrimitivePartition primPart(detail, mShapeClsAttrName, mShapeClsType);
 	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
@@ -69,6 +71,8 @@ void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PR
 		shapeData.mInitialShapeBuilders.emplace_back(std::move(isb));
 		shapeData.mPrimitiveMapping.emplace_back(pIt->second);
 	} // for each primitive partition
+
+	assert(shapeData.isValid());
 }
 
 void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
@@ -157,7 +161,7 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 		} // for rule attribute
 	} // for each initial shape
 
-	for (size_t isIdx = 0; isIdx < shapeData.mInitialShapeBuilders.size(); isIdx++) {
+	for (size_t isIdx = 0; isIdx < shapeData.mRuleAttributeBuilders.size(); isIdx++) {
 		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 

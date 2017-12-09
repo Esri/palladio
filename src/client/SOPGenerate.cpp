@@ -101,9 +101,9 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				);
 
 				LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = " << nThreads << ", initial shapes per thread = " << isRangeSize;
+				start = std::chrono::system_clock::now();
 
 				// kick-off generate threads
-				start = std::chrono::system_clock::now();
 				std::vector<std::future<void>> futures;
 				futures.reserve(nThreads);
 				for (int8_t ti = 0; ti < nThreads; ti++) {
@@ -114,7 +114,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 								size_t isActualRangeSize = isPastEndPos - isStartPos;
 								auto isRangeStart = &is[isStartPos];
 
-								LOG_INF << "thread " << ti << ": #is = " << isActualRangeSize;
+								LOG_DBG << "thread " << ti << ": #is = " << isActualRangeSize;
 
 								OcclusionSetUPtr occlSet;
 								std::vector<prt::OcclusionSet::Handle> occlHandles;
@@ -145,8 +145,9 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 					futures.emplace_back(std::move(f));
 				}
 				std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
+
 				end = std::chrono::system_clock::now();
-				LOG_INF << "generate took " << std::chrono::duration<double>(end - start).count() << "s";
+				LOG_INF << getName() << ": generate took " << std::chrono::duration<double>(end - start).count() << "s";
 			}
 			select();
 		}

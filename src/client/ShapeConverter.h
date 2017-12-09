@@ -12,7 +12,8 @@
 
 class GU_Detail;
 
-struct ShapeData final {
+class ShapeData final {
+public:
 	std::vector<PrimitiveNOPtrVector> mPrimitiveMapping;
 
 	InitialShapeBuilderVector         mInitialShapeBuilders;
@@ -21,8 +22,29 @@ struct ShapeData final {
 	AttributeMapBuilderVector         mRuleAttributeBuilders;
 	AttributeMapVector                mRuleAttributes;
 
+	bool isValid() const {
+		const size_t numISB = mInitialShapeBuilders.size();
+		const size_t numIS = mInitialShapes.size();
+
+		const size_t numAMB = mRuleAttributeBuilders.size();
+		const size_t numAM = mRuleAttributes.size();
+
+		const size_t numPM = mPrimitiveMapping.size();
+
+		if (numISB != numPM)
+			return false;
+
+		if (numIS != numAMB || numIS != numAM) // they are allowed to be all 0
+			return false;
+
+		return true;
+	}
+
 	~ShapeData() {
-		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is){ is->destroy(); });
+		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is){
+			if (is)
+				is->destroy();
+		});
 	}
 };
 
