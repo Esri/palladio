@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "LogHandler.h"
 
 #include "prt/API.h"
 #include "prt/StringUtils.h"

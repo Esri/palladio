@@ -1,9 +1,11 @@
 #pragma once
 
-#include "LogHandler.h"
-
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
+#include "prt/InitialShape.h"
+#include "prt/RuleFileInfo.h"
+#include "prt/EncoderInfo.h"
+#include "prt/OcclusionSet.h"
 
 #include "GA/GA_Primitive.h"
 
@@ -14,10 +16,7 @@ namespace boost { namespace filesystem { class path; } }
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
-		if (p)
-			p->destroy();
-		else
-			LOG_WRN << "trying to destroy null prt object!";
+		if (p) p->destroy();
 	}
 };
 

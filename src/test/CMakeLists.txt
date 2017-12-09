@@ -13,6 +13,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         prt4houdini
+		prt4houdini_codec
         ${PRT_LINK_LIBRARIES}
         CONAN_PKG::Catch)
 
