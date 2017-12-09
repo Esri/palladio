@@ -4,6 +4,7 @@
 #include "PRM/PRM_Parm.h"
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_Shared.h"
+#include "PRM/PRM_Callback.h"
 
 
 namespace AssignNodeParams {
@@ -11,6 +12,8 @@ namespace AssignNodeParams {
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
 static PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+int resetRuleParameter(void *data, int index, fpreal32 time, const PRM_Template *tplate);
+static PRM_Callback rpkCallback(&resetRuleParameter);
 
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
@@ -48,23 +51,8 @@ static PRM_Name shapeClsTypes[] = {
 	PRM_Name("FLOAT", "Float"),
 	PRM_Name(nullptr)
 };
-static PRM_ChoiceList shapeClsTypeMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                       shapeClsTypes);
+static PRM_ChoiceList shapeClsTypeMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), shapeClsTypes);
 static PRM_Default shapeClsTypeDefault(0, "INT");
-
-// -- LOGGER
-static PRM_Name LOG("logLevel", "Log Level");
-static PRM_Name logNames[] = {
-	PRM_Name("TRACE", "trace"), // TODO: eventually, remove this and offset index by 1
-	PRM_Name("DEBUG", "debug"),
-	PRM_Name("INFO", "info"),
-	PRM_Name("WARNING", "warning"),
-	PRM_Name("ERROR", "error"),
-	PRM_Name("FATAL", "fatal"),
-	PRM_Name(nullptr)
-};
-static PRM_ChoiceList logMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), logNames);
-static PRM_Default logDefault(0, "ERROR");
 
 static PRM_Default DEFAULT_SHAPE_CLS_ATTR(0.0f, "shapeCls", CH_STRING_LITERAL);
 static PRM_Template PARAM_TEMPLATES[] = {
@@ -73,14 +61,11 @@ static PRM_Template PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
 
 		// rpk, rulefile, startrule, ...
-		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault, nullptr, nullptr, 0, &PRM_SpareData::fileChooserModeRead),
+		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault,    nullptr, nullptr, rpkCallback, &PRM_SpareData::fileChooserModeRead),
 		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults, &ruleFileMenu),
 		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults, &styleMenu),
 		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu),
 		PRM_Template(PRM_INT,    1, &SEED,       PRMoneDefaults),
-
-		// logger
-		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &LOG, &logDefault, &logMenu),
 
 		PRM_Template()
 };

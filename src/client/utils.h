@@ -23,6 +23,7 @@ struct PRTDestroyer {
 
 using PrimitiveNOPtrVector      = std::vector<const GA_Primitive*>;
 
+using ObjectUPtr                = std::unique_ptr<const prt::Object, PRTDestroyer>;
 using InitialShapeNOPtrVector   = std::vector<const prt::InitialShape*>;
 using AttributeMapNOPtrVector   = std::vector<const prt::AttributeMap*>;
 using CacheObjectUPtr           = std::unique_ptr<prt::CacheObject, PRTDestroyer>;

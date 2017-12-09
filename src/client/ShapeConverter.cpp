@@ -22,6 +22,8 @@ const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
 
 void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
+	assert(shapeData.isValid());
+
 	// partition primitives into initial shapes by shape classifier values
 	PrimitivePartition primPart(detail, mShapeClsAttrName, mShapeClsType);
 	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
@@ -69,11 +71,13 @@ void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PR
 		shapeData.mInitialShapeBuilders.emplace_back(std::move(isb));
 		shapeData.mPrimitiveMapping.emplace_back(pIt->second);
 	} // for each primitive partition
+
+	assert(shapeData.isValid());
 }
 
 void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
-	// setup main attributes handles (potentially overwrite existing attributes)
-    GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
+    // TODO: factor out
+	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
 
 	GA_RWAttributeRef clsTypeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_TYPE, 1));
@@ -99,6 +103,8 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 			break;
 	}
 
+	// setup main attributes handles (potentially overwrite existing attributes)
+	// TODO: factor this out into a MainAttributeHandler or such
 	GA_RWAttributeRef rpkRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RPK, 1));
 	GA_RWHandleS rpkH(rpkRef);
 
@@ -115,8 +121,7 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 	GA_RWHandleI seedH(seedRef);
 
 	// generate primitive attribute handles from all default rule attribute names from all initial shapes
-	std::map<std::wstring, GA_RWAttributeRef> mAttrRefs;
-	std::set<std::string> defaultRuleAttributeNames;
+	std::map<std::string, GA_RWAttributeRef> mAttrRefs;
 	AttributeMapVector defaultRuleAttributeMaps;
 	defaultRuleAttributeMaps.reserve(shapeData.mRuleAttributeBuilders.size());
 	for (auto& amb: shapeData.mRuleAttributeBuilders) {
@@ -127,33 +132,27 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 		const wchar_t* const* cKeys = dra->getKeys(&keyCount);
 		for (size_t k = 0; k < keyCount; k++) {
 			const wchar_t* key = cKeys[k];
-			std::string nKey = toOSNarrowFromUTF16(key);
-
-			// strip away style prefix
-			// TODO: is this correct?
-	        auto styleDelimPos = nKey.find('$');
-	        if (styleDelimPos != std::string::npos)
-	            nKey.erase(0, styleDelimPos+1);
+			const std::string nKey = toOSNarrowFromUTF16(key);
 
 			// make sure to only generate an attribute handle once
-			if (!defaultRuleAttributeNames.insert(nKey).second)
+			if (mAttrRefs.count(nKey) > 0)
 				continue;
 
 			UT_String primAttrName = toPrimAttr(nKey);
 
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
-					GA_RWAttributeRef ar(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
+					GA_RWAttributeRef ar(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					if (ar.isValid())
-						mAttrRefs.emplace(key, ar);
+						mAttrRefs.emplace(nKey, ar);
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
-					mAttrRefs.emplace(key, detail->addIntTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
+					mAttrRefs.emplace(nKey, detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
-					mAttrRefs.emplace(key, detail->addStringTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
+					mAttrRefs.emplace(nKey, detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					break;
 				}
 				default:
@@ -162,7 +161,7 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 		} // for rule attribute
 	} // for each initial shape
 
-	for (size_t isIdx = 0; isIdx < shapeData.mInitialShapeBuilders.size(); isIdx++) {
+	for (size_t isIdx = 0; isIdx < shapeData.mRuleAttributeBuilders.size(); isIdx++) {
 		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 
@@ -171,6 +170,8 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 			clsAttrNameH.set(off, mShapeClsAttrName.c_str());
 			clsTypeH.set(off, mShapeClsType);
 
+			// put main attributes
+			// TODO: factor this out into a MainAttributeHandler or such
 			rpkH.set(off, mRPK.string().c_str());
 			ruleFileH.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
 			startRuleH.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
@@ -181,31 +182,27 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 			const wchar_t *const *cKeys = defaultRuleAttributes->getKeys(&keyCount);
 			for (size_t k = 0; k < keyCount; k++) {
 				const wchar_t *const key = cKeys[k];
-				std::string nKey = toOSNarrowFromUTF16(key);
+				const std::string nKey = toOSNarrowFromUTF16(key);
 
-				// strip away style prefix
-				const auto styleDelimPos = nKey.find('$');
-				if (styleDelimPos != std::string::npos)
-					nKey.erase(0, styleDelimPos + 1);
-
+				GA_RWAttributeRef attrRef = mAttrRefs.at(nKey);
 				switch (defaultRuleAttributes->getType(key)) {
 					case prt::AttributeMap::PT_FLOAT: {
-						GA_RWHandleF av(mAttrRefs.at(key)); // TODO: we should stay in double precision here
+						GA_RWHandleD av(attrRef);
 						if (av.isValid()) {
 							const double defVal = defaultRuleAttributes->getFloat(key);
-							av.set(off, (fpreal32) defVal); // TODO: again, stay in double precision
+							av.set(off, defVal);
 						}
 						break;
 					}
 					case prt::AttributeMap::PT_BOOL: {
-						GA_RWHandleI av(mAttrRefs.at(key));
+						GA_RWHandleI av(attrRef);
 						const bool defVal = defaultRuleAttributes->getBool(key);
 						av.set(off, defVal ? 1 : 0);
 						break;
 					}
 					case prt::AttributeMap::PT_STRING: {
-						GA_RWHandleS av(mAttrRefs.at(key));
-						const wchar_t *const defVal = defaultRuleAttributes->getString(key);
+						GA_RWHandleS av(attrRef);
+						const wchar_t* const defVal = defaultRuleAttributes->getString(key);
 						const std::string nDefVal = toOSNarrowFromUTF16(defVal); // !!!
 						av.set(off, nDefVal.c_str());
 						break;
@@ -219,15 +216,39 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 	} // for all initial shapes
 }
 
+RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
+	const auto cgbURI = resolveMap->getString(mRuleFile.c_str());
+	if (cgbURI == nullptr)
+		return {};
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	return RuleFileInfoUPtr(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+}
+
 std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
 	return mStyle + L'$' + mStartRule;
 }
 
+namespace {
+
+constexpr const char* ATTR_NAME_TO_HOUDINI[][2] = {
+	{ ".", "_dot_" },
+	{ "$", "_dollar_" }
+};
+constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(ATTR_NAME_TO_HOUDINI[0]);
+
+} // namespace
+
 UT_String ShapeConverter::toPrimAttr(const std::string& name) const {
-	return UT_String(boost::replace_all_copy(name, ".", "_dot_"));
+	std::string s = name;
+	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
+		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
+	return UT_String(s);
 }
 
-std::wstring ShapeConverter::toRuleAttr(const UT_StringHolder& name) const {
-	const auto wn = toUTF16FromOSNarrow(name.toStdString());
-	return boost::replace_all_copy(wn, L"_dot_", L".");
+std::string ShapeConverter::toRuleAttr(const UT_StringHolder& name) const {
+	std::string s = name.toStdString();
+	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
+		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
+	return s;
 }

@@ -25,7 +25,7 @@ struct PRTContext final {
 	const ResolveMapUPtr& getResolveMap(const boost::filesystem::path& rpk);
 
 	p4h_log::LogHandlerPtr  mLogHandler;
-	const prt::Object*      mLicHandle; // TODO: use PRTObjectPtr...
+	ObjectUPtr              mLicHandle;
 	CacheObjectUPtr         mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;
 	uint32_t                mCores;
