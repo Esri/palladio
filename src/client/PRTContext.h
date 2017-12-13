@@ -1,6 +1,5 @@
 #pragma once
 
-#include "LogHandler.h"
 #include "utils.h"
 
 #include "prt/Object.h"
@@ -10,6 +9,11 @@
 
 #include <map>
 
+
+namespace p4h_log {
+class LogHandler;
+using LogHandlerPtr = std::unique_ptr<LogHandler>;
+}
 
 /**
  * manage PRT "lifetime" (actually, the license lifetime)

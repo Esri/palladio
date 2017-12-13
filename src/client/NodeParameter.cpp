@@ -2,6 +2,7 @@
 #include "NodeParameter.h"
 #include "ShapeConverter.h"
 #include "utils.h"
+#include "LogHandler.h"
 
 #include "prt/API.h"
 
@@ -19,7 +20,8 @@ constexpr const size_t   CGA_NO_START_RULE_FOUND   = size_t(-1);
 using StringPairVector = std::vector<std::pair<std::string,std::string>>;
 bool compareSecond (const StringPairVector::value_type& a, const StringPairVector::value_type& b) {
 	return ( a.second < b.second );
-}
+
+} // namespace
 
 /**
  * find start rule (first annotated start rule or just first rule as fallback)

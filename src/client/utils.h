@@ -41,7 +41,7 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
 std::string objectToXML(prt::Object const* obj);
 
-void getPathToCurrentModule(boost::filesystem::path& path);
+void getLibraryPath(boost::filesystem::path& path, const void* func);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
 

@@ -3,6 +3,7 @@
 #include "ShapeGenerator.h"
 #include "ModelConverter.h"
 #include "NodeParameter.h"
+#include "LogHandler.h"
 
 #include "prt/API.h"
 

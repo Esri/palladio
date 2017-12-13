@@ -1,4 +1,5 @@
 #include "PRTContext.h"
+#include "LogHandler.h"
 
 #include <thread>
 
@@ -40,7 +41,7 @@ PRTContext::PRTContext()
     mCores = (mCores == 0) ? 1 : mCores;
 
     boost::filesystem::path sopPath;
-    getPathToCurrentModule(sopPath);
+	getLibraryPath(sopPath, reinterpret_cast<const void*>(prt::init));
 
     prt::FlexLicParams flp;
     const std::string libflexnet = getSharedLibraryPrefix() + FILE_FLEXNET_LIB + getSharedLibrarySuffix();

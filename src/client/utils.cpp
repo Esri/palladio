@@ -74,7 +74,7 @@ std::string objectToXML(prt::Object const* obj) {
 	return std::string(buffer.data());
 }
 
-void getPathToCurrentModule(boost::filesystem::path& path) {
+void getLibraryPath(boost::filesystem::path& path, const void* func) {
 #ifdef _WIN32
 	HMODULE dllHandle = 0;
 	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)getPathToCurrentModule, &dllHandle)) {
@@ -96,7 +96,7 @@ void getPathToCurrentModule(boost::filesystem::path& path) {
 	path = pathA;
 #else /* macosx or linux */
 	Dl_info dl_info;
-	if(dladdr((void*)getPathToCurrentModule, &dl_info) == 0) {
+	if(dladdr(func, &dl_info) == 0) {
 		char* error = dlerror();
 		throw std::runtime_error("error while trying to get current module path': " + std::string(error ? error : ""));
 	}
