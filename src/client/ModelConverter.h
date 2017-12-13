@@ -63,8 +63,9 @@ protected:
 			const uint32_t* uvCounts, size_t uvCountsSize,
 			const uint32_t* uvIndices, size_t uvIndicesSize,
 			uint32_t uvSets,
-			const prt::AttributeMap** materials, size_t materialsSize,
-			const uint32_t* faceRanges
+			const uint32_t* faceRanges, size_t faceRangesSize,
+			const prt::AttributeMap** materials,
+			const prt::AttributeMap** reports
 	) override;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;

@@ -139,7 +139,7 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 			if (mAttrRefs.count(nKey) > 0)
 				continue;
 
-			UT_String primAttrName = toPrimAttr(nKey);
+			UT_String primAttrName = NameConversion::toPrimAttr(nKey);
 
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
@@ -240,16 +240,22 @@ constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(AT
 
 } // namespace
 
-UT_String ShapeConverter::toPrimAttr(const std::string& name) const {
+namespace NameConversion {
+
+// TODO: look into GA_AttributeOptions to transport original prt attribute names between assign and generate node
+
+UT_String toPrimAttr(const std::string& name) {
 	std::string s = name;
 	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
 		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
 	return UT_String(s);
 }
 
-std::string ShapeConverter::toRuleAttr(const UT_StringHolder& name) const {
+std::string toRuleAttr(const UT_StringHolder& name) {
 	std::string s = name.toStdString();
 	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
 		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
 	return s;
 }
+
+} // namespace NameConversion

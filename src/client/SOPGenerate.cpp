@@ -28,14 +28,12 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
-	const prt::AttributeMap* errOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAErrorOptions.reset(createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions));
-	errOptions->destroy();
+	const AttributeMapUPtr errOptions(optionsBuilder->createAttributeMapAndReset());
+	mCGAErrorOptions.reset(createValidatedOptions(ENCODER_ID_CGA_ERROR, errOptions.get()));
 
 	optionsBuilder->setString(L"name", FILE_CGA_PRINT);
-	const prt::AttributeMap* printOptions = optionsBuilder->createAttributeMapAndReset();
-	mCGAPrintOptions.reset(createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions));
-	printOptions->destroy();
+	const AttributeMapUPtr printOptions(optionsBuilder->createAttributeMapAndReset());
+	mCGAPrintOptions.reset(createValidatedOptions(ENCODER_ID_CGA_PRINT, printOptions.get()));
 
 	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 	amb->setInt(L"numberWorkerThreads", mPRTCtx->mCores);
@@ -44,18 +42,18 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
-	const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
+	// TODO const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
 	const bool emitMaterial        = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
 	const bool emitReports         = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
-	const bool emitReportSummaries = (evalInt(GenerateNodeParams::EMIT_REPORT_SUMMARIES.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
-	optionsBuilder->setBool(L"emitAttributes", emitAttributes);
+	// TODO optionsBuilder->setBool(L"emitAttributes", emitAttributes);
 	optionsBuilder->setBool(L"emitMaterials", emitMaterial);
 	optionsBuilder->setBool(L"emitReports", emitReports);
-	optionsBuilder->setBool(L"emitReportSummaries", emitReportSummaries);
 	AttributeMapUPtr encoderOptions(optionsBuilder->createAttributeMapAndReset());
 	mHoudiniEncoderOptions.reset(createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions.get()));
+	if (!mHoudiniEncoderOptions)
+		return false;
 
 	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
 	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };

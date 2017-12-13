@@ -410,8 +410,9 @@ void add(const wchar_t* name,
          const uint32_t* uvCounts, size_t uvCountsSize,
          const uint32_t* uvIndices, size_t uvIndicesSize,
          uint32_t uvSets,
-         const prt::AttributeMap** materials, size_t materialsSize,
-         const uint32_t* faceRanges
+         const uint32_t* faceRanges, size_t faceRangesSize,
+         const prt::AttributeMap** materials,
+         const prt::AttributeMap** reports
 ) {
 	results.emplace_back(CallbackResult());
 	auto& cr = results.back();
@@ -426,12 +427,12 @@ void add(const wchar_t* name,
 	cr.uvIdx.assign(uvIndices, uvIndices+uvIndicesSize);
 	cr.uvSets = uvSets;
 
-	for (size_t mi = 0; mi < materialsSize; mi++) {
+	for (size_t mi = 0; mi < faceRangesSize-1; mi++) {
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(materials[mi]));
 		cr.materials.emplace_back(amb->createAttributeMap());
 	}
 
-	cr.faceRanges.assign(faceRanges, faceRanges+materialsSize+1); // faceRanges contains materialSize+1 values
+	cr.faceRanges.assign(faceRanges, faceRanges+faceRangesSize); // faceRanges contains materialSize+1 values
 
 }
 
@@ -601,14 +602,14 @@ TEST_CASE("generate two cubes with two uv sets") {
 		                                          4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
 		CHECK(cr.uvCnts == uvCntsExp);
 
-		const std::vector<uint32_t> uvIdxExp = { 3, 2, 1, 0, 27, 26, 25, 24, 7, 6, 5, 4, 31, 30, 29, 28,
-		                                         11, 10, 9, 8, 35, 34, 33, 32, 15, 14, 13, 12, 39, 38, 37, 36,
-		                                         19, 18, 17, 16, 43, 42, 41, 40, 23, 22, 21, 20, 47, 46, 45, 44 };
+		const std::vector<uint32_t> uvIdxExp = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23,
+		                                         22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28, 35, 34, 33, 32, 39, 38, 37, 36,
+		                                         43, 42, 41, 40, 47, 46, 45, 44 };
 		CHECK(cr.uvIdx == uvIdxExp);
 
 		CHECK(cr.uvSets == 4);
 
-		const std::vector<uint32_t> faceRangesExp = { 0, 6 };
+		const std::vector<uint32_t> faceRangesExp = { 0, 1, 2, 3, 4, 5, 6 };
 		CHECK(cr.faceRanges == faceRangesExp);
 	}
 

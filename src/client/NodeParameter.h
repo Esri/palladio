@@ -75,15 +75,13 @@ static PRM_Template PARAM_TEMPLATES[] = {
 
 namespace GenerateNodeParams {
 
-static PRM_Name EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
+// TODO static PRM_Name EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
 static PRM_Name EMIT_MATERIAL("emitMaterials", "Emit material attributes");
 static PRM_Name EMIT_REPORTS("emitReports", "Emit CGA reports");
-static PRM_Name EMIT_REPORT_SUMMARIES("emitReportSummaries", "Emit CGA report summaries");
 static PRM_Template PARAM_TEMPLATES[] {
-		PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
+		// TODO PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
 		PRM_Template(PRM_TOGGLE, 1, &EMIT_MATERIAL),
 		PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORTS),
-		PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORT_SUMMARIES),
 		PRM_Template()
 };
 
