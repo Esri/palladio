@@ -1,4 +1,5 @@
 #include "ModelConverter.h"
+#include "ShapeConverter.h"
 #include "LogHandler.h"
 #include "utils.h"
 
@@ -23,37 +24,114 @@ struct HandleMaps {
 	FloatHandles mFloats;
 };
 
+void applyAttributeMap(const HandleMaps& hm, const prt::AttributeMap* m, const GA_Offset rangeStart, const GA_Offset rangePastEnd) {
+	for (auto& h: hm.mStrings) {
+		if (m->hasKey(h.first.c_str())) {
+			std::string nv;
+			const wchar_t* v = m->getString(h.first.c_str());
+			if (v && std::wcslen(v) > 0) {
+				nv = toOSNarrowFromUTF16(v);
+				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+					h.second.set(off, nv.c_str());
+				if (DBG)
+					LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangePastEnd << "): "
+					        << h.second.getAttribute()->getName() << " = " << nv;
+			}
+		}
+	}
+
+	for (auto& h: hm.mFloats) {
+		if (m->hasKey(h.first.c_str())) {
+			const auto v = m->getFloat(h.first.c_str());
+			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+				h.second.set(off, static_cast<fpreal32 >(v));
+			if (DBG)
+				LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): "
+				        << h.second.getAttribute()->getName() << " = " << v;
+		}
+	}
+
+	for (auto& h: hm.mInts) {
+		if (m->hasKey(h.first.c_str())) {
+			const int32_t v = m->getInt(h.first.c_str());
+			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+				h.second.set(off, v);
+			if (DBG)
+				LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+				        h.second.getAttribute()->getName() << " = " << v;
+		}
+	}
+
+	for (auto& h: hm.mBools) {
+		if (m->hasKey(h.first.c_str())) {
+			const bool v = m->getBool(h.first.c_str());
+			constexpr int8_t valFalse = 0;
+			constexpr int8_t valTrue = 1;
+			for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
+				h.second.set(off, v ? valTrue : valFalse);
+			if (DBG)
+				LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
+				        h.second.getAttribute()->getName() << " = " << v;
+		}
+	}
+}
+
 void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm) {
 	size_t keyCount = 0;
 	wchar_t const* const* keys = m->getKeys(&keyCount);
 	for(size_t k = 0; k < keyCount; k++) {
 		wchar_t const* const key = keys[k];
-		std::string nKey = toOSNarrowFromUTF16(key);
-		std::replace(nKey.begin(), nKey.end(), '.', '_');
+		const std::string nKey = toOSNarrowFromUTF16(key);
+		const UT_String utKey = NameConversion::toPrimAttr(nKey);
+
 		if (DBG) LOG_DBG << "nKey = " << nKey;
 		switch(m->getType(key)) {
 			case prt::Attributable::PT_BOOL: {
-				GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
-				hm.mBools.insert(std::make_pair(key, h));
-				if (DBG) LOG_DBG << "bool: " << h->getName();
+				if (hm.mBools.count(key) > 0)
+					continue;
+				GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
+				if (h.isValid()) {
+					hm.mBools.insert(std::make_pair(key, h));
+					if (DBG) LOG_DBG << "bool: " << h->getName();
+				}
+				else
+					LOG_ERR << "could not create primitive attribute " << utKey;
 				break;
 			}
 			case prt::Attributable::PT_FLOAT: {
-				GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
-				hm.mFloats.insert(std::make_pair(key, h));
-				if (DBG) LOG_DBG << "float: " << h->getName();
+				if (hm.mFloats.count(key) > 0)
+					continue;
+				GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, utKey, 1));
+				if (h.isValid()) {
+					hm.mFloats.insert(std::make_pair(key, h));
+					if (DBG) LOG_DBG << "float: " << h->getName();
+				}
+				else
+					LOG_ERR << "could not create primitive attribute " << utKey;
 				break;
 			}
 			case prt::Attributable::PT_INT: {
-				GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
-				hm.mInts.insert(std::make_pair(key, h));
-				if (DBG) LOG_DBG << "int: " << h->getName();
+				if (hm.mInts.count(key) > 0)
+					continue;
+				GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, 1));
+				if (h.isValid()) {
+					hm.mInts.insert(std::make_pair(key, h));
+					if (DBG) LOG_DBG << "int: " << h->getName();
+				}
+				else
+					LOG_ERR << "could not create primitive attribute " << utKey;
 				break;
 			}
 			case prt::Attributable::PT_STRING: {
-				GA_RWHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, nKey.c_str(), 1));
-				hm.mStrings.insert(std::make_pair(key, h));
-				if (DBG) LOG_DBG << "strings: " << h->getName();
+				if (hm.mStrings.count(key) > 0)
+					continue;
+				GA_RWHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, utKey, 1));
+				if (h.isValid()) {
+					hm.mStrings.insert(std::make_pair(key, h));
+					if (DBG) LOG_DBG << "strings: " << h->getName();
+				}
+				else
+					LOG_ERR << "could not create primitive attribute " << utKey;
 				break;
 			}
 //			case prt::Attributable::PT_BOOL_ARRAY: {
@@ -151,7 +229,6 @@ void getUVSet(std::vector<uint32_t>& uvIndicesPerSet,
 	}
 }
 
-// TODO: write tests for below
 void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
             const uint32_t* counts, size_t countsSize,
             const uint32_t* uvCounts, size_t uvCountsSize,
@@ -192,8 +269,9 @@ void ModelConverter::add(
 			const uint32_t* uvCounts, size_t uvCountsSize,
 			const uint32_t* uvIndices, size_t uvIndicesSize,
 			uint32_t uvSets,
-			const prt::AttributeMap** materials, size_t materialsSize,
-			const uint32_t* faceRanges
+			const uint32_t* faceRanges, size_t faceRangesSize,
+			const prt::AttributeMap** materials,
+			const prt::AttributeMap** reports
 ) {
 	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
 
@@ -232,59 +310,25 @@ void ModelConverter::add(
 
 	primGroup->addRange(marker.primitiveRange());
 
-	if (DBG) LOG_DBG << "materials: materialsSize = " << materialsSize;
-	if (materialsSize > 0) {
+	if (DBG) LOG_DBG << "got " << faceRangesSize-1 << " face ranges";
 
-		// setup houdini attribute handles based on first material keys & types
+	// -- convert materials/reports into houdini primitive attributes based on face ranges
+	if (faceRangesSize > 1) {
 		HandleMaps hm;
-		setupHandles(mDetail, materials[0], hm); // TODO: bad strategy, either scan for all handles or lazily create handles
+		for (size_t fri = 0; fri < faceRangesSize-1; fri++) {
+			const GA_Offset rangeStart = primStartOffset + faceRanges[fri];
+			const GA_Offset rangePastEnd = primStartOffset + faceRanges[fri + 1]; // faceRanges contains faceRangeCount+1 values
 
-		// assign attribute values per face range
-		for (size_t r = 0; r < materialsSize; r++) {
-			const GA_Offset rangeStart = primStartOffset + faceRanges[r];
-			const GA_Offset rangePastEnd = primStartOffset + faceRanges[r + 1]; // faceRanges contains faceRangeCount+1 values
-			const prt::AttributeMap* m = materials[r];
-
-			for (auto& h: hm.mStrings) {
-				std::string nv;
-				const wchar_t* v = m->getString(h.first.c_str());
-				if (v && std::wcslen(v) > 0) {
-					nv = toOSNarrowFromUTF16(v);
-				}
-				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, nv.c_str());
-				if (DBG)
-					LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
-					h.second.getAttribute()->getName() << " = " << nv;
+			if (materials != nullptr) {
+				const prt::AttributeMap* m = materials[fri];
+				setupHandles(mDetail, m, hm);
+				applyAttributeMap(hm, m, rangeStart, rangePastEnd);
 			}
 
-			for (auto& h: hm.mFloats) {
-				const auto v = m->getFloat(h.first.c_str());
-				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, static_cast<fpreal32 >(v));
-				if (DBG)
-					LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
-					h.second.getAttribute()->getName() << " = " << v;
-			}
-
-			for (auto& h: hm.mInts) {
-				const int32_t v = m->getInt(h.first.c_str());
-				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, v);
-				if (DBG)
-					LOG_DBG << "float attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
-					h.second.getAttribute()->getName() << " = " << v;
-			}
-
-			for (auto& h: hm.mBools) {
-				const bool v = m->getBool(h.first.c_str());
-				constexpr int8_t valFalse = 0;
-				constexpr int8_t valTrue  = 1;
-				for (GA_Offset off = rangeStart; off < rangePastEnd; off++)
-					h.second.set(off, v ? valTrue : valFalse);
-				if (DBG)
-					LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangePastEnd << "): " <<
-					h.second.getAttribute()->getName() << " = " << v;
+			if (reports != nullptr) {
+				const prt::AttributeMap* r = reports[fri];
+				setupHandles(mDetail, r, hm);
+				applyAttributeMap(hm, r, rangeStart, rangePastEnd);
 			}
 		}
 	}

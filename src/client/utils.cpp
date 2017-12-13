@@ -52,13 +52,13 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 }
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
-	const prt::EncoderInfo* encInfo = prt::createEncoderInfo(encID);
+	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* validatedOptions = nullptr;
 	const prt::AttributeMap* optionStates = nullptr;
-	encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
-	optionStates->destroy();
-	encInfo->destroy();
-	return validatedOptions;
+	const prt::Status s = encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
+	if (optionStates != nullptr)
+		optionStates->destroy();
+	return (s == prt::STATUS_OK) ? validatedOptions : nullptr;
 }
 
 std::string objectToXML(prt::Object const* obj) {

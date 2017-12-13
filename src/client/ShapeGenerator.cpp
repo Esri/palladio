@@ -102,7 +102,7 @@ void ShapeGenerator::get(
 			if (ar.isInvalid())
 				continue;
 
-			const std::string nKey = toRuleAttr(k.second);
+			const std::string nKey = NameConversion::toRuleAttr(k.second);
 			const std::wstring key = toUTF16FromOSNarrow(nKey);
 
 			switch (ar.getStorageClass()) {

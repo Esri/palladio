@@ -56,8 +56,6 @@ public:
 
 	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;
-	UT_String toPrimAttr(const std::string& name) const;
-	std::string toRuleAttr(const UT_StringHolder& name) const;
 
 public:
 	UT_String               mShapeClsAttrName;
@@ -72,3 +70,11 @@ public:
 };
 
 using ShapeConverterUPtr = std::unique_ptr<ShapeConverter>;
+
+
+namespace NameConversion {
+
+UT_String toPrimAttr(const std::string& name);
+std::string toRuleAttr(const UT_StringHolder& name);
+
+} // namespace NameConversion
