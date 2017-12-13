@@ -4,6 +4,7 @@
 
 namespace {
 
+constexpr bool           DBG                   = false;
 constexpr const wchar_t* CGA_ANNOTATION_HIDDEN = L"@Hidden";
 
 bool isHiddenAttribute(const RuleFileInfoUPtr& ruleFileInfo, const wchar_t* key) {
@@ -59,7 +60,7 @@ prt::Status AttrEvalCallbacks::attrBool(size_t isIndex, int32_t shapeID, const w
 }
 
 prt::Status AttrEvalCallbacks::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-	LOG_DBG << "attrFloat: " << key << " = " << value;
+	if (DBG) LOG_DBG << "attrFloat: " << key << " = " << value;
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
 		mAMBS[isIndex]->setFloat(key, value);
 	return prt::STATUS_OK;

@@ -9,6 +9,13 @@ namespace {
 
 constexpr bool DBG = false;
 
+template<typename T>
+T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
+	GA_ROHandleS h(ref);
+	const char* s = h.get(off);
+	return (s != nullptr) ? T{s} : T{};
+}
+
 // TODO: factor this out into a MainAttributeHandler or such
 bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
@@ -31,23 +38,11 @@ bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const 
 	if (seedRef.isInvalid())
 		return false;
 
-	GA_Offset firstOffset = prim->getMapOffset();
-
-	GA_ROHandleS rpkH(rpkRef);
-	const std::string rpk = rpkH.get(firstOffset);
-	ssd.mRPK = boost::filesystem::path(rpk);
-
-	GA_ROHandleS ruleFileH(ruleFileRef);
-	const std::string ruleFile = ruleFileH.get(firstOffset);
-	ssd.mRuleFile = toUTF16FromOSNarrow(ruleFile);
-
-	GA_ROHandleS startRuleH(startRuleRef);
-	const std::string startRule = startRuleH.get(firstOffset);
-	ssd.mStartRule = toUTF16FromOSNarrow(startRule);
-
-	GA_ROHandleS styleH(styleRef);
-	const std::string style = styleH.get(firstOffset);
-	ssd.mStyle = toUTF16FromOSNarrow(style);
+	const GA_Offset firstOffset = prim->getMapOffset();
+	ssd.mRPK       = safeGet<boost::filesystem::path>(firstOffset, rpkRef);
+	ssd.mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
+	ssd.mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
+	ssd.mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
 
 	GA_ROHandleI seedH(seedRef);
 	ssd.mSeed = seedH.get(firstOffset);
@@ -80,6 +75,9 @@ void ShapeGenerator::get(
 	// loop over all initial shapes and use the first primitive to get the attribute values
 	for (size_t isIdx = 0; isIdx < shapeData.mInitialShapeBuilders.size(); isIdx++) {
 		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
+		if (pv.empty())
+			continue;
+
 		const auto& firstPrimitive = pv.front();
 		const auto& primitiveMapOffset = firstPrimitive->getMapOffset();
 
@@ -94,8 +92,7 @@ void ShapeGenerator::get(
 			continue;
 
 		// extract primitive attributes
-		shapeData.mRuleAttributeBuilders.emplace_back(prt::AttributeMapBuilder::create());
-		auto& amb = shapeData.mRuleAttributeBuilders.back();
+		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 		for (const auto& k: attributes) {
 			const GA_ROAttributeRef& ar = k.first;
 
@@ -144,7 +141,7 @@ void ShapeGenerator::get(
 
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 
-		shapeData.mRuleAttributes.emplace_back(amb->createAttributeMap());
+		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
 		auto& isb = shapeData.mInitialShapeBuilders[isIdx];
 		const auto fqStartRule = getFullyQualifiedStartRule();
@@ -153,20 +150,20 @@ void ShapeGenerator::get(
 				fqStartRule.c_str(),
 				mSeed,
 				shapeName.c_str(),
-				shapeData.mRuleAttributes.back().get(),
+				ruleAttr.get(),
 				assetsMap.get()
 		);
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
-		if (status != prt::STATUS_OK) {
-			LOG_WRN << "failed to create initial shape: " << prt::getStatusDescription(status);
-			return;
+		if (status == prt::STATUS_OK && initialShape != nullptr) {
+			if (DBG) LOG_DBG << objectToXML(initialShape);
+			shapeData.mInitialShapes.emplace_back(initialShape);
+			shapeData.mRuleAttributeBuilders.emplace_back(std::move(amb));
+			shapeData.mRuleAttributes.emplace_back(std::move(ruleAttr));
 		}
-		LOG_DBG << objectToXML(initialShape);
+		else
+			LOG_WRN << "failed to create initial shape " << shapeName << ": " << prt::getStatusDescription(status);
 
-		shapeData.mInitialShapes.emplace_back(initialShape);
-
-		if (DBG) LOG_DBG << objectToXML(initialShape);
 	} // for each partition
 }

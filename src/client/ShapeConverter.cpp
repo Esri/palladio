@@ -3,6 +3,7 @@
 #include "LogHandler.h"
 
 #include "GU/GU_Detail.h"
+#include "GEO/GEO_PrimPolySoup.h"
 #include "UT/UT_String.h"
 
 #include "boost/variant.hpp"
@@ -11,7 +12,7 @@
 
 namespace {
 
-constexpr bool DBG = false;
+constexpr bool  DBG                 = false;
 
 const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
 const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
@@ -25,50 +26,51 @@ const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
 	assert(shapeData.isValid());
 
-	// partition primitives into initial shapes by shape classifier values
+	// -- partition primitives into initial shapes by shape classifier values
 	PrimitivePartition primPart(detail, mShapeClsAttrName, mShapeClsType);
 	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
 
-	// loop over all primitive partitions and create proto shapes
+	// -- copy all coordinates
+	std::vector<double> coords;
+	assert(detail->getPointRange().getEntries() == detail->getNumPoints());
+	coords.reserve(detail->getNumPoints()*3);
+	GA_Offset ptoff;
+	GA_FOR_ALL_PTOFF(detail, ptoff) {
+		UT_Vector3 p = detail->getPos3(ptoff);
+		if (DBG) LOG_DBG << "coords " << coords.size()/3 << ": " << p.x() << ", " << p.y() << ", " << p.z();
+		coords.push_back(static_cast<double>(p.x()));
+		coords.push_back(static_cast<double>(p.y()));
+		coords.push_back(static_cast<double>(p.z()));
+	}
+
+	// -- loop over all primitive partitions and create shape builders
 	shapeData.mInitialShapeBuilders.reserve(shapePartitions.size());
 	uint32_t isIdx = 0;
 	for (auto pIt = shapePartitions.begin(); pIt != shapePartitions.end(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
-		std::vector<double> vtx;
-		std::vector<uint32_t> idx, faceCounts, holes;
+		std::vector<uint32_t> indices, faceCounts, holes;
 		for (const auto& prim: pIt->second) {
-			if (DBG) {
-				LOG_DBG << "   -- prim index " << prim->getMapIndex();
-				LOG_DBG << prim->getTypeName() << ", id = " << prim->getTypeId().get();
+			if (DBG) LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName() << ", id = " << prim->getTypeId().get();
+			const auto& primType = prim->getTypeId();
+			if (primType == GA_PRIMPOLY || primType == GA_PRIMPOLYSOUP) {
+				const GA_Size vtxCnt = prim->getVertexCount();
+				faceCounts.push_back(static_cast<uint32_t>(vtxCnt));
+				for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
+					indices.push_back(static_cast<uint32_t>(prim->getPointIndex(i)));
+					if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << prim->getPointIndex(i);
+				}
 			}
-
-			if (prim->getTypeId() != GA_PRIMPOLYSOUP && prim->getTypeId() != GA_PRIMPOLY)
-				continue;
-
-			// naively copying vertices
-			// prt does not support re-using a vertex index
-			for (GA_Size i = prim->getVertexCount() - 1; i >= 0; i--) {
-				idx.push_back(static_cast<uint32_t>(vtx.size() / 3));
-				UT_Vector3 p = detail->getPos3(prim->getPointOffset(i));
-				vtx.push_back(static_cast<double>(p.x()));
-				vtx.push_back(static_cast<double>(p.y()));
-				vtx.push_back(static_cast<double>(p.z()));
-				if (DBG) LOG_DBG << "      vtx idx " << i << ": " << idx.back();
-			}
-			faceCounts.push_back(static_cast<uint32_t>(prim->getVertexCount()));
 		} // for each polygon
 
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
 
-		isb->setGeometry(
-			vtx.data(), vtx.size(),
-			idx.data(), idx.size(),
-			faceCounts.data(), faceCounts.size(),
-			holes.data(), holes.size());
+		isb->setGeometry(coords.data(), coords.size(),
+		                 indices.data(), indices.size(),
+		                 faceCounts.data(), faceCounts.size(),
+		                 holes.data(), holes.size());
 
-		// store the builder and its corresponding Houdini detail primitives
 		shapeData.mInitialShapeBuilders.emplace_back(std::move(isb));
 		shapeData.mPrimitiveMapping.emplace_back(pIt->second);
 	} // for each primitive partition
