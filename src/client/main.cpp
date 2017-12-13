@@ -5,6 +5,9 @@
 
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"
+
+#undef major // fixes warning regarding duplicate macros in <sys/types.h> and <sys/sysmacros.h>
+#undef minor
 #include "UT/UT_DSOVersion.h"
 
 
