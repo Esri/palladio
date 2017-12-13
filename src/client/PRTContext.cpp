@@ -24,10 +24,17 @@ prt::LogLevel getLogLevel() {
 	return PRT_LOG_LEVEL_DEFAULT;
 }
 
+template<typename C>
+std::vector<const C*> toPtrVec(const std::vector<std::basic_string<C>>& sv) {
+	std::vector<const C*> pv(sv.size());
+	std::transform(sv.begin(), sv.end(), pv.begin(), [](const std::basic_string<C>& s){ return s.c_str(); });
+	return pv;
+}
+
 } // namespace
 
 
-PRTContext::PRTContext()
+PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
         : mLogHandler(new p4h_log::LogHandler(L"p4h")),
           mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
@@ -40,22 +47,44 @@ PRTContext::PRTContext()
     mCores = std::thread::hardware_concurrency();
     mCores = (mCores == 0) ? 1 : mCores;
 
-    boost::filesystem::path sopPath;
-	getLibraryPath(sopPath, reinterpret_cast<const void*>(prt::init));
+	// get the dir containing prt core library
+	const auto rootPath = [](){
+        boost::filesystem::path prtCorePath;
+		getLibraryPath(prtCorePath, reinterpret_cast<const void*>(prt::init));
+		return prtCorePath.parent_path();
+	}();
 
     prt::FlexLicParams flp;
     const std::string libflexnet = getSharedLibraryPrefix() + FILE_FLEXNET_LIB + getSharedLibrarySuffix();
-    const std::string libflexnetPath = (sopPath.parent_path() / libflexnet).string();
+    const std::string libflexnetPath = (rootPath / libflexnet).string();
     flp.mActLibPath = libflexnetPath.c_str();
     flp.mFeature = "CityEngAdvFx";
     flp.mHostName = "";
 
-    const std::wstring libPath = (sopPath.parent_path() / PRT_LIB_SUBDIR).wstring();
-    const wchar_t* extPaths[] = { libPath.c_str() };
-    const size_t extPathsCount = sizeof(extPaths)/sizeof(extPaths[0]);
+	const std::vector<boost::filesystem::path> extDirs = [&rootPath,&addExtDirs](){
+		std::vector<boost::filesystem::path> ed;
+		ed.emplace_back(rootPath / PRT_LIB_SUBDIR);
+		for (auto d: addExtDirs) { // get a copy
+			if (boost::filesystem::is_regular_file(d))
+				d = d.parent_path();
+			if (!d.is_absolute())
+				d = rootPath / d;
+			ed.emplace_back(d);
+		}
+		return ed;
+	}();
+
+	const std::vector<std::wstring> extDirStrs = [&extDirs]() {
+		std::vector<std::wstring> sv;
+		for (const auto& d: extDirs)
+			sv.emplace_back(d.wstring());
+		return sv;
+	}();
+
+	const auto extDirCStrs = toPtrVec(extDirStrs);
 
     prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-    mLicHandle.reset(prt::init(extPaths, extPathsCount, logLevel, &flp, &status));
+    mLicHandle.reset(prt::init(extDirCStrs.data(), extDirCStrs.size(), logLevel, &flp, &status));
     if (status != prt::STATUS_OK) {
         LOG_ERR << "Could not get license: " << prt::getStatusDescription(status);
     }
