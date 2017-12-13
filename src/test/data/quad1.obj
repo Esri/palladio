@@ -1,0 +1,18 @@
+# created with CityEngine 2017.1.3654 1007R (based on Esri Procedural Runtime 1.9.3766, build date: 2017-10-07 16:48)
+# creation date: Wed Dec 13 11:05:19 2017
+
+mtllib quad1.mtl
+
+# mesh 'mesh_CityEngineShapeMaterial' from geometry 'mesh_CityEngineShapeMaterial'
+v 136.575 0.000 22.651
+v 90.131 0.000 22.651
+v 90.131 0.000 67.925
+v 136.575 0.000 67.925
+# 4 vertices
+
+g CityEngineShapeMaterial
+s off
+usemtl CityEngineShapeMaterial
+f 1 2 3 4
+# 1 face
+

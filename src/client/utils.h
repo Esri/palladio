@@ -33,6 +33,7 @@ using AttributeMapBuilderVector = std::vector<AttributeMapBuilderUPtr>;
 using InitialShapeBuilderUPtr   = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
 using InitialShapeBuilderVector = std::vector<InitialShapeBuilderUPtr>;
 using ResolveMapUPtr            = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
+using ResolveMapBuilderUPtr     = std::unique_ptr<prt::ResolveMapBuilder, PRTDestroyer>;
 using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 using EncoderInfoUPtr           = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr          = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
