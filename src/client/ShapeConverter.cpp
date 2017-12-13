@@ -1,5 +1,6 @@
 #include "ShapeConverter.h"
 #include "PrimitivePartition.h"
+#include "LogHandler.h"
 
 #include "GU/GU_Detail.h"
 #include "UT/UT_String.h"

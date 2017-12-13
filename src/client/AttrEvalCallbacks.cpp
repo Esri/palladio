@@ -1,4 +1,5 @@
 #include "AttrEvalCallbacks.h"
+#include "LogHandler.h"
 
 
 namespace {

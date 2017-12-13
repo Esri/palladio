@@ -1,4 +1,5 @@
 #include "ModelConverter.h"
+#include "LogHandler.h"
 #include "utils.h"
 
 #include "GU/GU_HoleInfo.h"
@@ -76,27 +77,10 @@ void setupHandles(GU_Detail* detail, const prt::AttributeMap* m, HandleMaps& hm)
 
 std::mutex mDetailMutex; // guard the houdini detail object
 
-} // namespace
+using UTVector3FVector = std::vector<UT_Vector3F>;
 
-
-ModelConverter::ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt)
-: mDetail(gdp), mAutoInterrupt(autoInterrupt) { }
-
-void ModelConverter::add(
-		const wchar_t* name,
-		const double* vtx, size_t vtxSize,
-		const double* nrm, size_t nrmSize,
-		const double* uvs, size_t uvsSize,
-		int32_t* counts, size_t countsSize,
-		int32_t* indices, size_t indicesSize,
-		uint32_t* uvIndices, size_t uvIndicesSize,
-		int32_t* holes, size_t holesSize,
-		const prt::AttributeMap** materials, size_t materialsSize,
-		const uint32_t* faceRanges
-) {
-	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
-
-	std::vector<UT_Vector3F> utPoints;
+UTVector3FVector convertVertices(const double* vtx, size_t vtxSize) {
+	UTVector3FVector utPoints;
 	utPoints.reserve(vtxSize / 3);
 	for (size_t pi = 0; pi < vtxSize; pi += 3) {
 		const auto x = static_cast<fpreal32>(vtx[pi + 0]);
@@ -104,63 +88,147 @@ void ModelConverter::add(
 		const auto z = static_cast<fpreal32>(vtx[pi + 2]);
 		utPoints.emplace_back(x, y, z);
 	}
+	return utPoints;
+}
 
-	GEO_PolyCounts geoPolyCounts;
-	for (size_t ci = 0; ci < countsSize; ci++)
-		geoPolyCounts.append(counts[ci]);
-
-	std::string nname = toOSNarrowFromUTF16(name);
-	GA_PrimitiveGroup* primGroup = dynamic_cast<GA_PrimitiveGroup*>(mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE).newGroup(nname.c_str(), false));
-
-	GA_Detail::OffsetMarker marker(*mDetail);
-	GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts, indices);
-
-	if (nrmSize > 0) {
-		uint32_t vi = 0;
-		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
-		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
-			auto nrmIdx = indices[vi];
-			const auto nx = static_cast<fpreal32>(nrm[nrmIdx*3 + 0]);
-			const auto ny = static_cast<fpreal32>(nrm[nrmIdx*3 + 1]);
-			const auto nz = static_cast<fpreal32>(nrm[nrmIdx*3 + 2]);
-			nrmh.set(it.getOffset(), UT_Vector3F(nx, ny, nz));
-		}
+void setVertexNormals(
+	GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
+	const double* nrm, size_t nrmSize, const uint32_t* indices
+) {
+	uint32_t vi = 0;
+	for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
+		const auto nrmIdx = indices[vi];
+		const auto nrmPos = nrmIdx*3;
+		assert(nrmPos + 2 < nrmSize);
+		const auto nx = static_cast<fpreal32>(nrm[nrmPos + 0]);
+		const auto ny = static_cast<fpreal32>(nrm[nrmPos + 1]);
+		const auto nz = static_cast<fpreal32>(nrm[nrmPos + 2]);
+		handle.set(it.getOffset(), UT_Vector3F(nx, ny, nz));
 	}
+}
 
-	if (uvsSize > 0) {
-		GA_RWHandleV3 txth(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
-		uint32_t vi = 0;
-		for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
-			const uint32_t uvIdx = uvIndices[vi];
-			if (uvIdx != UV_IDX_NO_VALUE) {
-				const auto u = static_cast<fpreal32>(uvs[uvIdx*2 + 0]);
-				const auto v = static_cast<fpreal32>(uvs[uvIdx*2 + 1]);
-				txth.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
+constexpr auto UV_IDX_NO_VALUE = uint32_t(-1);
+
+} // namespace
+
+
+namespace ModelConversion {
+
+void getUVSet(std::vector<uint32_t>& uvIndicesPerSet,
+              const uint32_t* counts, size_t countsSize,
+              const uint32_t* uvCounts, size_t uvCountsSize,
+              uint32_t uvSet, uint32_t uvSets,
+              const uint32_t* uvIndices, size_t uvIndicesSize)
+{
+	assert(uvSet < uvSets);
+
+	uint32_t uvIdxBase = 0;
+	for (size_t c = 0; c < countsSize; c++) {
+		const uint32_t vtxCnt = counts[c];
+
+		assert(uvSets * c + uvSet < uvCountsSize);
+		const uint32_t uvCnt = uvCounts[uvSets * c + uvSet]; // 0 or vtxCnt
+		assert(uvCnt == 0 || uvCnt == vtxCnt);
+		if (uvCnt == vtxCnt) {
+
+			// skip to desired uv set index range
+			uint32_t uvIdxOff = 0;
+			for (size_t uvi = 0; uvi < uvSet; uvi++)
+				uvIdxOff += uvCounts[c*uvSets + uvi];
+
+			const uint32_t uvIdxPos = uvIdxBase + uvIdxOff;
+			for (size_t vi = 0; vi < uvCnt; vi++) {
+				assert(uvIdxPos + vi < uvIndicesSize);
+				const uint32_t uvIdx = uvIndices[uvIdxPos + vi];
+				uvIndicesPerSet.push_back(uvIdx);
 			}
-		}
-		// TODO: multiple UV sets
+		} else
+			uvIndicesPerSet.insert(uvIndicesPerSet.end(), vtxCnt, UV_IDX_NO_VALUE);
+
+		// skip to next face
+		for (size_t uvSet = 0; uvSet < uvSets; uvSet++)
+			uvIdxBase += uvCounts[c*uvSets + uvSet];
 	}
+}
 
-#if 0 // keep disabled until hole support for initial shapes is completed
-	static const int32_t HOLE_DELIM = std::numeric_limits<int32_t>::max();
-	std::vector<int32_t> holeFaceIndices;
-	int32_t faceIdx = 0;
-	for (size_t hi = 0; hi < mHoles.size(); hi++) {
-		if (mHoles[hi] == HOLE_DELIM) {
-			GEO_Primitive* holeOwner = mDetail->getGEOPrimitiveByIndex(faceIdx);
-			for (int32_t hfi: holeFaceIndices) {
-				GEO_Primitive* holePrim = mDetail->getGEOPrimitiveByIndex(hfi);
-				GU_HoleInfo holeInfo(holePrim);
-				holeInfo.setPromotedFace(static_cast<GEO_Face*>(holeOwner));
-				holeInfo.setReversed();
-			}
-			holeFaceIndices.clear();
-			faceIdx++;
+// TODO: write tests for below
+void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
+            const uint32_t* counts, size_t countsSize,
+            const uint32_t* uvCounts, size_t uvCountsSize,
+            uint32_t uvSet, uint32_t uvSets,
+            const uint32_t* uvIndices, size_t uvIndicesSize,
+            const double* uvs, size_t uvsSize)
+{
+	std::vector<uint32_t> uvIndicesPerSet;
+	getUVSet(uvIndicesPerSet, counts, countsSize, uvCounts, uvCountsSize, uvSet, uvSets, uvIndices, uvIndicesSize);
+
+	uint32_t vi = 0;
+	for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, vi++) {
+		const uint32_t uvIdx = uvIndicesPerSet[vi];
+		if (uvIdx == UV_IDX_NO_VALUE)
 			continue;
-		}
-		holeFaceIndices.push_back(mHoles[hi]);
+		assert(uvIdx * 2 + 1 < uvsSize);
+		const auto du = uvs[uvIdx * 2 + 0];
+		const auto dv = uvs[uvIdx * 2 + 1];
+		const auto u = static_cast<fpreal32>(du);
+		const auto v = static_cast<fpreal32>(dv);
+		handle.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
 	}
-#endif
+}
+
+} // namespace ModelConversion
+
+
+ModelConverter::ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt)
+: mDetail(gdp), mAutoInterrupt(autoInterrupt) { }
+
+void ModelConverter::add(
+			const wchar_t* name,
+			const double* vtx, size_t vtxSize,
+			const double* nrm, size_t nrmSize,
+			const double* uvs, size_t uvsSize,
+			const uint32_t* counts, size_t countsSize,
+			const uint32_t* indices, size_t indicesSize,
+			const uint32_t* uvCounts, size_t uvCountsSize,
+			const uint32_t* uvIndices, size_t uvIndicesSize,
+			uint32_t uvSets,
+			const prt::AttributeMap** materials, size_t materialsSize,
+			const uint32_t* faceRanges
+) {
+	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
+
+	// -- new prim group
+	const std::string nname = toOSNarrowFromUTF16(name);
+	auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
+	GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nname.c_str(), false));
+
+	// -- create polygons
+	const GA_Detail::OffsetMarker marker(*mDetail);
+	const UTVector3FVector utPoints = convertVertices(vtx, vtxSize);
+	const GEO_PolyCounts geoPolyCounts = [&counts, &countsSize](){
+		GEO_PolyCounts pc;
+		for (size_t ci = 0; ci < countsSize; ci++) pc.append(counts[ci]);
+		return pc;
+	}();
+	const GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts, reinterpret_cast<const int*>(indices));
+
+	// -- vertex normals
+	if (nrmSize > 0) {
+		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
+		setVertexNormals(nrmh, marker, nrm, nrmSize, indices);
+	}
+
+	// -- texture coordinates
+	for (size_t uvSet = 0; uvSet < uvSets; uvSet++) {
+		GA_RWHandleV3 uvh;
+		if (uvSet == 0)
+		    uvh.bind(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32)); // adds "uv" vertex attribute
+		else {
+			const std::string n = "uv" + std::to_string(uvSet);
+			uvh.bind(mDetail->addTuple(GA_STORE_REAL32, GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, n.c_str(), 3));
+		}
+		ModelConversion::setUVs(uvh, marker, counts, countsSize, uvCounts, uvCountsSize, uvSet, uvSets, uvIndices, uvIndicesSize, uvs, uvsSize);
+	}
 
 	primGroup->addRange(marker.primitiveRange());
 

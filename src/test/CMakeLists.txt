@@ -13,7 +13,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         prt4houdini
+		prt4houdini_codec
         ${PRT_LINK_LIBRARIES}
         CONAN_PKG::Catch)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+		-DHOUDINI_CODEC_PATH="$<TARGET_FILE:prt4houdini_codec>")
 
 p4h_add_dependency_houdini(${PROJECT_NAME})

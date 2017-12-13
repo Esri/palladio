@@ -40,6 +40,7 @@ const prtx::EncodePreparator::PreparationFlags PREP_FLAGS = prtx::EncodePreparat
 	.instancing(false)
 	.mergeByMaterial(true)
 	.triangulate(false)
+	.processHoles(prtx::HoleProcessor::TRIANGULATE_FACES_WITH_HOLES)
 	.mergeVertices(true)
 	.cleanupVertexNormals(true)
 	.cleanupUVs(true)
@@ -182,6 +183,74 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	convertGeometry(initialShape, geometries, materials, reports, oh);
 }
 
+void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& geometries) {
+	// PASS 1: scan
+	for (const auto& geo: geometries) {
+		const prtx::MeshPtrVector& meshes = geo->getMeshes();
+		for (const auto& mesh: meshes) {
+			// TODO: use opportunity to count/reserve space in containers
+
+			// scan for largest uv set count
+			sg.uvSets = std::max(sg.uvSets, mesh->getUVSetsCount());
+		}
+	}
+
+	// PASS 2: copy
+	uint32_t vertexIndexBase = 0;
+	uint32_t uvIndexBase = 0;
+	for (const auto& geo: geometries) {
+		const prtx::MeshPtrVector& meshes = geo->getMeshes();
+		for (const auto& mesh: meshes) {
+			const prtx::DoubleVector& verts = mesh->getVertexCoords();
+			sg.coords.insert(sg.coords.end(), verts.begin(), verts.end());
+
+			const prtx::DoubleVector& norms = mesh->getVertexNormalsCoords();
+			sg.normals.insert(sg.normals.end(), norms.begin(), norms.end());
+
+			const uint32_t numUVSets = mesh->getUVSetsCount();
+
+			std::vector<uint32_t> uvSetIndexBases(sg.uvSets, 0u); // first value is always 0
+			const uint32_t uvsBefore = sg.uvCoords.size();
+			for (size_t uvSet = 0; uvSet < numUVSets; uvSet++) {
+
+				if (uvSet > 0)
+					uvSetIndexBases[uvSet] = uvSetIndexBases[uvSet-1] + mesh->getUVCoords(uvSet-1).size() / 2u;
+
+				const prtx::DoubleVector& uvs = mesh->getUVCoords(uvSet);
+				if (!uvs.empty())
+					sg.uvCoords.insert(sg.uvCoords.end(), uvs.begin(), uvs.end());
+			}
+			const uint32_t uvsDelta = sg.uvCoords.size() - uvsBefore;
+
+			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
+
+			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
+				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
+				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
+
+				sg.counts.push_back(vtxCnt);
+				sg.indices.reserve(sg.indices.size() + vtxCnt);
+				for (uint32_t vi = 0; vi < vtxCnt; vi++)
+					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt-vi-1]); // reverse winding
+
+				for (size_t uvSet = 0; uvSet < sg.uvSets; uvSet++) {
+					const uint32_t uvCount = (uvSet < numUVSets) ? mesh->getFaceUVCount(fi, uvSet) : 0u;
+					if (uvCount == vtxCnt) {
+						const uint32_t* uvIdx = mesh->getFaceUVIndices(fi, uvSet);
+						for (uint32_t vi = 0; vi < uvCount; ++vi)
+							sg.uvIndices.push_back(uvIndexBase + uvSetIndexBases[uvSet] + uvIdx[uvCount - vi - 1u]); // reverse winding
+					}
+					sg.uvCounts.push_back(uvCount);
+				}
+			}
+
+			vertexIndexBase += verts.size() / 3u;
+			uvIndexBase += uvsDelta / 2u; // TODO: directly add to per uv set index bases
+		}
+	}
+
+}
+
 void HoudiniEncoder::convertGeometry(
 	const prtx::InitialShape& initialShape,
 	const prtx::GeometryPtrVector& geometries,
@@ -191,77 +260,11 @@ void HoudiniEncoder::convertGeometry(
 ) {
 	const bool emitMaterials = getOptions()->getBool(EO_EMIT_MATERIALS);
 
-	std::vector<double> coords, normals, uvCoords;
-	std::vector<int32_t> faceCounts;
-	std::vector<int32_t> vertexIndices;
-	std::vector<int32_t> holes;
-	std::vector<uint32_t> uvIndices;
-	int32_t base = 0;
-	int32_t uvBase  = 0;
+	SerializedGeometry sg;
+	serializeGeometry(sg, geometries);
 
-	for (const auto& geo: geometries) {
-		const prtx::MeshPtrVector& meshes = geo->getMeshes();
-		for (const auto& mesh: meshes) {
-			const prtx::DoubleVector& verts  = mesh->getVertexCoords();
-			const prtx::DoubleVector& norms  = mesh->getVertexNormalsCoords();
-			bool                      hasUVs = (mesh->getUVSetsCount() > 0);
-			const prtx::DoubleVector& uvs    = hasUVs ? mesh->getUVCoords(0) : prtx::DoubleVector();
-
-			faceCounts.reserve(faceCounts.size() + mesh->getFaceCount());
-
-			coords.insert(coords.end(), verts.begin(), verts.end());
-			normals.insert(normals.end(), norms.begin(), norms.end());
-			if (!uvs.empty())
-				uvCoords.insert(uvCoords.end(), uvs.begin(), uvs.end());
-
-			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
-				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
-				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
-
-				faceCounts.push_back(vtxCnt);
-				vertexIndices.reserve(vertexIndices.size() + vtxCnt);
-				for (uint32_t vi = 0; vi < vtxCnt; vi++)
-					vertexIndices.push_back(base + vtxIdx[vtxCnt-vi-1]); // reverse winding
-
-#if 0
-				// collect hole-face indices for each face delimited by max int32_t
-				static const int32_t HOLE_DELIM = std::numeric_limits<int32_t>::max();
-				uint32_t faceHoleCount = mesh->getFaceHolesCount(fi);
-				const uint32_t* faceHoleIndices = mesh->getFaceHolesIndices(fi);
-				if (faceHoleCount > 0)
-					holes.insert(holes.end(), faceHoleIndices, faceHoleIndices + faceHoleCount);
-				holes.push_back(HOLE_DELIM);
-#endif
-				const uint32_t uv0Count = hasUVs ? mesh->getFaceUVCount(fi, 0) : 0u;
-				if (uv0Count > 0) {
-						if (DBG) log_debug("    faceuvcount(%d, 0) = %d") % fi % mesh->getFaceUVCount(fi, 0);
-						if (DBG) log_debug("    getFaceVertexCount(%d) = %d") % fi % mesh->getFaceVertexCount(fi);
-						assert(uv0Count == vtxCnt);
-
-						const uint32_t* uv0Idx = mesh->getFaceUVIndices(fi, 0);
-						for (uint32_t vi = 0; vi < vtxCnt; ++vi) {
-							if (DBG) log_debug("       vi = %d, uvBase = %d, uv0Idx[vi] = %d") % vi % uvBase % uv0Idx[vi];
-							uvIndices.push_back(uvBase + uv0Idx[vtxCnt-vi-1]);
-						}
-				}
-				else {
-					for (uint32_t vi = 0; vi < vtxCnt; ++vi) {
-						uvIndices.push_back(uint32_t(-1)); // no uv
-					}
-				}
-
-				// TODO: more uv sets
-			}
-
-			base   += (int32_t)verts.size() / 3u;
-			uvBase += uvs.size() / 2u;
-
-			if (DBG) log_debug("copied face attributes");
-		}
-	}
-
-	if (DBG) log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
-	log_debug("encoder #materials = %s") % mats.size();
+	// log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
+	if (DBG) log_debug("encoder #materials = %s") % mats.size();
 
 	uint32_t faceCount = 0;
 	std::vector<uint32_t> faceRanges;
@@ -292,16 +295,16 @@ void HoudiniEncoder::convertGeometry(
 	faceRanges.push_back(faceCount); // close last range
 
 	hc->add(initialShape.getName(),
-			coords.data(), coords.size(),
-			normals.data(), normals.size(),
-			uvCoords.data(), uvCoords.size(),
-			faceCounts.data(), faceCounts.size(),
-			vertexIndices.data(), vertexIndices.size(),
-			uvIndices.data(), uvIndices.size(),
-			holes.data(), holes.size(),
+			sg.coords.data(), sg.coords.size(),
+			sg.normals.data(), sg.normals.size(),
+			sg.uvCoords.data(), sg.uvCoords.size(),
+			sg.counts.data(), sg.counts.size(),
+			sg.indices.data(), sg.indices.size(),
+			sg.uvCounts.data(), sg.uvCounts.size(),
+			sg.uvIndices.data(), sg.uvIndices.size(),
+	        sg.uvSets,
 			matAttrMaps.data(), matAttrMaps.size(),
-			faceRanges.data()
-	);
+			faceRanges.data());
 
 	for (const auto& m: matAttrMaps)
 		m->destroy();

@@ -1,4 +1,5 @@
 #include "ShapeGenerator.h"
+#include "LogHandler.h"
 
 #include "GU/GU_Detail.h"
 #include "GA/GA_Primitive.h"

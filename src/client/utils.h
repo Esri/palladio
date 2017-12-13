@@ -1,9 +1,11 @@
 #pragma once
 
-#include "LogHandler.h"
-
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
+#include "prt/InitialShape.h"
+#include "prt/RuleFileInfo.h"
+#include "prt/EncoderInfo.h"
+#include "prt/OcclusionSet.h"
 
 #include "GA/GA_Primitive.h"
 
@@ -14,10 +16,7 @@ namespace boost { namespace filesystem { class path; } }
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
-		if (p)
-			p->destroy();
-		else
-			LOG_WRN << "trying to destroy null prt object!";
+		if (p) p->destroy();
 	}
 };
 
@@ -34,6 +33,7 @@ using AttributeMapBuilderVector = std::vector<AttributeMapBuilderUPtr>;
 using InitialShapeBuilderUPtr   = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
 using InitialShapeBuilderVector = std::vector<InitialShapeBuilderUPtr>;
 using ResolveMapUPtr            = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
+using ResolveMapBuilderUPtr     = std::unique_ptr<prt::ResolveMapBuilder, PRTDestroyer>;
 using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 using EncoderInfoUPtr           = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr          = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
@@ -42,7 +42,7 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
 std::string objectToXML(prt::Object const* obj);
 
-void getPathToCurrentModule(boost::filesystem::path& path);
+void getLibraryPath(boost::filesystem::path& path, const void* func);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
 

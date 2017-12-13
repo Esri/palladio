@@ -14,21 +14,21 @@ const int VERSION_MINOR = PRT_VERSION_MINOR;
 extern "C" {
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API void registerExtensionFactories(prtx::ExtensionManager* manager) {
+CODEC_EXPORTS_API void registerExtensionFactories(prtx::ExtensionManager* manager) {
 	manager->addFactory(HoudiniEncoderFactory::createInstance());
 }
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API void unregisterExtensionFactories(prtx::ExtensionManager* /*manager*/) {
+CODEC_EXPORTS_API void unregisterExtensionFactories(prtx::ExtensionManager* /*manager*/) {
 }
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API int getVersionMajor() {
+CODEC_EXPORTS_API int getVersionMajor() {
 	return VERSION_MAJOR;
 }
 
 
-PRT4HOUDINI_CODEC_EXPORTS_API int getVersionMinor() {
+CODEC_EXPORTS_API int getVersionMinor() {
 	return VERSION_MINOR;
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../houdini.h"
+
 #include "prtx/ResolveMap.h"
 #include "prtx/Encoder.h"
 #include "prtx/EncoderFactory.h"
@@ -17,6 +19,22 @@
 
 class HoudiniCallbacks;
 
+struct SerializedGeometry {
+	prtx::DoubleVector coords;
+	prtx::DoubleVector normals; // uses same indexing as coords
+
+	prtx::IndexVector  counts;
+	prtx::IndexVector  indices;
+
+	uint32_t           uvSets = 0;
+	prtx::DoubleVector uvCoords;
+	prtx::IndexVector  uvCounts; // face 0: uv idx cnt set 0 | face 0: uv idx cnt set 1 | ... | face 0: uv idx cnt set uvSets-1 | face 1: uv idx cnt set 0 | ... | face n-1: ...
+	prtx::IndexVector  uvIndices;
+};
+
+// made visible for tests
+// TODO: put into namespace or such
+CODEC_EXPORTS_API void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& geometries);
 
 class HoudiniEncoder : public prtx::GeometryEncoder {
 public:

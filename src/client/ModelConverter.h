@@ -1,6 +1,5 @@
 #pragma once
 
-#include "LogHandler.h"
 #include "utils.h"
 #include "../codec/encoder/HoudiniCallbacks.h"
 
@@ -27,6 +26,28 @@
 #include <mutex>
 
 
+namespace ModelConversion {
+
+void getUVSet(
+	std::vector<uint32_t>& uvIndicesPerSet,
+	const uint32_t* counts, size_t countsSize,
+	const uint32_t* uvCounts, size_t uvCountsSize,
+	uint32_t uvSet, uint32_t uvSets,
+	const uint32_t* uvIndices, size_t uvIndicesSize
+);
+
+void setUVs(
+	GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
+	const uint32_t* counts, size_t countsSize,
+	const uint32_t* uvCounts, size_t uvCountsSize,
+	uint32_t uvSet, uint32_t uvSets,
+	const uint32_t* uvIndices, size_t uvIndicesSize,
+	const double* uvs, size_t uvsSize
+);
+
+} // namespace ModelConversion
+
+
 class ModelConverter : public HoudiniCallbacks {
 public:
 	explicit ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt = nullptr);
@@ -37,10 +58,11 @@ protected:
 			const double* vtx, size_t vtxSize,
 			const double* nrm, size_t nrmSize,
 			const double* uvs, size_t uvsSize,
-			int32_t* counts, size_t countsSize,
-			int32_t* indices, size_t indicesSize,
-			uint32_t* uvIndices, size_t uvIndicesSize,
-			int32_t* holes, size_t holesSize,
+			const uint32_t* counts, size_t countsSize,
+			const uint32_t* indices, size_t indicesSize,
+			const uint32_t* uvCounts, size_t uvCountsSize,
+			const uint32_t* uvIndices, size_t uvIndicesSize,
+			uint32_t uvSets,
 			const prt::AttributeMap** materials, size_t materialsSize,
 			const uint32_t* faceRanges
 	) override;
