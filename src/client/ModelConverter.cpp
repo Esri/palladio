@@ -317,7 +317,7 @@ void ModelConverter::add(
 		HandleMaps hm;
 		for (size_t fri = 0; fri < faceRangesSize-1; fri++) {
 			const GA_Offset rangeStart = primStartOffset + faceRanges[fri];
-			const GA_Offset rangePastEnd = primStartOffset + faceRanges[fri + 1]; // faceRanges contains faceRangeCount+1 values
+			const GA_Offset rangePastEnd = primStartOffset + faceRanges[fri + 1];
 
 			if (materials != nullptr) {
 				const prt::AttributeMap* m = materials[fri];
