@@ -250,7 +250,7 @@ UT_String toPrimAttr(const std::string& name) {
 	std::string s = name;
 	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
 		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
-	return UT_String(s);
+	return UT_String(UT_String::ALWAYS_DEEP, s);
 }
 
 std::string toRuleAttr(const UT_StringHolder& name) {
