@@ -49,28 +49,28 @@ bool evaluateDefaultRuleAttributes(
 	shapeData.mInitialShapes.reserve(shapeData.mInitialShapeBuilders.size());
 	for (auto& isb: shapeData.mInitialShapeBuilders) {
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx++);
+		if (DBG) LOG_DBG << "evaluating attrs for shape: " << shapeName;
 
 		// persist rule attributes even if empty (need to live until prt::generate is done)
-		// TODO: switch to shared ptrs and avoid all these copies
-		shapeData.mRuleAttributeBuilders.emplace_back(prt::AttributeMapBuilder::create());
-		shapeData.mRuleAttributes.emplace_back(shapeData.mRuleAttributeBuilders.back()->createAttributeMap());
-
+		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
+		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 		isb->setAttributes(
 				shapeConverter->mRuleFile.c_str(),
 				shapeConverter->mStartRule.c_str(),
 				shapeConverter->mSeed,
 				shapeName.c_str(),
-				shapeData.mRuleAttributes.back().get(),
+				ruleAttr.get(),
 				resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
-		if (status != prt::STATUS_OK) {
-			LOG_WRN << "failed to create initial shape: " << prt::getStatusDescription(status);
-			shapeData.mInitialShapes.emplace_back(nullptr);
+		if (status == prt::STATUS_OK && initialShape != nullptr) {
+			shapeData.mInitialShapes.emplace_back(initialShape);
+			shapeData.mRuleAttributeBuilders.emplace_back(std::move(amb));
+			shapeData.mRuleAttributes.emplace_back(std::move(ruleAttr));
 		}
 		else
-			shapeData.mInitialShapes.emplace_back(initialShape);
+			LOG_WRN << "failed to create initial shape " << shapeName << ": " << prt::getStatusDescription(status);
 	}
 
 	assert(shapeData.isValid());
@@ -78,8 +78,9 @@ bool evaluateDefaultRuleAttributes(
 	// run generate to evaluate default rule attributes
 	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
 	AttrEvalCallbacks aec(shapeData.mRuleAttributeBuilders, ruleFileInfo);
-	// TODO: should we run this in parallel batches as well? much to gain?
-	const prt::Status stat = prt::generate(shapeData.mInitialShapes.data(), shapeData.mInitialShapes.size(), nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
+	const prt::Status stat = prt::generate(shapeData.mInitialShapes.data(), shapeData.mInitialShapes.size(),
+	                                       nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(),
+	                                       nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}

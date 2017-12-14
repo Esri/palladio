@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr bool ENABLE_OCCLUSION = true;
+constexpr bool           ENABLE_OCCLUSION     = true;
 
 constexpr const wchar_t* FILE_CGA_ERROR       = L"CGAErrors.txt";
 constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
@@ -83,11 +83,16 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 		end = std::chrono::system_clock::now();
 		LOG_INF << getName() << ": creating initial shapes from detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
 
+		const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
+		if (is.empty()) {
+			LOG_ERR << getName() << ": could not extract any initial shapes from detail!";
+			return UT_ERROR_ABORT;
+		}
+
 		if (!progress.wasInterrupted()) {
 			gdp->clearAndDestroy();
 			{
 				// establish threads
-				const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
 				const size_t nThreads = std::min<size_t>(mPRTCtx->mCores, is.size());
 				const size_t isRangeSize = std::ceil(is.size() / nThreads);
 

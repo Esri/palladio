@@ -129,7 +129,7 @@ void convertAttributabletoAttributeMap(
 			// TODO: convert texture members...
 
 			default:
-				log_wdebug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
+				if (DBG) log_wdebug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
 				break;
 		}
 	}
