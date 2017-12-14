@@ -1,6 +1,7 @@
 #include "../client/PRTContext.h"
 #include "../client/utils.h"
 #include "../client/ModelConverter.h"
+#include "../client/AttributeConversion.h"
 #include "../codec/encoder/HoudiniEncoder.h"
 
 #include "prt/AttributeMap.h"
@@ -36,8 +37,6 @@ int main( int argc, char* argv[] ) {
 }
 
 
-// -- client test cases
-
 TEST_CASE("create file URI from path", "[utils]" ) {
     CHECK(toFileURI(boost::filesystem::path("/tmp/foo.txt")) == L"file:/tmp/foo.txt");
 }
@@ -54,7 +53,72 @@ TEST_CASE("get XML representation of a PRT object", "[utils]") {
     CHECK(xml == "<attributable>\n\t<attribute key=\"foo\" value=\"bar\" type=\"str\"/>\n</attributable>");
 }
 
-TEST_CASE("deserialize uv set") {
+TEST_CASE("extract attribute names", "[AttributeConversion]") {
+	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
+	amb->setFloat(L"foo", 1.23);
+	amb->setFloat(L"bar.r", 1.0);
+	amb->setFloat(L"bar.g", 0.5);
+	amb->setFloat(L"bar.b", 0.3);
+	amb->setString(L"baz.r", L"a");
+	amb->setString(L"baz.g", L"b");
+	amb->setString(L"baz.b", L"c");
+	amb->setString(L"same.ext", L"foo");
+	amb->setFloat(L"same", 3.0);
+	AttributeMapUPtr am(amb->createAttributeMap());
+
+	AttributeConversion::HandleMap hm;
+	AttributeConversion::extractAttributeNames(hm, am.get());
+	REQUIRE(hm.size() == 7);
+
+	SECTION("simple") {
+		const auto& ph = hm.at("foo");
+		const std::vector<std::wstring> expKeys = { L"foo" };
+
+		CHECK(ph.keys == expKeys);
+		CHECK(ph.type == prt::AttributeMap::PT_FLOAT);
+		CHECK(ph.handleType.which() == 0); // houdini handle type must not be changed
+	}
+
+	SECTION("group rgb floats") {
+		const auto& ph = hm.at("bar");
+		const std::vector<std::wstring> expKeys = { L"bar.r", L"bar.g", L"bar.b" };
+
+		CHECK(ph.keys == expKeys);
+		CHECK(ph.type == prt::AttributeMap::PT_FLOAT);
+		CHECK(ph.handleType.which() == 0); // houdini handle type must not be changed
+	}
+
+	SECTION("don't group strings") {
+		REQUIRE(hm.count("baz") == 0);
+
+		const auto& ph = hm.at("baz_dot_r");
+		const std::vector<std::wstring> expKeys = { L"baz.r" };
+
+		CHECK(ph.keys == expKeys);
+		CHECK(ph.type == prt::AttributeMap::PT_STRING);
+		CHECK(ph.handleType.which() == 0); // houdini handle type must not be changed
+	}
+
+	SECTION("same primary key") {
+		const auto& ph = hm.at("same");
+		const std::vector<std::wstring> expKeys = { L"same" };
+
+		CHECK(ph.keys == expKeys);
+		CHECK(ph.type == prt::AttributeMap::PT_FLOAT);
+		CHECK(ph.handleType.which() == 0); // houdini handle type must not be changed
+	}
+
+	SECTION("same.ext primary key") {
+		const auto& ph = hm.at("same_dot_ext");
+		const std::vector<std::wstring> expKeys = { L"same.ext" };
+
+		CHECK(ph.keys == expKeys);
+		CHECK(ph.type == prt::AttributeMap::PT_STRING);
+		CHECK(ph.handleType.which() == 0); // houdini handle type must not be changed
+	}
+}
+
+TEST_CASE("deserialize uv set", "[ModelConversion]") {
 	const prtx::IndexVector faceCnt  = { 4 };
 	const prtx::IndexVector uvCounts = { 4, 4 };
 	const prtx::IndexVector uvIdx    = { 3, 2, 1, 0,  4, 5, 6, 7 };

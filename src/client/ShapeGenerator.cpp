@@ -1,8 +1,10 @@
 #include "ShapeGenerator.h"
+#include "AttributeConversion.h"
 #include "LogHandler.h"
+#include "MultiWatch.h"
 
-#include "GU/GU_Detail.h"
 #include "GA/GA_Primitive.h"
+#include "GU/GU_Detail.h"
 
 
 namespace {
@@ -58,7 +60,7 @@ void ShapeGenerator::get(
 	ShapeData& shapeData,
 	const PRTContextUPtr& prtCtx
 ) {
-	if (DBG) LOG_DBG << "-- createInitialShapes";
+	WA("all");
 
 	// extract initial shape geometry
 	ShapeConverter::get(detail, shapeData, prtCtx);

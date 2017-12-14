@@ -91,9 +91,11 @@ using _LOG_DBG = LT<prt::LOG_DEBUG>;
 using _LOG_INF = LT<prt::LOG_INFO>;
 using _LOG_WRN = LT<prt::LOG_WARNING>;
 using _LOG_ERR = LT<prt::LOG_ERROR>;
+using _LOG_FTL = LT<prt::LOG_FATAL>;
 
 // convenience shortcuts in global namespace
 #define LOG_DBG _LOG_DBG()
 #define LOG_INF _LOG_INF()
 #define LOG_WRN _LOG_WRN()
 #define LOG_ERR _LOG_ERR()
+#define LOG_FTL _LOG_FTL()

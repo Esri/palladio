@@ -23,7 +23,6 @@
 
 #include <string>
 #include <vector>
-#include <mutex>
 
 
 namespace ModelConversion {
@@ -46,7 +45,6 @@ void setUVs(
 );
 
 } // namespace ModelConversion
-
 
 class ModelConverter : public HoudiniCallbacks {
 public:
@@ -89,3 +87,5 @@ private:
 	GU_Detail* mDetail;
 	UT_AutoInterrupt* mAutoInterrupt;
 };
+
+using ModelConverterUPtr = std::unique_ptr<ModelConverter>;

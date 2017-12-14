@@ -14,12 +14,14 @@ add_library(${PROJECT_NAME} SHARED
 		utils.cpp
 		ShapeConverter.cpp
 		ShapeGenerator.cpp
-        NodeParameter.cpp
+		NodeParameter.cpp
 		PRTContext.cpp
 		SOPAssign.cpp
 		SOPGenerate.cpp
 		PrimitivePartition.cpp
-		AttrEvalCallbacks.cpp)
+		AttrEvalCallbacks.cpp
+		AttributeConversion.cpp
+		MultiWatch.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${PRT_INCLUDE_PATH}
