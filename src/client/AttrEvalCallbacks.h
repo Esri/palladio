@@ -8,7 +8,7 @@
 class AttrEvalCallbacks: public prt::Callbacks {
 public:
 	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const RuleFileInfoUPtr& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
-	virtual ~AttrEvalCallbacks() = default;
+	~AttrEvalCallbacks() override = default;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
 	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) override;

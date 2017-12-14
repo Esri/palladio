@@ -413,7 +413,7 @@ void add(const wchar_t* name,
          const uint32_t* faceRanges, size_t faceRangesSize,
          const prt::AttributeMap** materials,
          const prt::AttributeMap** reports
-) {
+) override {
 	results.emplace_back(CallbackResult());
 	auto& cr = results.back();
 

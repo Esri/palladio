@@ -19,7 +19,7 @@ using LogHandlerPtr = std::unique_ptr<LogHandler>;
  * manage PRT "lifetime" (actually, the license lifetime)
  */
 struct PRTContext final {
-	PRTContext(const std::vector<boost::filesystem::path>& addExtDirs = {});
+	explicit PRTContext(const std::vector<boost::filesystem::path>& addExtDirs = {});
 	PRTContext(const PRTContext&) = delete;
 	PRTContext(PRTContext&&) = delete;
 	PRTContext& operator=(PRTContext&) = delete;

@@ -320,8 +320,8 @@ void getUVSet(std::vector<uint32_t>& uvIndicesPerSet,
 			uvIndicesPerSet.insert(uvIndicesPerSet.end(), vtxCnt, UV_IDX_NO_VALUE);
 
 		// skip to next face
-		for (size_t uvSet = 0; uvSet < uvSets; uvSet++)
-			uvIdxBase += uvCounts[c*uvSets + uvSet];
+		for (size_t u = 0; u < uvSets; u++)
+			uvIdxBase += uvCounts[c*uvSets + u];
 	}
 }
 
