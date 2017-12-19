@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 # versioning follows semver.org, Semantic Versioning 2.0.0
 # i.e. <major>.<minor>.<patch>+b<buildnr>
 set(P4H_VERSION_MAJOR 0)
-set(P4H_VERSION_MINOR 8)
+set(P4H_VERSION_MINOR 9)
 set(P4H_VERSION_PATCH 0)
 if(NOT P4H_VERSION_BUILD)
     set(P4H_VERSION_BUILD DEV)
