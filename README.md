@@ -23,3 +23,9 @@
 
 ### Running
 1. ```LD_LIBRARY_PATH=/opt/hfs16.0.XXX/dsolib happrentice``` (or your houdini flavor)
+
+
+## Environment Variables
+
+- CITYENGINE_LOG_LEVEL: controls global (minimal) log level for all assign and generate nodes. valid values are "debug", "info", "warning", "error", "fatal"
+- CITYENGINE_LICENSE_SERVER: specify how CityEngine license is acquired. an empty string specifies a node-locked license while "<port>@<host>" indicates a network license server, e.g. "27000@my.server.org".
