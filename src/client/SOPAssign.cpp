@@ -4,6 +4,7 @@
 #include "ModelConverter.h"
 #include "NodeParameter.h"
 #include "LogHandler.h"
+#include "MultiWatch.h"
 
 #include "prt/API.h"
 
@@ -29,6 +30,8 @@ bool evaluateDefaultRuleAttributes(
 		const ShapeConverterUPtr& shapeConverter,
 		const PRTContextUPtr& prtCtx
 ) {
+	WA("all");
+
 	assert(shapeData.isValid());
 
 	// setup encoder options for attribute evaluation encoder
@@ -97,7 +100,8 @@ SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* na
 : SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) { }
 
 OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
-	std::chrono::time_point<std::chrono::system_clock> start, end;
+	WA_NEW_LAP
+	WA("all");
 
 	if (!updateSharedShapeDataFromParams(context))
 		return UT_ERROR_ABORT;
@@ -112,26 +116,13 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		UT_AutoInterrupt progress("Assigning CityEngine rule attributes...");
 
 		ShapeData shapeData;
-
-		start = std::chrono::system_clock::now();
 		mShapeConverter->get(gdp, shapeData, mPRTCtx);
-		end = std::chrono::system_clock::now();
-		LOG_INF << getName() << ": extracting shapes from detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
-
-		start = std::chrono::system_clock::now();
 		const bool canContinue = evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
-		end = std::chrono::system_clock::now();
-		LOG_INF << getName() << ": evaluating default rule attributes on shapes: " << std::chrono::duration<double>(end - start).count() << "s\n";
-
 		if (!canContinue) {
 			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
 			return UT_ERROR_ABORT;
 		}
-
-		start = std::chrono::system_clock::now();
 		mShapeConverter->put(gdp, shapeData);
-		end = std::chrono::system_clock::now();
-		LOG_INF << getName() << ": writing shape attributes back to detail: " << std::chrono::duration<double>(end - start).count() << "s\n";
 	}
 
 	unlockInputs();
@@ -140,6 +131,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 }
 
 bool SOPAssign::updateSharedShapeDataFromParams(OP_Context &context) {
+	WA("all");
+
 	const fpreal now = context.getTime();
 
 	// -- shape classifier attr name

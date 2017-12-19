@@ -71,10 +71,3 @@ public:
 
 using ShapeConverterUPtr = std::unique_ptr<ShapeConverter>;
 
-
-namespace NameConversion {
-
-UT_String toPrimAttr(const std::string& name);
-std::string toRuleAttr(const UT_StringHolder& name);
-
-} // namespace NameConversion

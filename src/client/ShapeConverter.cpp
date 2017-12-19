@@ -1,13 +1,14 @@
 #include "ShapeConverter.h"
+#include "AttributeConversion.h"
 #include "PrimitivePartition.h"
 #include "LogHandler.h"
+#include "MultiWatch.h"
 
 #include "GU/GU_Detail.h"
 #include "GEO/GEO_PrimPolySoup.h"
 #include "UT/UT_String.h"
 
 #include "boost/variant.hpp"
-#include "boost/algorithm/string.hpp"
 
 
 namespace {
@@ -24,6 +25,8 @@ const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
 
 void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
+	WA("all");
+
 	assert(shapeData.isValid());
 
 	// -- partition primitives into initial shapes by shape classifier values
@@ -79,6 +82,8 @@ void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PR
 }
 
 void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
+	WA("all");
+
     // TODO: factor out
 	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
@@ -231,33 +236,3 @@ RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMa
 std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
 	return mStyle + L'$' + mStartRule;
 }
-
-namespace {
-
-constexpr const char* ATTR_NAME_TO_HOUDINI[][2] = {
-	{ ".", "_dot_" },
-	{ "$", "_dollar_" }
-};
-constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(ATTR_NAME_TO_HOUDINI[0]);
-
-} // namespace
-
-namespace NameConversion {
-
-// TODO: look into GA_AttributeOptions to transport original prt attribute names between assign and generate node
-
-UT_String toPrimAttr(const std::string& name) {
-	std::string s = name;
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
-	return UT_String(s);
-}
-
-std::string toRuleAttr(const UT_StringHolder& name) {
-	std::string s = name.toStdString();
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
-	return s;
-}
-
-} // namespace NameConversion
