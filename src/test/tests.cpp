@@ -18,6 +18,7 @@
 namespace {
 
 PRTContextUPtr prtCtx;
+const boost::filesystem::path testDataPath = TEST_DATA_PATH;
 
 } // namespace
 
@@ -544,11 +545,9 @@ prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, cons
 
 
 TEST_CASE("generate two cubes with two uv sets") {
-	const boost::filesystem::path testData = "/home/shaegler/esri/dev/git/houdini-cityengine-plugin/src/test/data"; // TODO
-
 	const std::vector<boost::filesystem::path> initialShapeSources = {
-	testData / "quad0.obj",
-	testData / "quad1.obj"
+	testDataPath / "quad0.obj",
+	testDataPath / "quad1.obj"
 	};
 
 	const std::vector<std::wstring> initialShapeURIs = {
@@ -561,7 +560,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	L"Default$TwoSets"
 	};
 
-	const boost::filesystem::path rpkPath = testData / "uvsets.rpk";
+	const boost::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
 	const ResolveMapUPtr& rpkRM = prtCtx->getResolveMap(rpkPath);
 
 	GenerateData gd;

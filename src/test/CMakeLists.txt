@@ -18,6 +18,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         CONAN_PKG::Catch)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-		-DHOUDINI_CODEC_PATH="$<TARGET_FILE:prt4houdini_codec>")
+		-DHOUDINI_CODEC_PATH="$<TARGET_FILE:prt4houdini_codec>"
+		-DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 p4h_add_dependency_houdini(${PROJECT_NAME})
