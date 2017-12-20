@@ -1,6 +1,5 @@
 #include "ShapeConverter.h"
 #include "AttributeConversion.h"
-#include "PrimitivePartition.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
@@ -13,24 +12,20 @@
 
 namespace {
 
-constexpr bool  DBG                 = false;
-
-const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
-const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
-const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
-const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
-const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
+constexpr bool DBG = false;
 
 } // namespace
 
 
-void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx) {
+void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
+                         ShapeData& shapeData, const PRTContextUPtr& prtCtx)
+{
 	WA("all");
 
 	assert(shapeData.isValid());
 
-	// -- partition primitives into initial shapes by shape classifier values
-	PrimitivePartition primPart(detail, mShapeClsAttrName, mShapeClsType);
+	// -- partition primitives into initial shapes by primitive classifier values
+	PrimitivePartition primPart(detail, primCls);
 	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
 
 	// -- copy all coordinates
@@ -81,30 +76,30 @@ void ShapeConverter::get(const GU_Detail* detail, ShapeData& shapeData, const PR
 	assert(shapeData.isValid());
 }
 
-void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
+void ShapeConverter::put(GU_Detail* detail, const PrimitiveClassifier& primCls, const ShapeData& shapeData) const {
 	WA("all");
 
     // TODO: factor out
-	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_NAME, 1));
+	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_PRIM_CLS_NAME, 1));
 	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
 
-	GA_RWAttributeRef clsTypeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_CLS_TYPE, 1));
+	GA_RWAttributeRef clsTypeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_PRIM_CLS_TYPE, 1));
 	GA_RWHandleI clsTypeH(clsTypeRef);
 
 	GA_RWAttributeRef clsNameRef;
 	using HandleType = boost::variant<GA_RWHandleF, GA_RWHandleI, GA_RWHandleS>;
 	HandleType clsNameH;
-	switch (mShapeClsType) {
+	switch (primCls.type) {
 		case GA_STORECLASS_FLOAT:
-			clsNameRef = GA_RWAttributeRef(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, mShapeClsAttrName.c_str(), 1));
+			clsNameRef = GA_RWAttributeRef(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
 			clsNameH = GA_RWHandleF(clsNameRef);
 			break;
 		case GA_STORECLASS_INT:
-			clsNameRef = GA_RWAttributeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, mShapeClsAttrName.c_str(), 1));
+			clsNameRef = GA_RWAttributeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
 			clsNameH = GA_RWHandleI(clsNameRef);
 			break;
 		case GA_STORECLASS_STRING:
-			clsNameRef = GA_RWAttributeRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, mShapeClsAttrName.c_str(), 1));
+			clsNameRef = GA_RWAttributeRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
 			clsNameH = GA_RWHandleS(clsNameRef);
 			break;
 		default:
@@ -175,8 +170,8 @@ void ShapeConverter::put(GU_Detail* detail, const ShapeData& shapeData) const {
 
 		for (auto& prim: pv) {
 			const GA_Offset &off = prim->getMapOffset();
-			clsAttrNameH.set(off, mShapeClsAttrName.c_str());
-			clsTypeH.set(off, mShapeClsType);
+			clsAttrNameH.set(off, primCls.name);
+			clsTypeH.set(off, primCls.type);
 
 			// put main attributes
 			// TODO: factor this out into a MainAttributeHandler or such

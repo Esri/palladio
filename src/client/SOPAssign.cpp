@@ -103,26 +103,26 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
 
-	if (!updateSharedShapeDataFromParams(context))
-		return UT_ERROR_ABORT;
+	evaluatePrimitiveClassifier(context);
+	evaluateSharedShapeData(context);
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
 		return error();
 	}
-	duplicateSource(0, context); // TODO: is this actually needed (we only set prim attrs)?
+	duplicateSource(0, context);
 
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Assigning CityEngine rule attributes...");
 
 		ShapeData shapeData;
-		mShapeConverter->get(gdp, shapeData, mPRTCtx);
+		mShapeConverter->get(gdp, mPrimCls, shapeData, mPRTCtx);
 		const bool canContinue = evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
 		if (!canContinue) {
 			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
 			return UT_ERROR_ABORT;
 		}
-		mShapeConverter->put(gdp, shapeData);
+		mShapeConverter->put(gdp, mPrimCls, shapeData);
 	}
 
 	unlockInputs();
@@ -130,29 +130,31 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	return error();
 }
 
-bool SOPAssign::updateSharedShapeDataFromParams(OP_Context &context) {
+void SOPAssign::evaluatePrimitiveClassifier(OP_Context &context) {
+	const fpreal now = context.getTime();
+
+	// -- primitive classifier attr name
+	UT_String utNextClsAttrName;
+	evalString(utNextClsAttrName, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
+	if (utNextClsAttrName.length() > 0)
+		mPrimCls.name.adopt(utNextClsAttrName);
+	else
+		setString(mPrimCls.name, CH_STRING_LITERAL, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
+
+	// -- primitive classifier attr type
+	const auto typeChoice = evalInt(AssignNodeParams::PARAM_NAME_PRIM_CLS_TYPE.getToken(), 0, now);
+	switch (typeChoice) {
+		case 0: mPrimCls.type = GA_STORECLASS_STRING; break;
+		case 1: mPrimCls.type = GA_STORECLASS_INT;    break;
+		case 2: mPrimCls.type = GA_STORECLASS_FLOAT;  break;
+		default: break;
+	}
+}
+
+void SOPAssign::evaluateSharedShapeData(OP_Context &context) {
 	WA("all");
 
 	const fpreal now = context.getTime();
-
-	// -- shape classifier attr name
-	// TODO: move to param callbacks
-	UT_String utNextClsAttrName;
-	evalString(utNextClsAttrName, AssignNodeParams::SHAPE_CLS_ATTR.getToken(), 0, now);
-	if (utNextClsAttrName.length() > 0)
-		mShapeConverter->mShapeClsAttrName.adopt(utNextClsAttrName);
-	else
-		setString(mShapeConverter->mShapeClsAttrName, CH_STRING_LITERAL, AssignNodeParams::SHAPE_CLS_ATTR.getToken(), 0, now);
-
-	// -- shape classifier attr type
-	// TODO: move to param callbacks
-	const auto shapeClsAttrTypeChoice = evalInt(AssignNodeParams::SHAPE_CLS_TYPE.getToken(), 0, now);
-	switch (shapeClsAttrTypeChoice) {
-		case 0: mShapeConverter->mShapeClsType = GA_STORECLASS_STRING; break;
-		case 1: mShapeConverter->mShapeClsType = GA_STORECLASS_INT;    break;
-		case 2: mShapeConverter->mShapeClsType = GA_STORECLASS_FLOAT;  break;
-		default: return false;
-	}
 
 	// -- rule package path
 	mShapeConverter->mRPK = [this,now](){
@@ -184,6 +186,4 @@ bool SOPAssign::updateSharedShapeDataFromParams(OP_Context &context) {
 
 	// -- random seed
 	mShapeConverter->mSeed = evalInt(AssignNodeParams::SEED.getToken(), 0, now);
-
-	return true;
 }

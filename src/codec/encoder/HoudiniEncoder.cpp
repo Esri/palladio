@@ -7,7 +7,6 @@
 #include "prtx/Material.h"
 #include "prtx/Shape.h"
 #include "prtx/ShapeIterator.h"
-#include "prtx/EncodePreparator.h"
 #include "prtx/ExtensionManager.h"
 #include "prtx/GenerateContext.h"
 #include "prtx/Attributable.h"
@@ -28,13 +27,8 @@ namespace {
 
 constexpr bool           DBG                = false;
 
-constexpr const wchar_t* ENC_ID             = L"HoudiniEncoder";
 constexpr const wchar_t* ENC_NAME           = L"SideFX(tm) Houdini(tm) Encoder";
 constexpr const wchar_t* ENC_DESCRIPTION    = L"Encodes geometry into the Houdini format.";
-
-constexpr const wchar_t* EO_EMIT_ATTRIBUTES = L"emitAttributes";
-constexpr const wchar_t* EO_EMIT_MATERIALS  = L"emitMaterials";
-constexpr const wchar_t* EO_EMIT_REPORTS    = L"emitReports";
 
 const prtx::EncodePreparator::PreparationFlags PREP_FLAGS = prtx::EncodePreparator::PreparationFlags()
 	.instancing(false)
@@ -135,6 +129,7 @@ void convertAttributabletoAttributeMap(
 	}
 }
 
+
 } // namespace
 
 
@@ -152,40 +147,59 @@ void HoudiniEncoder::init(prtx::GenerateContext&) {
 
 void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeIndex) {
 	const prtx::InitialShape& initialShape = *context.getInitialShape(initialShapeIndex);
-	auto* oh = dynamic_cast<HoudiniCallbacks*>(getCallbacks());
+	auto* cb = dynamic_cast<HoudiniCallbacks*>(getCallbacks());
+
+	const bool emitAttrs = getOptions()->getBool(EO_EMIT_ATTRIBUTES);
 
 	prtx::DefaultNamePreparator        namePrep;
 	prtx::NamePreparator::NamespacePtr nsMesh     = namePrep.newNamespace();
 	prtx::NamePreparator::NamespacePtr nsMaterial = namePrep.newNamespace();
-
 	prtx::EncodePreparatorPtr encPrep = prtx::EncodePreparator::create(true, namePrep, nsMesh, nsMaterial);
 
+	// get attribute names from initial shape
+	const std::vector<std::wstring> isAttrKeys = emitAttrs ? [&initialShape](){
+		size_t keyCount = 0;
+		wchar_t const* const* keys = initialShape.getAttributeMap()->getKeys(&keyCount);
+		return std::vector<std::wstring>(keys, keys+keyCount);
+	}() : std::vector<std::wstring>();
+
+	// generate geometry
 	prtx::ReportsAccumulatorPtr reportsAccumulator{prtx::WriteFirstReportsAccumulator::create()};
 	prtx::ReportingStrategyPtr reportsCollector{prtx::LeafShapeReportingStrategy::create(context, initialShapeIndex, reportsAccumulator)};
 	prtx::LeafIteratorPtr li = prtx::LeafIterator::create(context, initialShapeIndex);
 	for (prtx::ShapePtr shape = li->getNext(); shape; shape = li->getNext()) {
 		prtx::ReportsPtr r = reportsCollector->getReports(shape->getID());
 		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap(), r);
+
+		// get final values of generic attributes
+		if (emitAttrs) {
+			for (const std::wstring& key: isAttrKeys) {
+				switch (shape->getType(key)) {
+					case prtx::Attributable::PT_STRING: {
+						const auto v = shape->getString(key);
+						cb->attrString(initialShapeIndex, shape->getID(), key.c_str(), v.c_str());
+						break;
+					}
+					case prtx::Attributable::PT_FLOAT: {
+						const auto v = shape->getFloat(key);
+						cb->attrFloat(initialShapeIndex, shape->getID(), key.c_str(), v);
+						break;
+					}
+					case prtx::Attributable::PT_BOOL: {
+						const auto v = shape->getBool(key);
+						cb->attrBool(initialShapeIndex, shape->getID(), key.c_str(), v);
+						break;
+					}
+					default:
+						break;
+				}
+			}
+		}
 	}
 
-	prtx::GeometryPtrVector geometries;
-	std::vector<prtx::MaterialPtrVector> materials;
-	std::vector<prtx::ReportsPtr> reports;
-
-	prtx::EncodePreparator::InstanceVector finalizedInstances;
-	encPrep->fetchFinalizedInstances(finalizedInstances, PREP_FLAGS);
-
-	geometries.reserve(finalizedInstances.size());
-	materials.reserve(finalizedInstances.size());
-	reports.reserve(finalizedInstances.size());
-
-	for (const auto& inst: finalizedInstances) {
-		geometries.push_back(inst.getGeometry());
-		materials.push_back(inst.getMaterials());
-		reports.push_back(inst.getReports());
-	}
-
-	convertGeometry(initialShape, geometries, materials, reports, oh);
+	prtx::EncodePreparator::InstanceVector instances;
+	encPrep->fetchFinalizedInstances(instances, PREP_FLAGS);
+	convertGeometry(initialShape, instances, cb);
 }
 
 void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& geometries) {
@@ -253,7 +267,6 @@ void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& ge
 			uvIndexBase += uvsDelta / 2u; // TODO: directly add to per uv set index bases
 		}
 	}
-
 }
 
 namespace {
@@ -271,22 +284,35 @@ struct AttributeMapNOPtrVectorOwner {
 
 } // namespace
 
-void HoudiniEncoder::convertGeometry(
-	const prtx::InitialShape& initialShape,
-	const prtx::GeometryPtrVector& geometries,
-	const std::vector<prtx::MaterialPtrVector>& mats,
-	const std::vector<prtx::ReportsPtr>& reports,
-	HoudiniCallbacks* hc
-) {
+void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
+                                     const prtx::EncodePreparator::InstanceVector& instances,
+                                     HoudiniCallbacks* cb)
+{
 	const bool emitMaterials = getOptions()->getBool(EO_EMIT_MATERIALS);
 	const bool emitReports = getOptions()->getBool(EO_EMIT_REPORTS);
+
+	prtx::GeometryPtrVector geometries;
+	std::vector<prtx::MaterialPtrVector> materials;
+	std::vector<prtx::ReportsPtr> reports;
+	std::vector<int32_t> shapeIDs;
+
+	geometries.reserve(instances.size());
+	materials.reserve(instances.size());
+	reports.reserve(instances.size());
+	shapeIDs.reserve(instances.size());
+
+	for (const auto& inst: instances) {
+		geometries.push_back(inst.getGeometry());
+		materials.push_back(inst.getMaterials());
+		reports.push_back(inst.getReports());
+		shapeIDs.push_back(inst.getShapeId());
+	}
 
 	SerializedGeometry sg;
 	serializeGeometry(sg, geometries);
 
 	// log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
-	if (DBG) log_debug("encoder #materials = %s") % mats.size();
-
+	if (DBG) log_debug("encoder #materials = %s") % materials.size();
 
 	uint32_t faceCount = 0;
 	std::vector<uint32_t> faceRanges;
@@ -294,8 +320,8 @@ void HoudiniEncoder::convertGeometry(
 	AttributeMapNOPtrVectorOwner reportAttrMaps;
 
 	assert(geometries.size() == reports.size());
-	assert(mats.size() == reports.size());
-	auto matIt = mats.cbegin();
+	assert(materials.size() == reports.size());
+	auto matIt = materials.cbegin();
 	auto repIt = reports.cbegin();
 	prtx::PRTUtils::AttributeMapBuilderPtr amb(prt::AttributeMapBuilder::create());
 	for (const auto& geo: geometries) {
@@ -306,8 +332,6 @@ void HoudiniEncoder::convertGeometry(
 			const prtx::MaterialPtr& mat = matIt->at(mi);
 
 			faceRanges.push_back(faceCount);
-
-			// TODO: shape attributes (!)
 
 			if (emitMaterials) {
 				convertAttributabletoAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
@@ -336,7 +360,11 @@ void HoudiniEncoder::convertGeometry(
 	}
 	faceRanges.push_back(faceCount); // close last range
 
-	hc->add(initialShape.getName(),
+	assert(matAttrMaps.v.empty() || matAttrMaps.v.size() == faceRanges.size()-1);
+	assert(reportAttrMaps.v.empty() || reportAttrMaps.v.size() == faceRanges.size()-1);
+	assert(shapeIDs.size() == faceRanges.size()-1);
+
+	cb->add(initialShape.getName(),
 	        sg.coords.data(), sg.coords.size(),
 			sg.normals.data(), sg.normals.size(),
 			sg.uvCoords.data(), sg.uvCoords.size(),
@@ -347,7 +375,8 @@ void HoudiniEncoder::convertGeometry(
 	        sg.uvSets,
 			faceRanges.data(), faceRanges.size(),
 	        matAttrMaps.v.empty() ? nullptr : matAttrMaps.v.data(),
-	        reportAttrMaps.v.empty() ? nullptr : reportAttrMaps.v.data());
+	        reportAttrMaps.v.empty() ? nullptr : reportAttrMaps.v.data(),
+			shapeIDs.data());
 
 	if (DBG) log_debug("HoudiniEncoder::convertGeometry: end");
 }
@@ -359,7 +388,7 @@ void HoudiniEncoder::finish(prtx::GenerateContext& /*context*/) {
 HoudiniEncoderFactory* HoudiniEncoderFactory::createInstance() {
 	prtx::EncoderInfoBuilder encoderInfoBuilder;
 
-	encoderInfoBuilder.setID(ENC_ID);
+	encoderInfoBuilder.setID(ENCODER_ID_HOUDINI);
 	encoderInfoBuilder.setName(ENC_NAME);
 	encoderInfoBuilder.setDescription(ENC_DESCRIPTION);
 	encoderInfoBuilder.setType(prt::CT_GEOMETRY);

@@ -1,4 +1,5 @@
 #include "ShapeGenerator.h"
+#include "PrimitivePartition.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
@@ -6,10 +7,16 @@
 #include "GA/GA_Primitive.h"
 #include "GU/GU_Detail.h"
 
+#include <unordered_map>
+
 
 namespace {
 
 constexpr bool DBG = false;
+
+const std::set<UT_StringHolder> MAIN_ATTRIBUTES = { CE_PRIM_CLS_NAME, CE_PRIM_CLS_TYPE, CE_SHAPE_RPK,
+                                                    CE_SHAPE_RULE_FILE, CE_SHAPE_START_RULE, CE_SHAPE_STYLE,
+                                                    CE_SHAPE_SEED };
 
 template<typename T>
 T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
@@ -20,23 +27,23 @@ T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
 
 // TODO: factor this out into a MainAttributeHandler or such
 bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
-	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute("ceShapeRPK"));
+	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(CE_SHAPE_RPK));
 	if (rpkRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute("ceShapeRuleFile"));
+	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(CE_SHAPE_RULE_FILE));
 	if (ruleFileRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute("ceShapeStartRule"));
+	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(CE_SHAPE_START_RULE));
 	if (startRuleRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute("ceShapeStyle"));
+	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(CE_SHAPE_STYLE));
 	if (styleRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute("ceShapeSeed"));
+	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
 	if (seedRef.isInvalid())
 		return false;
 
@@ -55,22 +62,41 @@ bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const 
 } // namespace
 
 
-void ShapeGenerator::get(
-	const GU_Detail* detail,
-	ShapeData& shapeData,
-	const PRTContextUPtr& prtCtx
-) {
+void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
+                         ShapeData& shapeData, const PRTContextUPtr& prtCtx)
+{
 	WA("all");
 
 	// extract initial shape geometry
-	ShapeConverter::get(detail, shapeData, prtCtx);
+	ShapeConverter::get(detail, primCls, shapeData, prtCtx);
 
 	// collect all primitive attributes
-	std::vector<std::pair<GA_ROAttributeRef, UT_StringHolder>> attributes;
+	std::unordered_map<UT_StringHolder, GA_ROAttributeRef> attributes;
 	{
 		GA_Attribute* a;
 		GA_FOR_ALL_PRIMITIVE_ATTRIBUTES(detail, a) {
-			attributes.emplace_back(GA_ROAttributeRef(a), a->getName());
+			const UT_StringHolder& n = a->getName();
+
+			// do not add the main attributes as normal initial shape attributes
+			// else they end up as primitive attributes on the generated geometry
+			if (MAIN_ATTRIBUTES.count(n) > 0)
+				continue;
+
+			attributes.emplace(n, GA_ROAttributeRef(a));
+		}
+
+		// also filter out the actual primitive classifier attribute
+		std::set<UT_StringHolder> removeMe;
+		const GA_Primitive* p;
+		GA_FOR_ALL_PRIMITIVES(detail, p) {
+			const PrimitiveClassifier pc = primCls.updateFromPrimitive(detail, p);
+			if (removeMe.emplace(pc.name).second) {
+				auto it = attributes.find(pc.name);
+				if (it != attributes.end()) {
+					if (it->second->getStorageClass() == pc.type)
+						attributes.erase(it);
+				}
+			}
 		}
 	}
 
@@ -95,13 +121,13 @@ void ShapeGenerator::get(
 
 		// extract primitive attributes
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
-		for (const auto& k: attributes) {
-			const GA_ROAttributeRef& ar = k.first;
+		for (const auto& attr: attributes) {
+			const GA_ROAttributeRef& ar = attr.second;
 
 			if (ar.isInvalid())
 				continue;
 
-			const std::string nKey = NameConversion::toRuleAttr(k.second);
+			const std::string nKey = NameConversion::toRuleAttr(attr.first);
 			const std::wstring key = toUTF16FromOSNarrow(nKey);
 
 			switch (ar.getStorageClass()) {

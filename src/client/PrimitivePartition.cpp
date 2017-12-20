@@ -4,61 +4,57 @@
 
 namespace {
 
-constexpr bool  DBG = false;
-constexpr int32 INVALID_CLS_VALUE{-1};
+constexpr bool  DBG               = false;
+constexpr int32 INVALID_CLS_VALUE = -1;
 
 } // namespace
 
+PrimitiveClassifier PrimitiveClassifier::updateFromPrimitive(const GA_Detail* detail, const GA_Primitive* p) const {
+	if (DBG) detail->getAttributeDict(GA_ATTRIB_PRIMITIVE).forEachAttribute([](const GA_Attribute* a){ LOG_DBG << a->getName(); });
 
-PrimitivePartition::PrimitivePartition(const GU_Detail* detail, const UT_String& assignShpClsAttrName, const GA_StorageClass& assignShpClsAttrType) {
+	const GA_ROAttributeRef primClsAttrNameRef = detail->findPrimitiveAttribute(CE_PRIM_CLS_NAME);
+	const GA_ROAttributeRef primClsAttrTypeRef = detail->findPrimitiveAttribute(CE_PRIM_CLS_TYPE);
+
+	PrimitiveClassifier pc = *this;
+	if (primClsAttrNameRef.isValid() && primClsAttrTypeRef.isValid()) {
+		const GA_ROHandleS nameH(primClsAttrNameRef);
+		pc.name = nameH.get(p->getMapOffset());
+
+		const GA_ROHandleI typeH(primClsAttrTypeRef);
+		pc.type = static_cast<GA_StorageClass>(typeH.get(p->getMapOffset()));
+	}
+
+	return pc;
+}
+
+PrimitivePartition::PrimitivePartition(const GA_Detail* detail, const PrimitiveClassifier& primCls) {
 	const GA_Primitive* prim = nullptr;
 	GA_FOR_ALL_PRIMITIVES(detail, prim) {
-		add(detail, prim, assignShpClsAttrName, assignShpClsAttrType);
+		add(detail, primCls, prim);
 	}
 }
 
-/**
- * @param assignShpClsAttrName if empty, we assume generate mode and get the shape classifier attr name/type from the detail itself
- */
-void PrimitivePartition::add(const GA_Detail* detail, const GA_Primitive* p, const UT_String& assignShpClsAttrName, const GA_StorageClass& assignShpClsAttrType) {
+void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier& primCls, const GA_Primitive* p) {
 	if (DBG) LOG_DBG << "      adding prim: " << detail->primitiveIndex(p->getMapOffset());
 
-	// get shape classifier attr name and type
-	UT_String shpClsAttrName;
-	GA_StorageClass shpClsAttrType;
-	if (assignShpClsAttrName.length() == 0) { // generate mode
-		GA_ROAttributeRef shpClsAttrNameRef = detail->findPrimitiveAttribute(CE_SHAPE_CLS_NAME);
-		GA_ROAttributeRef shpClsAttrTypeRef = detail->findPrimitiveAttribute(CE_SHAPE_CLS_TYPE);
+	const PrimitiveClassifier pc = primCls.updateFromPrimitive(detail, p);
 
-		if (shpClsAttrNameRef.isValid() && shpClsAttrTypeRef.isValid()) {
-			GA_ROHandleS shpClsAttrNameH(shpClsAttrNameRef);
-			shpClsAttrName = shpClsAttrNameH.get(p->getMapOffset());
-
-			GA_ROHandleI shpClsAttrTypeH(shpClsAttrTypeRef);
-			shpClsAttrType = static_cast<GA_StorageClass>(shpClsAttrTypeH.get(p->getMapOffset()));
-		}
-	}
-	else { // assign mode
-		shpClsAttrName = assignShpClsAttrName;
-		shpClsAttrType = assignShpClsAttrType;
+	// try to read primitive classifier attr name and type
+	GA_ROAttributeRef primClsAttrRef;
+	if (pc.name.length() > 0) { // we have a valid primitive classifier attribute name
+		const GA_ROAttributeRef r(detail->findPrimitiveAttribute(pc.name));
+		if (r.isValid() && r->getStorageClass() == pc.type)
+			primClsAttrRef = r; // we found the primitive classifier attribute itself
 	}
 
-	// try to read shape classifier attr name and type
-	GA_ROAttributeRef shpClsAttrRef;
-	if (shpClsAttrName.length() > 0) { // we have a valid shape classifier attribute name
-		GA_ROAttributeRef r(detail->findPrimitiveAttribute(shpClsAttrName.buffer()));
-		if (r.isValid() && r->getStorageClass() == shpClsAttrType)
-			shpClsAttrRef = r; // we found the shape classifier attribute itself
-	}
-
-	if (shpClsAttrRef.isInvalid()) {
+	if (primClsAttrRef.isInvalid()) {
 		mPrimitives[INVALID_CLS_VALUE].push_back(p);
 		if (DBG) LOG_DBG << "       missing cls name: adding prim to fallback shape!";
 	}
-	else if ((shpClsAttrType == GA_STORECLASS_FLOAT) && shpClsAttrRef.isFloat()) {
-		GA_ROHandleF av(shpClsAttrRef);
+	else if ((pc.type == GA_STORECLASS_FLOAT) && primClsAttrRef.isFloat()) {
+		const GA_ROHandleF av(primClsAttrRef);
 		if (av.isValid()) {
-			fpreal32 v = av.get(p->getMapOffset());
+			const fpreal32 v = av.get(p->getMapOffset());
 			if (DBG) LOG_DBG << "        got float classifier value: " << v;
 			mPrimitives[v].push_back(p);
 		}
@@ -66,10 +62,10 @@ void PrimitivePartition::add(const GA_Detail* detail, const GA_Primitive* p, con
 			if (DBG) LOG_DBG << "        float: invalid handle!";
 		}
 	}
-	else if ((shpClsAttrType == GA_STORECLASS_INT) && shpClsAttrRef.isInt()) {
-		GA_ROHandleI av(shpClsAttrRef);
+	else if ((pc.type == GA_STORECLASS_INT) && primClsAttrRef.isInt()) {
+		const GA_ROHandleI av(primClsAttrRef);
 		if (av.isValid()) {
-			int32 v = av.get(p->getMapOffset());
+			const int32 v = av.get(p->getMapOffset());
 			if (DBG) LOG_DBG << "        got int classifier value: " << v;
 			mPrimitives[v].push_back(p);
 		}
@@ -77,8 +73,8 @@ void PrimitivePartition::add(const GA_Detail* detail, const GA_Primitive* p, con
 			if (DBG) LOG_DBG << "        int: invalid handle!";
 		}
 	}
-	else if ((shpClsAttrType == GA_STORECLASS_STRING) && shpClsAttrRef.isString()) {
-		GA_ROHandleS av(shpClsAttrRef);
+	else if ((pc.type == GA_STORECLASS_STRING) && primClsAttrRef.isString()) {
+		const GA_ROHandleS av(primClsAttrRef);
 		if (av.isValid()) {
 			const char* v = av.get(p->getMapOffset());
 			if (v) {
@@ -87,7 +83,7 @@ void PrimitivePartition::add(const GA_Detail* detail, const GA_Primitive* p, con
 			}
 			else {
 				mPrimitives[INVALID_CLS_VALUE].push_back(p);
-				LOG_WRN << "shape classifier attribute has empty string value -> fallback shape";
+				LOG_WRN << "primitive classifier attribute has empty string value -> fallback shape";
 			}
 		}
 		else {

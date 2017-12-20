@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PrimitivePartition.h"
 #include "PRTContext.h"
 #include "utils.h"
 
@@ -48,24 +49,26 @@ public:
 	}
 };
 
+const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
+const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
+const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
+const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
+const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
 
 class ShapeConverter {
 public:
-	virtual void get(const GU_Detail* detail, ShapeData& shapeData, const PRTContextUPtr& prtCtx);
-	void put(GU_Detail* detail, const ShapeData& shapeData) const;
+	virtual void get(const GU_Detail* detail,  const PrimitiveClassifier& primCls,
+	                 ShapeData& shapeData, const PRTContextUPtr& prtCtx);
+	void put(GU_Detail* detail, const PrimitiveClassifier& primCls, const ShapeData& shapeData) const;
 
 	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;
 
 public:
-	UT_String               mShapeClsAttrName;
-	GA_StorageClass	        mShapeClsType;
-
 	boost::filesystem::path mRPK;
 	std::wstring            mRuleFile;
 	std::wstring            mStyle;
 	std::wstring            mStartRule;
-
 	int64_t                 mSeed = 0;
 };
 

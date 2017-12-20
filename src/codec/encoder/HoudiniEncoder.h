@@ -8,6 +8,7 @@
 #include "prtx/EncoderInfoBuilder.h"
 #include "prtx/PRTUtils.h"
 #include "prtx/Singleton.h"
+#include "prtx/EncodePreparator.h"
 
 #include "prt/ContentType.h"
 #include "prt/InitialShape.h"
@@ -47,13 +48,9 @@ public:
 	void finish(prtx::GenerateContext& context) override;
 
 private:
-	void convertGeometry(
-		const prtx::InitialShape& initialShape,
-		const prtx::GeometryPtrVector& geometries,
-		const std::vector<prtx::MaterialPtrVector>& mat,
-		const std::vector<prtx::ReportsPtr>& reports,
-		HoudiniCallbacks* callbacks
-	);
+	void convertGeometry(const prtx::InitialShape& initialShape,
+	                     const prtx::EncodePreparator::InstanceVector& instances,
+	                     HoudiniCallbacks* callbacks);
 };
 
 

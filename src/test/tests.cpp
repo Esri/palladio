@@ -476,7 +476,8 @@ void add(const wchar_t* name,
          uint32_t uvSets,
          const uint32_t* faceRanges, size_t faceRangesSize,
          const prt::AttributeMap** materials,
-         const prt::AttributeMap** reports
+         const prt::AttributeMap** reports,
+         const int32_t* shapeIDs
 ) override {
 	results.emplace_back(CallbackResult());
 	auto& cr = results.back();
