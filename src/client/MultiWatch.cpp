@@ -56,10 +56,10 @@ void MultiWatch::printTimings() const {
 	LOG_FTL << "-- timings:";
 	for (const auto& l: lapTimes) {
 		const auto& ctxName = l.first;
-		const auto& lapTimes = l.second;
+		const auto& lt = l.second;
 
 		const size_t numLaps = lapTimes.size();
-		const double lapSum = std::accumulate(lapTimes.begin(), lapTimes.end(), 0.0);
+		const double lapSum = std::accumulate(lt.begin(), lt.end(), 0.0);
 		const double lapAvg = lapSum / (double)numLaps;
 		const auto avgIntStrWidth = std::to_string(std::trunc(lapAvg)).size();
 		LOG_FTL << "   " << ctxName

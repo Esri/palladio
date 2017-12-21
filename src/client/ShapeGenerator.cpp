@@ -52,10 +52,10 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			PrimitiveClassifier pc;
 			primCls.updateFromPrimitive(pc, detail, p);
 			if (removeMe.emplace(pc.name).second) {
-				auto it = attributes.find(pc.name);
-				if (it != attributes.end()) {
-					if (it->second->getStorageClass() == pc.type)
-						attributes.erase(it);
+				auto aIt = attributes.find(pc.name);
+				if (aIt != attributes.end()) {
+					if (aIt->second->getStorageClass() == pc.type)
+						attributes.erase(aIt);
 				}
 			}
 		}

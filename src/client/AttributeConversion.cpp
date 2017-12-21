@@ -82,7 +82,7 @@ bool hasKeys(const prt::AttributeMap* attrMap, const std::vector<std::wstring>& 
 
 struct Candidate {
 	std::vector<std::wstring> keys;
-	std::string::size_type dotPos;
+	std::string::size_type dotPos = -1;
 };
 
 using Candidates = std::map<std::wstring, Candidate>;
@@ -119,6 +119,8 @@ bool isColorGroup(const std::wstring& primary, const Candidate& candidate, const
 void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstring& handleName,
                     AttributeConversion::ProtoHandle&& ph)
 {
+	WA("all");
+
 	const UT_String utName = NameConversion::toPrimAttr(handleName);
 	if (DBG) LOG_DBG << "handle name conversion: handleName = " << handleName << ", utName = " << utName;
 	handleMap.emplace(utName, std::move(ph));
@@ -288,6 +290,8 @@ std::wstring removeStyle(const std::wstring& n) {
 namespace NameConversion {
 
 UT_String toPrimAttr(const std::wstring& name) {
+	WA("all");
+
 	std::string s = toOSNarrowFromUTF16(removeStyle(name));
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
 		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
@@ -295,6 +299,8 @@ UT_String toPrimAttr(const std::wstring& name) {
 }
 
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {
+	WA("all");
+
 	std::string s = name.toStdString();
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
 		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
