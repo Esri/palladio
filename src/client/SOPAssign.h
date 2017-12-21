@@ -18,9 +18,10 @@ protected:
 	OP_ERROR cookMySop(OP_Context &context) override;
 
 private:
-	bool updateSharedShapeDataFromParams(OP_Context &context);
+	void evaluatePrimitiveClassifier(OP_Context &context);
+	void evaluateSharedShapeData(OP_Context &context);
 
-private:
 	const PRTContextUPtr& mPRTCtx;
-	ShapeConverterUPtr   mShapeConverter;
+	PrimitiveClassifier   mPrimCls;
+	ShapeConverterUPtr    mShapeConverter;
 };

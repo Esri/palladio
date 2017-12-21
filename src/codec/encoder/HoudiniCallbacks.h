@@ -2,6 +2,11 @@
 
 #include "prt/Callbacks.h"
 
+constexpr const wchar_t* ENCODER_ID_HOUDINI = L"HoudiniEncoder";
+constexpr const wchar_t* EO_EMIT_ATTRIBUTES = L"emitAttributes";
+constexpr const wchar_t* EO_EMIT_MATERIALS  = L"emitMaterials";
+constexpr const wchar_t* EO_EMIT_REPORTS    = L"emitReports";
+
 
 class HoudiniCallbacks : public prt::Callbacks {
 public:
@@ -15,6 +20,7 @@ public:
 	 * @param faceRanges ranges for materials and reports
 	 * @param materials contains faceRangesSize-1 attribute maps (all materials must have an identical set of keys and types)
 	 * @param reports contains faceRangesSize-1 attribute maps
+	 * @param shapeIDs shape ids per face, contains faceRangesSize-1 values
 	 */
 	virtual void add(
 			const wchar_t* name,
@@ -28,6 +34,7 @@ public:
 			uint32_t uvSets,
 			const uint32_t* faceRanges, size_t faceRangesSize,
 			const prt::AttributeMap** materials,
-			const prt::AttributeMap** reports
+			const prt::AttributeMap** reports,
+			const int32_t* shapeIDs
 	) = 0;
 };

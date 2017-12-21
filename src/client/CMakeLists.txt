@@ -21,7 +21,8 @@ add_library(${PROJECT_NAME} SHARED
 		PrimitivePartition.cpp
 		AttrEvalCallbacks.cpp
 		AttributeConversion.cpp
-		MultiWatch.cpp)
+		MultiWatch.cpp
+		LogHandler.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${PRT_INCLUDE_PATH}

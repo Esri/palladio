@@ -18,7 +18,8 @@ constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
 
 constexpr const wchar_t* ENCODER_ID_CGA_ERROR = L"com.esri.prt.core.CGAErrorEncoder";
 constexpr const wchar_t* ENCODER_ID_CGA_PRINT = L"com.esri.prt.core.CGAPrintEncoder";
-constexpr const wchar_t* ENCODER_ID_HOUDINI   = L"HoudiniEncoder";
+
+const PrimitiveClassifier DEFAULT_PRIMITIVE_CLASSIFIER = PrimitiveClassifier();
 
 } // namespace
 
@@ -43,14 +44,14 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
-	// TODO const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
+	const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
 	const bool emitMaterial        = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
 	const bool emitReports         = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
-	// TODO optionsBuilder->setBool(L"emitAttributes", emitAttributes);
-	optionsBuilder->setBool(L"emitMaterials", emitMaterial);
-	optionsBuilder->setBool(L"emitReports", emitReports);
+	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);
+	optionsBuilder->setBool(EO_EMIT_MATERIALS, emitMaterial);
+	optionsBuilder->setBool(EO_EMIT_REPORTS, emitReports);
 	AttributeMapUPtr encoderOptions(optionsBuilder->createAttributeMapAndReset());
 	mHoudiniEncoderOptions.reset(createValidatedOptions(ENCODER_ID_HOUDINI, encoderOptions.get()));
 	if (!mHoudiniEncoderOptions)
@@ -78,7 +79,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 		ShapeData shapeData;
 		ShapeGenerator shapeGen;
-		shapeGen.get(gdp, shapeData, mPRTCtx);
+		shapeGen.get(gdp, DEFAULT_PRIMITIVE_CLASSIFIER, shapeData, mPRTCtx);
 
 		const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
 		if (is.empty()) {

@@ -63,7 +63,8 @@ protected:
 			uint32_t uvSets,
 			const uint32_t* faceRanges, size_t faceRangesSize,
 			const prt::AttributeMap** materials,
-			const prt::AttributeMap** reports
+			const prt::AttributeMap** reports,
+			const int32_t* shapeIDs
 	) override;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
@@ -86,6 +87,7 @@ protected:
 private:
 	GU_Detail* mDetail;
 	UT_AutoInterrupt* mAutoInterrupt;
+	std::map<int32_t, AttributeMapBuilderUPtr> mShapeAttributeBuilders;
 };
 
 using ModelConverterUPtr = std::unique_ptr<ModelConverter>;

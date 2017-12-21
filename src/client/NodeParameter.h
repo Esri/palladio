@@ -5,15 +5,40 @@
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_Shared.h"
 #include "PRM/PRM_Callback.h"
+#include "GA/GA_Types.h"
 
 
 namespace AssignNodeParams {
 
+// -- PRIMITIVE CLASSIFIERS
+static PRM_Name PARAM_NAME_PRIM_CLS_ATTR("primClsAttr", "Primitive Classifier");
+static PRM_Name PARAM_NAME_PRIM_CLS_TYPE("primClsType", "Primitive Classifier Type");
+
+static const char*           PRIM_CLS_TYPE_TOKENS[] = { "STRING", "INT", "FLOAT" };
+static const char*           PRIM_CLS_TYPE_LABELS[] = { "String", "Integer", "Float" };
+static const GA_StorageClass PRIM_CLS_TYPE_VALUES[]  = { GA_STORECLASS_STRING, GA_STORECLASS_INT, GA_STORECLASS_FLOAT };
+
+static PRM_Name PRIM_CLS_TYPE_MENU_ITEMS[] = {
+	PRM_Name(PRIM_CLS_TYPE_TOKENS[0], PRIM_CLS_TYPE_LABELS[0]),
+	PRM_Name(PRIM_CLS_TYPE_TOKENS[1], PRIM_CLS_TYPE_LABELS[1]),
+	PRM_Name(PRIM_CLS_TYPE_TOKENS[2], PRIM_CLS_TYPE_LABELS[2]),
+	PRM_Name(nullptr)
+};
+static PRM_ChoiceList primClsTypeMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), PRIM_CLS_TYPE_MENU_ITEMS);
+
+const size_t DEFAULT_PRIM_CLS_TYPE_ORDINAL = 1;
+const GA_StorageClass DEFAULT_PRIM_CLS_TYPE_VALUE = PRIM_CLS_TYPE_VALUES[DEFAULT_PRIM_CLS_TYPE_ORDINAL];
+static PRM_Default DEFAULT_PRIM_CLS_TYPE(0, PRIM_CLS_TYPE_TOKENS[DEFAULT_PRIM_CLS_TYPE_ORDINAL]);
+
+static PRM_Default DEFAULT_PRIM_CLS_ATTR(0.0f, "primCls", CH_STRING_LITERAL);
+
+
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
 static PRM_Default rpkDefault(0, "$HIP/$F.rpk");
-int resetRuleParameter(void *data, int index, fpreal32 time, const PRM_Template *tplate);
-static PRM_Callback rpkCallback(&resetRuleParameter);
+int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
+static PRM_Callback rpkCallback(&updateRPK);
+
 
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
@@ -42,23 +67,12 @@ static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELI
 // -- RANDOM SEED
 static PRM_Name SEED("seed", "Random Seed");
 
-// -- PRIMITIVE CLASSIFIERS
-static PRM_Name SHAPE_CLS_ATTR("shapeClsAttr", "Shape Classifier");
-static PRM_Name SHAPE_CLS_TYPE("shapeClsType", "Shape Classifier Type");
-static PRM_Name shapeClsTypes[] = {
-	PRM_Name("STRING", "String"),
-	PRM_Name("INT", "Integer"),
-	PRM_Name("FLOAT", "Float"),
-	PRM_Name(nullptr)
-};
-static PRM_ChoiceList shapeClsTypeMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), shapeClsTypes);
-static PRM_Default shapeClsTypeDefault(0, "INT");
 
-static PRM_Default DEFAULT_SHAPE_CLS_ATTR(0.0f, "shapeCls", CH_STRING_LITERAL);
+// -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
-		PRM_Template(PRM_STRING, 1, &SHAPE_CLS_ATTR, &DEFAULT_SHAPE_CLS_ATTR),
-		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &SHAPE_CLS_TYPE, &shapeClsTypeDefault, &shapeClsTypeMenu),
+		PRM_Template(PRM_STRING,                            1, &PARAM_NAME_PRIM_CLS_ATTR, &DEFAULT_PRIM_CLS_ATTR),
+		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &PARAM_NAME_PRIM_CLS_TYPE, &DEFAULT_PRIM_CLS_TYPE, &primClsTypeMenu),
 
 		// rpk, rulefile, startrule, ...
 		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault,    nullptr, nullptr, rpkCallback, &PRM_SpareData::fileChooserModeRead),
@@ -75,11 +89,11 @@ static PRM_Template PARAM_TEMPLATES[] = {
 
 namespace GenerateNodeParams {
 
-// TODO static PRM_Name EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
+static PRM_Name EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
 static PRM_Name EMIT_MATERIAL("emitMaterials", "Emit material attributes");
 static PRM_Name EMIT_REPORTS("emitReports", "Emit CGA reports");
 static PRM_Template PARAM_TEMPLATES[] {
-		// TODO PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
+		PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
 		PRM_Template(PRM_TOGGLE, 1, &EMIT_MATERIAL),
 		PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORTS),
 		PRM_Template()

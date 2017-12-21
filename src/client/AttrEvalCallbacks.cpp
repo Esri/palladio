@@ -54,19 +54,21 @@ prt::Status AttrEvalCallbacks::cgaReportString(size_t isIndex, int32_t shapeID, 
 }
 
 prt::Status AttrEvalCallbacks::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
+	if (DBG) LOG_DBG << "attrBool: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
 		mAMBS[isIndex]->setBool(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-	if (DBG) LOG_DBG << "attrFloat: " << key << " = " << value;
+	if (DBG) LOG_DBG << "attrFloat: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
 		mAMBS[isIndex]->setFloat(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+	if (DBG) LOG_DBG << "attrString: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo && !isHiddenAttribute(mRuleFileInfo, key))
 		mAMBS[isIndex]->setString(key, value);
 	return prt::STATUS_OK;

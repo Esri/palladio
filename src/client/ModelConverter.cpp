@@ -168,8 +168,8 @@ GA_Offset createPrimitives(GU_Detail* mDetail, const wchar_t* name,
 } // namespace ModelConversion
 
 
-ModelConverter::ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt)
-: mDetail(gdp), mAutoInterrupt(autoInterrupt) { }
+ModelConverter::ModelConverter(GU_Detail* detail, UT_AutoInterrupt* autoInterrupt)
+: mDetail(detail), mAutoInterrupt(autoInterrupt) { }
 
 void ModelConverter::add(const wchar_t* name,
                          const double* vtx, size_t vtxSize,
@@ -182,9 +182,11 @@ void ModelConverter::add(const wchar_t* name,
                          uint32_t uvSets,
                          const uint32_t* faceRanges, size_t faceRangesSize,
                          const prt::AttributeMap** materials,
-                         const prt::AttributeMap** reports)
+                         const prt::AttributeMap** reports,
+                         const int32_t* shapeIDs)
 {
-	std::lock_guard<std::mutex> guard(mDetailMutex); // protect all mDetail accesses
+	// we need to protect mDetail, it is accessed by multiple generate threads
+	std::lock_guard<std::mutex> guard(mDetailMutex);
 
 	const GA_Offset primStartOffset = ModelConversion::createPrimitives(mDetail, name,
 	                                                                    vtx, vtxSize, nrm, nrmSize, uvs, uvsSize,
@@ -215,6 +217,19 @@ void ModelConverter::add(const wchar_t* name,
 				AttributeConversion::extractAttributeNames(handleMap, attrMap);
 				AttributeConversion::createAttributeHandles(mDetail, handleMap);
 				AttributeConversion::setAttributeValues(handleMap, attrMap, primIndexMap, rangeStart, rangeSize);
+			}
+
+			if (!mShapeAttributeBuilders.empty()) {
+				// implicit contract: the attr{Bool,Float,String} callbacks are called prior to ModelConverter::add
+				const int32_t shapeID = shapeIDs[fri];
+				auto it = mShapeAttributeBuilders.find(shapeID);
+				if (it != mShapeAttributeBuilders.end()) {
+					const AttributeMapUPtr attrMap(it->second->createAttributeMap());
+					AttributeConversion::extractAttributeNames(handleMap, attrMap.get());
+					AttributeConversion::createAttributeHandles(mDetail, handleMap);
+					AttributeConversion::setAttributeValues(handleMap, attrMap.get(), primIndexMap,
+					                                        rangeStart, rangeSize);
+				}
 			}
 		}
 	}
@@ -251,14 +266,28 @@ prt::Status ModelConverter::cgaReportString(size_t isIndex, int32_t shapeID, con
 	return prt::STATUS_OK;
 }
 
+namespace {
+
+AttributeMapBuilderUPtr& getBuilder(std::map<int32_t, AttributeMapBuilderUPtr>& amb, int32_t shapeID) {
+	auto it = amb.find(shapeID);
+	if (it == amb.end())
+		it = amb.emplace(shapeID, std::move(AttributeMapBuilderUPtr(prt::AttributeMapBuilder::create()))).first;
+	return it->second;
+}
+
+} // namespace
+
 prt::Status ModelConverter::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
+	getBuilder(mShapeAttributeBuilders, shapeID)->setBool(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status ModelConverter::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
+	getBuilder(mShapeAttributeBuilders, shapeID)->setFloat(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status ModelConverter::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+	getBuilder(mShapeAttributeBuilders, shapeID)->setString(key, value);
 	return prt::STATUS_OK;
 }

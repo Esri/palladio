@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project(prt4houdini_tests CXX)
 
-add_executable(${PROJECT_NAME} tests.cpp)
+add_executable(${PROJECT_NAME} tests.cpp TestUtils.cpp TestCallbacks.h)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
         -std=c++11)
