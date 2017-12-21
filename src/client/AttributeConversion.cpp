@@ -264,11 +264,10 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
 
 namespace {
 
-constexpr const char* ATTR_NAME_TO_HOUDINI[][2] = {
-	{ ".", "_dot_" },
-	{ "$", "_dollar_" }
+constexpr const char* RULE_ATTR_NAME_TO_PRIM_ATTR[][2] = {
+	{ ".", "__" }
 };
-constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(ATTR_NAME_TO_HOUDINI[0]);
+constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N = sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR)/sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR[0]);
 
 constexpr wchar_t STYLE_SEPARATOR = L'$';
 
@@ -290,15 +289,15 @@ namespace NameConversion {
 
 UT_String toPrimAttr(const std::wstring& name) {
 	std::string s = toOSNarrowFromUTF16(removeStyle(name));
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
+	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
+		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
 	return UT_String(UT_String::ALWAYS_DEEP, s);
 }
 
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {
 	std::string s = name.toStdString();
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
+	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
+		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
 	return addStyle(toUTF16FromOSNarrow(s), style);
 }
 
