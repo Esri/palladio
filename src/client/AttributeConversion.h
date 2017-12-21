@@ -38,9 +38,7 @@ struct ProtoHandle {
 	prt::AttributeMap::PrimitiveType type; // original PRT type
 };
 
-using HandleMap = std::unordered_map<UT_String, ProtoHandle>;
-
-
+using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
 
 void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap);
 void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap);
@@ -53,7 +51,7 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
 
 namespace NameConversion {
 
-UT_String toPrimAttr(const std::wstring& name);
+UT_StringHolder toPrimAttr(const std::wstring& name);
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name);
 
 } // namespace NameConversion

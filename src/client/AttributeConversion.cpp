@@ -1,13 +1,63 @@
 #include "AttributeConversion.h"
+#include "LRUCache.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
 #include "boost/algorithm/string.hpp"
 
+#include <mutex>
+
 
 namespace {
 
 constexpr bool DBG = false;
+
+#undef STRING_CONVERSION_CACHE_STATS
+
+// thread safe wrapper for LRU cache
+struct StringConversionCache {
+	lru_cache<std::wstring,UT_StringHolder> mCache;
+	std::mutex mMutex;
+
+#ifdef STRING_CONVERSION_CACHE_STATS
+	size_t hits = 0;
+	size_t misses = 0;
+#endif
+
+	StringConversionCache() : mCache(1 << 12) { }
+
+	~StringConversionCache() {
+#ifdef STRING_CONVERSION_CACHE_STATS
+		std::wcout << L"~LRUCache: capacity = " << mCache.capacity() << L", size = " << mCache.size() << L", hits = " << hits << L", misses = " << misses << std::endl;
+#endif
+	}
+
+	const UT_StringHolder* get(const std::wstring& ws) {
+		std::lock_guard<std::mutex> guard(mMutex);
+
+		auto v = mCache.get(ws);
+		if (v) {
+#ifdef STRING_CONVERSION_CACHE_STATS
+			hits++;
+#endif
+			return &v.get();
+		}
+#ifdef STRING_CONVERSION_CACHE_STATS
+		misses++;
+#endif
+		return nullptr;
+	}
+
+	UT_StringHolder add(const std::wstring& ws, const UT_StringHolder& s) {
+		std::lock_guard<std::mutex> guard(mMutex);
+
+		mCache.insert(ws, s);
+		return mCache.get(ws).get();
+	}
+};
+
+StringConversionCache theStringConversionCache;
+
 
 class HandleVisitor : public boost::static_visitor<> {
 private:
@@ -29,12 +79,19 @@ public:
 	    assert(protoHandle.keys.size() == 1);
 	    const wchar_t* v = attrMap->getString(protoHandle.keys.front().c_str());
 		if (v && std::wcslen(v) > 0) {
-			const std::string nv = toOSNarrowFromUTF16(v);
-			const UT_StringHolder hv(nv.c_str());
+
+			const UT_StringHolder& hv = [&v]() {
+				const UT_StringHolder* sh = theStringConversionCache.get(v);
+				if (sh != nullptr)
+					return *sh;
+				const std::string nv = toOSNarrowFromUTF16(v);
+				return theStringConversionCache.add(v, nv);
+			}();
+
 			const GA_Range range(primIndexMap, rangeStart, rangeStart+rangeSize);
 			handle.set(range, 0, hv);
 			if (DBG) LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangeStart+rangeSize << "): "
-			                 << handle.getAttribute()->getName() << " = " << nv;
+			                 << handle.getAttribute()->getName() << " = " << hv;
 		}
     }
 
@@ -121,7 +178,7 @@ void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstrin
 {
 	WA("all");
 
-	const UT_String utName = NameConversion::toPrimAttr(handleName);
+	const UT_StringHolder& utName = NameConversion::toPrimAttr(handleName);
 	if (DBG) LOG_DBG << "handle name conversion: handleName = " << handleName << ", utName = " << utName;
 	handleMap.emplace(utName, std::move(ph));
 }
@@ -289,13 +346,18 @@ std::wstring removeStyle(const std::wstring& n) {
 
 namespace NameConversion {
 
-UT_String toPrimAttr(const std::wstring& name) {
+UT_StringHolder toPrimAttr(const std::wstring& name) {
 	WA("all");
+
+	const UT_StringHolder* cv = theStringConversionCache.get(name);
+	if (cv != nullptr)
+		return *cv;
 
 	std::string s = toOSNarrowFromUTF16(removeStyle(name));
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
 		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
-	return UT_String(UT_String::ALWAYS_DEEP, s);
+
+	return theStringConversionCache.add(name, s);
 }
 
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {

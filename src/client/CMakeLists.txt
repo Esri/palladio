@@ -23,7 +23,8 @@ add_library(${PROJECT_NAME} SHARED
 		AttributeConversion.cpp
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
-		LogHandler.h)
+		LogHandler.h
+		LRUCache.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${PRT_INCLUDE_PATH}
