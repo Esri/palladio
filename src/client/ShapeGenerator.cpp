@@ -1,5 +1,6 @@
 #include "ShapeGenerator.h"
 #include "PrimitivePartition.h"
+#include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
@@ -14,50 +15,9 @@ namespace {
 
 constexpr bool DBG = false;
 
-const std::set<UT_StringHolder> MAIN_ATTRIBUTES = { CE_PRIM_CLS_NAME, CE_PRIM_CLS_TYPE, CE_SHAPE_RPK,
-                                                    CE_SHAPE_RULE_FILE, CE_SHAPE_START_RULE, CE_SHAPE_STYLE,
-                                                    CE_SHAPE_SEED };
-
-template<typename T>
-T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
-	GA_ROHandleS h(ref);
-	const char* s = h.get(off);
-	return (s != nullptr) ? T{s} : T{};
-}
-
-// TODO: factor this out into a MainAttributeHandler or such
-bool extractMainAttributes(ShapeConverter& ssd, const GA_Primitive* prim, const GU_Detail* detail) {
-	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(CE_SHAPE_RPK));
-	if (rpkRef.isInvalid())
-		return false;
-
-	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(CE_SHAPE_RULE_FILE));
-	if (ruleFileRef.isInvalid())
-		return false;
-
-	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(CE_SHAPE_START_RULE));
-	if (startRuleRef.isInvalid())
-		return false;
-
-	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(CE_SHAPE_STYLE));
-	if (styleRef.isInvalid())
-		return false;
-
-	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
-	if (seedRef.isInvalid())
-		return false;
-
-	const GA_Offset firstOffset = prim->getMapOffset();
-	ssd.mRPK       = safeGet<boost::filesystem::path>(firstOffset, rpkRef);
-	ssd.mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
-	ssd.mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
-	ssd.mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
-
-	GA_ROHandleI seedH(seedRef);
-	ssd.mSeed = seedH.get(firstOffset);
-
-	return true;
-}
+const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { CE_PRIM_CLS_NAME, CE_PRIM_CLS_TYPE, CE_SHAPE_RPK,
+                                                        CE_SHAPE_RULE_FILE, CE_SHAPE_START_RULE, CE_SHAPE_STYLE,
+                                                        CE_SHAPE_SEED };
 
 } // namespace
 
@@ -79,7 +39,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 			// do not add the main attributes as normal initial shape attributes
 			// else they end up as primitive attributes on the generated geometry
-			if (MAIN_ATTRIBUTES.count(n) > 0)
+			if (ATTRIBUTE_BLACKLIST.count(n) > 0)
 				continue;
 
 			attributes.emplace(n, GA_ROAttributeRef(a));
@@ -89,7 +49,8 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		std::set<UT_StringHolder> removeMe;
 		const GA_Primitive* p;
 		GA_FOR_ALL_PRIMITIVES(detail, p) {
-			const PrimitiveClassifier pc = primCls.updateFromPrimitive(detail, p);
+			PrimitiveClassifier pc;
+			primCls.updateFromPrimitive(pc, detail, p);
 			if (removeMe.emplace(pc.name).second) {
 				auto it = attributes.find(pc.name);
 				if (it != attributes.end()) {
@@ -112,7 +73,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pv.size();
 
 		// extract main attrs from first prim in initial shape prim group
-		if (!extractMainAttributes(*this, firstPrimitive, detail))
+		if (!getMainAttributes(detail, firstPrimitive))
 			continue;
 
 		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(mRPK);

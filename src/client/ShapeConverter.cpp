@@ -1,4 +1,5 @@
 #include "ShapeConverter.h"
+#include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
@@ -14,7 +15,40 @@ namespace {
 
 constexpr bool DBG = false;
 
+template<typename T>
+T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
+	GA_ROHandleS h(ref);
+	const char* s = h.get(off);
+	return (s != nullptr) ? T{s} : T{};
+}
+
 } // namespace
+
+
+struct MainAttributeHandles {
+	GA_RWHandleS rpk;
+	GA_RWHandleS ruleFile;
+	GA_RWHandleS startRule;
+	GA_RWHandleS style;
+	GA_RWHandleI seed;
+
+	void setup(GU_Detail* detail) {
+		GA_RWAttributeRef rpkRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RPK, 1));
+		rpk.bind(rpkRef);
+
+		GA_RWAttributeRef ruleFileRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RULE_FILE, 1));
+		ruleFile.bind(ruleFileRef);
+
+		GA_RWAttributeRef startRuleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_START_RULE, 1));
+		startRule.bind(startRuleRef);
+
+		GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_STYLE, 1));
+		style.bind(styleRef);
+
+		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_SEED, 1));
+		seed.bind(seedRef);
+	}
+};
 
 
 void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
@@ -76,52 +110,13 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	assert(shapeData.isValid());
 }
 
-void ShapeConverter::put(GU_Detail* detail, const PrimitiveClassifier& primCls, const ShapeData& shapeData) const {
+void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const ShapeData& shapeData) const {
 	WA("all");
 
-    // TODO: factor out
-	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_PRIM_CLS_NAME, 1));
-	GA_RWHandleS clsAttrNameH(clsAttrNameRef);
+	primCls.setupAttributeHandles(detail);
 
-	GA_RWAttributeRef clsTypeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_PRIM_CLS_TYPE, 1));
-	GA_RWHandleI clsTypeH(clsTypeRef);
-
-	GA_RWAttributeRef clsNameRef;
-	using HandleType = boost::variant<GA_RWHandleF, GA_RWHandleI, GA_RWHandleS>;
-	HandleType clsNameH;
-	switch (primCls.type) {
-		case GA_STORECLASS_FLOAT:
-			clsNameRef = GA_RWAttributeRef(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
-			clsNameH = GA_RWHandleF(clsNameRef);
-			break;
-		case GA_STORECLASS_INT:
-			clsNameRef = GA_RWAttributeRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
-			clsNameH = GA_RWHandleI(clsNameRef);
-			break;
-		case GA_STORECLASS_STRING:
-			clsNameRef = GA_RWAttributeRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primCls.name, 1));
-			clsNameH = GA_RWHandleS(clsNameRef);
-			break;
-		default:
-			break;
-	}
-
-	// setup main attributes handles (potentially overwrite existing attributes)
-	// TODO: factor this out into a MainAttributeHandler or such
-	GA_RWAttributeRef rpkRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RPK, 1));
-	GA_RWHandleS rpkH(rpkRef);
-
-	GA_RWAttributeRef ruleFileRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RULE_FILE, 1));
-	GA_RWHandleS ruleFileH(ruleFileRef);
-
-	GA_RWAttributeRef startRuleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_START_RULE, 1));
-	GA_RWHandleS startRuleH(startRuleRef);
-
-	GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_STYLE, 1));
-	GA_RWHandleS styleH(styleRef);
-
-	GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_SEED, 1));
-	GA_RWHandleI seedH(seedRef);
+	MainAttributeHandles mah;
+	mah.setup(detail);
 
 	// generate primitive attribute handles from all default rule attribute names from all initial shapes
 	std::map<std::string, GA_RWAttributeRef> mAttrRefs;
@@ -169,17 +164,10 @@ void ShapeConverter::put(GU_Detail* detail, const PrimitiveClassifier& primCls, 
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 
 		for (auto& prim: pv) {
-			const GA_Offset &off = prim->getMapOffset();
-			clsAttrNameH.set(off, primCls.name);
-			clsTypeH.set(off, primCls.type);
+			primCls.put(prim);
+			putMainAttributes(mah, prim);
 
-			// put main attributes
-			// TODO: factor this out into a MainAttributeHandler or such
-			rpkH.set(off, mRPK.string().c_str());
-			ruleFileH.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
-			startRuleH.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
-			styleH.set(off, toOSNarrowFromUTF16(mStyle).c_str());
-			seedH.set(off, mSeed);
+			const GA_Offset &off = prim->getMapOffset();
 
 			size_t keyCount = 0;
 			const wchar_t *const *cKeys = defaultRuleAttributes->getKeys(&keyCount);
@@ -217,6 +205,75 @@ void ShapeConverter::put(GU_Detail* detail, const PrimitiveClassifier& primCls, 
 			} // for default rule attribute keys
 		} // for all primitives in initial shape
 	} // for all initial shapes
+}
+
+void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
+	const fpreal now = context.getTime();
+
+	// -- rule package path
+	UT_String utNextRPKStr;
+	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, now);
+	mRPK = utNextRPKStr.toStdString();
+
+	// -- rule file
+	UT_String utRuleFile;
+	node->evalString(utRuleFile, AssignNodeParams::RULE_FILE.getToken(), 0, now);
+	mRuleFile = toUTF16FromOSNarrow(utRuleFile.toStdString());
+
+	// -- rule style
+	UT_String utStyle;
+	node->evalString(utStyle, AssignNodeParams::STYLE.getToken(), 0, now);
+	mStyle = toUTF16FromOSNarrow(utStyle.toStdString());
+
+	// -- start rule
+	UT_String utStartRule;
+	node->evalString(utStartRule, AssignNodeParams::START_RULE.getToken(), 0, now);
+	mStartRule = toUTF16FromOSNarrow(utStartRule.toStdString());
+
+	// -- random seed
+	mSeed = node->evalInt(AssignNodeParams::SEED.getToken(), 0, now);
+}
+
+bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {
+	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(CE_SHAPE_RPK));
+	if (rpkRef.isInvalid())
+		return false;
+
+	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(CE_SHAPE_RULE_FILE));
+	if (ruleFileRef.isInvalid())
+		return false;
+
+	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(CE_SHAPE_START_RULE));
+	if (startRuleRef.isInvalid())
+		return false;
+
+	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(CE_SHAPE_STYLE));
+	if (styleRef.isInvalid())
+		return false;
+
+	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
+	if (seedRef.isInvalid())
+		return false;
+
+	const GA_Offset firstOffset = prim->getMapOffset();
+	mRPK       = safeGet<boost::filesystem::path>(firstOffset, rpkRef);
+	mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
+	mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
+	mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
+
+	GA_ROHandleI seedH(seedRef);
+	mSeed = seedH.get(firstOffset);
+
+	return true;
+}
+
+void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const {
+	const GA_Offset &off = primitive->getMapOffset();
+	mah.rpk.set(off, mRPK.string().c_str());
+	mah.ruleFile.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
+	mah.startRule.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
+	mah.style.set(off, toOSNarrowFromUTF16(mStyle).c_str());
+	mah.seed.set(off, mSeed);
 }
 
 RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {

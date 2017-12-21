@@ -12,6 +12,11 @@
 
 
 class GU_Detail;
+class GA_Primitive;
+class OP_Context;
+class PrimitiveClassifier;
+class MainAttributeHandles;
+
 
 class ShapeData final {
 public:
@@ -59,7 +64,11 @@ class ShapeConverter {
 public:
 	virtual void get(const GU_Detail* detail,  const PrimitiveClassifier& primCls,
 	                 ShapeData& shapeData, const PRTContextUPtr& prtCtx);
-	void put(GU_Detail* detail, const PrimitiveClassifier& primCls, const ShapeData& shapeData) const;
+	void put(GU_Detail* detail, PrimitiveClassifier& primCls, const ShapeData& shapeData) const;
+
+	void getMainAttributes(SOP_Node* node, const OP_Context& context);
+	bool getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim);
+	void putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const;
 
 	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;

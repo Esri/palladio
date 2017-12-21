@@ -1,5 +1,6 @@
 #include "SOPAssign.h"
 #include "AttrEvalCallbacks.h"
+#include "PrimitiveClassifier.h"
 #include "ShapeGenerator.h"
 #include "ModelConverter.h"
 #include "NodeParameter.h"
@@ -103,9 +104,6 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
 
-	evaluatePrimitiveClassifier(context);
-	evaluateSharedShapeData(context);
-
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
 		return error();
@@ -115,75 +113,20 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Assigning CityEngine rule attributes...");
 
+		PrimitiveClassifier primCls(this, context);
+		mShapeConverter->getMainAttributes(this, context);
+
 		ShapeData shapeData;
-		mShapeConverter->get(gdp, mPrimCls, shapeData, mPRTCtx);
+		mShapeConverter->get(gdp, primCls, shapeData, mPRTCtx);
 		const bool canContinue = evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
 		if (!canContinue) {
 			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
 			return UT_ERROR_ABORT;
 		}
-		mShapeConverter->put(gdp, mPrimCls, shapeData);
+		mShapeConverter->put(gdp, primCls, shapeData);
 	}
 
 	unlockInputs();
 
 	return error();
-}
-
-void SOPAssign::evaluatePrimitiveClassifier(OP_Context &context) {
-	const fpreal now = context.getTime();
-
-	// -- primitive classifier attr name
-	UT_String utNextClsAttrName;
-	evalString(utNextClsAttrName, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
-	if (utNextClsAttrName.length() > 0)
-		mPrimCls.name.adopt(utNextClsAttrName);
-	else
-		setString(mPrimCls.name, CH_STRING_LITERAL, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
-
-	// -- primitive classifier attr type
-	const auto typeChoice = evalInt(AssignNodeParams::PARAM_NAME_PRIM_CLS_TYPE.getToken(), 0, now);
-	switch (typeChoice) {
-		case 0: mPrimCls.type = GA_STORECLASS_STRING; break;
-		case 1: mPrimCls.type = GA_STORECLASS_INT;    break;
-		case 2: mPrimCls.type = GA_STORECLASS_FLOAT;  break;
-		default: break;
-	}
-}
-
-void SOPAssign::evaluateSharedShapeData(OP_Context &context) {
-	WA("all");
-
-	const fpreal now = context.getTime();
-
-	// -- rule package path
-	mShapeConverter->mRPK = [this,now](){
-		UT_String utNextRPKStr;
-		evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, now);
-		return boost::filesystem::path(utNextRPKStr.toStdString());
-	}();
-
-	// -- rule file
-	mShapeConverter->mRuleFile = [this,now](){
-		UT_String utRuleFile;
-		evalString(utRuleFile, AssignNodeParams::RULE_FILE.getToken(), 0, now);
-		return toUTF16FromOSNarrow(utRuleFile.toStdString());
-	}();
-
-	// -- rule style
-	mShapeConverter->mStyle = [this,now](){
-		UT_String utStyle;
-		evalString(utStyle, AssignNodeParams::STYLE.getToken(), 0, now);
-		return toUTF16FromOSNarrow(utStyle.toStdString());
-	}();
-
-	// -- start rule
-	mShapeConverter->mStartRule = [this,now](){
-		UT_String utStartRule;
-		evalString(utStartRule, AssignNodeParams::START_RULE.getToken(), 0, now);
-		return toUTF16FromOSNarrow(utStartRule.toStdString());
-	}();
-
-	// -- random seed
-	mShapeConverter->mSeed = evalInt(AssignNodeParams::SEED.getToken(), 0, now);
 }

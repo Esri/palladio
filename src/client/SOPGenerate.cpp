@@ -1,6 +1,7 @@
 #include "SOPGenerate.h"
 #include "NodeParameter.h"
 #include "ShapeGenerator.h"
+#include "PrimitiveClassifier.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
 
@@ -19,7 +20,7 @@ constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
 constexpr const wchar_t* ENCODER_ID_CGA_ERROR = L"com.esri.prt.core.CGAErrorEncoder";
 constexpr const wchar_t* ENCODER_ID_CGA_PRINT = L"com.esri.prt.core.CGAPrintEncoder";
 
-const PrimitiveClassifier DEFAULT_PRIMITIVE_CLASSIFIER = PrimitiveClassifier();
+const PrimitiveClassifier DEFAULT_PRIMITIVE_CLASSIFIER;
 
 } // namespace
 
@@ -98,7 +99,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 				// prt requires one callback instance per generate call
 				std::vector<ModelConverterUPtr> hg(nThreads);
-				std::generate(hg.begin(), hg.end(), [&]() -> ModelConverterUPtr {
+				std::generate(hg.begin(), hg.end(), [this,&progress]() -> ModelConverterUPtr {
 					return ModelConverterUPtr(new ModelConverter(gdp, &progress));
 				});
 

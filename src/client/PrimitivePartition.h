@@ -2,6 +2,7 @@
 
 #include "NodeParameter.h"
 
+#include "SOP/SOP_Node.h"
 #include "GA/GA_Primitive.h"
 #include "GU/GU_Detail.h"
 
@@ -10,17 +11,7 @@
 #include <vector>
 #include <map>
 
-
-const UT_String CE_PRIM_CLS_NAME = "cePrimClsName";
-const UT_String CE_PRIM_CLS_TYPE = "cePrimClsType";
-
-struct PrimitiveClassifier {
-	UT_String       name;
-	GA_StorageClass type = AssignNodeParams::DEFAULT_PRIM_CLS_TYPE_VALUE;
-
-	PrimitiveClassifier updateFromPrimitive(const GA_Detail* detail, const GA_Primitive* p) const;
-};
-
+class PrimitiveClassifier;
 
 class PrimitivePartition {
 public:

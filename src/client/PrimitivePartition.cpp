@@ -1,4 +1,5 @@
 #include "PrimitivePartition.h"
+#include "PrimitiveClassifier.h"
 #include "LogHandler.h"
 
 
@@ -9,23 +10,6 @@ constexpr int32 INVALID_CLS_VALUE = -1;
 
 } // namespace
 
-PrimitiveClassifier PrimitiveClassifier::updateFromPrimitive(const GA_Detail* detail, const GA_Primitive* p) const {
-	if (DBG) detail->getAttributeDict(GA_ATTRIB_PRIMITIVE).forEachAttribute([](const GA_Attribute* a){ LOG_DBG << a->getName(); });
-
-	const GA_ROAttributeRef primClsAttrNameRef = detail->findPrimitiveAttribute(CE_PRIM_CLS_NAME);
-	const GA_ROAttributeRef primClsAttrTypeRef = detail->findPrimitiveAttribute(CE_PRIM_CLS_TYPE);
-
-	PrimitiveClassifier pc = *this;
-	if (primClsAttrNameRef.isValid() && primClsAttrTypeRef.isValid()) {
-		const GA_ROHandleS nameH(primClsAttrNameRef);
-		pc.name = nameH.get(p->getMapOffset());
-
-		const GA_ROHandleI typeH(primClsAttrTypeRef);
-		pc.type = static_cast<GA_StorageClass>(typeH.get(p->getMapOffset()));
-	}
-
-	return pc;
-}
 
 PrimitivePartition::PrimitivePartition(const GA_Detail* detail, const PrimitiveClassifier& primCls) {
 	const GA_Primitive* prim = nullptr;
@@ -37,13 +21,14 @@ PrimitivePartition::PrimitivePartition(const GA_Detail* detail, const PrimitiveC
 void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier& primCls, const GA_Primitive* p) {
 	if (DBG) LOG_DBG << "      adding prim: " << detail->primitiveIndex(p->getMapOffset());
 
-	const PrimitiveClassifier pc = primCls.updateFromPrimitive(detail, p);
+	PrimitiveClassifier updatedPrimCls;
+	primCls.updateFromPrimitive(updatedPrimCls, detail, p);
 
 	// try to read primitive classifier attr name and type
 	GA_ROAttributeRef primClsAttrRef;
-	if (pc.name.length() > 0) { // we have a valid primitive classifier attribute name
-		const GA_ROAttributeRef r(detail->findPrimitiveAttribute(pc.name));
-		if (r.isValid() && r->getStorageClass() == pc.type)
+	if (updatedPrimCls.name.length() > 0) { // we have a valid primitive classifier attribute name
+		const GA_ROAttributeRef r(detail->findPrimitiveAttribute(updatedPrimCls.name));
+		if (r.isValid() && r->getStorageClass() == updatedPrimCls.type)
 			primClsAttrRef = r; // we found the primitive classifier attribute itself
 	}
 
@@ -51,7 +36,7 @@ void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier&
 		mPrimitives[INVALID_CLS_VALUE].push_back(p);
 		if (DBG) LOG_DBG << "       missing cls name: adding prim to fallback shape!";
 	}
-	else if ((pc.type == GA_STORECLASS_FLOAT) && primClsAttrRef.isFloat()) {
+	else if ((updatedPrimCls.type == GA_STORECLASS_FLOAT) && primClsAttrRef.isFloat()) {
 		const GA_ROHandleF av(primClsAttrRef);
 		if (av.isValid()) {
 			const fpreal32 v = av.get(p->getMapOffset());
@@ -62,7 +47,7 @@ void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier&
 			if (DBG) LOG_DBG << "        float: invalid handle!";
 		}
 	}
-	else if ((pc.type == GA_STORECLASS_INT) && primClsAttrRef.isInt()) {
+	else if ((updatedPrimCls.type == GA_STORECLASS_INT) && primClsAttrRef.isInt()) {
 		const GA_ROHandleI av(primClsAttrRef);
 		if (av.isValid()) {
 			const int32 v = av.get(p->getMapOffset());
@@ -73,7 +58,7 @@ void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier&
 			if (DBG) LOG_DBG << "        int: invalid handle!";
 		}
 	}
-	else if ((pc.type == GA_STORECLASS_STRING) && primClsAttrRef.isString()) {
+	else if ((updatedPrimCls.type == GA_STORECLASS_STRING) && primClsAttrRef.isString()) {
 		const GA_ROHandleS av(primClsAttrRef);
 		if (av.isValid()) {
 			const char* v = av.get(p->getMapOffset());

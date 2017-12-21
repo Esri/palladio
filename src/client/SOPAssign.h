@@ -15,13 +15,9 @@ public:
 	const ShapeConverterUPtr& getShapeConverter() const { return mShapeConverter; }
 
 protected:
-	OP_ERROR cookMySop(OP_Context &context) override;
+	OP_ERROR cookMySop(OP_Context& context) override;
 
 private:
-	void evaluatePrimitiveClassifier(OP_Context &context);
-	void evaluateSharedShapeData(OP_Context &context);
-
 	const PRTContextUPtr& mPRTCtx;
-	PrimitiveClassifier   mPrimCls;
 	ShapeConverterUPtr    mShapeConverter;
 };
