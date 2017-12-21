@@ -119,9 +119,8 @@ bool isColorGroup(const std::wstring& primary, const Candidate& candidate, const
 void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstring& handleName,
                     AttributeConversion::ProtoHandle&& ph)
 {
-	const std::string nName = toOSNarrowFromUTF16(handleName);
-	const UT_String utName = NameConversion::toPrimAttr(nName);
-	if (DBG) LOG_DBG << "handle name conversion: nName = " << nName << ", utName = " << utName;
+	const UT_String utName = NameConversion::toPrimAttr(handleName);
+	if (DBG) LOG_DBG << "handle name conversion: handleName = " << handleName << ", utName = " << utName;
 	handleMap.emplace(utName, std::move(ph));
 }
 
@@ -271,25 +270,36 @@ constexpr const char* ATTR_NAME_TO_HOUDINI[][2] = {
 };
 constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(ATTR_NAME_TO_HOUDINI[0]);
 
+constexpr wchar_t STYLE_SEPARATOR = L'$';
+
+std::wstring addStyle(const std::wstring& n, const std::wstring& style) {
+	return style + STYLE_SEPARATOR + n;
+}
+
+std::wstring removeStyle(const std::wstring& n) {
+	const auto p = n.find_first_of(STYLE_SEPARATOR);
+	if (p != std::string::npos)
+		return n.substr(p+1);
+	return n;
+}
+
 } // namespace
 
 
 namespace NameConversion {
 
-// TODO: look into GA_AttributeOptions to transport original prt attribute names between assign and generate node
-
-UT_String toPrimAttr(const std::string& name) {
-	std::string s = name;
+UT_String toPrimAttr(const std::wstring& name) {
+	std::string s = toOSNarrowFromUTF16(removeStyle(name));
 	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
 		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
 	return UT_String(UT_String::ALWAYS_DEEP, s);
 }
 
-std::string toRuleAttr(const UT_StringHolder& name) {
+std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {
 	std::string s = name.toStdString();
 	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
 		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
-	return s;
+	return addStyle(toUTF16FromOSNarrow(s), style);
 }
 
 } // namespace NameConversion

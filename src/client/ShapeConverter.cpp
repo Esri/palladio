@@ -119,9 +119,9 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 	mah.setup(detail);
 
 	// generate primitive attribute handles from all default rule attribute names from all initial shapes
-	std::map<std::string, GA_RWAttributeRef> mAttrRefs;
 	AttributeMapVector defaultRuleAttributeMaps;
 	defaultRuleAttributeMaps.reserve(shapeData.mRuleAttributeBuilders.size());
+	std::map<const wchar_t*, GA_RWAttributeRef> mAttrRefs; // key points to defaultRuleAttributeMaps
 	for (auto& amb: shapeData.mRuleAttributeBuilders) {
 		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
 		const auto& dra = defaultRuleAttributeMaps.back();
@@ -130,27 +130,26 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 		const wchar_t* const* cKeys = dra->getKeys(&keyCount);
 		for (size_t k = 0; k < keyCount; k++) {
 			const wchar_t* key = cKeys[k];
-			const std::string nKey = toOSNarrowFromUTF16(key);
 
 			// make sure to only generate an attribute handle once
-			if (mAttrRefs.count(nKey) > 0)
+			if (mAttrRefs.count(key) > 0)
 				continue;
 
-			UT_String primAttrName = NameConversion::toPrimAttr(nKey);
+			const UT_String primAttrName = NameConversion::toPrimAttr(key);
 
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
 					GA_RWAttributeRef ar(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					if (ar.isValid())
-						mAttrRefs.emplace(nKey, ar);
+						mAttrRefs.emplace(key, ar);
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
-					mAttrRefs.emplace(nKey, detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
+					mAttrRefs.emplace(key, detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
-					mAttrRefs.emplace(nKey, detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
+					mAttrRefs.emplace(key, detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
 					break;
 				}
 				default:
@@ -167,15 +166,14 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			primCls.put(prim);
 			putMainAttributes(mah, prim);
 
-			const GA_Offset &off = prim->getMapOffset();
+			const GA_Offset& off = prim->getMapOffset();
 
 			size_t keyCount = 0;
-			const wchar_t *const *cKeys = defaultRuleAttributes->getKeys(&keyCount);
+			const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
 			for (size_t k = 0; k < keyCount; k++) {
-				const wchar_t *const key = cKeys[k];
-				const std::string nKey = toOSNarrowFromUTF16(key);
+				const wchar_t* const key = cKeys[k];
 
-				GA_RWAttributeRef attrRef = mAttrRefs.at(nKey);
+				const auto& attrRef = mAttrRefs.at(key);
 				switch (defaultRuleAttributes->getType(key)) {
 					case prt::AttributeMap::PT_FLOAT: {
 						GA_RWHandleD av(attrRef);

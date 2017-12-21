@@ -88,8 +88,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			if (ar.isInvalid())
 				continue;
 
-			const std::string nKey = NameConversion::toRuleAttr(attr.first);
-			const std::wstring key = toUTF16FromOSNarrow(nKey);
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(mStyle, attr.first);
 
 			switch (ar.getStorageClass()) {
 				case GA_STORECLASS_FLOAT: {
@@ -97,7 +96,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 					if (av.isValid()) {
 						double v = av.get(primitiveMapOffset);
 						if (DBG) LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
-						amb->setFloat(key.c_str(), v);
+						amb->setFloat(ruleAttrName.c_str(), v);
 					}
 					break;
 				}
@@ -107,7 +106,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 						const char* v = av.get(primitiveMapOffset);
 						const std::wstring wv = toUTF16FromOSNarrow(v);
 						if (DBG) LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
-						amb->setString(key.c_str(), wv.c_str());
+						amb->setString(ruleAttrName.c_str(), wv.c_str());
 					}
 					break;
 				}
@@ -117,7 +116,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 						const int v = av.get(primitiveMapOffset);
 						const bool bv = (v > 0);
 						if (DBG) LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << v;
-						amb->setBool(key.c_str(), bv);
+						amb->setBool(ruleAttrName.c_str(), bv);
 					}
 					break;
 				}
