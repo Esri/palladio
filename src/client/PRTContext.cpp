@@ -126,11 +126,14 @@ PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
 }
 
 PRTContext::~PRTContext() {
-    mLicHandle.reset();
-	LOG_INF << "PRT shutdown & license returned";
+    mPRTCache.reset();
+	LOG_INF << "Released PRT cache";
+
+	mLicHandle.reset();
+	LOG_INF << "Shutdown PRT & returned license";
 
     boost::filesystem::remove_all(mRPKUnpackPath);
-    LOG_INF << "Removed RPK unpack directory.";
+    LOG_INF << "Removed RPK unpack directory";
 
     prt::removeLogHandler(mLogHandler.get());
 }
