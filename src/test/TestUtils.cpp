@@ -38,6 +38,7 @@ void generate(TestCallbacks& tc,
 			case prt::AAT_FLOAT: amb->setFloat(a->getName(), 0.0); break;
 			case prt::AAT_STR: amb->setString(a->getName(), L""); break;
 			case prt::AAT_INT: amb->setInt(a->getName(), 0); break;
+			default: break;
 		}
 	}
 	const AttributeMapUPtr isAttrsProto(amb->createAttributeMapAndReset());
@@ -51,8 +52,8 @@ void generate(TestCallbacks& tc,
 		auto& isb = gd.mInitialShapeBuilders.back();
 
 		gd.mRuleAttributeBuilders.emplace_back(prt::AttributeMapBuilder::createFromAttributeMap(isAttrsProto.get())); // TODO: use shared_ptr
-		auto& amb = gd.mRuleAttributeBuilders.back();
-		gd.mRuleAttributes.emplace_back(amb->createAttributeMap());
+		const auto& rab = gd.mRuleAttributeBuilders.back();
+		gd.mRuleAttributes.emplace_back(rab->createAttributeMap());
 		const auto& am = gd.mRuleAttributes.back();
 
 		const std::wstring sn = L"shape" + std::to_wstring(i);

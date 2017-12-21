@@ -95,7 +95,7 @@ TEST_CASE("extract attribute names", "[AttributeConversion]") {
 	SECTION("don't group strings") {
 		REQUIRE(hm.count("baz") == 0);
 
-		const auto& ph = hm.at("baz_dot_r");
+		const auto& ph = hm.at("baz__r");
 		const std::vector<std::wstring> expKeys = { L"baz.r" };
 
 		CHECK(ph.keys == expKeys);
@@ -113,7 +113,7 @@ TEST_CASE("extract attribute names", "[AttributeConversion]") {
 	}
 
 	SECTION("same.ext primary key") {
-		const auto& ph = hm.at("same_dot_ext");
+		const auto& ph = hm.at("same__ext");
 		const std::vector<std::wstring> expKeys = { L"same.ext" };
 
 		CHECK(ph.keys == expKeys);

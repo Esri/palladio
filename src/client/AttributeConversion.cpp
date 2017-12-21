@@ -82,7 +82,7 @@ bool hasKeys(const prt::AttributeMap* attrMap, const std::vector<std::wstring>& 
 
 struct Candidate {
 	std::vector<std::wstring> keys;
-	std::string::size_type dotPos;
+	std::string::size_type dotPos = -1;
 };
 
 using Candidates = std::map<std::wstring, Candidate>;
@@ -119,9 +119,10 @@ bool isColorGroup(const std::wstring& primary, const Candidate& candidate, const
 void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstring& handleName,
                     AttributeConversion::ProtoHandle&& ph)
 {
-	const std::string nName = toOSNarrowFromUTF16(handleName);
-	const UT_String utName = NameConversion::toPrimAttr(nName);
-	if (DBG) LOG_DBG << "handle name conversion: nName = " << nName << ", utName = " << utName;
+	WA("all");
+
+	const UT_String utName = NameConversion::toPrimAttr(handleName);
+	if (DBG) LOG_DBG << "handle name conversion: handleName = " << handleName << ", utName = " << utName;
 	handleMap.emplace(utName, std::move(ph));
 }
 
@@ -265,31 +266,45 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
 
 namespace {
 
-constexpr const char* ATTR_NAME_TO_HOUDINI[][2] = {
-	{ ".", "_dot_" },
-	{ "$", "_dollar_" }
+constexpr const char* RULE_ATTR_NAME_TO_PRIM_ATTR[][2] = {
+	{ ".", "__" }
 };
-constexpr size_t ATTR_NAME_TO_HOUDINI_N = sizeof(ATTR_NAME_TO_HOUDINI)/sizeof(ATTR_NAME_TO_HOUDINI[0]);
+constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N = sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR)/sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR[0]);
+
+constexpr wchar_t STYLE_SEPARATOR = L'$';
+
+std::wstring addStyle(const std::wstring& n, const std::wstring& style) {
+	return style + STYLE_SEPARATOR + n;
+}
+
+std::wstring removeStyle(const std::wstring& n) {
+	const auto p = n.find_first_of(STYLE_SEPARATOR);
+	if (p != std::string::npos)
+		return n.substr(p+1);
+	return n;
+}
 
 } // namespace
 
 
 namespace NameConversion {
 
-// TODO: look into GA_AttributeOptions to transport original prt attribute names between assign and generate node
+UT_String toPrimAttr(const std::wstring& name) {
+	WA("all");
 
-UT_String toPrimAttr(const std::string& name) {
-	std::string s = name;
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][0], ATTR_NAME_TO_HOUDINI[i][1]);
+	std::string s = toOSNarrowFromUTF16(removeStyle(name));
+	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
+		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
 	return UT_String(UT_String::ALWAYS_DEEP, s);
 }
 
-std::string toRuleAttr(const UT_StringHolder& name) {
+std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {
+	WA("all");
+
 	std::string s = name.toStdString();
-	for (size_t i = 0; i < ATTR_NAME_TO_HOUDINI_N; i++)
-		boost::replace_all(s, ATTR_NAME_TO_HOUDINI[i][1], ATTR_NAME_TO_HOUDINI[i][0]);
-	return s;
+	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
+		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
+	return addStyle(toUTF16FromOSNarrow(s), style);
 }
 
 } // namespace NameConversion
