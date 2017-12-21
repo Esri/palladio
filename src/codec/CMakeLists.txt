@@ -9,7 +9,10 @@ project(prt4houdini_codec CXX)
 
 ### build target
 
-add_library(${PROJECT_NAME} SHARED houdini.cpp encoder/HoudiniEncoder.cpp)
+add_library(${PROJECT_NAME} SHARED
+		houdini.cpp
+		encoder/HoudiniEncoder.cpp
+		encoder/HoudiniCallbacks.h)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
 
