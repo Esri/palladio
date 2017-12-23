@@ -55,11 +55,14 @@ elseif(P4H_LINUX)
 			-fno-strict-aliasing -Wno-unused-local-typedefs)
 
 	if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3)
+		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -g)
+		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -ggdb -pg)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O0 -g)
+		target_compile_options(${PROJECT_NAME} PRIVATE -O0 -ggdb -pg)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
 	endif()
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
