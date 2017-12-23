@@ -142,9 +142,15 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	}
 
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+	if (!resolveMap) {
+		theMenu[0].setToken(nullptr);
+		return;
+	}
+
 	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
 	if (cgbURI == nullptr) {
 		LOG_ERR << L"failed to resolve rule file '" << ssd->mRuleFile << "', aborting.";
+		theMenu[0].setToken(nullptr);
 		return;
 	}
 
@@ -193,8 +199,10 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	const auto& prtCtx = node->getPRTCtx();
 
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
-	if (!resolveMap)
+	if (!resolveMap) {
+		theMenu[0].setToken(nullptr);
 		return;
+	}
 
 	std::vector<std::pair<std::wstring,std::wstring>> cgbs; // key -> uri
 	getCGBs(resolveMap, cgbs);
@@ -222,12 +230,16 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
-	if (!resolveMap)
+	if (!resolveMap) {
+		theMenu[0].setToken(nullptr);
 		return;
+	}
 
 	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
-	if (cgbURI == nullptr)
+	if (cgbURI == nullptr) {
+		theMenu[0].setToken(nullptr);
 		return;
+	}
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
