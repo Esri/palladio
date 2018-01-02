@@ -51,7 +51,7 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
 
 namespace NameConversion {
 
-UT_StringHolder toPrimAttr(const std::wstring& name);
+UT_String toPrimAttr(const std::wstring& name);
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name);
 
 } // namespace NameConversion

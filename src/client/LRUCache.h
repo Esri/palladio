@@ -4,11 +4,11 @@
 
 #include <list>
 #include <map>
+#include <mutex>
 
 
 // shamelessly copied from boost
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
-// (not yet present in houdini's boost)
 
 // a mCache which evicts the least recently used item when it is full
 template<class Key, class Value>
@@ -119,4 +119,49 @@ private:
     map_type m_map;
     list_type m_list;
     size_t m_capacity;
+};
+
+
+
+#undef LOCKED_LRU_CACHE_STATS
+
+template<typename K, typename V>
+class LockedLRUCache : public lru_cache<K,V> {
+private:
+	using Base = lru_cache<K,V>;
+
+    std::mutex mMutex;
+
+#ifdef LOCKED_LRU_CACHE_STATS
+	size_t hits = 0;
+	size_t misses = 0;
+#endif
+
+public:
+	LockedLRUCache(size_t capacity) : Base{capacity} { }
+
+	~LockedLRUCache() {
+#ifdef LOCKED_LRU_CACHE_STATS
+		std::wcout << L"~LockedLRUCache: capacity = " << this->capacity() << L", size = " << this->size() << L", hits = " << hits << L", misses = " << misses << std::endl;
+#endif
+	}
+
+    void insert(const K& key, const V& value) {
+		std::lock_guard<std::mutex> guard(mMutex);
+        Base::insert(key, value);
+    }
+
+    boost::optional<V> get(const K& key) {
+		std::lock_guard<std::mutex> guard(mMutex);
+        auto v = Base::get(key);
+
+#ifdef LOCKED_LRU_CACHE_STATS
+		if (v)
+			hits++;
+        else
+            misses++;
+#endif
+
+        return v;
+    }
 };

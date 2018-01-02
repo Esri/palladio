@@ -12,52 +12,9 @@ namespace {
 
 constexpr bool DBG = false;
 
-#undef STRING_CONVERSION_CACHE_STATS
-
-// thread safe wrapper for LRU cache
-struct StringConversionCache {
-	lru_cache<std::wstring,UT_StringHolder> mCache;
-	std::mutex mMutex;
-
-#ifdef STRING_CONVERSION_CACHE_STATS
-	size_t hits = 0;
-	size_t misses = 0;
-#endif
-
-	StringConversionCache() : mCache(1 << 12) { }
-
-	~StringConversionCache() {
-#ifdef STRING_CONVERSION_CACHE_STATS
-		std::wcout << L"~LRUCache: capacity = " << mCache.capacity() << L", size = " << mCache.size() << L", hits = " << hits << L", misses = " << misses << std::endl;
-#endif
-	}
-
-	const UT_StringHolder* get(const std::wstring& ws) {
-		std::lock_guard<std::mutex> guard(mMutex);
-
-		auto v = mCache.get(ws);
-		if (v) {
-#ifdef STRING_CONVERSION_CACHE_STATS
-			hits++;
-#endif
-			return &v.get();
-		}
-#ifdef STRING_CONVERSION_CACHE_STATS
-		misses++;
-#endif
-		return nullptr;
-	}
-
-	UT_StringHolder add(const std::wstring& ws, const UT_StringHolder& s) {
-		std::lock_guard<std::mutex> guard(mMutex);
-
-		mCache.insert(ws, s);
-		return mCache.get(ws).get();
-	}
-};
-
-StringConversionCache theStringConversionCache;
-
+namespace StringConversionCaches {
+	LockedLRUCache<std::wstring, UT_String> toPrimAttr(1 << 12);
+}
 
 class HandleVisitor : public boost::static_visitor<> {
 private:
@@ -80,12 +37,14 @@ public:
 	    const wchar_t* v = attrMap->getString(protoHandle.keys.front().c_str());
 		if (v && std::wcslen(v) > 0) {
 
-			const UT_StringHolder& hv = [&v]() {
-				const UT_StringHolder* sh = theStringConversionCache.get(v);
-				if (sh != nullptr)
-					return *sh;
+			const UT_String hv = [&v]() {
+				const auto sh = StringConversionCaches::toPrimAttr.get(v);
+				if (sh)
+					return sh.get();
 				const std::string nv = toOSNarrowFromUTF16(v);
-				return theStringConversionCache.add(v, nv);
+				UT_String hv(UT_String::ALWAYS_DEEP, nv); // ensure owning UT_String inside cache
+				StringConversionCaches::toPrimAttr.insert(v, hv);
+				return hv;
 			}();
 
 			const GA_Range range(primIndexMap, rangeStart, rangeStart+rangeSize);
@@ -346,18 +305,20 @@ std::wstring removeStyle(const std::wstring& n) {
 
 namespace NameConversion {
 
-UT_StringHolder toPrimAttr(const std::wstring& name) {
+UT_String toPrimAttr(const std::wstring& name) {
 	WA("all");
 
-	const UT_StringHolder* cv = theStringConversionCache.get(name);
-	if (cv != nullptr)
-		return *cv;
+	const auto cv = StringConversionCaches::toPrimAttr.get(name);
+	if (cv)
+		return cv.get();
 
 	std::string s = toOSNarrowFromUTF16(removeStyle(name));
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
 		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
 
-	return theStringConversionCache.add(name, s);
+	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
+	StringConversionCaches::toPrimAttr.insert(name, primAttr);
+	return primAttr;
 }
 
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {

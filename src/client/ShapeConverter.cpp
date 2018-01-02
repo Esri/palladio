@@ -135,26 +135,31 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			if (mAttrRefs.count(key) > 0)
 				continue;
 
-			const UT_StringHolder primAttrName = NameConversion::toPrimAttr(key);
+			const UT_String primAttrName = NameConversion::toPrimAttr(key);
 
+			GA_Attribute* primAttr = nullptr;
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
-					GA_RWAttributeRef ar(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
-					if (ar.isValid())
-						mAttrRefs.emplace(key, ar);
+					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
-					mAttrRefs.emplace(key, detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
+					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
-					mAttrRefs.emplace(key, detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1));
+					primAttr = detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
 					break;
 				}
 				default:
 					break;
 			} // switch type
+
+			if (primAttr != nullptr)
+				mAttrRefs.emplace(key, primAttr);
+			else
+				LOG_ERR << "Could not create primitive attribute handle: " << key << " -> " << primAttrName << " (type " << dra->getType(key) << ")";
+
 		} // for rule attribute
 	} // for each initial shape
 
@@ -173,7 +178,11 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			for (size_t k = 0; k < keyCount; k++) {
 				const wchar_t* const key = cKeys[k];
 
-				const auto& attrRef = mAttrRefs.at(key);
+				const auto& attrRefIt = mAttrRefs.find(key);
+				if (attrRefIt == mAttrRefs.end())
+					continue;
+				const auto& attrRef = attrRefIt->second;
+
 				switch (defaultRuleAttributes->getType(key)) {
 					case prt::AttributeMap::PT_FLOAT: {
 						GA_RWHandleD av(attrRef);
