@@ -135,7 +135,7 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			if (mAttrRefs.count(key) > 0)
 				continue;
 
-			const UT_String primAttrName = NameConversion::toPrimAttr(key);
+			const UT_StringHolder primAttrName = NameConversion::toPrimAttr(key);
 
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
