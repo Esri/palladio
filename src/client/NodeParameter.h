@@ -1,11 +1,16 @@
 #pragma once
 
+#include "utils.h"
+
 #include "PRM/PRM_ChoiceList.h"
 #include "PRM/PRM_Parm.h"
 #include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_Shared.h"
 #include "PRM/PRM_Callback.h"
 #include "GA/GA_Types.h"
+#include "OP/OP_Node.h"
+
+#include "boost/filesystem/path.hpp"
 
 
 namespace AssignNodeParams {
@@ -35,9 +40,15 @@ static PRM_Default DEFAULT_PRIM_CLS_ATTR(0.0f, "primCls", CH_STRING_LITERAL);
 
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
-static PRM_Default rpkDefault(0, "$HIP/$F.rpk");
+static PRM_Default rpkDefault(0, "");
 int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback rpkCallback(&updateRPK);
+
+auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
+	UT_String s;
+	node->evalString(s, RPK.getToken(), 0, t);
+	return s.toStdString();
+};
 
 
 // -- RULE FILE (cgb)
@@ -48,6 +59,18 @@ void buildRuleFileMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_
 static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
                                    &buildRuleFileMenu);
 
+auto getRuleFile = [](const OP_Node* node, fpreal t) -> std::wstring {
+	UT_String s;
+	node->evalString(s, RULE_FILE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
+
+auto setRuleFile = [](OP_Node* node, const std::wstring& ruleFile, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(ruleFile));
+	node->setString(val, CH_STRING_LITERAL, RULE_FILE.getToken(), 0, t);
+};
+
+
 // -- STYLE
 static PRM_Name STYLE("style", "Style");
 
@@ -55,6 +78,18 @@ void buildStyleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_Spa
 
 static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
                                 &buildStyleMenu);
+
+auto getStyle = [](const OP_Node* node, fpreal t) -> std::wstring {
+	UT_String s;
+	node->evalString(s, STYLE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
+
+auto setStyle = [](OP_Node* node, const std::wstring& s, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(s));
+	node->setString(val, CH_STRING_LITERAL, STYLE.getToken(), 0, t);
+};
+
 
 // -- START RULE
 static PRM_Name START_RULE("startRule", "Start Rule");
@@ -64,8 +99,24 @@ void buildStartRuleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM
 static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
                                     &buildStartRuleMenu);
 
+auto getStartRule = [](const OP_Node* node, fpreal t) -> std::wstring {
+	UT_String s;
+	node->evalString(s, START_RULE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
+
+auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(s));
+	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
+};
+
+
 // -- RANDOM SEED
 static PRM_Name SEED("seed", "Random Seed");
+
+auto getSeed = [](const OP_Node* node, fpreal t) -> int64_t {
+	return node->evalInt(SEED.getToken(), 0, t);
+};
 
 
 // -- ASSIGN NODE PARAMS

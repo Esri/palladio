@@ -289,6 +289,11 @@ constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N = sizeof(RULE_ATTR_NAME_TO_PRIM_A
 
 constexpr wchar_t STYLE_SEPARATOR = L'$';
 
+} // namespace
+
+
+namespace NameConversion {
+
 std::wstring addStyle(const std::wstring& n, const std::wstring& style) {
 	return style + STYLE_SEPARATOR + n;
 }
@@ -299,11 +304,6 @@ std::wstring removeStyle(const std::wstring& n) {
 		return n.substr(p+1);
 	return n;
 }
-
-} // namespace
-
-
-namespace NameConversion {
 
 UT_String toPrimAttr(const std::wstring& name) {
 	WA("all");
@@ -328,6 +328,26 @@ std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) 
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
 		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
 	return addStyle(toUTF16FromOSNarrow(s), style);
+}
+
+void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name) {
+	if (fqName.length() <= 1)
+		return;
+
+	const auto p = fqName.find_first_of(STYLE_SEPARATOR);
+	if (p == std::wstring::npos) {
+		name.assign(fqName);
+	}
+	else if (p > 0 && p < fqName.length()-1) {
+		style.assign(fqName.substr(0,p));
+		name.assign(fqName.substr(p + 1));
+	}
+	else if (p == 0) { // empty style
+		name = fqName.substr(1);
+	}
+	else if (p == fqName.length()-1) { // empty name
+		style = fqName.substr(0, p);
+	}
 }
 
 } // namespace NameConversion

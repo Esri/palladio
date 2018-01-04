@@ -57,6 +57,53 @@ TEST_CASE("get XML representation of a PRT object", "[utils]") {
     CHECK(xml == "<attributable>\n\t<attribute key=\"foo\" value=\"bar\" type=\"str\"/>\n</attributable>");
 }
 
+TEST_CASE("separate fully qualified name into style and name", "[NameConversion]") {
+	std::wstring style, name;
+
+	SECTION("default case") {
+		NameConversion::separate(L"foo$bar", style, name);
+		CHECK(style == L"foo");
+		CHECK(name == L"bar");
+	}
+
+	SECTION("no style") {
+		NameConversion::separate(L"foo", style, name);
+		CHECK(style.empty());
+		CHECK(name == L"foo");
+	}
+
+	SECTION("edge case 1") {
+		NameConversion::separate(L"foo$", style, name);
+		CHECK(style == L"foo");
+		CHECK(name.empty());
+	}
+
+	SECTION("edge case 2") {
+		NameConversion::separate(L"$foo", style, name);
+		CHECK(style.empty());
+		CHECK(name == L"foo");
+	}
+
+	SECTION("separator only") {
+		NameConversion::separate(L"$", style, name);
+		CHECK(style.empty());
+		CHECK(name.empty());
+	}
+
+	SECTION("empty") {
+		NameConversion::separate(L"", style, name);
+		CHECK(style.empty());
+		CHECK(name.empty());
+	}
+
+	SECTION("two separators") {
+		NameConversion::separate(L"foo$bar$baz", style, name);
+		CHECK(style == L"foo");
+		CHECK(name == L"bar$baz");
+	}
+
+}
+
 TEST_CASE("extract attribute names", "[AttributeConversion]") {
 	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 	amb->setFloat(L"foo", 1.23);

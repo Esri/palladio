@@ -216,29 +216,11 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-
-	// -- rule package path
-	UT_String utNextRPKStr;
-	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, now);
-	mRPK = utNextRPKStr.toStdString();
-
-	// -- rule file
-	UT_String utRuleFile;
-	node->evalString(utRuleFile, AssignNodeParams::RULE_FILE.getToken(), 0, now);
-	mRuleFile = toUTF16FromOSNarrow(utRuleFile.toStdString());
-
-	// -- rule style
-	UT_String utStyle;
-	node->evalString(utStyle, AssignNodeParams::STYLE.getToken(), 0, now);
-	mStyle = toUTF16FromOSNarrow(utStyle.toStdString());
-
-	// -- start rule
-	UT_String utStartRule;
-	node->evalString(utStartRule, AssignNodeParams::START_RULE.getToken(), 0, now);
-	mStartRule = toUTF16FromOSNarrow(utStartRule.toStdString());
-
-	// -- random seed
-	mSeed = node->evalInt(AssignNodeParams::SEED.getToken(), 0, now);
+	mRPK       = AssignNodeParams::getRPK(node, now);
+	mRuleFile  = AssignNodeParams::getRuleFile(node, now);
+	mStyle     = AssignNodeParams::getStyle(node, now);
+	mStartRule = AssignNodeParams::getStartRule(node, now);
+	mSeed      = AssignNodeParams::getSeed(node, now);
 }
 
 bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {

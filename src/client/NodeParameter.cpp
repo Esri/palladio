@@ -1,12 +1,13 @@
-#include "SOPAssign.h"
 #include "NodeParameter.h"
+#include "SOPAssign.h"
+#include "AttributeConversion.h"
 #include "ShapeConverter.h"
 #include "utils.h"
 #include "LogHandler.h"
 
 #include "prt/API.h"
 
-#include "boost/algorithm/string.hpp"
+#include "CH/CH_Manager.h"
 
 #include <string>
 #include <vector>
@@ -68,12 +69,16 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	const boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 
 	// -- early exit if rpk path is not valid
-	if (!boost::filesystem::exists(nextRPK))
+	if (!boost::filesystem::exists(nextRPK)) {
+		LOG_WRN << "non-existent rpk";
 		return NOT_CHANGED;
+	}
 
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(nextRPK);
-	if (!resolveMap )
+	if (!resolveMap ) {
+		LOG_WRN << "invalid resolve map";
 		return NOT_CHANGED;
+	}
 
 	// -- try get first rule file
 	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
@@ -96,26 +101,17 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 
 	// -- get style/name from start rule
 	auto getStartRuleComponents = [](const std::wstring& fqRule) -> std::pair<std::wstring,std::wstring> {
-		std::vector<std::wstring> startRuleComponents;
-		boost::split(startRuleComponents, fqRule, boost::is_any_of(L"$")); // TODO: split is overkill
-		return { startRuleComponents[0], startRuleComponents[1]};
+		std::wstring style, name;
+		NameConversion::separate(fqRule, style, name);
+		return { style, name };
 	};
 	const auto startRuleComponents = getStartRuleComponents(fqStartRule);
 	LOG_DBG << "start rule: style = " << startRuleComponents.first << ", name = " << startRuleComponents.second;
 
 	// -- update the node
-	{
-		const UT_String val(toOSNarrowFromUTF16(cgbKey));
-		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::RULE_FILE.getToken(), 0, time);
-	}
-	{
-		const UT_String val(toOSNarrowFromUTF16(startRuleComponents.first));
-		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::STYLE.getToken(), 0, time);
-	}
-	{
-		const UT_String val(toOSNarrowFromUTF16(startRuleComponents.second));
-		node->setString(val, CH_STRING_LITERAL, AssignNodeParams::START_RULE.getToken(), 0, time);
-	}
+	AssignNodeParams::setRuleFile(node, cgbKey, time);
+	AssignNodeParams::setStyle(node, startRuleComponents.first, time);
+	AssignNodeParams::setStartRule(node, startRuleComponents.second, time);
 
 	// reset was successful, try to optimize the cache
 	prtCtx->mPRTCache->flushAll();
@@ -123,47 +119,48 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	return CHANGED;
 }
 
-void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	constexpr const bool DBG = false;
+void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
+	constexpr bool DBG = false;
 
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getShapeConverter();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+
+    const fpreal now = CHgetEvalTime();
+	const boost::filesystem::path rpk = getRPK(node, now);
+	const std::wstring ruleFile = getRuleFile(node, now);
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
-		LOG_DBG << "   mRPK = " << ssd->mRPK;
-		LOG_DBG << "   mRuleFile = " << ssd->mRuleFile;
+		LOG_DBG << "   mRPK = " << rpk;
+		LOG_DBG << "   mRuleFile = " << ruleFile;
 	}
 
-	if (ssd->mRPK.empty() || ssd->mRuleFile.empty()) {
-		theMenu[0].setToken(nullptr);
+	if (rpk.empty() || ruleFile.empty()) {
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
-		theMenu[0].setToken(nullptr);
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
 
-	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
+	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
 	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << ssd->mRuleFile << "', aborting.";
-		theMenu[0].setToken(nullptr);
+		LOG_ERR << L"failed to resolve rule file '" << ruleFile << "', aborting.";
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
 
-	// TODO: deduplicate with SOPAssign::resetRulePackage
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
 	if (status == prt::STATUS_OK) {
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
 			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
-			std::string rn = toOSNarrowFromUTF16(re->getName());
-			std::vector<std::string> tok;
-			boost::split(tok, rn, boost::is_any_of("$"));
+			const std::wstring wRuleName = NameConversion::removeStyle(re->getName());
+			const std::string rn = toOSNarrowFromUTF16(wRuleName);
 
 			bool hasStartRuleAnnotation = false;
 			for (size_t ai = 0; ai < re->getNumAnnotations(); ai++) {
@@ -174,9 +171,9 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 			}
 
 			if (hasStartRuleAnnotation)
-				startRules.emplace_back(tok[1], tok[1] + " (@StartRule)");
+				startRules.emplace_back(rn, rn + " (@StartRule)");
 			else
-				rules.emplace_back(tok[1], tok[1]);
+				rules.emplace_back(rn, rn);
 		}
 
 		std::sort(startRules.begin(), startRules.end(), compareSecond);
@@ -186,19 +183,20 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 		const size_t limit = std::min<size_t>(rules.size(), static_cast<size_t>(theMaxSize));
 		for (size_t ri = 0; ri < limit; ri++) {
-			theMenu[ri].setToken(rules[ri].first.c_str());
-			theMenu[ri].setLabel(rules[ri].second.c_str());
+			theMenu[ri].setTokenAndLabel(rules[ri].first.c_str(), rules[ri].second.c_str());
 		}
-		theMenu[limit].setToken(nullptr); // need a null terminator
+		theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
 	}
 }
 
-void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getShapeConverter();
 	const auto& prtCtx = node->getPRTCtx();
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+    const fpreal now = CHgetEvalTime();
+	const boost::filesystem::path rpk = getRPK(node, now);
+
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
 		theMenu[0].setToken(nullptr);
 		return;
@@ -210,34 +208,34 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
 	for (size_t ri = 0; ri < limit; ri++) {
 		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
-		std::string lbl = toOSNarrowFromUTF16(cgbs[ri].first);
-		theMenu[ri].setToken(tok.c_str());
-		theMenu[ri].setLabel(lbl.c_str());
+		theMenu[ri].setTokenAndLabel(tok.c_str(), tok.c_str());
 	}
-	theMenu[limit].setToken(nullptr); // need a null terminator
+	theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
 }
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
-	std::string rn = toOSNarrowFromUTF16(re->getName());
-	std::vector<std::string> tok;
-	boost::split(tok, rn, boost::is_any_of("$"));
-	return tok[0];
+	std::wstring style, name;
+	NameConversion::separate(re->getName(), style, name);
+	return toOSNarrowFromUTF16(style);
 }
 
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& ssd = node->getShapeConverter();
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ssd->mRPK);
+    const fpreal now = CHgetEvalTime();
+	const boost::filesystem::path rpk = getRPK(node, now);
+	const std::wstring ruleFile = getRuleFile(node, now);
+
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
-		theMenu[0].setToken(nullptr);
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
 
-	const wchar_t* cgbURI = resolveMap->getString(ssd->mRuleFile.c_str());
+	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
 	if (cgbURI == nullptr) {
-		theMenu[0].setToken(nullptr);
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
 
@@ -255,12 +253,11 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 		}
 		size_t si = 0;
 		for (const auto& s : styles) {
-			theMenu[si].setToken(s.c_str());
-			theMenu[si].setLabel(s.c_str());
+			theMenu[si].setTokenAndLabel(s.c_str(), s.c_str());
 			si++;
 		}
 		const size_t limit = std::min<size_t>(styles.size(), static_cast<size_t>(theMaxSize));
-		theMenu[limit].setToken(nullptr); // need a null terminator
+		theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
 	}
 }
 
