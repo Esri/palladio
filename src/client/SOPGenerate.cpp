@@ -45,9 +45,9 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
-	const bool emitAttributes      = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
-	const bool emitMaterial        = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
-	const bool emitReports         = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
+	const bool emitAttributes = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
+	const bool emitMaterial   = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
+	const bool emitReports    = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);
@@ -78,7 +78,12 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
-		ShapeData shapeData;
+		const auto groupCreation = GenerateNodeParams::getGroupCreation(this, context.getTime());
+
+		ShapeData shapeData; // TODO: ctor
+		shapeData.mGroupCreation = groupCreation;
+		shapeData.mNamePrefix = toUTF16FromOSNarrow(getName().toStdString());
+
 		ShapeGenerator shapeGen;
 		shapeGen.get(gdp, DEFAULT_PRIMITIVE_CLASSIFIER, shapeData, mPRTCtx);
 
@@ -99,8 +104,8 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 				// prt requires one callback instance per generate call
 				std::vector<ModelConverterUPtr> hg(nThreads);
-				std::generate(hg.begin(), hg.end(), [this,&progress]() -> ModelConverterUPtr {
-					return ModelConverterUPtr(new ModelConverter(gdp, &progress));
+				std::generate(hg.begin(), hg.end(), [this, &groupCreation, &progress]() -> ModelConverterUPtr {
+					return ModelConverterUPtr(new ModelConverter(gdp, groupCreation, &progress));
 				});
 
 				LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = "

@@ -9,6 +9,7 @@
 #include "UT/UT_String.h"
 
 #include "boost/variant.hpp"
+#include "boost/algorithm/string.hpp"
 
 
 namespace {
@@ -50,6 +51,35 @@ struct MainAttributeHandles {
 	}
 };
 
+namespace {
+
+const std::wstring GROUP_NAME_LEGAL_CHARS = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+
+/**
+ * creates initial shape and primitive group name from primitive classifier value
+ */
+class NameFromPrimPart : public boost::static_visitor<> {
+public:
+	NameFromPrimPart(std::wstring& name, const std::wstring& prefix) : mName(name), mPrefix(prefix) { }
+
+    void operator()(const UT_String& s) {
+        mName.assign(toUTF16FromOSNarrow(s.toStdString()));
+	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
+	    if (mName.empty()) // handle empty primCls string value
+		    mName.assign(L"_invalid_");
+    }
+
+    void operator()(const int32& i) {
+        mName.assign(mPrefix).append(L"_").append(std::to_wstring(i));
+	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
+    }
+
+private:
+	std::wstring& mName;
+	const std::wstring& mPrefix;
+};
+
+} // namespace
 
 void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
                          ShapeData& shapeData, const PRTContextUPtr& prtCtx)
@@ -60,7 +90,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 	// -- partition primitives into initial shapes by primitive classifier values
 	PrimitivePartition primPart(detail, primCls);
-	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
+	const PrimitivePartition::PartitionMap& partitions = primPart.get();
 
 	// -- copy all coordinates
 	std::vector<double> coords;
@@ -68,7 +98,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	coords.reserve(detail->getNumPoints()*3);
 	GA_Offset ptoff;
 	GA_FOR_ALL_PTOFF(detail, ptoff) {
-		UT_Vector3 p = detail->getPos3(ptoff);
+		const UT_Vector3 p = detail->getPos3(ptoff);
 		if (DBG) LOG_DBG << "coords " << coords.size()/3 << ": " << p.x() << ", " << p.y() << ", " << p.z();
 		coords.push_back(static_cast<double>(p.x()));
 		coords.push_back(static_cast<double>(p.y()));
@@ -76,9 +106,9 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	}
 
 	// -- loop over all primitive partitions and create shape builders
-	shapeData.mInitialShapeBuilders.reserve(shapePartitions.size());
+	shapeData.mInitialShapeBuilders.reserve(partitions.size());
 	uint32_t isIdx = 0;
-	for (auto pIt = shapePartitions.begin(); pIt != shapePartitions.end(); ++pIt, ++isIdx) {
+	for (auto pIt = partitions.cbegin(); pIt != partitions.cend(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
@@ -95,6 +125,18 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 				}
 			}
 		} // for each polygon
+
+		// prepare initial shape name (later potentially used as primitive group name)
+		// TODO: move into shapeData
+		if (shapeData.mGroupCreation == GenerateNodeParams::GroupCreation::PRIMCLS) {
+			const auto clsVal = pIt->first;
+			std::wstring name;
+			NameFromPrimPart npp(name, shapeData.mNamePrefix);
+			boost::apply_visitor(npp, clsVal);
+			shapeData.mInitialShapeNames.push_back(name);
+		}
+		else
+			shapeData.mInitialShapeNames.push_back(shapeData.mNamePrefix + std::to_wstring(isIdx)); // TODO: not really needed, could just always use the same string
 
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
 

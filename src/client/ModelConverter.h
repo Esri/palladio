@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NodeParameter.h"
 #include "utils.h"
 #include "../codec/encoder/HoudiniCallbacks.h"
 
@@ -48,7 +49,7 @@ void setUVs(
 
 class ModelConverter : public HoudiniCallbacks {
 public:
-	explicit ModelConverter(GU_Detail* gdp, UT_AutoInterrupt* autoInterrupt = nullptr);
+	explicit ModelConverter(GU_Detail* gdp, GenerateNodeParams::GroupCreation gc, UT_AutoInterrupt* autoInterrupt = nullptr);
 
 protected:
 	void add(
@@ -86,6 +87,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
+	GenerateNodeParams::GroupCreation mGroupCreation;
 	UT_AutoInterrupt* mAutoInterrupt;
 	std::map<int32_t, AttributeMapBuilderUPtr> mShapeAttributeBuilders;
 };

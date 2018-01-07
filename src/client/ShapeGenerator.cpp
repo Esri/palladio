@@ -127,11 +127,10 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			} // switch key type
 		} // for each primitive attribute
 
-		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
-
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
 		auto& isb = shapeData.mInitialShapeBuilders[isIdx];
+		const auto& shapeName = shapeData.mInitialShapeNames[isIdx];
 		const auto fqStartRule = getFullyQualifiedStartRule();
 		isb->setAttributes(
 				mRuleFile.c_str(),

@@ -15,7 +15,7 @@ class PrimitiveClassifier;
 
 class PrimitivePartition {
 public:
-	using ClassifierValueType = boost::variant<UT_String, fpreal32, int32>;
+	using ClassifierValueType = boost::variant<UT_String, int32>;
 	using PrimitiveVector     = std::vector<const GA_Primitive*>;
 	using PartitionMap        = std::map<ClassifierValueType, PrimitiveVector>;
 

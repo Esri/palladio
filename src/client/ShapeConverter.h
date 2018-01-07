@@ -28,16 +28,21 @@ public:
 	AttributeMapBuilderVector         mRuleAttributeBuilders;
 	AttributeMapVector                mRuleAttributes;
 
+	GenerateNodeParams::GroupCreation mGroupCreation = GenerateNodeParams::GroupCreation::NONE;
+	std::vector<std::wstring>         mInitialShapeNames;
+	std::wstring                      mNamePrefix;
+
 	bool isValid() const {
 		const size_t numISB = mInitialShapeBuilders.size();
 		const size_t numIS = mInitialShapes.size();
+		const size_t numISN = mInitialShapeNames.size();
 
 		const size_t numAMB = mRuleAttributeBuilders.size();
 		const size_t numAM = mRuleAttributes.size();
 
 		const size_t numPM = mPrimitiveMapping.size();
 
-		if (numISB != numPM)
+		if (numISB != numPM || numISB != numISN)
 			return false;
 
 		if (numIS != numAMB || numIS != numAM) // they are allowed to be all 0

@@ -26,21 +26,15 @@ void PrimitiveClassifier::get(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
 
 	// -- primitive classifier attr name
-	UT_String utNextClsAttrName;
-	node->evalString(utNextClsAttrName, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
-	if (utNextClsAttrName.length() > 0)
-		name.adopt(utNextClsAttrName);
+	UT_String pcn = AssignNodeParams::getPrimClsName(node, now);
+	pcn.trimBoundingSpace();
+	if (pcn.length() > 0)
+		name.adopt(pcn);
 	else
-		node->setString(name, CH_STRING_LITERAL, AssignNodeParams::PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, now);
+		AssignNodeParams::setPrimClsName(node, name, now);
 
 	// -- primitive classifier attr type
-	const auto typeChoice = node->evalInt(AssignNodeParams::PARAM_NAME_PRIM_CLS_TYPE.getToken(), 0, now);
-	switch (typeChoice) {
-		case 0: type = GA_STORECLASS_STRING; break;
-		case 1: type = GA_STORECLASS_INT;    break;
-		case 2: type = GA_STORECLASS_FLOAT;  break;
-		default: break;
-	}
+	type = AssignNodeParams::getPrimClsType(node, now);
 }
 
 void PrimitiveClassifier::setupAttributeHandles(GU_Detail* detail) {
