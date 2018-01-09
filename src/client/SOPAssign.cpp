@@ -113,7 +113,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Assigning CityEngine rule attributes...");
 
-		PrimitiveClassifier primCls(this, context);
+		PrimitiveClassifier primCls(this, gdp, context);
 		mShapeConverter->getMainAttributes(this, context);
 
 		ShapeData shapeData;

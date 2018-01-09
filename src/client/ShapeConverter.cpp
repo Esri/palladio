@@ -182,11 +182,11 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			GA_Attribute* primAttr = nullptr;
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
-					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
+					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use double storage
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
-					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
+					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use store type uint8
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {

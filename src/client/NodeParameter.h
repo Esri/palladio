@@ -30,34 +30,6 @@ auto setPrimClsName = [](OP_Node* node, const UT_String& name, fpreal t) {
 };
 
 
-// -- PRIMITIVE CLASSIFIER TYPE
-static PRM_Name PARAM_NAME_PRIM_CLS_TYPE("primClsType", "Primitive Classifier Type");
-
-static const char*           PRIM_CLS_TYPE_TOKENS[] = { "STRING", "INT" };
-static const char*           PRIM_CLS_TYPE_LABELS[] = { "String", "Integer" };
-static const GA_StorageClass PRIM_CLS_TYPE_VALUES[]  = { GA_STORECLASS_STRING, GA_STORECLASS_INT };
-
-static PRM_Name PRIM_CLS_TYPE_MENU_ITEMS[] = {
-	PRM_Name(PRIM_CLS_TYPE_TOKENS[0], PRIM_CLS_TYPE_LABELS[0]),
-	PRM_Name(PRIM_CLS_TYPE_TOKENS[1], PRIM_CLS_TYPE_LABELS[1]),
-	PRM_Name(nullptr)
-};
-static PRM_ChoiceList primClsTypeMenu((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), PRIM_CLS_TYPE_MENU_ITEMS);
-
-const size_t DEFAULT_PRIM_CLS_TYPE_ORDINAL = 1; // default prim cls is an int
-const GA_StorageClass DEFAULT_PRIM_CLS_TYPE_VALUE = PRIM_CLS_TYPE_VALUES[DEFAULT_PRIM_CLS_TYPE_ORDINAL];
-static PRM_Default DEFAULT_PRIM_CLS_TYPE(0, PRIM_CLS_TYPE_TOKENS[DEFAULT_PRIM_CLS_TYPE_ORDINAL]);
-
-auto getPrimClsType = [](const OP_Node* node, fpreal t) -> GA_StorageClass {
-	const auto typeChoice = node->evalInt(PARAM_NAME_PRIM_CLS_TYPE.getToken(), 0, t);
-	switch (typeChoice) {
-		case 0:  return GA_STORECLASS_STRING;  break;
-		case 1:  return GA_STORECLASS_INT;     break;
-		default: return GA_STORECLASS_INVALID; break;
-	}
-};
-
-
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
 static PRM_Default rpkDefault(0, "");
@@ -142,8 +114,7 @@ auto getSeed = [](const OP_Node* node, fpreal t) -> int64_t {
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
-		PRM_Template(PRM_STRING,                            1, &PARAM_NAME_PRIM_CLS_ATTR, &DEFAULT_PRIM_CLS_ATTR),
-		PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &PARAM_NAME_PRIM_CLS_TYPE, &DEFAULT_PRIM_CLS_TYPE, &primClsTypeMenu),
+		PRM_Template(PRM_STRING, 1, &PARAM_NAME_PRIM_CLS_ATTR, &DEFAULT_PRIM_CLS_ATTR),
 
 		// rpk, rulefile, startrule, ...
 		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault,    nullptr, nullptr, rpkCallback, &PRM_SpareData::fileChooserModeRead),

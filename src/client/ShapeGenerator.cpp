@@ -15,9 +15,8 @@ namespace {
 
 constexpr bool DBG = false;
 
-const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { CE_PRIM_CLS_NAME, CE_PRIM_CLS_TYPE, CE_SHAPE_RPK,
-                                                        CE_SHAPE_RULE_FILE, CE_SHAPE_START_RULE, CE_SHAPE_STYLE,
-                                                        CE_SHAPE_SEED };
+const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { CE_PRIM_CLS_NAME, CE_SHAPE_RPK, CE_SHAPE_RULE_FILE,
+                                                        CE_SHAPE_START_RULE, CE_SHAPE_STYLE, CE_SHAPE_SEED };
 
 } // namespace
 
@@ -54,8 +53,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			if (removeMe.emplace(pc.name).second) {
 				auto aIt = attributes.find(pc.name);
 				if (aIt != attributes.end()) {
-					if (aIt->second->getStorageClass() == pc.type)
-						attributes.erase(aIt);
+					attributes.erase(aIt);
 				}
 			}
 		}
