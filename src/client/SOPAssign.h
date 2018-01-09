@@ -14,6 +14,8 @@ public:
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
 	const ShapeConverterUPtr& getShapeConverter() const { return mShapeConverter; }
 
+	void opChanged(OP_EventType reason, void* data = nullptr) override;
+
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
 

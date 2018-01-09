@@ -2,6 +2,7 @@
 #include "AttrEvalCallbacks.h"
 #include "PrimitiveClassifier.h"
 #include "ShapeGenerator.h"
+#include "ShapeData.h"
 #include "ModelConverter.h"
 #include "NodeParameter.h"
 #include "LogHandler.h"
@@ -50,8 +51,7 @@ bool evaluateDefaultRuleAttributes(
 
 	// create initial shapes
 	uint32_t isIdx = 0;
-	shapeData.mInitialShapes.reserve(shapeData.mInitialShapeBuilders.size());
-	for (auto& isb: shapeData.mInitialShapeBuilders) {
+	for (auto& isb: shapeData.getInitialShapeBuilders()) {
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx++);
 		if (DBG) LOG_DBG << "evaluating attrs for shape: " << shapeName;
 
@@ -69,9 +69,7 @@ bool evaluateDefaultRuleAttributes(
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
 		if (status == prt::STATUS_OK && initialShape != nullptr) {
-			shapeData.mInitialShapes.emplace_back(initialShape);
-			shapeData.mRuleAttributeBuilders.emplace_back(std::move(amb));
-			shapeData.mRuleAttributes.emplace_back(std::move(ruleAttr));
+			shapeData.addShape(initialShape, std::move(amb), std::move(ruleAttr));
 		}
 		else
 			LOG_WRN << "failed to create initial shape " << shapeName << ": " << prt::getStatusDescription(status);
@@ -81,10 +79,10 @@ bool evaluateDefaultRuleAttributes(
 
 	// run generate to evaluate default rule attributes
 	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
-	AttrEvalCallbacks aec(shapeData.mRuleAttributeBuilders, ruleFileInfo);
-	const prt::Status stat = prt::generate(shapeData.mInitialShapes.data(), shapeData.mInitialShapes.size(),
-	                                       nullptr, encs, encsCount, encsOpts, &aec, prtCtx->mPRTCache.get(),
-	                                       nullptr, nullptr, nullptr);
+	AttrEvalCallbacks aec(shapeData.getRuleAttributeMapBuilders(), ruleFileInfo);
+	const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
+	const prt::Status stat = prt::generate(is.data(), is.size(), nullptr, encs, encsCount, encsOpts, &aec,
+	                                       prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
 		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
 	}
@@ -113,7 +111,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
 		UT_AutoInterrupt progress("Assigning CityEngine rule attributes...");
 
-		PrimitiveClassifier primCls(this, context);
+		PrimitiveClassifier primCls(this, gdp, context);
 		mShapeConverter->getMainAttributes(this, context);
 
 		ShapeData shapeData;
@@ -129,4 +127,12 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	unlockInputs();
 
 	return error();
+}
+
+void SOPAssign::opChanged(OP_EventType reason, void *data) {
+   SOP_Node::opChanged(reason, data);
+
+   // trigger recook on name change, we use the node name in various output places
+   if (reason == OP_NAME_CHANGED)
+	   forceRecook();
 }

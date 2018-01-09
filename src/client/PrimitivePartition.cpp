@@ -24,30 +24,25 @@ void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier&
 	PrimitiveClassifier updatedPrimCls;
 	primCls.updateFromPrimitive(updatedPrimCls, detail, p);
 
-	// try to read primitive classifier attr name and type
+	// try to read primitive classifier attr handle
 	GA_ROAttributeRef primClsAttrRef;
 	if (updatedPrimCls.name.length() > 0) { // we have a valid primitive classifier attribute name
 		const GA_ROAttributeRef r(detail->findPrimitiveAttribute(updatedPrimCls.name));
-		if (r.isValid() && r->getStorageClass() == updatedPrimCls.type)
-			primClsAttrRef = r; // we found the primitive classifier attribute itself
+		if (r.isValid()) {
+			const auto& sc = r->getStorageClass();
+			if (sc == GA_STORECLASS_STRING || sc == GA_STORECLASS_INT)
+				primClsAttrRef = r; // we found the primitive classifier attribute itself
+			else
+				LOG_WRN << "Ignoring primitive classifier '" << r->getName() << "', it is neither of type string or int";
+		}
 	}
 
+	// try to read actual attr value and classify primitive
 	if (primClsAttrRef.isInvalid()) {
 		mPrimitives[INVALID_CLS_VALUE].push_back(p);
 		if (DBG) LOG_DBG << "       missing cls name: adding prim to fallback shape!";
 	}
-	else if ((updatedPrimCls.type == GA_STORECLASS_FLOAT) && primClsAttrRef.isFloat()) {
-		const GA_ROHandleF av(primClsAttrRef);
-		if (av.isValid()) {
-			const fpreal32 v = av.get(p->getMapOffset());
-			if (DBG) LOG_DBG << "        got float classifier value: " << v;
-			mPrimitives[v].push_back(p);
-		}
-		else {
-			if (DBG) LOG_DBG << "        float: invalid handle!";
-		}
-	}
-	else if ((updatedPrimCls.type == GA_STORECLASS_INT) && primClsAttrRef.isInt()) {
+	else if (primClsAttrRef.isInt()) {
 		const GA_ROHandleI av(primClsAttrRef);
 		if (av.isValid()) {
 			const int32 v = av.get(p->getMapOffset());
@@ -58,7 +53,7 @@ void PrimitivePartition::add(const GA_Detail* detail, const PrimitiveClassifier&
 			if (DBG) LOG_DBG << "        int: invalid handle!";
 		}
 	}
-	else if ((updatedPrimCls.type == GA_STORECLASS_STRING) && primClsAttrRef.isString()) {
+	else if (primClsAttrRef.isString()) {
 		const GA_ROHandleS av(primClsAttrRef);
 		if (av.isValid()) {
 			const char* v = av.get(p->getMapOffset());

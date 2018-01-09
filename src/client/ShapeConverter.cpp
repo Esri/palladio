@@ -1,4 +1,5 @@
 #include "ShapeConverter.h"
+#include "ShapeData.h"
 #include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
@@ -9,6 +10,7 @@
 #include "UT/UT_String.h"
 
 #include "boost/variant.hpp"
+#include "boost/algorithm/string.hpp"
 
 
 namespace {
@@ -50,7 +52,6 @@ struct MainAttributeHandles {
 	}
 };
 
-
 void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
                          ShapeData& shapeData, const PRTContextUPtr& prtCtx)
 {
@@ -60,7 +61,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 	// -- partition primitives into initial shapes by primitive classifier values
 	PrimitivePartition primPart(detail, primCls);
-	const PrimitivePartition::PartitionMap& shapePartitions = primPart.get();
+	const PrimitivePartition::PartitionMap& partitions = primPart.get();
 
 	// -- copy all coordinates
 	std::vector<double> coords;
@@ -68,7 +69,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	coords.reserve(detail->getNumPoints()*3);
 	GA_Offset ptoff;
 	GA_FOR_ALL_PTOFF(detail, ptoff) {
-		UT_Vector3 p = detail->getPos3(ptoff);
+		const UT_Vector3 p = detail->getPos3(ptoff);
 		if (DBG) LOG_DBG << "coords " << coords.size()/3 << ": " << p.x() << ", " << p.y() << ", " << p.z();
 		coords.push_back(static_cast<double>(p.x()));
 		coords.push_back(static_cast<double>(p.y()));
@@ -76,9 +77,8 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	}
 
 	// -- loop over all primitive partitions and create shape builders
-	shapeData.mInitialShapeBuilders.reserve(shapePartitions.size());
 	uint32_t isIdx = 0;
-	for (auto pIt = shapePartitions.begin(); pIt != shapePartitions.end(); ++pIt, ++isIdx) {
+	for (auto pIt = partitions.cbegin(); pIt != partitions.cend(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
@@ -96,15 +96,14 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			}
 		} // for each polygon
 
+		// prepare and store initial shape builder
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
-
 		isb->setGeometry(coords.data(), coords.size(),
 		                 indices.data(), indices.size(),
 		                 faceCounts.data(), faceCounts.size(),
 		                 holes.data(), holes.size());
 
-		shapeData.mInitialShapeBuilders.emplace_back(std::move(isb));
-		shapeData.mPrimitiveMapping.emplace_back(pIt->second);
+		shapeData.addBuilder(std::move(isb), pIt->second, pIt->first);
 	} // for each primitive partition
 
 	assert(shapeData.isValid());
@@ -120,9 +119,8 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 	// generate primitive attribute handles from all default rule attribute names from all initial shapes
 	AttributeMapVector defaultRuleAttributeMaps;
-	defaultRuleAttributeMaps.reserve(shapeData.mRuleAttributeBuilders.size());
 	std::map<const wchar_t*, GA_RWAttributeRef> mAttrRefs; // key points to defaultRuleAttributeMaps
-	for (auto& amb: shapeData.mRuleAttributeBuilders) {
+	for (auto& amb: shapeData.getRuleAttributeMapBuilders()) {
 		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
 		const auto& dra = defaultRuleAttributeMaps.back();
 
@@ -140,11 +138,11 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			GA_Attribute* primAttr = nullptr;
 			switch (dra->getType(key)) {
 				case prt::AttributeMap::PT_FLOAT: {
-					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
+					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use double storage
 					break;
 				}
 				case prt::AttributeMap::PT_BOOL: {
-					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
+					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use store type uint8
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
@@ -163,8 +161,8 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 		} // for rule attribute
 	} // for each initial shape
 
-	for (size_t isIdx = 0; isIdx < shapeData.mRuleAttributeBuilders.size(); isIdx++) {
-		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
+	for (size_t isIdx = 0; isIdx < shapeData.getRuleAttributeMapBuilders().size(); isIdx++) {
+		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 
 		for (auto& prim: pv) {

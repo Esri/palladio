@@ -54,7 +54,35 @@ TEST_CASE("get XML representation of a PRT object", "[utils]") {
 	amb->setString(L"foo", L"bar");
     AttributeMapUPtr am(amb->createAttributeMap());
     std::string xml = objectToXML(am.get());
-    CHECK(xml == "<attributable>\n\t<attribute key=\"foo\" value=\"bar\" type=\"str\"/>\n</attributable>");
+    CHECK(xml == "<attributable>\n\t<attribute key=\"foo\" value=\"bar\" type=\"str\"/>\n</attributable>"); // TODO: use R?
+}
+
+TEST_CASE("replace chars not in set", "[utils]") {
+	const std::wstring ac = L"abc";
+
+	SECTION("basic") {
+		std::wstring s = L"abc_def";
+		replace_all_not_of(s, ac);
+		CHECK(s == L"abc____");
+	}
+
+	SECTION("empty") {
+		std::wstring s = L"";
+		replace_all_not_of(s, ac);
+		CHECK(s == L"");
+	}
+
+	SECTION("one char") {
+		std::wstring s = L" ";
+		replace_all_not_of(s, ac);
+		CHECK(s == L"_");
+	}
+
+	SECTION("one allowed char") {
+		std::wstring s = L"_";
+		replace_all_not_of(s, ac);
+		CHECK(s == L"_");
+	}
 }
 
 TEST_CASE("separate fully qualified name into style and name", "[NameConversion]") {

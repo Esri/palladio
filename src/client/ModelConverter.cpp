@@ -115,7 +115,7 @@ void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
 	}
 }
 
-GA_Offset createPrimitives(GU_Detail* mDetail, const wchar_t* name,
+GA_Offset createPrimitives(GU_Detail* mDetail, GenerateNodeParams::GroupCreation gc, const wchar_t* name,
                            const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize,
                            const double* uvs, size_t uvsSize,
@@ -156,11 +156,13 @@ GA_Offset createPrimitives(GU_Detail* mDetail, const wchar_t* name,
 		                        uvSet, uvSets, uvIndices, uvIndicesSize, uvs, uvsSize);
 	}
 
-	// -- add primitives to detail
-	const std::string nName = toOSNarrowFromUTF16(name);
-	auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-	GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nName.c_str(), false));
-	primGroup->addRange(marker.primitiveRange());
+	// -- optionally create primitive groups
+	if (gc == GenerateNodeParams::GroupCreation::PRIMCLS) {
+		const std::string nName = toOSNarrowFromUTF16(name);
+		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
+		GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nName.c_str(), false));
+		primGroup->addRange(marker.primitiveRange());
+	}
 
 	return primStartOffset;
 }
@@ -168,8 +170,8 @@ GA_Offset createPrimitives(GU_Detail* mDetail, const wchar_t* name,
 } // namespace ModelConversion
 
 
-ModelConverter::ModelConverter(GU_Detail* detail, UT_AutoInterrupt* autoInterrupt)
-: mDetail(detail), mAutoInterrupt(autoInterrupt) { }
+ModelConverter::ModelConverter(GU_Detail* detail, GenerateNodeParams::GroupCreation gc, UT_AutoInterrupt* autoInterrupt)
+: mDetail(detail), mGroupCreation(gc), mAutoInterrupt(autoInterrupt) { }
 
 void ModelConverter::add(const wchar_t* name,
                          const double* vtx, size_t vtxSize,
@@ -188,7 +190,7 @@ void ModelConverter::add(const wchar_t* name,
 	// we need to protect mDetail, it is accessed by multiple generate threads
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
-	const GA_Offset primStartOffset = ModelConversion::createPrimitives(mDetail, name,
+	const GA_Offset primStartOffset = ModelConversion::createPrimitives(mDetail, mGroupCreation, name,
 	                                                                    vtx, vtxSize, nrm, nrmSize, uvs, uvsSize,
 	                                                                    counts, countsSize, indices, indicesSize,
 	                                                                    uvCounts, uvCountsSize,

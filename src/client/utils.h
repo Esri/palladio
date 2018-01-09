@@ -52,3 +52,13 @@ std::string toUTF8FromOSNarrow(const std::string& osString);
 
 std::wstring toFileURI(const boost::filesystem::path& p);
 std::wstring percentEncode(const std::string& utf8String);
+
+inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {
+	std::wstring::size_type pos = 0;
+	while (pos < s.size()) {
+		pos = s.find_first_not_of(allowedChars, pos);
+		if (pos == std::wstring::npos)
+			break;
+		s[pos++] = L'_';
+	}
+}

@@ -13,6 +13,7 @@ add_library(${PROJECT_NAME} SHARED
 		ModelConverter.cpp
 		utils.cpp
 		ShapeConverter.cpp
+		ShapeData.cpp
 		ShapeGenerator.cpp
 		NodeParameter.cpp
 		PRTContext.cpp
