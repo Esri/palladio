@@ -128,3 +128,11 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 	return error();
 }
+
+void SOPAssign::opChanged(OP_EventType reason, void *data) {
+   SOP_Node::opChanged(reason, data);
+
+   // trigger recook on name change, we use the node name in various output places
+   if (reason == OP_NAME_CHANGED)
+	   forceRecook();
+}
