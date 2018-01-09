@@ -1,4 +1,5 @@
 #include "ShapeGenerator.h"
+#include "ShapeData.h"
 #include "PrimitivePartition.h"
 #include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
@@ -60,8 +61,8 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	}
 
 	// loop over all initial shapes and use the first primitive to get the attribute values
-	for (size_t isIdx = 0; isIdx < shapeData.mInitialShapeBuilders.size(); isIdx++) {
-		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
+	for (size_t isIdx = 0; isIdx < shapeData.getInitialShapeBuilders().size(); isIdx++) {
+		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		if (pv.empty())
 			continue;
 
@@ -127,9 +128,10 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
-		auto& isb = shapeData.mInitialShapeBuilders[isIdx];
-		const auto& shapeName = shapeData.mInitialShapeNames[isIdx];
+		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
+		const auto& shapeName = shapeData.getInitialShapeName(isIdx);
 		const auto fqStartRule = getFullyQualifiedStartRule();
+
 		isb->setAttributes(
 				mRuleFile.c_str(),
 				fqStartRule.c_str(),
@@ -143,9 +145,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
 		if (status == prt::STATUS_OK && initialShape != nullptr) {
 			if (DBG) LOG_DBG << objectToXML(initialShape);
-			shapeData.mInitialShapes.emplace_back(initialShape);
-			shapeData.mRuleAttributeBuilders.emplace_back(std::move(amb));
-			shapeData.mRuleAttributes.emplace_back(std::move(ruleAttr));
+			shapeData.addShape(initialShape, std::move(amb), std::move(ruleAttr));
 		}
 		else
 			LOG_WRN << "failed to create initial shape " << shapeName << ": " << prt::getStatusDescription(status);

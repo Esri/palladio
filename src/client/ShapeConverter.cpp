@@ -1,4 +1,5 @@
 #include "ShapeConverter.h"
+#include "ShapeData.h"
 #include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
@@ -51,36 +52,6 @@ struct MainAttributeHandles {
 	}
 };
 
-namespace {
-
-const std::wstring GROUP_NAME_LEGAL_CHARS = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
-
-/**
- * creates initial shape and primitive group name from primitive classifier value
- */
-class NameFromPrimPart : public boost::static_visitor<> {
-public:
-	NameFromPrimPart(std::wstring& name, const std::wstring& prefix) : mName(name), mPrefix(prefix) { }
-
-    void operator()(const UT_String& s) {
-        mName.assign(toUTF16FromOSNarrow(s.toStdString()));
-	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
-	    if (mName.empty()) // handle empty primCls string value
-		    mName.assign(L"_invalid_");
-    }
-
-    void operator()(const int32& i) {
-        mName.assign(mPrefix).append(L"_").append(std::to_wstring(i));
-	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
-    }
-
-private:
-	std::wstring& mName;
-	const std::wstring& mPrefix;
-};
-
-} // namespace
-
 void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
                          ShapeData& shapeData, const PRTContextUPtr& prtCtx)
 {
@@ -106,7 +77,6 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	}
 
 	// -- loop over all primitive partitions and create shape builders
-	shapeData.mInitialShapeBuilders.reserve(partitions.size());
 	uint32_t isIdx = 0;
 	for (auto pIt = partitions.cbegin(); pIt != partitions.cend(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
@@ -126,27 +96,14 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			}
 		} // for each polygon
 
-		// prepare initial shape name (later potentially used as primitive group name)
-		// TODO: move into shapeData
-		if (shapeData.mGroupCreation == GenerateNodeParams::GroupCreation::PRIMCLS) {
-			const auto clsVal = pIt->first;
-			std::wstring name;
-			NameFromPrimPart npp(name, shapeData.mNamePrefix);
-			boost::apply_visitor(npp, clsVal);
-			shapeData.mInitialShapeNames.push_back(name);
-		}
-		else
-			shapeData.mInitialShapeNames.push_back(shapeData.mNamePrefix + std::to_wstring(isIdx)); // TODO: not really needed, could just always use the same string
-
+		// prepare and store initial shape builder
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
-
 		isb->setGeometry(coords.data(), coords.size(),
 		                 indices.data(), indices.size(),
 		                 faceCounts.data(), faceCounts.size(),
 		                 holes.data(), holes.size());
 
-		shapeData.mInitialShapeBuilders.emplace_back(std::move(isb));
-		shapeData.mPrimitiveMapping.emplace_back(pIt->second);
+		shapeData.addBuilder(std::move(isb), pIt->second, pIt->first);
 	} // for each primitive partition
 
 	assert(shapeData.isValid());
@@ -162,9 +119,8 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 	// generate primitive attribute handles from all default rule attribute names from all initial shapes
 	AttributeMapVector defaultRuleAttributeMaps;
-	defaultRuleAttributeMaps.reserve(shapeData.mRuleAttributeBuilders.size());
 	std::map<const wchar_t*, GA_RWAttributeRef> mAttrRefs; // key points to defaultRuleAttributeMaps
-	for (auto& amb: shapeData.mRuleAttributeBuilders) {
+	for (auto& amb: shapeData.getRuleAttributeMapBuilders()) {
 		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
 		const auto& dra = defaultRuleAttributeMaps.back();
 
@@ -205,8 +161,8 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 		} // for rule attribute
 	} // for each initial shape
 
-	for (size_t isIdx = 0; isIdx < shapeData.mRuleAttributeBuilders.size(); isIdx++) {
-		const auto& pv = shapeData.mPrimitiveMapping[isIdx];
+	for (size_t isIdx = 0; isIdx < shapeData.getRuleAttributeMapBuilders().size(); isIdx++) {
+		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 
 		for (auto& prim: pv) {

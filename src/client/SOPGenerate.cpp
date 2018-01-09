@@ -1,6 +1,7 @@
 #include "SOPGenerate.h"
 #include "NodeParameter.h"
 #include "ShapeGenerator.h"
+#include "ShapeData.h"
 #include "PrimitiveClassifier.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
@@ -79,15 +80,12 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 		UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
 		const auto groupCreation = GenerateNodeParams::getGroupCreation(this, context.getTime());
-
-		ShapeData shapeData; // TODO: ctor
-		shapeData.mGroupCreation = groupCreation;
-		shapeData.mNamePrefix = toUTF16FromOSNarrow(getName().toStdString());
+		ShapeData shapeData(groupCreation, toUTF16FromOSNarrow(getName().toStdString()));
 
 		ShapeGenerator shapeGen;
 		shapeGen.get(gdp, DEFAULT_PRIMITIVE_CLASSIFIER, shapeData, mPRTCtx);
 
-		const InitialShapeNOPtrVector& is = shapeData.mInitialShapes;
+		const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
 		if (is.empty()) {
 			LOG_ERR << getName() << ": could not extract any initial shapes from detail!";
 			return UT_ERROR_ABORT;
