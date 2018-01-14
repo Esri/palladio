@@ -103,14 +103,6 @@ auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 };
 
 
-// -- RANDOM SEED
-static PRM_Name SEED("seed", "Random Seed");
-
-auto getSeed = [](const OP_Node* node, fpreal t) -> int64_t {
-	return node->evalInt(SEED.getToken(), 0, t);
-};
-
-
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
 		// primitive classifier attribute
@@ -121,7 +113,6 @@ static PRM_Template PARAM_TEMPLATES[] = {
 		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults, &ruleFileMenu),
 		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults, &styleMenu),
 		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu),
-		PRM_Template(PRM_INT,    1, &SEED,       PRMoneDefaults),
 
 		PRM_Template()
 };

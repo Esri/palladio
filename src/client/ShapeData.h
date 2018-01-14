@@ -13,12 +13,13 @@ public:
 	ShapeData(ShapeData&&) = delete;
 	~ShapeData();
 
-	void addBuilder(InitialShapeBuilderUPtr&& isb, const PrimitiveNOPtrVector& primMappings,
+	void addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed, const PrimitiveNOPtrVector& primMappings,
 	                const PrimitivePartition::ClassifierValueType& clsVal);
 
 	void addShape(const prt::InitialShape* is, AttributeMapBuilderUPtr&& amb, AttributeMapUPtr&& ruleAttr);
 
 	InitialShapeBuilderVector& getInitialShapeBuilders() { return mInitialShapeBuilders; }
+	int32_t getInitialShapeRandomSeed(size_t isIdx) const { return mRandomSeeds[isIdx]; }
 	InitialShapeBuilderUPtr& getInitialShapeBuilder(size_t isIdx) { return mInitialShapeBuilders[isIdx]; }
 	const PrimitiveNOPtrVector& getPrimitiveMapping(size_t isIdx) const { return mPrimitiveMapping[isIdx]; }
 
@@ -42,4 +43,6 @@ private:
 	GenerateNodeParams::GroupCreation mGroupCreation = GenerateNodeParams::GroupCreation::NONE;
 	std::vector<std::wstring>         mInitialShapeNames;
 	std::wstring                      mNamePrefix;
+
+	std::vector<int32_t>              mRandomSeeds;
 };

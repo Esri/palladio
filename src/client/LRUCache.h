@@ -10,7 +10,7 @@
 // shamelessly copied from boost
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
 
-// a mCache which evicts the least recently used item when it is full
+// a cache which evicts the least recently used item when it is full
 template<class Key, class Value>
 class lru_cache
 {
