@@ -9,7 +9,7 @@
 #include "UT/UT_String.h"
 
 
-const UT_String CE_PRIM_CLS_NAME = "cePrimClsName";
+const UT_String PLD_PRIM_CLS_NAME = "pldPrimClsName";
 
 class PrimitiveClassifier {
 public:

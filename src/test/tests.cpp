@@ -1,10 +1,10 @@
 #include "TestCallbacks.h"
 #include "TestUtils.h"
 
-#include "../client/PRTContext.h"
-#include "../client/utils.h"
-#include "../client/ModelConverter.h"
-#include "../client/AttributeConversion.h"
+#include "../palladio/PRTContext.h"
+#include "../palladio/Utils.h"
+#include "../palladio/ModelConverter.h"
+#include "../palladio/AttributeConversion.h"
 #include "../codec/encoder/HoudiniEncoder.h"
 
 #include "prt/AttributeMap.h"

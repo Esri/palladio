@@ -1,5 +1,5 @@
-#include "encoder/HoudiniEncoder.h"
-#include "encoder/HoudiniCallbacks.h"
+#include "HoudiniEncoder.h"
+#include "HoudiniCallbacks.h"
 
 #include "prtx/Exception.h"
 #include "prtx/Log.h"

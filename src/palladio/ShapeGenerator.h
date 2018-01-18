@@ -2,7 +2,7 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
-#include "utils.h"
+#include "Utils.h"
 
 
 class GU_Detail;

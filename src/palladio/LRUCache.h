@@ -7,8 +7,18 @@
 #include <mutex>
 
 
-// shamelessly copied from boost
+// shamelessly copied from boost (houdini restricts us to boost 1.55 for the moment)
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
+
+//---------------------------------------------------------------------------//
+// Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
+//
+// Distributed under the Boost Software License, Version 1.0
+// See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt
+//
+// See http://boostorg.github.com/compute for more information.
+//---------------------------------------------------------------------------//
 
 // a cache which evicts the least recently used item when it is full
 template<class Key, class Value>

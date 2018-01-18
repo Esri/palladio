@@ -14,10 +14,10 @@
 
 namespace {
 
-constexpr bool DBG = false;
+constexpr bool DBG = true;
 
-const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { CE_PRIM_CLS_NAME, CE_SHAPE_RPK, CE_SHAPE_RULE_FILE,
-                                                        CE_SHAPE_START_RULE, CE_SHAPE_STYLE, CE_SHAPE_SEED };
+const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { PLD_PRIM_CLS_NAME, PLD_RPK, PLD_RULE_FILE,
+                                                        PLD_START_RULE, PLD_STYLE, PLD_RANDOM_SEED };
 
 } // namespace
 

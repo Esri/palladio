@@ -1,13 +1,13 @@
 #pragma once
 
 #include "NodeParameter.h"
-#include "utils.h"
-#include "../codec/encoder/HoudiniCallbacks.h"
+#include "Utils.h"
+#include "encoder/HoudiniCallbacks.h"
 
 #include "prt/AttributeMap.h"
 #include "prt/Callbacks.h"
 
-#ifdef P4H_TC_GCC
+#ifdef PLD_TC_GCC
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
@@ -18,7 +18,7 @@
 #include "UT/UT_Vector3.h"
 #include "UT/UT_Interrupt.h"
 
-#ifdef P4H_TC_GCC
+#ifdef PLD_TC_GCC
 #	pragma GCC diagnostic pop
 #endif
 

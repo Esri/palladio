@@ -6,7 +6,7 @@ PrimitiveClassifier::PrimitiveClassifier(SOP_Node* node, const GA_Detail* detail
 }
 
 void PrimitiveClassifier::updateFromPrimitive(PrimitiveClassifier& derived, const GA_Detail* detail, const GA_Primitive* p) const {
-	const GA_ROAttributeRef primClsAttrNameRef = detail->findPrimitiveAttribute(CE_PRIM_CLS_NAME);
+	const GA_ROAttributeRef primClsAttrNameRef = detail->findPrimitiveAttribute(PLD_PRIM_CLS_NAME);
 	if (primClsAttrNameRef.isValid()) {
 		const GA_ROHandleS nameH(primClsAttrNameRef);
 		derived.name = nameH.get(p->getMapOffset());
@@ -28,7 +28,7 @@ void PrimitiveClassifier::get(SOP_Node* node, const GA_Detail* detail, const OP_
 }
 
 void PrimitiveClassifier::setupAttributeHandles(GU_Detail* detail) {
-	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_PRIM_CLS_NAME, 1));
+	GA_RWAttributeRef clsAttrNameRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_PRIM_CLS_NAME, 1));
 	clsAttrNameH.bind(clsAttrNameRef);
 }
 

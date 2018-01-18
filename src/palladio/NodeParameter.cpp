@@ -2,7 +2,7 @@
 #include "SOPAssign.h"
 #include "AttributeConversion.h"
 #include "ShapeConverter.h"
-#include "utils.h"
+#include "Utils.h"
 #include "LogHandler.h"
 
 #include "prt/API.h"
