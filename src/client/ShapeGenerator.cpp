@@ -129,13 +129,14 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
+		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 		const auto& shapeName = shapeData.getInitialShapeName(isIdx);
 		const auto fqStartRule = getFullyQualifiedStartRule();
 
 		isb->setAttributes(
 				mRuleFile.c_str(),
 				fqStartRule.c_str(),
-				mSeed,
+				randomSeed,
 				shapeName.c_str(),
 				ruleAttr.get(),
 				assetsMap.get()

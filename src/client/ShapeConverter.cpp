@@ -11,6 +11,7 @@
 
 #include "boost/variant.hpp"
 #include "boost/algorithm/string.hpp"
+#include "boost/functional/hash.hpp"
 
 
 namespace {
@@ -47,7 +48,7 @@ struct MainAttributeHandles {
 		GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_STYLE, 1));
 		style.bind(styleRef);
 
-		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_SEED, 1));
+		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_SEED, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT32));
 		seed.bind(seedRef);
 	}
 };
@@ -83,6 +84,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
 		std::vector<uint32_t> indices, faceCounts, holes;
+		std::array<double,3> centroid = { 0.0, 0.0, 0.0 };
 		for (const auto& prim: pIt->second) {
 			if (DBG) LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName() << ", id = " << prim->getTypeId().get();
 			const auto& primType = prim->getTypeId();
@@ -92,6 +94,10 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 				for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
 					indices.push_back(static_cast<uint32_t>(prim->getPointIndex(i)));
 					if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << prim->getPointIndex(i);
+
+					centroid[0] += coords[3*indices.back()+0];
+					centroid[1] += coords[3*indices.back()+1];
+					centroid[2] += coords[3*indices.back()+2];
 				}
 			}
 		} // for each polygon
@@ -103,7 +109,27 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		                 faceCounts.data(), faceCounts.size(),
 		                 holes.data(), holes.size());
 
-		shapeData.addBuilder(std::move(isb), pIt->second, pIt->first);
+		// try to get random seed from incoming primitive attributes (important for default rule attr eval)
+		// use centroid based hash as fallback
+		int32_t randomSeed = 0;
+		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
+		if (!seedRef.isInvalid() && (seedRef->getStorageClass() == GA_STORECLASS_INT)) { // TODO: check for 32bit
+			GA_ROHandleI seedH(seedRef);
+			randomSeed = seedH.get(pIt->second.front()->getMapOffset());
+		}
+		else {
+			centroid[0] /= (double)indices.size();
+			centroid[1] /= (double)indices.size();
+			centroid[2] /= (double)indices.size();
+
+			size_t hash = 0;
+			boost::hash_combine(hash, centroid[0]);
+			boost::hash_combine(hash, centroid[1]);
+			boost::hash_combine(hash, centroid[2]);
+			randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
+		}
+
+		shapeData.addBuilder(std::move(isb), randomSeed, pIt->second, pIt->first);
 	} // for each primitive partition
 
 	assert(shapeData.isValid());
@@ -164,12 +190,15 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 	for (size_t isIdx = 0; isIdx < shapeData.getRuleAttributeMapBuilders().size(); isIdx++) {
 		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
+		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
 		for (auto& prim: pv) {
 			primCls.put(prim);
 			putMainAttributes(mah, prim);
 
 			const GA_Offset& off = prim->getMapOffset();
+
+			mah.seed.set(off, randomSeed);
 
 			size_t keyCount = 0;
 			const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
@@ -218,7 +247,6 @@ void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context
 	mRuleFile  = AssignNodeParams::getRuleFile(node, now);
 	mStyle     = AssignNodeParams::getStyle(node, now);
 	mStartRule = AssignNodeParams::getStartRule(node, now);
-	mSeed      = AssignNodeParams::getSeed(node, now);
 }
 
 bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {
@@ -238,18 +266,11 @@ bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primiti
 	if (styleRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
-	if (seedRef.isInvalid())
-		return false;
-
 	const GA_Offset firstOffset = prim->getMapOffset();
 	mRPK       = safeGet<boost::filesystem::path>(firstOffset, rpkRef);
 	mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
 	mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
 	mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
-
-	GA_ROHandleI seedH(seedRef);
-	mSeed = seedH.get(firstOffset);
 
 	return true;
 }
@@ -260,7 +281,6 @@ void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primi
 	mah.ruleFile.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
 	mah.startRule.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
 	mah.style.set(off, toOSNarrowFromUTF16(mStyle).c_str());
-	mah.seed.set(off, mSeed);
 }
 
 RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
@@ -269,7 +289,11 @@ RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMa
 		return {};
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	return RuleFileInfoUPtr(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	if (status != prt::STATUS_OK)
+		return {};
+
+	return rfi;
 }
 
 std::wstring ShapeConverter::getFullyQualifiedStartRule() const {

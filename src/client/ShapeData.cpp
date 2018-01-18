@@ -41,8 +41,12 @@ ShapeData::~ShapeData() {
 	});
 }
 
-void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, const PrimitiveNOPtrVector& primMappings, const PrimitivePartition::ClassifierValueType& clsVal) {
+void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed,
+                           const PrimitiveNOPtrVector& primMappings,
+                           const PrimitivePartition::ClassifierValueType& clsVal)
+{
 	mInitialShapeBuilders.emplace_back(std::move(isb));
+	mRandomSeeds.push_back(randomSeed);
 	mPrimitiveMapping.emplace_back(primMappings);
 
 	if (mGroupCreation == GenerateNodeParams::GroupCreation::PRIMCLS) {

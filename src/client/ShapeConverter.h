@@ -40,7 +40,6 @@ public:
 	std::wstring            mRuleFile;
 	std::wstring            mStyle;
 	std::wstring            mStartRule;
-	int64_t                 mSeed = 0;
 };
 
 using ShapeConverterUPtr = std::unique_ptr<ShapeConverter>;

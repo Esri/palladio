@@ -23,7 +23,7 @@ elseif(P4H_MACOS)
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-	target_compile_options(${PROJECT_NAME} PRIVATE -O3)
+	target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
 elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 	target_compile_options(${PROJECT_NAME} PRIVATE -O3 -ggdb -pg)

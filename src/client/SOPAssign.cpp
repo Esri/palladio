@@ -45,7 +45,14 @@ bool evaluateDefaultRuleAttributes(
 	// try to get a resolve map
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
 	if (!resolveMap) {
-		LOG_WRN << "could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
+		LOG_WRN << "Could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
+		return false;
+	}
+
+	// try to get rule file info
+	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
+	if (!ruleFileInfo) {
+		LOG_WRN << "Could not get rule file info from " << shapeConverter->mRuleFile << ", aborting default rule attribute evaluation";
 		return false;
 	}
 
@@ -61,7 +68,7 @@ bool evaluateDefaultRuleAttributes(
 		isb->setAttributes(
 				shapeConverter->mRuleFile.c_str(),
 				shapeConverter->mStartRule.c_str(),
-				shapeConverter->mSeed,
+				shapeData.getInitialShapeRandomSeed(isIdx),
 				shapeName.c_str(),
 				ruleAttr.get(),
 				resolveMap.get());
@@ -74,11 +81,9 @@ bool evaluateDefaultRuleAttributes(
 		else
 			LOG_WRN << "failed to create initial shape " << shapeName << ": " << prt::getStatusDescription(status);
 	}
-
 	assert(shapeData.isValid());
 
 	// run generate to evaluate default rule attributes
-	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
 	AttrEvalCallbacks aec(shapeData.getRuleAttributeMapBuilders(), ruleFileInfo);
 	const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
 	const prt::Status stat = prt::generate(is.data(), is.size(), nullptr, encs, encsCount, encsOpts, &aec,
