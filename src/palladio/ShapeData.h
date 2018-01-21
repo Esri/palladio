@@ -2,7 +2,7 @@
 
 #include "PrimitivePartition.h"
 #include "NodeParameter.h"
-#include "utils.h"
+#include "Utils.h"
 
 
 class ShapeData final {

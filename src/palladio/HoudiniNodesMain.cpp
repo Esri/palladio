@@ -31,7 +31,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	auto createSOPAssign = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
 		return new SOPAssign(prtCtx, net, name, op);
 	};
-	table->addOperator(new OP_Operator("ceAssign", "ceAssign", createSOPAssign,
+	table->addOperator(new OP_Operator("pldAssign", "pldAssign", createSOPAssign,
 			AssignNodeParams::PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
 	));
 
@@ -39,7 +39,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	auto createSOPGenerate = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
 		return new SOPGenerate(prtCtx, net, name, op);
 	};
-	table->addOperator(new OP_Operator("ceGenerate", "ceGenerate", createSOPGenerate,
+	table->addOperator(new OP_Operator("pldGenerate", "pldGenerate", createSOPGenerate,
 	       GenerateNodeParams::PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
 	));
 }

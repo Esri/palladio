@@ -3,15 +3,15 @@ cmake_minimum_required(VERSION 3.8)
 
 ### project definition
 
-project(prt4houdini CXX)
+project(palladio CXX)
 
 
 ### target definition
 
 add_library(${PROJECT_NAME} SHARED
-		main.cpp
+		HoudiniNodesMain.cpp
 		ModelConverter.cpp
-		utils.cpp
+		Utils.cpp
 		ShapeConverter.cpp
 		ShapeData.cpp
 		ShapeGenerator.cpp
@@ -28,26 +28,22 @@ add_library(${PROJECT_NAME} SHARED
 		LRUCache.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-		${PRT_INCLUDE_PATH}
-		${PRT4HOUDINI_CODEC_INCLUDE_PATH})
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-		${PRT_LINK_LIBRARIES})
+		${palladio_codec_SOURCE_DIR})
 
 
 ### compiler settings
 
-if(P4H_WINDOWS)
-	# TODO: outdated, move houdini-specific stuff to p4h_add_dependency_houdini
+if(PLD_WINDOWS)
+	# TODO: outdated, move houdini-specific stuff to pld_add_dependency_houdini
 	set(CMAKE_CXX_FLAGS "-EHsc -nologo -TP -Zc:forScope -wd4355 -w14996")
 	set(CMAKE_CXX_FLAGS_Release "-O2 -DNDEBUG -MD -GR -bigobj")
-	target_comipile_definitions(${PROJECT_NAME} PRIVATE ${P4H_SESI_TAG} -DMAKING_DSO -DI386 -DWIN32 -DSWAP_BITFIELDS -D_WIN32_WINNT=0x0502 -DNOMINMAX -DSTRICT -DWIN32_LEAN_AND_MEAN -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DBOOST_ALL_NO_LIB -DSESI_LITTLE_ENDIAN -DAMD64 -DSIZEOF_VOID_P=8 -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
+	target_comipile_definitions(${PROJECT_NAME} PRIVATE ${PLD_SESI_TAG} -DMAKING_DSO -DI386 -DWIN32 -DSWAP_BITFIELDS -D_WIN32_WINNT=0x0502 -DNOMINMAX -DSTRICT -DWIN32_LEAN_AND_MEAN -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DBOOST_ALL_NO_LIB -DSESI_LITTLE_ENDIAN -DAMD64 -DSIZEOF_VOID_P=8 -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
 
 	file(GLOB_RECURSE HOUDINI_LIBS
 			"${HOUDINI_ROOT}/custom/houdini/dsolib/*.a"
 			"${HOUDINI_ROOT}/custom/houdini/dsolib/*.lib")
 
-elseif(P4H_LINUX)
+elseif(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-mtune=generic -m64 -fPIC -mmmx -msse -msse2 -msse3
 			-std=c++11
@@ -69,7 +65,7 @@ elseif(P4H_LINUX)
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 			INSTALL_RPATH "\$ORIGIN")
 
-elseif(P4H_MACOS)
+elseif(PLD_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-std=c++11)
 
@@ -84,7 +80,8 @@ endif()
 
 ### dependencies
 
-p4h_add_dependency_houdini(${PROJECT_NAME}) # also provides boost
+pld_add_dependency_prt(${PROJECT_NAME})
+pld_add_dependency_houdini(${PROJECT_NAME}) # also provides boost
 
 
 ### setup install target

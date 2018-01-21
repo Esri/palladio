@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "Utils.h"
 
 #include "prt/Object.h"
 #include "prt/FlexLicParams.h"
@@ -10,13 +10,13 @@
 #include <map>
 
 
-namespace p4h_log {
+namespace logging {
 class LogHandler;
 using LogHandlerPtr = std::unique_ptr<LogHandler>;
 }
 
 /**
- * manage PRT "lifetime" (actually, the license lifetime)
+ * manage PRT "lifetime" (actually, its license lifetime)
  */
 struct PRTContext final {
 	explicit PRTContext(const std::vector<boost::filesystem::path>& addExtDirs = {});
@@ -28,7 +28,7 @@ struct PRTContext final {
 
 	const ResolveMapUPtr& getResolveMap(const boost::filesystem::path& rpk);
 
-	p4h_log::LogHandlerPtr  mLogHandler;
+	logging::LogHandlerPtr  mLogHandler;
 	ObjectUPtr              mLicHandle;
 	CacheObjectUPtr         mPRTCache;
 	boost::filesystem::path mRPKUnpackPath;

@@ -12,7 +12,7 @@
 #include <memory>
 
 
-namespace p4h_log {
+namespace logging {
 
 struct Logger { };
 
@@ -85,7 +85,7 @@ using LogHandlerPtr = std::unique_ptr<LogHandler>;
 
 
 // switch logger here
-#define LT p4h_log::PRTLogger
+#define LT logging::PRTLogger
 
 using _LOG_DBG = LT<prt::LOG_DEBUG>;
 using _LOG_INF = LT<prt::LOG_INFO>;

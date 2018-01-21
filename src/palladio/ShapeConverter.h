@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "utils.h"
+#include "Utils.h"
 
 #include "boost/filesystem/path.hpp"
 
@@ -16,11 +16,11 @@ class PrimitiveClassifier;
 class MainAttributeHandles;
 class ShapeData;
 
-const UT_String CE_SHAPE_RPK        = "ceShapeRPK";
-const UT_String CE_SHAPE_RULE_FILE  = "ceShapeRuleFile";
-const UT_String CE_SHAPE_START_RULE = "ceShapeStartRule";
-const UT_String CE_SHAPE_STYLE      = "ceShapeStyle";
-const UT_String CE_SHAPE_SEED       = "ceShapeSeed";
+const UT_String PLD_RPK         = "pldRPK";
+const UT_String PLD_RULE_FILE   = "pldRuleFile";
+const UT_String PLD_START_RULE  = "pldStartRule";
+const UT_String PLD_STYLE       = "pldStyle";
+const UT_String PLD_RANDOM_SEED = "pldRandomSeed";
 
 class ShapeConverter {
 public:

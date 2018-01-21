@@ -2,8 +2,8 @@
 
 #include "TestCallbacks.h"
 
-#include "../client/PRTContext.h"
-#include "../client/utils.h"
+#include "../palladio/PRTContext.h"
+#include "../palladio/Utils.h"
 
 #include "boost/filesystem.hpp"
 

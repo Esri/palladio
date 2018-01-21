@@ -6,6 +6,9 @@
 
 namespace {
 
+constexpr const wchar_t*      PLD_LOG_PREFIX          = L"pld";
+constexpr const char*         PLD_TMP_PREFIX          = "palladio_";
+
 constexpr const char*         PRT_LIB_SUBDIR          = "prtlib";
 constexpr const char*         FILE_FLEXNET_LIB        = "flexnet_prt";
 
@@ -21,8 +24,8 @@ private:
     prt::FlexLicParams flexLicParams;
 
 	std::string libflexnetPath; // owns flexLicParams.mActLibPath char ptr
-	std::string licFeature; // owns flexLicParams.mFeature
-	std::string licServer; // owns flexLicParams.mHostName
+	std::string licFeature;     // owns flexLicParams.mFeature
+	std::string licServer;      // owns flexLicParams.mHostName
 
 public:
 	License(const boost::filesystem::path& prtRootPath) {
@@ -50,6 +53,7 @@ public:
 	}
 };
 
+// TODO: move to LogHandler
 prt::LogLevel getLogLevel() {
 	const char* e = std::getenv(PRT_LOG_LEVEL_ENV_VAR);
 	if (e == nullptr || strlen(e) == 0)
@@ -76,10 +80,10 @@ uint32_t getNumCores() {
 
 
 PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
-        : mLogHandler(new p4h_log::LogHandler(L"p4h")),
+        : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)),
           mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
-          mRPKUnpackPath{boost::filesystem::temp_directory_path() / ("prt4houdini_" + std::to_string(::getpid()))},
+          mRPKUnpackPath{boost::filesystem::temp_directory_path() / (PLD_TMP_PREFIX + std::to_string(::getpid()))},
           mCores{getNumCores()}
 {
     const prt::LogLevel logLevel = getLogLevel();

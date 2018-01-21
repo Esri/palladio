@@ -4,22 +4,24 @@ cmake_policy(SET CMP0015 NEW)
 
 ### project definition
 
-project(prt4houdini_codec CXX)
+project(palladio_codec CXX)
 
 
 ### build target
 
 add_library(${PROJECT_NAME} SHARED
-		houdini.cpp
+		CodecMain.cpp
 		encoder/HoudiniEncoder.cpp
 		encoder/HoudiniCallbacks.h)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
-
-if(P4H_LINUX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11 -march=nocona -fvisibility=hidden -fvisibility-inlines-hidden)
-elseif(P4H_MACOS)
-	target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14 -fvisibility=hidden -fvisibility-inlines-hidden)
+if(PLD_LINUX)
+	target_compile_options(${PROJECT_NAME} PRIVATE
+			-std=c++11 -march=nocona
+			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: use cmake tools to set these
+elseif(PLD_MACOS)
+	target_compile_options(${PROJECT_NAME} PRIVATE
+			-std=c++14
+			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: dito
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -33,8 +35,10 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${PRT_INCLUDE_PATH})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PRT_LINK_LIBRARIES})
+
+### dependencies
+
+pld_add_dependency_prt(${PROJECT_NAME})
 
 
 ### install target

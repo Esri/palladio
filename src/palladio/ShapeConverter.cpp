@@ -36,19 +36,19 @@ struct MainAttributeHandles {
 	GA_RWHandleI seed;
 
 	void setup(GU_Detail* detail) {
-		GA_RWAttributeRef rpkRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RPK, 1));
+		GA_RWAttributeRef rpkRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_RPK, 1));
 		rpk.bind(rpkRef);
 
-		GA_RWAttributeRef ruleFileRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_RULE_FILE, 1));
+		GA_RWAttributeRef ruleFileRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_RULE_FILE, 1));
 		ruleFile.bind(ruleFileRef);
 
-		GA_RWAttributeRef startRuleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_START_RULE, 1));
+		GA_RWAttributeRef startRuleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_START_RULE, 1));
 		startRule.bind(startRuleRef);
 
-		GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_STYLE, 1));
+		GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_STYLE, 1));
 		style.bind(styleRef);
 
-		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, CE_SHAPE_SEED, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT32));
+		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, PLD_RANDOM_SEED, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT32));
 		seed.bind(seedRef);
 	}
 };
@@ -112,7 +112,7 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		// try to get random seed from incoming primitive attributes (important for default rule attr eval)
 		// use centroid based hash as fallback
 		int32_t randomSeed = 0;
-		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(CE_SHAPE_SEED));
+		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(PLD_RANDOM_SEED));
 		if (!seedRef.isInvalid() && (seedRef->getStorageClass() == GA_STORECLASS_INT)) { // TODO: check for 32bit
 			GA_ROHandleI seedH(seedRef);
 			randomSeed = seedH.get(pIt->second.front()->getMapOffset());
@@ -250,19 +250,19 @@ void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context
 }
 
 bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {
-	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(CE_SHAPE_RPK));
+	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(PLD_RPK));
 	if (rpkRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(CE_SHAPE_RULE_FILE));
+	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(PLD_RULE_FILE));
 	if (ruleFileRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(CE_SHAPE_START_RULE));
+	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(PLD_START_RULE));
 	if (startRuleRef.isInvalid())
 		return false;
 
-	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(CE_SHAPE_STYLE));
+	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(PLD_STYLE));
 	if (styleRef.isInvalid())
 		return false;
 

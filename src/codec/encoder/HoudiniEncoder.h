@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../houdini.h"
+#include "../CodecMain.h"
 
 #include "prtx/ResolveMap.h"
 #include "prtx/Encoder.h"

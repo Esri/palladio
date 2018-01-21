@@ -1,7 +1,5 @@
 #pragma once
 
-#include "NodeParameter.h"
-
 #include "SOP/SOP_Node.h"
 #include "OP/OP_Context.h"
 #include "GA/GA_Handle.h"
@@ -9,7 +7,7 @@
 #include "UT/UT_String.h"
 
 
-const UT_String CE_PRIM_CLS_NAME = "cePrimClsName";
+const UT_String PLD_PRIM_CLS_NAME = "pldPrimClsName";
 
 class PrimitiveClassifier {
 public:

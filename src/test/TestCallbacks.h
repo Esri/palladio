@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../client/utils.h"
+#include "../palladio/Utils.h"
 #include "../codec/encoder/HoudiniCallbacks.h"
 
 #include "prt/API.h"
