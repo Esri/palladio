@@ -1,4 +1,5 @@
 #include "PrimitiveClassifier.h"
+#include "NodeParameter.h"
 
 
 PrimitiveClassifier::PrimitiveClassifier(SOP_Node* node, const GA_Detail* detail, const OP_Context& context) {

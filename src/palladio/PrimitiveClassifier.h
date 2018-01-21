@@ -1,7 +1,5 @@
 #pragma once
 
-#include "NodeParameter.h"
-
 #include "SOP/SOP_Node.h"
 #include "OP/OP_Context.h"
 #include "GA/GA_Handle.h"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ShapeConverter.h"
+#include "PrimitiveClassifier.h"
 #include "Utils.h"
 
 #include "PRM/PRM_ChoiceList.h"
@@ -16,23 +18,26 @@
 namespace AssignNodeParams {
 
 // -- PRIMITIVE CLASSIFIER NAME
-static PRM_Name PARAM_NAME_PRIM_CLS_ATTR("primClsAttr", "Primitive Classifier");
-static PRM_Default DEFAULT_PRIM_CLS_ATTR(0.0f, "primCls", CH_STRING_LITERAL);
+static PRM_Name PRIM_CLS("primClsAttr", "Primitive Classifier");
+const std::string PRIM_CLS_HELP = "Classifies primitives into input shapes and sets value for primitive attribute '" + PLD_PRIM_CLS_NAME.toStdString() + "'";
+static PRM_Default PRIM_CLS_DEFAULT(0.0f, "primCls", CH_STRING_LITERAL);
 
 auto getPrimClsName = [](const OP_Node* node, fpreal t) -> UT_String {
 	UT_String s;
-	node->evalString(s, PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, t);
+	node->evalString(s, PRIM_CLS.getToken(), 0, t);
 	return s;
 };
 
 auto setPrimClsName = [](OP_Node* node, const UT_String& name, fpreal t) {
-	node->setString(name, CH_STRING_LITERAL, PARAM_NAME_PRIM_CLS_ATTR.getToken(), 0, t);
+	node->setString(name, CH_STRING_LITERAL, PRIM_CLS.getToken(), 0, t);
 };
 
 
 // -- RULE PACKAGE
 static PRM_Name RPK("rpk", "Rule Package");
-static PRM_Default rpkDefault(0, "");
+const std::string RPK_HELP = "Sets value for primitive attribute '" + PLD_RPK.toStdString() + "'";
+
+static PRM_Default RPK_DEFAULT(0, "");
 int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback rpkCallback(&updateRPK);
 
@@ -45,6 +50,7 @@ auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
 
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
+const std::string RULE_FILE_HELP = "Sets value for primitive attribute '" + PLD_RULE_FILE.toStdString() + "'";
 
 void buildRuleFileMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
@@ -65,6 +71,7 @@ auto setRuleFile = [](OP_Node* node, const std::wstring& ruleFile, fpreal t) {
 
 // -- STYLE
 static PRM_Name STYLE("style", "Style");
+const std::string STYLE_HELP = "Sets value for primitive attribute '" + PLD_STYLE.toStdString() + "'";
 
 void buildStyleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
@@ -85,6 +92,7 @@ auto setStyle = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 // -- START RULE
 static PRM_Name START_RULE("startRule", "Start Rule");
+const std::string START_RULE_HELP = "Sets value for primitive attribute '" + PLD_START_RULE.toStdString() + "'";
 
 void buildStartRuleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
@@ -105,15 +113,11 @@ auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
-		// primitive classifier attribute
-		PRM_Template(PRM_STRING, 1, &PARAM_NAME_PRIM_CLS_ATTR, &DEFAULT_PRIM_CLS_ATTR),
-
-		// rpk, rulefile, startrule, ...
-		PRM_Template(PRM_FILE,   1, &RPK,        &rpkDefault,    nullptr, nullptr, rpkCallback, &PRM_SpareData::fileChooserModeRead),
-		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults, &ruleFileMenu),
-		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults, &styleMenu),
-		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu),
-
+		PRM_Template(PRM_STRING, 1, &PRIM_CLS,   &PRIM_CLS_DEFAULT, nullptr,        nullptr, PRM_Callback(), nullptr,                             1, PRIM_CLS_HELP.c_str()),
+		PRM_Template(PRM_FILE,   1, &RPK,        &RPK_DEFAULT,      nullptr,        nullptr, rpkCallback,    &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
+		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults,    &ruleFileMenu,  nullptr, PRM_Callback(), nullptr,                             1, RULE_FILE_HELP.c_str()),
+		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults,    &styleMenu,     nullptr, PRM_Callback(), nullptr,                             1, STYLE_HELP.c_str()),
+		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults,    &startRuleMenu, nullptr, PRM_Callback(), nullptr,                             1, START_RULE_HELP.c_str()),
 		PRM_Template()
 };
 
