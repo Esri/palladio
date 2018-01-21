@@ -9,7 +9,7 @@ project(palladio CXX)
 ### target definition
 
 add_library(${PROJECT_NAME} SHARED
-		HoudiniNodesMain.cpp
+        PalladioMain.cpp
 		ModelConverter.cpp
 		Utils.cpp
 		ShapeConverter.cpp
