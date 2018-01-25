@@ -4,9 +4,10 @@ Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides o
 
 ## Documentation
 
-* [Quick Start](doc/USAGE.md)
-* [Building Palladio](doc/BUILD.md)
-* [ChangeLog](doc/CHANGELOG.md)
+* [Quick Start](doc/usage.md)
+* [Building Palladio](doc/build.md)
+* [Examples](doc/examples.md)
+* [ChangeLog](doc/changelog.md)
 
 External documentation:
 * [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)

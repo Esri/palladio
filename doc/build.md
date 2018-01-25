@@ -23,7 +23,7 @@ This section is only needed once (or if you want to upgrade one of the dependenc
 1. ```make install``` (the plugin is installed into your ~/houdiniXXX/dso directory)
 
 ### Running Palladio
-See [Quick Start](USAGE.md) how to launch Houdini with Palladio.
+See [Quick Start](usage.md) how to launch Houdini with Palladio.
 
 ## Environment Variables
 
