@@ -2,6 +2,8 @@
 
 Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) 'rules' within Houdini networks. This provides a convenient combination of the generic procedural modelling capabilities of Houdini with the architecture-specific procedural modeling language 'CGA' of CityEngine.
 
+Palladio is not an Esri nor vrbn product and there is currently no official/commercial support from Esri nor vrbn. However, if you are interested in commercial services related to Palladio, please contact info@vrbn.io
+
 ## Documentation
 
 * [Quick Start](doc/usage.md)
