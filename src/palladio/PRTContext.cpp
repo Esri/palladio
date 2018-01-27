@@ -18,6 +18,11 @@
 #include "LogHandler.h"
 
 #include <thread>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifndef WIN32
+#   include <unistd.h>
+#endif
 
 
 namespace {
@@ -92,6 +97,17 @@ uint32_t getNumCores() {
 	return n > 0 ? n : 1;
 }
 
+const timespec NO_MODIFICATION_TIME{0, 0};
+
+timespec getFileModificationTime(const boost::filesystem::path& p) {
+	struct stat result;
+	if (stat(p.c_str(), &result) == 0) {
+		return result.st_mtim;
+	}
+	else
+		return NO_MODIFICATION_TIME;
+}
+
 } // namespace
 
 
@@ -159,17 +175,40 @@ PRTContext::~PRTContext() {
 }
 
 const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& rpk) {
-    if (rpk.empty())
-        return mResolveMapNone;
+	if (rpk.empty())
+		return mResolveMapNone;
 
-    auto it = mResolveMapCache.find(rpk);
-    if (it == mResolveMapCache.end()) {
-        prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-        const auto rpkURI = toFileURI(rpk);
-        ResolveMapUPtr rm(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
-        if (status != prt::STATUS_OK)
-            return mResolveMapNone;
-        it = mResolveMapCache.emplace(rpk, std::move(rm)).first;
-    }
-    return it->second;
+	const auto timeStamp = getFileModificationTime(rpk);
+	LOG_DBG << "rpk: current timestamp: " << timeStamp.tv_sec << "s " << timeStamp.tv_nsec << "ns";
+
+	bool reload = false;
+	auto it = mResolveMapCache.find(rpk);
+	if (it != mResolveMapCache.end()) {
+		LOG_DBG << "rpk: cache timestamp: " << it->second.mTimeStamp.tv_sec << "s " << it->second.mTimeStamp.tv_nsec << "ns";
+		if (it->second.mTimeStamp.tv_sec != timeStamp.tv_sec || it->second.mTimeStamp.tv_nsec != timeStamp.tv_nsec) {
+			mResolveMapCache.erase(it);
+			const auto cnt = boost::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
+			mPRTCache->flushAll(); // TODO: or do we need to explicitely remove cgbs from cache?
+			LOG_DBG << "RPK change detected, refreshing unpack cache: " << rpk << "( removed " << cnt << " files)";
+			reload = true;
+		}
+	}
+	else
+		reload = true;
+
+	if (reload) {
+		const auto rpkURI = toFileURI(rpk);
+
+		ResolveMapCacheEntry rmce;
+		rmce.mTimeStamp = timeStamp;
+
+		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
+		if (status != prt::STATUS_OK)
+			return mResolveMapNone;
+
+		it = mResolveMapCache.emplace(rpk, std::move(rmce)).first;
+	}
+
+	return it->second.mResolveMap;
 }

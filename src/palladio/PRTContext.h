@@ -50,7 +50,11 @@ struct PRTContext final {
 	boost::filesystem::path mRPKUnpackPath;
 	const uint32_t          mCores;
 
-	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapUPtr>;
+	struct ResolveMapCacheEntry {
+		ResolveMapUPtr mResolveMap;
+		timespec mTimeStamp;
+	};
+	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapCacheEntry>;
 	ResolveMapCache         mResolveMapCache;
 	const ResolveMapUPtr    mResolveMapNone;
 };
