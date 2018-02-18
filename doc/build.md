@@ -12,8 +12,8 @@
 ### Bootstrap Dependencies
 This section is only needed once (or if you want to upgrade one of the dependencies).
 1. ```git clone git@github.com:esri/palladio.git && cd palladio```
-1. Package CityEngine SDK: ```cd conan/cesdk && conan create cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8```
-1. Package Houdini (adjust XXX and YYY): ```cd conan/houdini && conan create houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=YYY```
+1. Package CityEngine SDK: ```cd conan/cesdk && conan create . cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8```
+1. Package Houdini (adjust XXX and YYY): ```cd conan/houdini && conan create . houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=YYY```
 1. In ```src/conanfile.txt``` adjust ```houdini-flavor``` to your houdini (apprentice, indie, core, fx)
 
 ### Building Palladio
