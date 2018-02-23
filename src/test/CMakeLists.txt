@@ -14,7 +14,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
         palladio
 		palladio_codec
-        CONAN_PKG::Catch)
+        CONAN_PKG::catch2)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 		-DHOUDINI_CODEC_PATH="$<TARGET_FILE:palladio_codec>"
