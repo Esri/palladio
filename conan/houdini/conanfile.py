@@ -2,7 +2,7 @@ from conans import ConanFile
 from conans import tools
 
 # this recipe creates a houdini conan package from a locally installed houdini
-# usage: conan create houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=apprentice
+# usage: conan create houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8
 
 class HoudiniConan(ConanFile):
     name        = "houdini"

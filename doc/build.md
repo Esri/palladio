@@ -13,8 +13,7 @@
 This section is only needed once (or if you want to upgrade one of the dependencies).
 1. ```git clone git@github.com:esri/palladio.git && cd palladio```
 1. Package CityEngine SDK: ```cd conan/cesdk && conan create . cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8```
-1. Package Houdini (adjust XXX and YYY): ```cd conan/houdini && conan create . houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8 -o houdini-flavor=YYY```
-1. In ```src/conanfile.txt``` adjust ```houdini-flavor``` to your houdini (apprentice, indie, core, fx)
+1. Package Houdini (adjust XXX): ```cd conan/houdini && conan create . houdini/16.0.XXX@sidefx/stable -s compiler=gcc -s compiler.version=4.8```
 
 ### Building Palladio
 1. ```mkdir -p build/release && cd build/release```
@@ -29,3 +28,4 @@ See [Quick Start](usage.md) how to launch Houdini with Palladio.
 
 - CITYENGINE_LOG_LEVEL: controls global (minimal) log level for all assign and generate nodes. valid values are "debug", "info", "warning", "error", "fatal"
 - CITYENGINE_LICENSE_SERVER: specify how CityEngine license is acquired. an empty string specifies a node-locked license while "<port>@<host>" indicates a network license server, e.g. "27000@my.server.org".
+- HOUDINI_DSO_ERROR: useful to debug loading issues, see http://www.sidefx.com/docs/houdini/ref/env

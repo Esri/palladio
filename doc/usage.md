@@ -22,11 +22,11 @@
     ```
     export CITYENGINE_LICENSE_SERVER="27000@my.license.server"
     ```
-1. Start Houdini in a bash console:
+1. Start Houdini in a bash console (adapt to your Houdini installation location):
     ```
-    LD_LIBRARY_PATH=/opt/hfs16.0/dsolib /opt/hfs16.0/bin/houdini
+    LD_LIBRARY_PATH=pt/hfs16.0/dsolib /opt/hfs16.0/bin/houdini
     ```
-    (Use ``happrentice`` instead of ``houdini``, if you don't have a commercial license. You might want to create a ``start-houdini`` script or alias with this line.)
+    (Use ``happrentice`` or ``hindie`` instead of ``houdini``, depending on our license. You might want to create a ``start-houdini`` script or alias with this line.)
 1. In a new scene, add a ``grid`` node.
 1. Enter the ``grid`` node and add the two Palladio nodes ``pldAssign`` and ``pldGenerate``. Connect them like this: ![](img/extrude01.png)
 1. In the ``pldAssign`` node, set the ``Rule Package`` parameter to the path of the previously exported RPK.
