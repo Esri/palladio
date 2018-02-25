@@ -10,6 +10,7 @@ class HoudiniConan(ConanFile):
     description = "Houdini is a 3D animation application software developed by Side Effects Software based in Toronto."
     url         = "https://www.sidefx.com"
     license     = "SIDE EFFECTS SOFTWARE LICENSE AGREEMENT, https://www.sidefx.com/legal/license-agreement"
+    options     = { "hfs": "ANY" }
 
     def build(self):
         pass
@@ -19,7 +20,7 @@ class HoudiniConan(ConanFile):
             # TODO
             pass
         elif self.settings.os == "Linux":
-            local_install = "/opt/hfs{}".format(self.version)
+            local_install = str(self.options.hfs) if self.options.hfs else "/opt/hfs{}".format(self.version)
             self.copy("*", ".", local_install, symlinks=True, excludes="python/*")
             # the python exclude is a hacky workaround: houdini installs some files in the python subdir as only readable by root
         elif self.settings.os == "Macos":
