@@ -8,7 +8,7 @@ import os
 
 class HoudiniConan(ConanFile):
     name        = "houdini"
-    settings    = "os", "compiler", "build_type", "arch"
+    settings    = "os", "compiler", "arch"
     description = "Houdini is a 3D animation application software developed by Side Effects Software based in Toronto."
     url         = "https://www.sidefx.com"
     license     = "SIDE EFFECTS SOFTWARE LICENSE AGREEMENT, https://www.sidefx.com/legal/license-agreement"

@@ -6,7 +6,7 @@ from conans import tools
 class CESDKConan(ConanFile):
     name        = "cesdk"
     version     = "1.9.3786"
-    settings    = "os", "compiler", "build_type", "arch"
+    settings    = "os", "compiler", "arch"
     description = "Develop 3D applications using the procedural geometry engine of Esri CityEngine."
     url         = "https://github.com/Esri/esri-cityengine-sdk"
     license     = "CityEngine EULA"
