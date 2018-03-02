@@ -2,11 +2,12 @@
 
 ## Build Requirements
 - RHEL/CentOS 6/7 (or compatible) with GCC 4.8
+- Installation of [Houdini 16.0](https://sidefx.com/download)
 - [cmake 3.8 or later](https://cmake.org/download)
 - [conan 1.0.1 or later](https://www.conan.io/downloads)
 
-The bootstrap will take care of these additional dependencies: 
-- [SideFX Houdini HDK 16](https://sidefx.com/download)
+The bootstrap step below will take care of these additional dependencies: 
+- SideFX Houdini HDK 16
 - [Esri CityEngine SDK 1.9](https://github.com/Esri/esri-cityengine-sdk)
 
 ## Build Instructions
