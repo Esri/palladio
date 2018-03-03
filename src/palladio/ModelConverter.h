@@ -65,7 +65,7 @@ void setUVs(
 
 class ModelConverter : public HoudiniCallbacks {
 public:
-	explicit ModelConverter(GU_Detail* gdp, GenerateNodeParams::GroupCreation gc, UT_AutoInterrupt* autoInterrupt = nullptr);
+	explicit ModelConverter(GU_Detail* gdp, GenerateNodeParams::GroupCreation gc, std::vector<prt::Status>& statuses, UT_AutoInterrupt* autoInterrupt = nullptr);
 
 protected:
 	void add(
@@ -104,6 +104,7 @@ protected:
 private:
 	GU_Detail* mDetail;
 	GenerateNodeParams::GroupCreation mGroupCreation;
+	std::vector<prt::Status>& mStatuses;
 	UT_AutoInterrupt* mAutoInterrupt;
 	std::map<int32_t, AttributeMapBuilderUPtr> mShapeAttributeBuilders;
 };

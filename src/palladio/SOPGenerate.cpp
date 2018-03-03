@@ -25,6 +25,7 @@
 #include "UT/UT_Interrupt.h"
 
 #include <future>
+#include <algorithm>
 
 
 namespace {
@@ -92,85 +93,102 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	duplicateSource(0, context);
 
-	if (error() < UT_ERROR_ABORT && cookInputGroups(context) < UT_ERROR_ABORT) {
-		UT_AutoInterrupt progress("Generating CityEngine geometry...");
+	if (error() >= UT_ERROR_ABORT || cookInputGroups(context) >= UT_ERROR_ABORT)
+		return error();
 
-		const auto groupCreation = GenerateNodeParams::getGroupCreation(this, context.getTime());
-		ShapeData shapeData(groupCreation, toUTF16FromOSNarrow(getName().toStdString()));
 
-		ShapeGenerator shapeGen;
-		shapeGen.get(gdp, DEFAULT_PRIMITIVE_CLASSIFIER, shapeData, mPRTCtx);
+	UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
-		const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
-		if (is.empty()) {
-			LOG_ERR << getName() << ": could not extract any initial shapes from detail!";
-			return UT_ERROR_ABORT;
-		}
+	const auto groupCreation = GenerateNodeParams::getGroupCreation(this, context.getTime());
+	ShapeData shapeData(groupCreation, toUTF16FromOSNarrow(getName().toStdString()));
 
-		if (!progress.wasInterrupted()) {
-			gdp->clearAndDestroy();
-			{
-				WA("generate");
+	ShapeGenerator shapeGen;
+	shapeGen.get(gdp, DEFAULT_PRIMITIVE_CLASSIFIER, shapeData, mPRTCtx);
 
-				// establish threads
-				const size_t nThreads = std::min<size_t>(mPRTCtx->mCores, is.size());
-				const size_t isRangeSize = std::ceil(is.size() / nThreads);
-
-				// prt requires one callback instance per generate call
-				std::vector<ModelConverterUPtr> hg(nThreads);
-				std::generate(hg.begin(), hg.end(), [this, &groupCreation, &progress]() -> ModelConverterUPtr {
-					return ModelConverterUPtr(new ModelConverter(gdp, groupCreation, &progress));
-				});
-
-				LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = "
-				        << nThreads << ", initial shapes per thread = " << isRangeSize;
-
-				// kick-off generate threads
-				std::vector<std::future<void>> futures;
-				futures.reserve(nThreads);
-				for (int8_t ti = 0; ti < nThreads; ti++) {
-					auto f = std::async(std::launch::async, [this, &hg, ti, &nThreads, &isRangeSize, &is] {
-						const size_t isStartPos = ti * isRangeSize;
-						const size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
-						const size_t isActualRangeSize = isPastEndPos - isStartPos;
-						const auto isRangeStart = &is[isStartPos];
-
-						LOG_DBG << "thread " << ti << ": #is = " << isActualRangeSize;
-
-						OcclusionSetUPtr occlSet;
-						std::vector<prt::OcclusionSet::Handle> occlHandles;
-						if (ENABLE_OCCLUSION) {
-							occlSet.reset(prt::OcclusionSet::create());
-							occlHandles.resize(isActualRangeSize);
-							prt::generateOccluders(isRangeStart, isActualRangeSize, occlHandles.data(), nullptr, 0,
-							                       nullptr, hg[ti].get(), mPRTCtx->mPRTCache.get(), occlSet.get(),
-							                       mGenerateOptions.get());
-						}
-
-						prt::Status stat = prt::generate(isRangeStart, isActualRangeSize, occlHandles.data(),
-						                                 mAllEncoders.data(), mAllEncoders.size(),
-						                                 mAllEncoderOptions.data(), hg[ti].get(),
-						                                 mPRTCtx->mPRTCache.get(), occlSet.get(),
-						                                 mGenerateOptions.get());
-						if (stat != prt::STATUS_OK) {
-							LOG_ERR << "prt::generate() failed with status: '"
-							        << prt::getStatusDescription(stat) << "' (" << stat << ")";
-						}
-
-						if (ENABLE_OCCLUSION)
-							occlSet->dispose(occlHandles.data(), occlHandles.size());
-					});
-					futures.emplace_back(std::move(f));
-				}
-				std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
-			}
-			select();
-		}
+	const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
+	if (is.empty()) {
+		LOG_ERR << getName() << ": could not extract any initial shapes from detail!";
+		return UT_ERROR_ABORT;
 	}
+
+	// establish threads
+	const size_t nThreads = std::min<size_t>(mPRTCtx->mCores, is.size());
+	const size_t isRangeSize = std::ceil(is.size() / nThreads);
+
+	// prepare generate status receivers
+	std::vector<prt::Status> initialShapeStatus(is.size(), prt::STATUS_OK);
+	std::vector<prt::Status> batchStatus(nThreads, prt::STATUS_UNSPECIFIED_ERROR);
+
+	if (!progress.wasInterrupted()) {
+		gdp->clearAndDestroy();
+		{
+			WA("generate");
+
+			// prt requires one callback instance per generate call
+			std::vector<ModelConverterUPtr> hg(nThreads);
+			std::generate(hg.begin(), hg.end(), [this, &groupCreation, &initialShapeStatus, &progress]() -> ModelConverterUPtr {
+				return ModelConverterUPtr(new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
+			});
+
+			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = "
+			        << nThreads << ", initial shapes per thread = " << isRangeSize;
+
+			// kick-off generate threads
+			std::vector<std::future<void>> futures;
+			futures.reserve(nThreads);
+			for (int8_t ti = 0; ti < nThreads; ti++) {
+				auto f = std::async(std::launch::async, [this, &hg, ti, &nThreads, &isRangeSize, &is, &batchStatus] {
+					const size_t isStartPos = ti * isRangeSize;
+					const size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
+					const size_t isActualRangeSize = isPastEndPos - isStartPos;
+					const auto isRangeStart = &is[isStartPos];
+
+					LOG_DBG << "thread " << ti << ": #is = " << isActualRangeSize;
+
+					OcclusionSetUPtr occlSet;
+					std::vector<prt::OcclusionSet::Handle> occlHandles;
+					if (ENABLE_OCCLUSION) {
+						occlSet.reset(prt::OcclusionSet::create());
+						occlHandles.resize(isActualRangeSize);
+						prt::generateOccluders(isRangeStart, isActualRangeSize, occlHandles.data(), nullptr, 0,
+						                       nullptr, hg[ti].get(), mPRTCtx->mPRTCache.get(), occlSet.get(),
+						                       mGenerateOptions.get());
+					}
+
+					batchStatus[ti] = prt::generate(isRangeStart, isActualRangeSize, occlHandles.data(),
+					                                 mAllEncoders.data(), mAllEncoders.size(),
+					                                 mAllEncoderOptions.data(), hg[ti].get(),
+					                                 mPRTCtx->mPRTCache.get(), occlSet.get(),
+					                                 mGenerateOptions.get());
+
+					if (ENABLE_OCCLUSION)
+						occlSet->dispose(occlHandles.data(), occlHandles.size());
+
+					if (batchStatus[ti] != prt::STATUS_OK) {
+						LOG_WRN << "prt::generate() failed with status: '"
+						        << prt::getStatusDescription(batchStatus[ti]) << "' (" << batchStatus[ti] << ")";
+					}
+
+				});
+				futures.emplace_back(std::move(f));
+			}
+			std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
+		}
+		select();
+	}
+
+	WA_PRINT_TIMINGS
 
 	unlockInputs();
 
-	WA_PRINT_TIMINGS
+	// generate status check: if all shapes fail, we abort cooking (failure of individual shapes is sometimes expected)
+	const size_t isSuccesses = std::count(initialShapeStatus.begin(), initialShapeStatus.end(), prt::STATUS_OK);
+	if (isSuccesses == 0) {
+		LOG_ERR << getName() << ": All initial shapes failed to generate, cooking aborted.";
+		addError(UT_ERROR_ABORT, "All initial shapes failed to generate.");
+		return UT_ERROR_ABORT;
+	}
+	// TODO: evaluate batchStatus as well...
 
 	return error();
 }
