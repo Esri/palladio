@@ -1,8 +1,11 @@
-# Palladio
+# ![](doc/img/Palladio_icon_v1_32.png) Palladio
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) 'rules' within Houdini networks. This provides a convenient combination of the generic procedural modelling capabilities of Houdini with the architecture-specific procedural modeling language 'CGA' of CityEngine.
 
 Palladio is not an Esri nor vrbn product and there is currently no official/commercial support from Esri nor vrbn. However, if you are interested in commercial services related to Palladio, please contact info@vrbn.io
+
 
 ## Documentation
 
@@ -17,6 +20,7 @@ External documentation:
 * [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
 * [Houdini 16.0 HDK Reference](http://www.sidefx.com/docs/hdk16.0/)  
 
+
 ## Community
 
 Palladio is maintained as an open-source project by Matthias Buehler (vrbn.io) and Simon Haegler (Esri R&D Zurich). Matthias is focusing on UX/UI topics and use-cases in Urban Planning, while Simon is focusing on the implementation and procedural modelling technology.
@@ -26,6 +30,7 @@ Our goal is to bring as many Houdini and CityEngine users and developers on boar
 [Join us on slack!](https://join.slack.com/t/palladio-houdini-ce/shared_invite/enQtMzAzNTc4MzIzNjA1LTEwYmQ1ZjE0MTExODIxNTA4ZDEzYWYyYzNkZGZmMWQ0NmM2MjMzYTllOGI5OTQwNGM0N2RjYjFlNjJjNzVhMjE)
 
 Our thanks also go to the fine folks at Esri R&D Zurich and VRBN which provided valuable comments and feedback.
+
 
 ## History
 
