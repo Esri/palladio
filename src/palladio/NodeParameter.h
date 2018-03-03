@@ -64,6 +64,10 @@ auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
 };
 
 
+// -- RPK RELOADER
+static PRM_Name RPK_RELOAD("rpkReload", "Reload Rule Package");
+
+
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
 const std::string RULE_FILE_HELP = "Sets value for primitive attribute '" + PLD_RULE_FILE.toStdString() + "'";
@@ -126,11 +130,12 @@ auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
-		PRM_Template(PRM_STRING, 1, &PRIM_CLS,   &PRIM_CLS_DEFAULT, nullptr,        nullptr, PRM_Callback(), nullptr,                             1, PRIM_CLS_HELP.c_str()),
-		PRM_Template(PRM_FILE,   1, &RPK,        &RPK_DEFAULT,      nullptr,        nullptr, rpkCallback,    &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults,    &ruleFileMenu,  nullptr, PRM_Callback(), nullptr,                             1, RULE_FILE_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults,    &styleMenu,     nullptr, PRM_Callback(), nullptr,                             1, STYLE_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults,    &startRuleMenu, nullptr, PRM_Callback(), nullptr,                             1, START_RULE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &PRIM_CLS,   &PRIM_CLS_DEFAULT, nullptr,        nullptr, PRM_Callback(), nullptr,                             1, PRIM_CLS_HELP.c_str()),
+		PRM_Template(PRM_FILE,     1, &RPK,        &RPK_DEFAULT,      nullptr,        nullptr, rpkCallback,    &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
+		PRM_Template(PRM_CALLBACK, 1, &RPK_RELOAD, PRMoneDefaults,    nullptr,        nullptr, rpkCallback),
+		PRM_Template(PRM_STRING,   1, &RULE_FILE,  PRMoneDefaults,    &ruleFileMenu,  nullptr, PRM_Callback(), nullptr,                             1, RULE_FILE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &STYLE,      PRMoneDefaults,    &styleMenu,     nullptr, PRM_Callback(), nullptr,                             1, STYLE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &START_RULE, PRMoneDefaults,    &startRuleMenu, nullptr, PRM_Callback(), nullptr,                             1, START_RULE_HELP.c_str()),
 		PRM_Template()
 };
 
