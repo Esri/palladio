@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ResolveMapCache.h"
 #include "Utils.h"
 
 #include "prt/Object.h"
@@ -47,16 +48,8 @@ struct PRTContext final {
 	logging::LogHandlerPtr  mLogHandler;
 	ObjectUPtr              mLicHandle;
 	CacheObjectUPtr         mPRTCache;
-	boost::filesystem::path mRPKUnpackPath;
 	const uint32_t          mCores;
-
-	struct ResolveMapCacheEntry {
-		ResolveMapUPtr mResolveMap;
-		timespec mTimeStamp;
-	};
-	using ResolveMapCache = std::map<boost::filesystem::path, ResolveMapCacheEntry>;
-	ResolveMapCache         mResolveMapCache;
-	const ResolveMapUPtr    mResolveMapNone;
+	ResolveMapCacheUPtr     mResolveMapCache;
 };
 
 using PRTContextUPtr = std::unique_ptr<PRTContext>;

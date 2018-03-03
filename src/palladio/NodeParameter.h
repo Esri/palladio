@@ -70,8 +70,7 @@ const std::string RULE_FILE_HELP = "Sets value for primitive attribute '" + PLD_
 
 void buildRuleFileMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                   &buildRuleFileMenu);
+static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildRuleFileMenu);
 
 auto getRuleFile = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
@@ -91,8 +90,7 @@ const std::string STYLE_HELP = "Sets value for primitive attribute '" + PLD_STYL
 
 void buildStyleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                &buildStyleMenu);
+static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStyleMenu);
 
 auto getStyle = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
@@ -112,8 +110,7 @@ const std::string START_RULE_HELP = "Sets value for primitive attribute '" + PLD
 
 void buildStartRuleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                    &buildStartRuleMenu);
+static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStartRuleMenu);
 
 auto getStartRule = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;

@@ -28,6 +28,7 @@ public:
 	~SOPAssign() override = default;
 
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
+	const boost::filesystem::path& getRPK() const { return mShapeConverter->mRPK; }
 
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 

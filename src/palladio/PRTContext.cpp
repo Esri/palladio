@@ -15,14 +15,15 @@
  */
 
 #include "PRTContext.h"
+#include "PalladioMain.h"
 #include "LogHandler.h"
+#include "SOPAssign.h"
+
+#include "OP/OP_Node.h"
+#include "OP/OP_Director.h"
+#include "OP/OP_Network.h"
 
 #include <thread>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifndef WIN32
-#   include <unistd.h>
-#endif
 
 
 namespace {
@@ -97,15 +98,24 @@ uint32_t getNumCores() {
 	return n > 0 ? n : 1;
 }
 
-const timespec NO_MODIFICATION_TIME{0, 0};
+/**
+ * schedule recook of all assign nodes with matching rpk
+ */
+void scheduleRecook(const boost::filesystem::path& rpk) {
+	auto visit = [](OP_Node& n, void* data) -> bool {
+		if (n.getOperator()->getName().equal(OP_PLD_ASSIGN)) {
+			auto rpk = reinterpret_cast<boost::filesystem::path*>(data);
+			SOPAssign& sa = static_cast<SOPAssign&>(n);
+			if (sa.getRPK() == *rpk) {
+				LOG_DBG << "forcing recook of: " << n.getName() << ", " << n.getOpType() << ", " << n.getOperator()->getName();
+				sa.forceRecook();
+			}
+		}
+		return false;
+	};
 
-timespec getFileModificationTime(const boost::filesystem::path& p) {
-	struct stat result;
-	if (stat(p.c_str(), &result) == 0) {
-		return result.st_mtim;
-	}
-	else
-		return NO_MODIFICATION_TIME;
+	OP_Network* objMgr = OPgetDirector()->getManager("obj");
+	objMgr->traverseChildren(visit, const_cast<void*>(reinterpret_cast<const void*>(&rpk)), true);
 }
 
 } // namespace
@@ -115,8 +125,8 @@ PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
         : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)),
           mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
-          mRPKUnpackPath{boost::filesystem::temp_directory_path() / (PLD_TMP_PREFIX + std::to_string(::getpid()))},
-          mCores{getNumCores()}
+          mCores{getNumCores()},
+          mResolveMapCache{new ResolveMapCache(boost::filesystem::temp_directory_path() / (PLD_TMP_PREFIX + std::to_string(::getpid())))}
 {
     const prt::LogLevel logLevel = getLogLevel();
 	prt::setLogLevel(logLevel);
@@ -162,53 +172,23 @@ PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
 }
 
 PRTContext::~PRTContext() {
-    mPRTCache.reset();
+    mResolveMapCache.reset();
+	LOG_INF << "Released RPK Cache";
+
+	mPRTCache.reset(); // calling reset manually to ensure order
 	LOG_INF << "Released PRT cache";
 
-	mLicHandle.reset();
+	mLicHandle.reset(); // same here
 	LOG_INF << "Shutdown PRT & returned license";
-
-    boost::filesystem::remove_all(mRPKUnpackPath);
-    LOG_INF << "Removed RPK unpack directory";
 
     prt::removeLogHandler(mLogHandler.get());
 }
 
 const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& rpk) {
-	if (rpk.empty())
-		return mResolveMapNone;
-
-	const auto timeStamp = getFileModificationTime(rpk);
-	LOG_DBG << "rpk: current timestamp: " << timeStamp.tv_sec << "s " << timeStamp.tv_nsec << "ns";
-
-	bool reload = false;
-	auto it = mResolveMapCache.find(rpk);
-	if (it != mResolveMapCache.end()) {
-		LOG_DBG << "rpk: cache timestamp: " << it->second.mTimeStamp.tv_sec << "s " << it->second.mTimeStamp.tv_nsec << "ns";
-		if (it->second.mTimeStamp.tv_sec != timeStamp.tv_sec || it->second.mTimeStamp.tv_nsec != timeStamp.tv_nsec) {
-			mResolveMapCache.erase(it);
-			const auto cnt = boost::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
-			mPRTCache->flushAll(); // TODO: or do we need to explicitely remove cgbs from cache?
-			LOG_DBG << "RPK change detected, refreshing unpack cache: " << rpk << "( removed " << cnt << " files)";
-			reload = true;
-		}
+	auto lookupResult = mResolveMapCache->get(rpk);
+	if (lookupResult.second == ResolveMapCache::CacheStatus::MISS) {
+		mPRTCache->flushAll();
+		scheduleRecook(rpk);
 	}
-	else
-		reload = true;
-
-	if (reload) {
-		const auto rpkURI = toFileURI(rpk);
-
-		ResolveMapCacheEntry rmce;
-		rmce.mTimeStamp = timeStamp;
-
-		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
-		if (status != prt::STATUS_OK)
-			return mResolveMapNone;
-
-		it = mResolveMapCache.emplace(rpk, std::move(rmce)).first;
-	}
-
-	return it->second.mResolveMap;
+	return lookupResult.first;
 }
