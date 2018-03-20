@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "PalladioMain.proto.h"
+
 #include "SOPAssign.h"
 #include "SOPGenerate.h"
 #include "PRTContext.h"
@@ -22,8 +24,8 @@
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"
 
-#undef major // fixes warning regarding duplicate macros in <sys/types.h> and <sys/sysmacros.h>
-#undef minor
+//#undef major // fixes warning regarding duplicate macros in <sys/types.h> and <sys/sysmacros.h>
+//#undef minor
 #include "UT/UT_DSOVersion.h"
 
 

@@ -18,21 +18,23 @@ if(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-std=c++11 -march=nocona
 			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: use cmake tools to set these
+
+	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
+	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -ggdb -pg)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
+	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+		target_compile_options(${PROJECT_NAME} PRIVATE -O0 -ggdb -pg)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
+	endif()
+
 elseif(PLD_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-std=c++14
 			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: dito
-endif()
-
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-	target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-	target_compile_options(${PROJECT_NAME} PRIVATE -O3 -ggdb -pg)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	target_compile_options(${PROJECT_NAME} PRIVATE -O0 -ggdb -pg)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
+elseif(PLD_WINDOWS)
 endif()
 
 

@@ -39,7 +39,7 @@ set(PLD_ARCH "x86_64")
 ### toolchain configuration
 
 if(PLD_WINDOWS)
-	set(PLD_TC "vc110")
+	set(PLD_TC "vc140")
 	add_definitions(-DPLD_TC_VC) # TODO
 elseif(PLD_LINUX)
 	set(PLD_TC "gcc48")
@@ -59,7 +59,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
 
 add_subdirectory(codec)
 add_subdirectory(palladio)
-add_subdirectory(test)
+#add_subdirectory(test)
 
 add_dependencies(palladio palladio_codec)
 
@@ -81,7 +81,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 add_custom_target(install_palladio
-    make install
+    ${CMAKE_MAKE_PROGRAM} install
     DEPENDS palladio
     COMMENT "Installing palladio")
 
