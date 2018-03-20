@@ -18,7 +18,8 @@ class HoudiniConan(ConanFile):
 
     def package(self):
         if self.settings.os == "Windows":
-            # TODO
+            local_install = os.getenv('HOUDINI_INSTALL') if 'HOUDINI_INSTALL' in os.environ else "C:\Program Files\Side Effects Software\Houdini {}".format(self.version)
+            self.copy("*", ".", local_install)
             pass
         elif self.settings.os == "Linux":
             local_install = os.getenv('HOUDINI_INSTALL') if 'HOUDINI_INSTALL' in os.environ else "/opt/hfs{}".format(self.version)
