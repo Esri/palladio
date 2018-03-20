@@ -18,6 +18,7 @@
 #include "LogHandler.h"
 
 #include <thread>
+#include <process.h>
 
 
 namespace {
