@@ -15,7 +15,13 @@
  */
 
 #include "PRTContext.h"
+#include "PalladioMain.h"
 #include "LogHandler.h"
+#include "SOPAssign.h"
+
+#include "OP/OP_Node.h"
+#include "OP/OP_Director.h"
+#include "OP/OP_Network.h"
 
 #include <thread>
 
@@ -92,6 +98,26 @@ uint32_t getNumCores() {
 	return n > 0 ? n : 1;
 }
 
+/**
+ * schedule recook of all assign nodes with matching rpk
+ */
+void scheduleRecook(const boost::filesystem::path& rpk) {
+	auto visit = [](OP_Node& n, void* data) -> bool {
+		if (n.getOperator()->getName().equal(OP_PLD_ASSIGN)) {
+			auto rpk = reinterpret_cast<boost::filesystem::path*>(data);
+			SOPAssign& sa = static_cast<SOPAssign&>(n);
+			if (sa.getRPK() == *rpk) {
+				LOG_DBG << "forcing recook of: " << n.getName() << ", " << n.getOpType() << ", " << n.getOperator()->getName();
+				sa.forceRecook();
+			}
+		}
+		return false;
+	};
+
+	OP_Network* objMgr = OPgetDirector()->getManager("obj");
+	objMgr->traverseChildren(visit, const_cast<void*>(reinterpret_cast<const void*>(&rpk)), true);
+}
+
 } // namespace
 
 
@@ -99,8 +125,8 @@ PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
         : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)),
           mLicHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
-          mRPKUnpackPath{boost::filesystem::temp_directory_path() / (PLD_TMP_PREFIX + std::to_string(::getpid()))},
-          mCores{getNumCores()}
+          mCores{getNumCores()},
+          mResolveMapCache{new ResolveMapCache(boost::filesystem::temp_directory_path() / (PLD_TMP_PREFIX + std::to_string(::getpid())))}
 {
     const prt::LogLevel logLevel = getLogLevel();
 	prt::setLogLevel(logLevel);
@@ -146,30 +172,23 @@ PRTContext::PRTContext(const std::vector<boost::filesystem::path>& addExtDirs)
 }
 
 PRTContext::~PRTContext() {
-    mPRTCache.reset();
+    mResolveMapCache.reset();
+	LOG_INF << "Released RPK Cache";
+
+	mPRTCache.reset(); // calling reset manually to ensure order
 	LOG_INF << "Released PRT cache";
 
-	mLicHandle.reset();
+	mLicHandle.reset(); // same here
 	LOG_INF << "Shutdown PRT & returned license";
-
-    boost::filesystem::remove_all(mRPKUnpackPath);
-    LOG_INF << "Removed RPK unpack directory";
 
     prt::removeLogHandler(mLogHandler.get());
 }
 
 const ResolveMapUPtr& PRTContext::getResolveMap(const boost::filesystem::path& rpk) {
-    if (rpk.empty())
-        return mResolveMapNone;
-
-    auto it = mResolveMapCache.find(rpk);
-    if (it == mResolveMapCache.end()) {
-        prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-        const auto rpkURI = toFileURI(rpk);
-        ResolveMapUPtr rm(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
-        if (status != prt::STATUS_OK)
-            return mResolveMapNone;
-        it = mResolveMapCache.emplace(rpk, std::move(rm)).first;
-    }
-    return it->second;
+	auto lookupResult = mResolveMapCache->get(rpk);
+	if (lookupResult.second == ResolveMapCache::CacheStatus::MISS) {
+		mPRTCache->flushAll();
+		scheduleRecook(rpk);
+	}
+	return lookupResult.first;
 }

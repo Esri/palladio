@@ -186,8 +186,8 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GenerateNodeParams::GroupCreation
 } // namespace ModelConversion
 
 
-ModelConverter::ModelConverter(GU_Detail* detail, GenerateNodeParams::GroupCreation gc, UT_AutoInterrupt* autoInterrupt)
-: mDetail(detail), mGroupCreation(gc), mAutoInterrupt(autoInterrupt) { }
+ModelConverter::ModelConverter(GU_Detail* detail, GenerateNodeParams::GroupCreation gc, std::vector<prt::Status>& statuses, UT_AutoInterrupt* autoInterrupt)
+: mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) { }
 
 void ModelConverter::add(const wchar_t* name,
                          const double* vtx, size_t vtxSize,
@@ -254,7 +254,8 @@ void ModelConverter::add(const wchar_t* name,
 }
 
 prt::Status ModelConverter::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
-	LOG_ERR << message;
+	LOG_WRN << message; // generate error for one shape is not yet a reason to abort cooking
+	mStatuses[isIndex] = status;
 	return prt::STATUS_OK;
 }
 
@@ -264,7 +265,7 @@ prt::Status ModelConverter::assetError(size_t isIndex, prt::CGAErrorLevel level,
 }
 
 prt::Status ModelConverter::cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
-	LOG_ERR << message;
+	LOG_WRN << message;
 	return prt::STATUS_OK;
 }
 
