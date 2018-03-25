@@ -10,36 +10,27 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
 
 
-### boost dependency
-
-function(pld_add_dependency_boost TGT)
-	target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
-endfunction()
-
-
 ### PRT dependency
 
-function(pld_add_dependency_prt TGT)
-	find_package(prt CONFIG)
+find_package(prt CONFIG REQUIRED)
 
+function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
 	target_include_directories(${TGT} PRIVATE ${PRT_INCLUDE_PATH})
-	target_link_libraries(${TGT} PRIVATE ${PRT_LINK_LIBRARIES})
-
-	# promote the PRT library paths so we can use them for the install command
-	# todo: use output variables
-	set( PRT_LIBRARIES ${PRT_LIBRARIES} PARENT_SCOPE )
-	set( PRT_EXT_LIBRARIES ${PRT_EXT_LIBRARIES} PARENT_SCOPE )
+	target_link_libraries(${TGT} PRIVATE ${PRT_LIBRARY})
 endfunction()
 
 
 ### HOUDINI dependency
 
+list(APPEND CMAKE_PREFIX_PATH "${CONAN_HOUDINI_ROOT}/toolkit/cmake")
+find_package(Houdini REQUIRED)
+
 # TODO: move into function, use output variables
 if(PLD_LINUX)
 	# get Houdini fundamentals from conan as global variables
 	set(HOUDINI_ROOT    ${CONAN_HOUDINI_ROOT})
-	set(HOUDINI_VERSION ${CONAN_USER_HOUDINI_version})
+	set(HOUDINI_VERSION ${CONAN_USER_HOUDINI_version}) # todo: replace by cmake
 	message(STATUS "HOUDINI_VERSION = ${HOUDINI_VERSION}")
 
 	string(REPLACE "." ";" VL ${HOUDINI_VERSION})
@@ -50,17 +41,8 @@ endif()
 
 function(pld_add_dependency_houdini TGT)
 	if(PLD_WINDOWS)
-		list(APPEND CMAKE_PREFIX_PATH "${CONAN_HOUDINI_ROOT}/toolkit/cmake")
-		find_package(Houdini)
-
 		target_link_libraries(${TGT} PRIVATE Houdini)
-		houdini_generate_proto_headers( FILES PalladioMain.cpp )
-		houdini_configure_target(${PROJECT_NAME})
-
-		# fixme
-		set(HOUDINI_MAJOR_VERSION ${Houdini_VERSION_MAJOR} PARENT_SCOPE)
-		set(HOUDINI_MINOR_VERSION ${Houdini_VERSION_MINOR} PARENT_SCOPE)
-
+		houdini_configure_target(${TGT})
 	elseif(PLD_LINUX)
 		# TODO: use houdini cmake config
 
@@ -133,3 +115,15 @@ function(pld_add_dependency_houdini TGT)
 endfunction()
 
 
+### boost dependency
+
+function(pld_add_dependency_boost TGT)
+	target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
+endfunction()
+
+
+### catch2 dependency
+
+function(pld_add_dependency_catch2 TGT)
+	target_link_libraries(${TGT} PRIVATE CONAN_PKG::catch2)
+endfunction()

@@ -34,6 +34,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 ### compiler settings
 
+add_toolchain_definition(${PROJECT_NAME})
+
+if(PLD_TEST)
+	target_compile_definitions(palladio PRIVATE -DPLD_TEST_EXPORTS)
+endif()
+
 if(PLD_WINDOWS)
 	# TODO: outdated, move houdini-specific stuff to pld_add_dependency_houdini
 	#set(CMAKE_CXX_FLAGS "-EHsc -nologo -TP -Zc:forScope -wd4355 -w14996")
@@ -84,10 +90,6 @@ endif()
 pld_add_dependency_boost(${PROJECT_NAME})
 pld_add_dependency_prt(${PROJECT_NAME})
 pld_add_dependency_houdini(${PROJECT_NAME})
-
-#TODO FIXME
-set(HOUDINI_MAJOR_VERSION ${HOUDINI_MAJOR_VERSION} PARENT_SCOPE)
-set(HOUDINI_MINOR_VERSION ${HOUDINI_MINOR_VERSION} PARENT_SCOPE)
 
 
 ### setup install target
