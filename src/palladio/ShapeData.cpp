@@ -65,7 +65,7 @@ void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed,
 	mRandomSeeds.push_back(randomSeed);
 	mPrimitiveMapping.emplace_back(primMappings);
 
-	if (mGroupCreation == GenerateNodeParams::GroupCreation::PRIMCLS) {
+	if (mGroupCreation == GroupCreation::PRIMCLS) {
 		std::wstring name;
 		NameFromPrimPart npp(name, mNamePrefix);
 		boost::apply_visitor(npp, clsVal);

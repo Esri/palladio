@@ -157,13 +157,12 @@ static PRM_ChoiceList groupCreationMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCL
 const size_t DEFAULT_GROUP_CREATION_ORDINAL = 0;
 static PRM_Default DEFAULT_GROUP_CREATION(0, GROUP_CREATION_TOKENS[DEFAULT_GROUP_CREATION_ORDINAL]);
 
-enum class GroupCreation { NONE, PRIMCLS };
 const auto getGroupCreation = [](const OP_Node* node, fpreal t) -> GroupCreation {
 	const auto ord = node->evalInt(GROUP_CREATION.getToken(), 0, t);
 	switch (ord) {
-		case 0: return GroupCreation::NONE; break;
-		case 1: return GroupCreation::PRIMCLS; break;
-		default: return GroupCreation::NONE; break;
+		case 0: return GroupCreation::NONE;
+		case 1: return GroupCreation::PRIMCLS;
+		default: return GroupCreation::NONE;
 	}
 };
 

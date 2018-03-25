@@ -131,7 +131,7 @@ void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
 	}
 }
 
-GA_Offset createPrimitives(GU_Detail* mDetail, GenerateNodeParams::GroupCreation gc, const wchar_t* name,
+GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name,
                            const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize,
                            const double* uvs, size_t uvsSize,
@@ -173,7 +173,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GenerateNodeParams::GroupCreation
 	}
 
 	// -- optionally create primitive groups
-	if (gc == GenerateNodeParams::GroupCreation::PRIMCLS) {
+	if (gc == GroupCreation::PRIMCLS) {
 		const std::string nName = toOSNarrowFromUTF16(name);
 		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
 		GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nName.c_str(), false));
@@ -186,7 +186,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GenerateNodeParams::GroupCreation
 } // namespace ModelConversion
 
 
-ModelConverter::ModelConverter(GU_Detail* detail, GenerateNodeParams::GroupCreation gc, UT_AutoInterrupt* autoInterrupt)
+ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, UT_AutoInterrupt* autoInterrupt)
 : mDetail(detail), mGroupCreation(gc), mAutoInterrupt(autoInterrupt) { }
 
 void ModelConverter::add(const wchar_t* name,

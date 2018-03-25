@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "PalladioMain.h"
 #include "Utils.h"
 
 #include "GU/GU_Detail.h"
@@ -56,7 +57,7 @@ struct ProtoHandle {
 
 using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
 
-void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap);
+PLD_TEST_EXPORTS_API void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap);
 void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap);
 void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
                         const GA_IndexMap& primIndexMap, const GA_Offset rangeStart,
@@ -69,7 +70,7 @@ namespace NameConversion {
 
 std::wstring addStyle(const std::wstring& n, const std::wstring& style);
 std::wstring removeStyle(const std::wstring& n);
-void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name);
+PLD_TEST_EXPORTS_API void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name);
 
 UT_String toPrimAttr(const std::wstring& name);
 std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name);

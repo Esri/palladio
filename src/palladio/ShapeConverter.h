@@ -38,6 +38,8 @@ const UT_String PLD_START_RULE  = "pldStartRule";
 const UT_String PLD_STYLE       = "pldStyle";
 const UT_String PLD_RANDOM_SEED = "pldRandomSeed";
 
+enum class GroupCreation { NONE, PRIMCLS };
+
 class ShapeConverter {
 public:
 	virtual void get(const GU_Detail* detail,  const PrimitiveClassifier& primCls,

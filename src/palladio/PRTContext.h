@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "PalladioMain.h"
 #include "Utils.h"
 
 #include "prt/Object.h"
@@ -34,7 +35,7 @@ using LogHandlerPtr = std::unique_ptr<LogHandler>;
 /**
  * manage PRT "lifetime" (actually, its license lifetime)
  */
-struct PRTContext final {
+struct PLD_TEST_EXPORTS_API PRTContext final {
 	explicit PRTContext(const std::vector<boost::filesystem::path>& addExtDirs = {});
 	PRTContext(const PRTContext&) = delete;
 	PRTContext(PRTContext&&) = delete;

@@ -20,7 +20,6 @@
 #include "ShapeConverter.h"
 #include "Utils.h"
 
-
 class GU_Detail;
 
 struct ShapeGenerator final : ShapeConverter {
