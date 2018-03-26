@@ -64,14 +64,17 @@ const auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path
 };
 
 
+// -- RPK RELOADER
+static PRM_Name RPK_RELOAD("rpkReload", "Reload Rule Package");
+
+
 // -- RULE FILE (cgb)
 static PRM_Name RULE_FILE("ruleFile", "Rule File");
 const std::string RULE_FILE_HELP = "Sets value for primitive attribute '" + PLD_RULE_FILE.toStdString() + "'";
 
 void buildRuleFileMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                   &buildRuleFileMenu);
+static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildRuleFileMenu);
 
 const auto getRuleFile = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
@@ -91,8 +94,7 @@ const std::string STYLE_HELP = "Sets value for primitive attribute '" + PLD_STYL
 
 void buildStyleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                &buildStyleMenu);
+static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStyleMenu);
 
 const auto getStyle = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
@@ -112,8 +114,7 @@ const std::string START_RULE_HELP = "Sets value for primitive attribute '" + PLD
 
 void buildStartRuleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 
-static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-                                    &buildStartRuleMenu);
+static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStartRuleMenu);
 
 const auto getStartRule = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
@@ -129,11 +130,12 @@ const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
-		PRM_Template(PRM_STRING, 1, &PRIM_CLS,   &PRIM_CLS_DEFAULT, nullptr,        nullptr, PRM_Callback(), nullptr,                             1, PRIM_CLS_HELP.c_str()),
-		PRM_Template(PRM_FILE,   1, &RPK,        &RPK_DEFAULT,      nullptr,        nullptr, rpkCallback,    &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &RULE_FILE,  PRMoneDefaults,    &ruleFileMenu,  nullptr, PRM_Callback(), nullptr,                             1, RULE_FILE_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &STYLE,      PRMoneDefaults,    &styleMenu,     nullptr, PRM_Callback(), nullptr,                             1, STYLE_HELP.c_str()),
-		PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults,    &startRuleMenu, nullptr, PRM_Callback(), nullptr,                             1, START_RULE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &PRIM_CLS,   &PRIM_CLS_DEFAULT, nullptr,        nullptr, PRM_Callback(), nullptr,                             1, PRIM_CLS_HELP.c_str()),
+		PRM_Template(PRM_FILE,     1, &RPK,        &RPK_DEFAULT,      nullptr,        nullptr, rpkCallback,    &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
+		PRM_Template(PRM_CALLBACK, 1, &RPK_RELOAD, PRMoneDefaults,    nullptr,        nullptr, rpkCallback),
+		PRM_Template(PRM_STRING,   1, &RULE_FILE,  PRMoneDefaults,    &ruleFileMenu,  nullptr, PRM_Callback(), nullptr,                             1, RULE_FILE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &STYLE,      PRMoneDefaults,    &styleMenu,     nullptr, PRM_Callback(), nullptr,                             1, STYLE_HELP.c_str()),
+		PRM_Template(PRM_STRING,   1, &START_RULE, PRMoneDefaults,    &startRuleMenu, nullptr, PRM_Callback(), nullptr,                             1, START_RULE_HELP.c_str()),
 		PRM_Template()
 };
 

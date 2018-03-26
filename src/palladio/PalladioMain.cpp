@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "PalladioMain.h"
+
+#include "PRTContext.h"
 #include "SOPAssign.h"
 #include "SOPGenerate.h"
-#include "PRTContext.h"
 #include "NodeParameter.h"
 
 #include "OP/OP_OperatorTable.h"
@@ -47,7 +49,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	auto createSOPAssign = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
 		return new SOPAssign(prtCtx, net, name, op);
 	};
-	table->addOperator(new OP_Operator("pldAssign", "pldAssign", createSOPAssign,
+	table->addOperator(new OP_Operator(OP_PLD_ASSIGN, OP_PLD_ASSIGN, createSOPAssign,
 			AssignNodeParams::PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
 	));
 
@@ -55,7 +57,7 @@ void newSopOperator(OP_OperatorTable *table) {
 	auto createSOPGenerate = [](OP_Network *net, const char *name, OP_Operator *op) -> OP_Node* {
 		return new SOPGenerate(prtCtx, net, name, op);
 	};
-	table->addOperator(new OP_Operator("pldGenerate", "pldGenerate", createSOPGenerate,
+	table->addOperator(new OP_Operator(OP_PLD_GENERATE, OP_PLD_GENERATE, createSOPGenerate,
 	       GenerateNodeParams::PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR
 	));
 }

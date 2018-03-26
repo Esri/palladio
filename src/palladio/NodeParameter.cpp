@@ -84,12 +84,6 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, time);
 	const boost::filesystem::path nextRPK(utNextRPKStr.toStdString());
 
-	// -- early exit if rpk path is not valid
-	if (!boost::filesystem::exists(nextRPK)) {
-		LOG_WRN << "non-existent rpk";
-		return NOT_CHANGED;
-	}
-
 	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(nextRPK);
 	if (!resolveMap ) {
 		LOG_WRN << "invalid resolve map";
