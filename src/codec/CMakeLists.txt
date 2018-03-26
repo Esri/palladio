@@ -19,7 +19,7 @@ add_toolchain_definition(${PROJECT_NAME})
 if(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-std=c++11 -march=nocona
-			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: use cmake tools to set these
+			-fvisibility=hidden -fvisibility-inlines-hidden)
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
@@ -35,8 +35,11 @@ if(PLD_LINUX)
 elseif(PLD_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			-std=c++14
-			-fvisibility=hidden -fvisibility-inlines-hidden) # TODO: dito
+			-fvisibility=hidden -fvisibility-inlines-hidden)
+
 elseif(PLD_WINDOWS)
+	target_compile_options(${PROJECT_NAME} PRIVATE
+			/bigobj /GR /EHsc /MD)
 endif()
 
 

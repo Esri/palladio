@@ -6,6 +6,7 @@ catch2/2.0.1@bincrafters/stable
 
 [options]
 boost:shared=False
+boost:fPIC=True
 
 [generators]
 cmake
