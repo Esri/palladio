@@ -42,14 +42,7 @@ if(PLD_TEST)
 endif()
 
 if(PLD_WINDOWS)
-	# TODO: outdated, move houdini-specific stuff to pld_add_dependency_houdini
-	#set(CMAKE_CXX_FLAGS "-EHsc -nologo -TP -Zc:forScope -wd4355 -w14996")
-	#set(CMAKE_CXX_FLAGS_Release "-O2 -DNDEBUG -MD -GR -bigobj")
-	#target_comipile_definitions(${PROJECT_NAME} PRIVATE ${PLD_SESI_TAG} -DMAKING_DSO -DI386 -DWIN32 -DSWAP_BITFIELDS -D_WIN32_WINNT=0x0502 -DNOMINMAX -DSTRICT -DWIN32_LEAN_AND_MEAN -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DBOOST_ALL_NO_LIB -DSESI_LITTLE_ENDIAN -DAMD64 -DSIZEOF_VOID_P=8 -DFBX_ENABLED=1 -DOPENCL_ENABLED=1 -DOPENVDB_ENABLED=1)
-
-	#file(GLOB_RECURSE HOUDINI_LIBS
-	#		"${HOUDINI_ROOT}/custom/houdini/dsolib/*.a"
-	#		"${HOUDINI_ROOT}/custom/houdini/dsolib/*.lib")
+	# nothing, inheriting compiler flags from houdini
 
 elseif(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE
@@ -98,3 +91,5 @@ pld_add_dependency_houdini(${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION . LIBRARY DESTINATION .)
 install(FILES ${PRT_LIBRARIES} DESTINATION .)
 install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/../../doc DESTINATION .)
+install(FILES ${PROJECT_SOURCE_DIR}/../../README.md ${PROJECT_SOURCE_DIR}/../../LICENSE DESTINATION .)
