@@ -3,15 +3,16 @@ from conans import tools
 
 # usage: conan create cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8
 
-class CESDKConan(ConanFile):
-    name        = "cesdk"
-    version     = "1.9.3786"
-    settings    = "os", "compiler", "arch"
-    description = "Develop 3D applications using the procedural geometry engine of Esri CityEngine."
-    url         = "https://github.com/Esri/esri-cityengine-sdk"
-    license     = "CityEngine EULA"
 
-    baseURL     = "https://github.com/esri/esri-cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
+class CESDKConan(ConanFile):
+    name = "cesdk"
+    version = "1.9.3786"
+    settings = "os", "compiler", "arch"
+    description = "Develop 3D applications using the procedural geometry engine of Esri CityEngine."
+    url = "https://github.com/Esri/esri-cityengine-sdk"
+    license = "CityEngine EULA"
+
+    baseURL = "https://github.com/esri/esri-cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
 
     def build(self):
         if self.settings.os == "Windows":
