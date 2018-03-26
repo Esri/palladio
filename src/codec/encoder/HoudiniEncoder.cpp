@@ -203,7 +203,7 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 					}
 					case prtx::Attributable::PT_BOOL: {
 						const auto v = shape->getBool(key);
-						cb->attrBool(initialShapeIndex, shape->getID(), key.c_str(), v);
+						cb->attrBool(initialShapeIndex, shape->getID(), key.c_str(), (v == prtx::PRTX_TRUE));
 						break;
 					}
 					default:
@@ -245,17 +245,17 @@ void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& ge
 			const uint32_t numUVSets = mesh->getUVSetsCount();
 
 			std::vector<uint32_t> uvSetIndexBases(sg.uvSets, 0u); // first value is always 0
-			const uint32_t uvsBefore = sg.uvCoords.size();
-			for (size_t uvSet = 0; uvSet < numUVSets; uvSet++) {
+			const uint32_t uvsBefore = (uint32_t)sg.uvCoords.size();
+			for (uint32_t uvSet = 0; uvSet < numUVSets; uvSet++) {
 
 				if (uvSet > 0)
-					uvSetIndexBases[uvSet] = uvSetIndexBases[uvSet-1] + mesh->getUVCoords(uvSet-1).size() / 2u;
+					uvSetIndexBases[uvSet] = uvSetIndexBases[uvSet-1] + (uint32_t)mesh->getUVCoords(uvSet-1).size() / 2u;
 
 				const prtx::DoubleVector& uvs = mesh->getUVCoords(uvSet);
 				if (!uvs.empty())
 					sg.uvCoords.insert(sg.uvCoords.end(), uvs.begin(), uvs.end());
 			}
-			const uint32_t uvsDelta = sg.uvCoords.size() - uvsBefore;
+			const uint32_t uvsDelta = (uint32_t)sg.uvCoords.size() - uvsBefore;
 
 			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
 
@@ -268,7 +268,7 @@ void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& ge
 				for (uint32_t vi = 0; vi < vtxCnt; vi++)
 					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt-vi-1]); // reverse winding
 
-				for (size_t uvSet = 0; uvSet < sg.uvSets; uvSet++) {
+				for (uint32_t uvSet = 0; uvSet < sg.uvSets; uvSet++) {
 					const uint32_t uvCount = (uvSet < numUVSets) ? mesh->getFaceUVCount(fi, uvSet) : 0u;
 					if (uvCount == vtxCnt) {
 						const uint32_t* uvIdx = mesh->getFaceUVIndices(fi, uvSet);
@@ -279,7 +279,7 @@ void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& ge
 				}
 			}
 
-			vertexIndexBase += verts.size() / 3u;
+			vertexIndexBase += (uint32_t)verts.size() / 3u;
 			uvIndexBase += uvsDelta / 2u; // TODO: directly add to per uv set index bases
 		}
 	}
