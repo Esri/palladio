@@ -5,10 +5,11 @@
 #include "boost/filesystem.hpp"
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #ifndef WIN32
-#   include <unistd.h>
+#   include <unistd.h> // TODO: still needed?
 #endif
+
+#include <chrono>
 
 
 class ResolveMapCache {
@@ -26,7 +27,7 @@ public:
 private:
 	struct ResolveMapCacheEntry {
 		ResolveMapUPtr mResolveMap;
-		timespec mTimeStamp;
+		std::chrono::system_clock::time_point mTimeStamp;
 	};
 	using Cache = std::map<boost::filesystem::path, ResolveMapCacheEntry>;
 	Cache mCache;
