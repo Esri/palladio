@@ -1,5 +1,10 @@
 # Palladio ChangeLog
 
+## v1.1 (Apr 7, 2018)
+* Added support for Windows (#85).
+* Raised minimal Houdini version to 16.5.x (#85).
+* Added support to reload RPKs (#58).
+
 ## v1.0 (Jan 26, 2018)
 * Renamed project to "Palladio" (#68).
 * Updated documentation (#38).
