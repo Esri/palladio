@@ -28,7 +28,8 @@ find_package(Houdini REQUIRED)
 
 function(pld_add_dependency_houdini TGT)
 	target_link_libraries(${TGT} PRIVATE Houdini)
-	houdini_configure_target(${TGT})
+	# houdini_configure_target(${TGT})
+	# note: the above disabled function (provided by sidefx) does weird things with the install prefix
 endfunction()
 
 
