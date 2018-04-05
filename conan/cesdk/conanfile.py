@@ -25,6 +25,15 @@ class CESDKConan(ConanFile):
             raise Exception("Binary does not exist for this configuration")
         tools.get(url)
 
+        # hack: both cesdk and houdini provide libAlembic.so which are not compatible
+        #       the alembic library from houdini is loaded first and this prevents libcom.esri.prt.codecs.so to load
+        #       we are using a using patchelf to rename libAlembic.so of cesdk
+        # note: this requires patchelf 0.9 or later (https://github.com/NixOS/patchelf)
+        if self.settings.os == "Linux":
+            self.run('cd esri_ce_sdk/lib && mv libAlembic.so libAlembicCESDK.so')
+            self.run('patchelf --replace-needed libAlembic.so libAlembicCESDK.so esri_ce_sdk/lib/libcom.esri.prt.codecs.so')
+            tools.replace_in_file('esri_ce_sdk/cmake/prtConfig.cmake', 'Alembic', 'AlembicCESDK')
+
     def package(self):
         self.copy("*", ".", "esri_ce_sdk")
 
