@@ -19,6 +19,8 @@
 #include "PRTContext.h"
 #include "Utils.h"
 
+#include "UT/UT_String.h"
+
 #include "boost/filesystem/path.hpp"
 
 #include <string>

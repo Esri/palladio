@@ -1,7 +1,7 @@
 from conans import ConanFile
 from conans import tools
 
-# usage: conan create cesdk/1.9.3786@esri-rd-zurich/stable -s compiler=gcc -s compiler.version=4.8
+# usage: conan create -s compiler=gcc -s compiler.version=4.8 . cesdk/1.9.3786@esri-rd-zurich/stable
 
 
 class CESDKConan(ConanFile):
