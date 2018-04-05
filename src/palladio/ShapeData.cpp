@@ -81,7 +81,7 @@ void ShapeData::addShape(const prt::InitialShape* is, AttributeMapBuilderUPtr&& 
 
 const std::wstring& ShapeData::getInitialShapeName(size_t isIdx) const {
 	if (mInitialShapeNames.empty()) {
-		assert(mGroupCreation == GenerateNodeParams::GroupCreation::NONE);
+		assert(mGroupCreation == GroupCreation::NONE);
 		return DEFAULT_SHAPE_NAME;
 	}
 	else
