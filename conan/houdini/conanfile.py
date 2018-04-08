@@ -1,5 +1,4 @@
 from conans import ConanFile
-from conans import tools
 import os
 
 # this recipe creates a houdini conan package from a locally installed houdini
@@ -13,8 +12,9 @@ class HoudiniConan(ConanFile):
     description = "Houdini is a 3D animation application software developed by Side Effects Software based in Toronto."
     url = "https://www.sidefx.com"
     license = "SIDE EFFECTS SOFTWARE LICENSE AGREEMENT, https://www.sidefx.com/legal/license-agreement"
+    short_paths = True
 
-    houdiniDefaultInstallationPath = 'C:\Program Files\Side Effects Software\Houdini {}'
+    houdiniDefaultInstallationPath = r'C:\Program Files\Side Effects Software\Houdini {}'
 
     def build(self):
         pass
@@ -25,7 +25,6 @@ class HoudiniConan(ConanFile):
                 if 'HOUDINI_INSTALL' in os.environ\
                 else self.houdiniDefaultInstallationPath.format(self.version)
             self.copy("*", ".", local_install)
-            pass
         elif self.settings.os == "Linux":
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
