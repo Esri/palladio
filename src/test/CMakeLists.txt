@@ -31,6 +31,7 @@ pld_add_dependency_houdini(${PROJECT_NAME})
 if(PLD_WINDOWS)
 	# copy libraries next to test excutable so they can be found
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:palladio_codec> ${CMAKE_CURRENT_BINARY_DIR})
+		COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
+		COMMAND ${CMAKE_COMMAND} ARGS -E copy_directory ${PRT_INSTALL_PATH}/lib ${CMAKE_BINARY_DIR}/bin/lib
+		COMMAND ${CMAKE_COMMAND} ARGS -E copy $<TARGET_FILE:palladio_codec> ${CMAKE_BINARY_DIR}/bin/lib)
 endif()

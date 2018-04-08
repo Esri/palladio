@@ -38,6 +38,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 add_toolchain_definition(${PROJECT_NAME})
 
 if(PLD_TEST)
+	message(STATUS "Enabling test exports...")
 	target_compile_definitions(palladio PRIVATE -DPLD_TEST_EXPORTS)
 endif()
 
