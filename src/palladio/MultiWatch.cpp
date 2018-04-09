@@ -20,6 +20,7 @@
 #include <mutex>
 #include <iomanip>
 #include <algorithm>
+#include <numeric>
 
 
 namespace {

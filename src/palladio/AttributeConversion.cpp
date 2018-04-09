@@ -22,6 +22,7 @@
 #include "boost/algorithm/string.hpp"
 
 #include <mutex>
+#include <bitset>
 
 
 namespace {

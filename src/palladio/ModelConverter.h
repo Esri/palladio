@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "NodeParameter.h"
+#include "PalladioMain.h"
+#include "ShapeConverter.h"
 #include "Utils.h"
 #include "encoder/HoudiniCallbacks.h"
 
@@ -44,7 +45,7 @@
 
 namespace ModelConversion {
 
-void getUVSet(
+PLD_TEST_EXPORTS_API void getUVSet(
 	std::vector<uint32_t>& uvIndicesPerSet,
 	const uint32_t* counts, size_t countsSize,
 	const uint32_t* uvCounts, size_t uvCountsSize,
@@ -65,7 +66,7 @@ void setUVs(
 
 class ModelConverter : public HoudiniCallbacks {
 public:
-	explicit ModelConverter(GU_Detail* gdp, GenerateNodeParams::GroupCreation gc, std::vector<prt::Status>& statuses, UT_AutoInterrupt* autoInterrupt = nullptr);
+	explicit ModelConverter(GU_Detail* gdp, GroupCreation gc, std::vector<prt::Status>& statuses, UT_AutoInterrupt* autoInterrupt = nullptr);
 
 protected:
 	void add(
@@ -103,7 +104,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
-	GenerateNodeParams::GroupCreation mGroupCreation;
+    GroupCreation mGroupCreation;
 	std::vector<prt::Status>& mStatuses;
 	UT_AutoInterrupt* mAutoInterrupt;
 	std::map<int32_t, AttributeMapBuilderUPtr> mShapeAttributeBuilders;

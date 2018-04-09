@@ -9,15 +9,9 @@
 namespace {
 
 const ResolveMapUPtr RESOLVE_MAP_NONE;
-const timespec       NO_MODIFICATION_TIME{0, 0};
 
-timespec getFileModificationTime(const boost::filesystem::path& p) {
-	struct stat result;
-	if (stat(p.c_str(), &result) == 0) {
-		return result.st_mtim;
-	}
-	else
-		return NO_MODIFICATION_TIME;
+std::chrono::system_clock::time_point getFileModificationTime(const boost::filesystem::path& p) {
+	return std::chrono::system_clock::from_time_t(boost::filesystem::last_write_time(p));
 }
 
 } // namespace
@@ -36,13 +30,13 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const boost::filesystem::path
 		return { RESOLVE_MAP_NONE, CacheStatus::MISS };
 
 	const auto timeStamp = getFileModificationTime(rpk);
-	LOG_DBG << "rpk: current timestamp: " << timeStamp.tv_sec << "s " << timeStamp.tv_nsec << "ns";
+	LOG_DBG << "rpk: current timestamp: " << std::chrono::duration_cast<std::chrono::nanoseconds>(timeStamp.time_since_epoch()).count() << "ns";
 
 	CacheStatus cs = CacheStatus::HIT;
 	auto it = mCache.find(rpk);
 	if (it != mCache.end()) {
-		LOG_DBG << "rpk: cache timestamp: " << it->second.mTimeStamp.tv_sec << "s " << it->second.mTimeStamp.tv_nsec << "ns";
-		if (it->second.mTimeStamp.tv_sec != timeStamp.tv_sec || it->second.mTimeStamp.tv_nsec != timeStamp.tv_nsec) {
+		LOG_DBG << "rpk: cache timestamp: " << std::chrono::duration_cast<std::chrono::nanoseconds>(it->second.mTimeStamp.time_since_epoch()).count() << "ns";
+		if (it->second.mTimeStamp != timeStamp) {
 			mCache.erase(it);
 			const auto cnt = boost::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
 			LOG_INF << "RPK change detected, forcing reload and clearing cache for " << rpk << " (removed " << cnt << " files)";

@@ -2,14 +2,18 @@
 
 ## Prerequisites
 * RHEL/CentOS 6/7 (or a compatible distribution)
-* Houdini 16.0.x (Apprentice edition is fine)
+* or Windows 7/8.1/10
+* Houdini 16.5.x (including Apprentice edition)
 * CityEngine 2017.x with valid Advanced license (node-locked or network)
 
 ## Execute a simple CityEngine Rule
 
-1. Verify that Palladio is installed and all necessary files are present in ``$HOME/houdiniXX/dso``:
+1. [Build](build.md) Palladio
+1. Verify that Palladio is installed and all necessary files are present in ``<User Home>/houdini16.5/dso``:
 
     ![](img/installation01.png)
+    
+1. Windows only: ensure that the ``<User Home>/houdini16.5/dso`` and the `bin` subdirectory of your Houdini installation are on the `PATH`
 1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere:
    ```
    attr height = 1
@@ -24,9 +28,9 @@
     ```
 1. Start Houdini in a bash console (adapt to your Houdini installation location):
     ```
-    LD_LIBRARY_PATH=pt/hfs16.0/dsolib /opt/hfs16.0/bin/houdini
+    /opt/hfs16.5/bin/houdini
     ```
-    (Use ``happrentice`` or ``hindie`` instead of ``houdini``, depending on our license. You might want to create a ``start-houdini`` script or alias with this line.)
+    (Use ``happrentice`` or ``hindie`` instead of ``houdini``, depending on our license.)
 1. In a new scene, add a ``grid`` node.
 1. Enter the ``grid`` node and add the two Palladio nodes ``pldAssign`` and ``pldGenerate``. Connect them like this: ![](img/extrude01.png)
 1. In the ``pldAssign`` node, set the ``Rule Package`` parameter to the path of the previously exported RPK.

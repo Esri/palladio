@@ -65,7 +65,7 @@ void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed,
 	mRandomSeeds.push_back(randomSeed);
 	mPrimitiveMapping.emplace_back(primMappings);
 
-	if (mGroupCreation == GenerateNodeParams::GroupCreation::PRIMCLS) {
+	if (mGroupCreation == GroupCreation::PRIMCLS) {
 		std::wstring name;
 		NameFromPrimPart npp(name, mNamePrefix);
 		boost::apply_visitor(npp, clsVal);
@@ -81,7 +81,7 @@ void ShapeData::addShape(const prt::InitialShape* is, AttributeMapBuilderUPtr&& 
 
 const std::wstring& ShapeData::getInitialShapeName(size_t isIdx) const {
 	if (mInitialShapeNames.empty()) {
-		assert(mGroupCreation == GenerateNodeParams::GroupCreation::NONE);
+		assert(mGroupCreation == GroupCreation::NONE);
 		return DEFAULT_SHAPE_NAME;
 	}
 	else

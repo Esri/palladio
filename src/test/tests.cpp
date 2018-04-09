@@ -58,7 +58,14 @@ int main( int argc, char* argv[] ) {
 
 
 TEST_CASE("create file URI from path", "[utils]" ) {
-    CHECK(toFileURI(boost::filesystem::path("/tmp/foo.txt")) == L"file:/tmp/foo.txt");
+#ifdef PLD_LINUX
+	const auto u = toFileURI(boost::filesystem::path("/tmp/foo.txt"));
+    CHECK(u.compare(L"file:/tmp/foo.txt") == 0);
+#elif defined(PLD_WINDOWS)
+	const auto u = toFileURI(boost::filesystem::path("c:\\tmp\\foo.txt"));
+    INFO(toOSNarrowFromUTF16(u));
+    CHECK(u.compare(L"file:/c:/tmp/foo.txt") == 0);
+#endif
 }
 
 TEST_CASE("percent-encode a UTF-8 string", "[utils]") {

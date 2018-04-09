@@ -114,8 +114,10 @@ void scheduleRecook(const boost::filesystem::path& rpk) {
 		return false;
 	};
 
-	OP_Network* objMgr = OPgetDirector()->getManager("obj");
-	objMgr->traverseChildren(visit, const_cast<void*>(reinterpret_cast<const void*>(&rpk)), true);
+    if (OPgetDirector() != nullptr) {
+	    OP_Network* objMgr = OPgetDirector()->getManager("obj");
+	    objMgr->traverseChildren(visit, const_cast<void*>(reinterpret_cast<const void*>(&rpk)), true);
+    }
 }
 
 } // namespace

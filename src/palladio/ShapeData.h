@@ -24,7 +24,7 @@
 class ShapeData final {
 public:
 	ShapeData() = default;
-	ShapeData(const GenerateNodeParams::GroupCreation& gc, const std::wstring& namePrefix) : mGroupCreation(gc), mNamePrefix(namePrefix) { }
+	ShapeData(const GroupCreation& gc, const std::wstring& namePrefix) : mGroupCreation(gc), mNamePrefix(namePrefix) { }
 	ShapeData(const ShapeData&) = delete;
 	ShapeData(ShapeData&&) = delete;
 	~ShapeData();
@@ -56,7 +56,7 @@ private:
 	AttributeMapBuilderVector         mRuleAttributeBuilders;
 	AttributeMapVector                mRuleAttributes;
 
-	GenerateNodeParams::GroupCreation mGroupCreation = GenerateNodeParams::GroupCreation::NONE;
+	GroupCreation                     mGroupCreation = GroupCreation::NONE;
 	std::vector<std::wstring>         mInitialShapeNames;
 	std::wstring                      mNamePrefix;
 

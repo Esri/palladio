@@ -19,6 +19,8 @@
 #include "PRTContext.h"
 #include "Utils.h"
 
+#include "UT/UT_String.h"
+
 #include "boost/filesystem/path.hpp"
 
 #include <string>
@@ -37,6 +39,8 @@ const UT_String PLD_RULE_FILE   = "pldRuleFile";
 const UT_String PLD_START_RULE  = "pldStartRule";
 const UT_String PLD_STYLE       = "pldStyle";
 const UT_String PLD_RANDOM_SEED = "pldRandomSeed";
+
+enum class GroupCreation { NONE, PRIMCLS };
 
 class ShapeConverter {
 public:

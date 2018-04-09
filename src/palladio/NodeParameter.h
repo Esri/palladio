@@ -38,13 +38,13 @@ static PRM_Name PRIM_CLS("primClsAttr", "Primitive Classifier");
 const std::string PRIM_CLS_HELP = "Classifies primitives into input shapes and sets value for primitive attribute '" + PLD_PRIM_CLS_NAME.toStdString() + "'";
 static PRM_Default PRIM_CLS_DEFAULT(0.0f, "primCls", CH_STRING_LITERAL);
 
-auto getPrimClsName = [](const OP_Node* node, fpreal t) -> UT_String {
+const auto getPrimClsName = [](const OP_Node* node, fpreal t) -> UT_String {
 	UT_String s;
 	node->evalString(s, PRIM_CLS.getToken(), 0, t);
 	return s;
 };
 
-auto setPrimClsName = [](OP_Node* node, const UT_String& name, fpreal t) {
+const auto setPrimClsName = [](OP_Node* node, const UT_String& name, fpreal t) {
 	node->setString(name, CH_STRING_LITERAL, PRIM_CLS.getToken(), 0, t);
 };
 
@@ -57,7 +57,7 @@ static PRM_Default RPK_DEFAULT(0, "");
 int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback rpkCallback(&updateRPK);
 
-auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
+const auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
 	UT_String s;
 	node->evalString(s, RPK.getToken(), 0, t);
 	return s.toStdString();
@@ -76,13 +76,13 @@ void buildRuleFileMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_
 
 static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildRuleFileMenu);
 
-auto getRuleFile = [](const OP_Node* node, fpreal t) -> std::wstring {
+const auto getRuleFile = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
 	node->evalString(s, RULE_FILE.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
-auto setRuleFile = [](OP_Node* node, const std::wstring& ruleFile, fpreal t) {
+const auto setRuleFile = [](OP_Node* node, const std::wstring& ruleFile, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(ruleFile));
 	node->setString(val, CH_STRING_LITERAL, RULE_FILE.getToken(), 0, t);
 };
@@ -96,13 +96,13 @@ void buildStyleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_Spa
 
 static PRM_ChoiceList styleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStyleMenu);
 
-auto getStyle = [](const OP_Node* node, fpreal t) -> std::wstring {
+const auto getStyle = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
 	node->evalString(s, STYLE.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
-auto setStyle = [](OP_Node* node, const std::wstring& s, fpreal t) {
+const auto setStyle = [](OP_Node* node, const std::wstring& s, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(s));
 	node->setString(val, CH_STRING_LITERAL, STYLE.getToken(), 0, t);
 };
@@ -116,13 +116,13 @@ void buildStartRuleMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM
 
 static PRM_ChoiceList startRuleMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildStartRuleMenu);
 
-auto getStartRule = [](const OP_Node* node, fpreal t) -> std::wstring {
+const auto getStartRule = [](const OP_Node* node, fpreal t) -> std::wstring {
 	UT_String s;
 	node->evalString(s, START_RULE.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
-auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
+const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(s));
 	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
 };
@@ -159,13 +159,12 @@ static PRM_ChoiceList groupCreationMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCL
 const size_t DEFAULT_GROUP_CREATION_ORDINAL = 0;
 static PRM_Default DEFAULT_GROUP_CREATION(0, GROUP_CREATION_TOKENS[DEFAULT_GROUP_CREATION_ORDINAL]);
 
-enum class GroupCreation { NONE, PRIMCLS };
-auto getGroupCreation = [](const OP_Node* node, fpreal t) -> GroupCreation {
+const auto getGroupCreation = [](const OP_Node* node, fpreal t) -> GroupCreation {
 	const auto ord = node->evalInt(GROUP_CREATION.getToken(), 0, t);
 	switch (ord) {
-		case 0: return GroupCreation::NONE; break;
-		case 1: return GroupCreation::PRIMCLS; break;
-		default: return GroupCreation::NONE; break;
+		case 0: return GroupCreation::NONE;
+		case 1: return GroupCreation::PRIMCLS;
+		default: return GroupCreation::NONE;
 	}
 };
 

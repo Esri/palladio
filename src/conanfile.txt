@@ -1,7 +1,0 @@
-[requires]
-cesdk/1.9.3786@esri-rd-zurich/stable
-houdini/[>16.0.0,<16.5.0]@sidefx/stable
-catch2/2.0.1@bincrafters/stable
-
-[generators]
-cmake

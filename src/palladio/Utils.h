@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "PalladioMain.h"
+
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
 #include "prt/InitialShape.h"
@@ -25,8 +27,9 @@
 
 #include "GA/GA_Primitive.h"
 
+#include <memory>
 #include <string>
-
+#include <vector>
 
 namespace boost { namespace filesystem { class path; } }
 
@@ -54,20 +57,20 @@ using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDe
 using EncoderInfoUPtr           = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr          = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
-void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
-const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
-std::string objectToXML(prt::Object const* obj);
+PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
+PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
+PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);
 
 void getLibraryPath(boost::filesystem::path& path, const void* func);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
 
-std::string toOSNarrowFromUTF16(const std::wstring& osWString);
+PLD_TEST_EXPORTS_API std::string toOSNarrowFromUTF16(const std::wstring& osWString);
 std::wstring toUTF16FromOSNarrow(const std::string& osString);
 std::string toUTF8FromOSNarrow(const std::string& osString);
 
-std::wstring toFileURI(const boost::filesystem::path& p);
-std::wstring percentEncode(const std::string& utf8String);
+PLD_TEST_EXPORTS_API std::wstring toFileURI(const boost::filesystem::path& p);
+PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
 
 inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {
 	std::wstring::size_type pos = 0;
