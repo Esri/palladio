@@ -18,7 +18,7 @@ External documentation:
 * [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
 * [CityEngine CGA Reference](http://desktop.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
 * [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
-* [Houdini 16.0 HDK Reference](http://www.sidefx.com/docs/hdk16.0/)  
+* [Houdini 16.5 HDK Reference](http://www.sidefx.com/docs/hdk16.5/)  
 
 
 ## Community
