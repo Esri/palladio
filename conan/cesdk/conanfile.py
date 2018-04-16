@@ -6,7 +6,6 @@ from conans import tools
 
 class CESDKConan(ConanFile):
     name = "cesdk"
-    version = "1.9.3786"
     settings = "os", "compiler", "arch"
     description = "Develop 3D applications using the procedural geometry engine of Esri CityEngine."
     url = "https://github.com/Esri/esri-cityengine-sdk"
@@ -15,8 +14,14 @@ class CESDKConan(ConanFile):
     baseURL = "https://github.com/esri/esri-cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
 
     # we host a manually patched CE SDK for windows to fix loading issues of the codecs dll
-    # (see comment on v1.1 github release page)
-    baseURLWindows = 'https://github.com/Esri/palladio/releases/download/v1.1/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt-patched-alembic.zip'
+    # (see comment on v1.1 github release page and issue #88)
+    baseURLWindows = 'https://github.com/Esri/palladio/releases/download/v1.1/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip'
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            self.version = "1.9.3786p1"
+        else:
+            self.version = "1.9.3786"
 
     def build(self):
         if self.settings.os == "Windows":
