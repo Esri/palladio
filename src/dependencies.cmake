@@ -12,7 +12,6 @@ conan_cmake_run(CONANFILE conanfile.py BASIC_SETUP CMAKE_TARGETS BUILD missing)
 
 ### PRT dependency
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Users/Simon Haegler/Downloads/esri_ce_sdk-1.9.3786-win7-vc14-x86_64-rel-opt/esri_ce_sdk/cmake")
 find_package(prt CONFIG REQUIRED)
 
 function(pld_add_dependency_prt TGT)
