@@ -14,9 +14,14 @@ class CESDKConan(ConanFile):
 
     baseURL = "https://github.com/esri/esri-cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
 
+    # we host a manually patched CE SDK for windows to fix loading issues of the codecs dll
+    # (see comment on v1.1 github release page)
+    baseURLWindows = 'https://github.com/Esri/palladio/releases/download/v1.1/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt-patched-alembic.zip'
+
     def build(self):
         if self.settings.os == "Windows":
-            url = self.baseURL.format(self.version, self.version, "win7", "vc14")
+            print("Note: Downloading a customized CE SDK build! See issue #88.")
+            url = self.baseURLWindows.format(self.version, "win7", "vc14")
         elif self.settings.os == "Linux":
             url = self.baseURL.format(self.version, self.version, "rhel6", "gcc48")
         elif self.settings.os == "Macos":
@@ -30,9 +35,12 @@ class CESDKConan(ConanFile):
         #       we are using a using patchelf to rename libAlembic.so of cesdk
         # note: this requires patchelf 0.9 or later (https://github.com/NixOS/patchelf)
         if self.settings.os == "Linux":
-            self.run('cd esri_ce_sdk/lib && mv libAlembic.so libAlembicCESDK.so')
-            self.run('patchelf --replace-needed libAlembic.so libAlembicCESDK.so esri_ce_sdk/lib/libcom.esri.prt.codecs.so')
-            tools.replace_in_file('esri_ce_sdk/cmake/prtConfig.cmake', 'Alembic', 'AlembicCESDK')
+            abc_old = 'Alembic'
+            abc_new = 'AlembicCESDK'
+            codecs_lib = 'esri_ce_sdk/lib/libcom.esri.prt.codecs.so'
+            self.run('cd esri_ce_sdk/lib && mv lib{}.so lib{}.so'.format(abc_old, abc_new))
+            self.run('patchelf --replace-needed lib{}.so lib{}.so {}'.format(abc_old, abc_new, codecs_lib))
+            tools.replace_in_file('esri_ce_sdk/cmake/prtConfig.cmake', abc_old, abc_new)
 
     def package(self):
         self.copy("*", ".", "esri_ce_sdk")
