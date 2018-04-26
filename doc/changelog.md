@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.1.1 (Apr 16, 2018)
+* Fixed asset loading issues in Windows build (#88).
+
 ## v1.1 (Apr 7, 2018)
 * Added support for Windows (#85).
 * Raised minimal Houdini version to 16.5.x (#85).
