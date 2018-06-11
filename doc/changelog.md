@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.2.0-rc.1 (Jun 11, 2018)
+* Support for inter-shape occlusion queries (#33).
+
 ## v1.1.1 (Apr 16, 2018)
 * Fixed asset loading issues in Windows build (#88).
 
