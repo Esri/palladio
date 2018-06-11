@@ -30,8 +30,6 @@
 
 namespace {
 
-constexpr bool           ENABLE_OCCLUSION     = true;
-
 constexpr const wchar_t* FILE_CGA_ERROR       = L"CGAErrors.txt";
 constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
 
@@ -82,6 +80,68 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	return true;
 }
 
+namespace {
+
+enum class BatchMode { OCCLUSION, GENERATION };
+const std::vector<std::string> BATCH_MODE_NAMES = { "occlusion", "generation" };
+
+std::vector<prt::Status> batchGenerate(BatchMode mode,
+                                       size_t nThreads,
+                                       std::vector<ModelConverterUPtr>& hg,
+                                       size_t isRangeSize,
+                                       const InitialShapeNOPtrVector& is,
+                                       const std::vector<const wchar_t*>& allEncoders,
+                                       const AttributeMapNOPtrVector& allEncoderOptions,
+                                       std::vector<prt::OcclusionSet::Handle>& occlusionHandles,
+                                       OcclusionSetUPtr& occlusionSet,
+                                       CacheObjectUPtr& prtCache,
+                                       const AttributeMapUPtr& genOpts)
+{
+	std::vector<prt::Status> batchStatus(nThreads, prt::STATUS_UNSPECIFIED_ERROR);
+
+	std::vector<std::future<void>> futures;
+	futures.reserve(nThreads);
+	for (int8_t ti = 0; ti < nThreads; ti++) {
+		auto f = std::async(std::launch::async, [&,ti] { // capture thread index by value, else we have is range chaos
+			const size_t isStartPos = ti * isRangeSize;
+			const size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
+			const size_t isActualRangeSize = isPastEndPos - isStartPos;
+			const auto isRangeStart = &is[isStartPos];
+			const auto isOcclRangeStart = &occlusionHandles[isStartPos];
+
+			LOG_DBG << "thread " << ti << ": #is = " << isActualRangeSize;
+
+			switch (mode) {
+				case BatchMode::OCCLUSION: {
+					batchStatus[ti] = prt::generateOccluders(isRangeStart, isActualRangeSize, isOcclRangeStart,
+					                                         nullptr, 0, nullptr, hg[ti].get(), prtCache.get(),
+					                                         occlusionSet.get(), genOpts.get());
+					break;
+				}
+				case BatchMode::GENERATION: {
+					batchStatus[ti] = prt::generate(isRangeStart, isActualRangeSize, isOcclRangeStart,
+					                                allEncoders.data(), allEncoders.size(), allEncoderOptions.data(),
+					                                hg[ti].get(), prtCache.get(), occlusionSet.get(), genOpts.get());
+					break;
+				}
+			}
+
+			if (batchStatus[ti] != prt::STATUS_OK) {
+			    LOG_WRN << "batch mode " << BATCH_MODE_NAMES[(int)mode] << " failed with status: '"
+			            << prt::getStatusDescription(batchStatus[ti]) << "' ("
+			            << batchStatus[ti] << ")";
+			}
+
+		});
+		futures.emplace_back(std::move(f));
+	}
+	std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
+
+	return batchStatus;
+}
+
+} // namespace
+
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	WA("all");
 
@@ -95,7 +155,6 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	if (error() >= UT_ERROR_ABORT || cookInputGroups(context) >= UT_ERROR_ABORT)
 		return error();
-
 
 	UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
@@ -117,7 +176,6 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	// prepare generate status receivers
 	std::vector<prt::Status> initialShapeStatus(is.size(), prt::STATUS_OK);
-	std::vector<prt::Status> batchStatus(nThreads, prt::STATUS_UNSPECIFIED_ERROR);
 
 	if (!progress.wasInterrupted()) {
 		gdp->clearAndDestroy();
@@ -130,49 +188,19 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 				return ModelConverterUPtr(new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
 			});
 
+			std::vector<prt::OcclusionSet::Handle> occlusionHandles(is.size());
+			OcclusionSetUPtr occlusionSet{prt::OcclusionSet::create()};
+
 			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = "
 			        << nThreads << ", initial shapes per thread = " << isRangeSize;
 
-			// kick-off generate threads
-			std::vector<std::future<void>> futures;
-			futures.reserve(nThreads);
-			for (int8_t ti = 0; ti < nThreads; ti++) {
-				auto f = std::async(std::launch::async, [this, &hg, ti, &nThreads, &isRangeSize, &is, &batchStatus] {
-					const size_t isStartPos = ti * isRangeSize;
-					const size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
-					const size_t isActualRangeSize = isPastEndPos - isStartPos;
-					const auto isRangeStart = &is[isStartPos];
+			batchGenerate(BatchMode::OCCLUSION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
+			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
-					LOG_DBG << "thread " << ti << ": #is = " << isActualRangeSize;
+			batchGenerate(BatchMode::GENERATION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
+			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
-					OcclusionSetUPtr occlSet;
-					std::vector<prt::OcclusionSet::Handle> occlHandles;
-					if (ENABLE_OCCLUSION) {
-						occlSet.reset(prt::OcclusionSet::create());
-						occlHandles.resize(isActualRangeSize);
-						prt::generateOccluders(isRangeStart, isActualRangeSize, occlHandles.data(), nullptr, 0,
-						                       nullptr, hg[ti].get(), mPRTCtx->mPRTCache.get(), occlSet.get(),
-						                       mGenerateOptions.get());
-					}
-
-					batchStatus[ti] = prt::generate(isRangeStart, isActualRangeSize, occlHandles.data(),
-					                                 mAllEncoders.data(), mAllEncoders.size(),
-					                                 mAllEncoderOptions.data(), hg[ti].get(),
-					                                 mPRTCtx->mPRTCache.get(), occlSet.get(),
-					                                 mGenerateOptions.get());
-
-					if (ENABLE_OCCLUSION)
-						occlSet->dispose(occlHandles.data(), occlHandles.size());
-
-					if (batchStatus[ti] != prt::STATUS_OK) {
-						LOG_WRN << "prt::generate() failed with status: '"
-						        << prt::getStatusDescription(batchStatus[ti]) << "' (" << batchStatus[ti] << ")";
-					}
-
-				});
-				futures.emplace_back(std::move(f));
-			}
-			std::for_each(futures.begin(), futures.end(), [](std::future<void>& f) { f.wait(); });
+			occlusionSet->dispose(occlusionHandles.data(), occlusionHandles.size());
 		}
 		select();
 	}
