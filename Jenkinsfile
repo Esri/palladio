@@ -17,6 +17,7 @@ import com.esri.zrh.jenkins.PipelineSupportLibrary
 
 properties([ disableConcurrentBuilds() ])
 psl.runsHere('testing', 'development')
+env.PIPELINE_ARCHIVING_ALLOWED = "true"
 
 
 // -- LOAD & RUN PIPELINE

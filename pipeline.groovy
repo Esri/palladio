@@ -57,6 +57,12 @@ def taskBuildPalladio(cfg) {
 		[ key: 'PLD_VERSION_BUILD', val: env.BUILD_NUMBER ]
 	]
 	papl.buildConfig(REPO, myBranch, SOURCE, BUILD_TARGET, cfg, [], defs)
+	
+	def versionExtractor = { p ->
+		def vers = (p =~ /.*palladio-(.*)-(windows|linux)\..*/)
+		return vers[0][1]
+	}
+	papl.publish('palladio', myBranch, "palladio-*", versionExtractor, cfg)
 }
 
 
