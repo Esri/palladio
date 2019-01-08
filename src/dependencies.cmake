@@ -3,9 +3,9 @@
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
 
 if(PLD_WINDOWS)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v140")
 elseif(PLD_LINUX)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc48")
 endif()
 
 if(PLD_CONAN_CESDK_DIR)
