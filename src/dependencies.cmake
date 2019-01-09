@@ -1,23 +1,15 @@
 ### setup conan
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.13/conan.cmake"
-                 "${CMAKE_BINARY_DIR}/conan.cmake")
-endif()
+set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
 
 if(PLD_WINDOWS)
-	set(CONAN_PROFILE "${CMAKE_SOURCE_DIR}/../conan/profiles/windows-v141")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
 elseif(PLD_LINUX)
-	set(CONAN_PROFILE "${CMAKE_SOURCE_DIR}/../conan/profiles/linux-gcc63")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-conan_cmake_run(
-	CONANFILE conanfile.py
-	PROFILE ${CONAN_PROFILE}
-	BASIC_SETUP
-	CMAKE_TARGETS)
+include(${PLD_CONAN_TOOLS}/conan-0.13.cmake)
+conan_cmake_run(CONANFILE conanfile.py PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS)
 
 
 ### PRT dependency
