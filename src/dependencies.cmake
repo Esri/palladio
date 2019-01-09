@@ -6,8 +6,18 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
                  "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 
+if(PLD_WINDOWS)
+	set(CONAN_PROFILE "${CMAKE_SOURCE_DIR}/../conan/profiles/windows-v141")
+elseif(PLD_LINUX)
+	set(CONAN_PROFILE "${CMAKE_SOURCE_DIR}/../conan/profiles/linux-gcc63")
+endif()
+
 include(${CMAKE_BINARY_DIR}/conan.cmake)
-conan_cmake_run(CONANFILE conanfile.py BASIC_SETUP CMAKE_TARGETS)
+conan_cmake_run(
+	CONANFILE conanfile.py
+	PROFILE ${CONAN_PROFILE}
+	BASIC_SETUP
+	CMAKE_TARGETS)
 
 
 ### PRT dependency
