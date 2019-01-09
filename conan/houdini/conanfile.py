@@ -1,11 +1,6 @@
 from conans import ConanFile
 import os
 
-# this recipe creates a houdini conan package from a locally installed houdini
-# usage: conan create -s compiler=gcc -s compiler.version=4.8 . houdini/X.Y.Z@sidefx/stable
-#        if houdini is not installed at the default location, try -e HOUDINI_INSTALL=<your installation path>
-
-
 class HoudiniConan(ConanFile):
     name = "houdini"
     settings = "os", "compiler", "arch"
