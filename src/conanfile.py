@@ -1,4 +1,6 @@
+import os
 from conans import ConanFile
+
 
 class PalladioConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
@@ -9,10 +11,11 @@ class PalladioConan(ConanFile):
     default_options = "boost:shared=False"
 
     def requirements(self):
-        if self.settings.os == "Windows":
-            self.requires("cesdk/1.9.3786p1@esri-rd-zurich/stable")  # see issue #88
-        else:
-            self.requires("cesdk/1.9.3786@esri-rd-zurich/stable")
+        if "PLD_CONAN_SKIP_CESDK" not in os.environ:
+            if self.settings.os == "Windows":
+                self.requires("cesdk/1.9.3786p1@esri-rd-zurich/stable")  # see issue #88
+            else:
+                self.requires("cesdk/1.9.3786@esri-rd-zurich/stable")
 
     def configure(self):
         if self.settings.os == "Linux":

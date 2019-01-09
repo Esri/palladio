@@ -8,8 +8,15 @@ elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
 endif()
 
+if(PLD_CONAN_CESDK_DIR)
+	# make conan ignore cesdk package, we'll set its path manually
+	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
+	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
+	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
+endif()
+
 include(${PLD_CONAN_TOOLS}/conan-0.13.cmake)
-conan_cmake_run(CONANFILE conanfile.py PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS)
+conan_cmake_run(CONANFILE conanfile.py PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
 
 
 ### PRT dependency
