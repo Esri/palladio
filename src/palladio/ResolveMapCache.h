@@ -14,7 +14,8 @@ public:
 	ResolveMapCache(const PLD_BOOST_NS::filesystem::path& unpackPath) : mRPKUnpackPath{unpackPath} { }
 	ResolveMapCache(const ResolveMapCache&) = delete;
 	ResolveMapCache(ResolveMapCache&&) = delete;
-	ResolveMapCache& operator=(ResolveMapCache&) = delete;
+	ResolveMapCache& operator=(ResolveMapCache const&) = delete;
+	ResolveMapCache& operator=(ResolveMapCache&&) = delete;
 	~ResolveMapCache();
 
 	enum class CacheStatus { HIT, MISS };
