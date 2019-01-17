@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 
 project(palladio_root CXX)
 
 
 ### platform configuration
 
-message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	set(PLD_WINDOWS 1)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

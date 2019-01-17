@@ -1,11 +1,6 @@
 from conans import ConanFile
 import os
 
-# this recipe creates a houdini conan package from a locally installed houdini
-# usage: conan create -s compiler=gcc -s compiler.version=4.8 . houdini/X.Y.Z@sidefx/stable
-#        if houdini is not installed at the default location, try -e HOUDINI_INSTALL=<your installation path>
-
-
 class HoudiniConan(ConanFile):
     name = "houdini"
     settings = "os", "compiler", "arch"
@@ -24,14 +19,16 @@ class HoudiniConan(ConanFile):
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
                 else self.houdiniDefaultInstallationPath.format(self.version)
-            self.copy("*", ".", local_install)
+            #self.copy("*", ".", local_install, excludes=("bin/*","python27/*","engine/*","qt/*"))
+            self.copy("custom/*", ".", local_install)
+            self.copy("toolkit/*", ".", local_install)
         elif self.settings.os == "Linux":
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
                 else "/opt/hfs{}".format(self.version)
-            # the python exclude is a workaround: houdini installs some
-            # files in the python subdir as only readable by root
-            self.copy("*", ".", local_install, symlinks=True, excludes="python/*")
+            #self.copy("*", ".", local_install, symlinks=True, excludes=("python/*","engine/*","qt/*"))
+            self.copy("dsolib/*", ".", local_install)
+            self.copy("toolkit/*", ".", local_install)
         elif self.settings.os == "Macos":
             # TODO
             pass

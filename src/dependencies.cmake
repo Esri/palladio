@@ -1,13 +1,22 @@
 ### setup conan
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.13/conan.cmake"
-                 "${CMAKE_BINARY_DIR}/conan.cmake")
+set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
+
+if(PLD_WINDOWS)
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v140")
+elseif(PLD_LINUX)
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc48")
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-conan_cmake_run(CONANFILE conanfile.py BASIC_SETUP CMAKE_TARGETS)
+if(PLD_CONAN_CESDK_DIR)
+	# make conan ignore cesdk package, we'll set its path manually
+	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
+	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
+	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
+endif()
+
+include(${PLD_CONAN_TOOLS}/conan-0.13.cmake)
+conan_cmake_run(CONANFILE conanfile.py PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
 
 
 ### PRT dependency
