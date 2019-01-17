@@ -7,7 +7,7 @@ import groovy.transform.Field
 
 // -- PIPELINE LIBRARIES
 
-@Library('psl@simo6772/CE-6230-palladio-conan-python')
+@Library('psl')
 import com.esri.zrh.jenkins.PipelineSupportLibrary 
 
 @Field def psl = new PipelineSupportLibrary(this)
@@ -22,7 +22,7 @@ properties([
 	disableConcurrentBuilds()
 ])
 
-psl.runsHere('development')
+psl.runsHere('production')
 env.PIPELINE_ARCHIVING_ALLOWED = "true"
 
 
