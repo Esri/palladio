@@ -1,5 +1,11 @@
 # Palladio ChangeLog
 
+## v1.2.0 (Jan 17, 2019)
+* Build System changes to improve continuous integration support (Jenkins).
+* Updated required cmake version to 3.13 (preparation for Houdini 17 support).
+* Added pipenv script for easier access to conan.
+* Reduced Houdini package size.
+
 ## v1.2.0-rc.1 (Jun 11, 2018)
 * Support for inter-shape occlusion queries (#33).
 

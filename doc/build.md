@@ -4,8 +4,8 @@
 - RHEL/CentOS 6/7 (or compatible) with GCC 4.8
 - or Windows 7/8.1/10 with Visual Studio 2015 (MSVC 14.0)
 - Installation of [Houdini 16.5](https://sidefx.com/download)
-- [cmake 3.8 or later](https://cmake.org/download)
-- [conan 1.1 or later](https://www.conan.io/downloads)
+- [cmake 3.13 or later](https://cmake.org/download)
+- [conan 1.11 or later](https://www.conan.io/downloads)
 
 The bootstrap steps below will take care of these additional dependencies: 
 - SideFX Houdini HDK 16.5
