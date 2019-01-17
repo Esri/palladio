@@ -15,8 +15,14 @@ import com.esri.zrh.jenkins.PipelineSupportLibrary
 
 // -- SETUP
 
-properties([ disableConcurrentBuilds() ])
-psl.runsHere('testing', 'development')
+properties([
+	parameters([
+		string(name: 'PRM_CESDK_BRANCH', defaultValue: '')
+	]),
+	disableConcurrentBuilds()
+])
+
+psl.runsHere('development')
 env.PIPELINE_ARCHIVING_ALLOWED = "true"
 
 

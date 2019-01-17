@@ -53,10 +53,23 @@ Map taskGenPalladio() {
 // -- TASK BUILDERS
 
 def taskBuildPalladio(cfg) {
+	List deps = [] // empty dependencies = by default use conan packages
+	
 	List defs = [
 		[ key: 'PLD_VERSION_BUILD', val: env.BUILD_NUMBER ]
 	]
-	papl.buildConfig(REPO, myBranch, SOURCE, BUILD_TARGET, cfg, [], defs)
+	
+	// pipeline params tell us if we need to build with a development version of CESDK
+	if (params.PRM_CESDK_BRANCH) {
+		// redirect the CESDK dependency to the right internal branch build
+		Map myCESDK = PrtAppPipelineLibrary.Dependencies.CESDK.clone()
+		myCESDK.g = { return params.PRM_CESDK_BRANCH.replace('/', '.') }
+		deps << myCESDK
+
+		defs << [ key: 'PLD_CONAN_CESDK_DIR', val: myCESDK.p ]
+	}
+	
+	papl.buildConfig(REPO, myBranch, SOURCE, BUILD_TARGET, cfg, deps, defs)
 	
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)-(windows|linux)\..*/)
