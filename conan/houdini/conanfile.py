@@ -19,6 +19,7 @@ class HoudiniConan(ConanFile):
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
                 else self.houdiniDefaultInstallationPath.format(self.version)
+            self.copy("bin/*", ".", local_install) # needed for sesitag etc
             self.copy("custom/*", ".", local_install)
             self.copy("toolkit/*", ".", local_install)
         elif self.settings.os == "Linux":
