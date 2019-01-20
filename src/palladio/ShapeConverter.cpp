@@ -25,9 +25,10 @@
 #include "GEO/GEO_PrimPolySoup.h"
 #include "UT/UT_String.h"
 
-#include "boost/variant.hpp"
-#include "boost/algorithm/string.hpp"
-#include "boost/functional/hash.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/variant.hpp)
+#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
+#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
 
 
 namespace {
@@ -139,9 +140,9 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			centroid[2] /= (double)indices.size();
 
 			size_t hash = 0;
-			boost::hash_combine(hash, centroid[0]);
-			boost::hash_combine(hash, centroid[1]);
-			boost::hash_combine(hash, centroid[2]);
+			PLD_BOOST_NS::hash_combine(hash, centroid[0]);
+			PLD_BOOST_NS::hash_combine(hash, centroid[1]);
+			PLD_BOOST_NS::hash_combine(hash, centroid[2]);
 			randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
 		}
 
@@ -283,7 +284,7 @@ bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primiti
 		return false;
 
 	const GA_Offset firstOffset = prim->getMapOffset();
-	mRPK       = safeGet<boost::filesystem::path>(firstOffset, rpkRef);
+	mRPK       = safeGet<PLD_BOOST_NS::filesystem::path>(firstOffset, rpkRef);
 	mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
 	mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
 	mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));

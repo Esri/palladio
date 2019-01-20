@@ -18,7 +18,7 @@ add_toolchain_definition(${PROJECT_NAME})
 
 if(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE
-			-std=c++11 -march=nocona
+			-std=c++11 -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0
 			-fvisibility=hidden -fvisibility-inlines-hidden)
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")

@@ -26,7 +26,8 @@
 #include "prt/AttributeMap.h"
 #include "prtx/Geometry.h"
 
-#include "boost/filesystem/path.hpp"
+#include "../palladio/BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
 
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
@@ -37,7 +38,7 @@
 namespace {
 
 PRTContextUPtr prtCtx;
-const boost::filesystem::path testDataPath = TEST_DATA_PATH;
+const PLD_BOOST_NS::filesystem::path testDataPath = TEST_DATA_PATH;
 
 } // namespace
 
@@ -45,7 +46,7 @@ const boost::filesystem::path testDataPath = TEST_DATA_PATH;
 int main( int argc, char* argv[] ) {
 	assert(!prtCtx);
 
-	const std::vector<boost::filesystem::path> addExtDirs = {
+	const std::vector<PLD_BOOST_NS::filesystem::path> addExtDirs = {
 		"../lib", // adapt to default prt dir layout (core is in bin subdir)
 		HOUDINI_CODEC_PATH // set to absolute path to houdini encoder lib via cmake
 	};
@@ -59,10 +60,10 @@ int main( int argc, char* argv[] ) {
 
 TEST_CASE("create file URI from path", "[utils]" ) {
 #ifdef PLD_LINUX
-	const auto u = toFileURI(boost::filesystem::path("/tmp/foo.txt"));
+	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("/tmp/foo.txt"));
     CHECK(u.compare(L"file:/tmp/foo.txt") == 0);
 #elif defined(PLD_WINDOWS)
-	const auto u = toFileURI(boost::filesystem::path("c:\\tmp\\foo.txt"));
+	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("c:\\tmp\\foo.txt"));
     INFO(toOSNarrowFromUTF16(u));
     CHECK(u.compare(L"file:/c:/tmp/foo.txt") == 0);
 #endif
@@ -512,7 +513,7 @@ TEST_CASE("serialize two meshes with one uv set") {
 }
 
 TEST_CASE("generate two cubes with two uv sets") {
-	const std::vector<boost::filesystem::path> initialShapeSources = {
+	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = {
 		testDataPath / "quad0.obj",
 		testDataPath / "quad1.obj"
 	};
@@ -527,7 +528,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 		L"Default$TwoSets"
 	};
 
-	const boost::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
+	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;
@@ -586,10 +587,10 @@ TEST_CASE("generate two cubes with two uv sets") {
 }
 
 TEST_CASE("generate with generic attributes") {
-	const std::vector<boost::filesystem::path> initialShapeSources = { testDataPath / "quad0.obj" };
+	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = { testDataPath / "quad0.obj" };
 	const std::vector<std::wstring> initialShapeURIs = { toFileURI(initialShapeSources[0]) };
 	const std::vector<std::wstring> startRules = { L"Default$Init" };
-	const boost::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
+	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;

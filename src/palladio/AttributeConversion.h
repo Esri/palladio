@@ -21,7 +21,8 @@
 
 #include "GU/GU_Detail.h"
 
-#include "boost/variant.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/variant.hpp)
 
 #include <unordered_map>
 
@@ -45,7 +46,7 @@ namespace AttributeConversion {
  * double  -> float (single precision!)
  */
 using NoHandle   = int8_t;
-using HandleType = boost::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF>;
+using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF>;
 
 
 // bound to life time of PRT attribute map

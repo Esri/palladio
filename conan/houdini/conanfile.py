@@ -19,19 +19,18 @@ class HoudiniConan(ConanFile):
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
                 else self.houdiniDefaultInstallationPath.format(self.version)
-            #self.copy("*", ".", local_install, excludes=("bin/*","python27/*","engine/*","qt/*"))
+            self.copy("bin/*", ".", local_install) # needed for sesitag etc
             self.copy("custom/*", ".", local_install)
             self.copy("toolkit/*", ".", local_install)
         elif self.settings.os == "Linux":
             local_install = os.getenv('HOUDINI_INSTALL')\
                 if 'HOUDINI_INSTALL' in os.environ\
                 else "/opt/hfs{}".format(self.version)
-            #self.copy("*", ".", local_install, symlinks=True, excludes=("python/*","engine/*","qt/*"))
+            self.copy("houdini_setup*", ".", local_install) # needed for sesitag etc
+            self.copy("bin/*", ".", local_install) # needed for sesitag etc
             self.copy("dsolib/*", ".", local_install)
             self.copy("toolkit/*", ".", local_install)
-        elif self.settings.os == "Macos":
-            # TODO
-            pass
+            self.copy("houdini/Licensing.opt", ".", local_install)
         else:
             raise Exception("platform not supported!")
 

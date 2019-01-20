@@ -18,8 +18,10 @@ import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
 @Field final String BUILD_TARGET = 'package'
 
 @Field final List CONFIGS = [
-	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC48, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ],
-	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC140, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ],
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC48, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '16.5' ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC140, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '16.5' ],
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC63, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.0' ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC141, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.0' ],
 ]
 
 
@@ -56,7 +58,8 @@ def taskBuildPalladio(cfg) {
 	List deps = [] // empty dependencies = by default use conan packages
 	
 	List defs = [
-		[ key: 'PLD_VERSION_BUILD', val: env.BUILD_NUMBER ]
+		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
+		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
 	
 	// pipeline params tell us if we need to build with a development version of CESDK
@@ -72,10 +75,14 @@ def taskBuildPalladio(cfg) {
 	papl.buildConfig(REPO, myBranch, SOURCE, BUILD_TARGET, cfg, deps, defs)
 	
 	def versionExtractor = { p ->
-		def vers = (p =~ /.*palladio-(.*)-(windows|linux)\..*/)
+		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
 		return vers[0][1]
 	}
-	papl.publish('palladio', myBranch, "palladio-*", versionExtractor, cfg)
+	def classifierExtractor = { p ->
+		def cls = (p =~ /.*palladio-.*\.(hdn.*)-(windows|linux)\..*/)
+		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
+	}
+	papl.publish('palladio', myBranch, "palladio-*", versionExtractor, cfg, classifierExtractor)
 }
 
 

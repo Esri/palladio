@@ -26,7 +26,8 @@ add_library(${PROJECT_NAME} SHARED
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
 		LogHandler.h
-		LRUCache.h)
+		LRUCache.h
+		BoostRedirect.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${palladio_codec_SOURCE_DIR}
@@ -65,7 +66,10 @@ elseif(PLD_LINUX)
 	endif()
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
-			INSTALL_RPATH "\$ORIGIN")
+			INSTALL_RPATH "\$ORIGIN"
+			INSTALL_RPATH_USE_LINK_PATH FALSE
+			SKIP_RPATH FALSE
+			BUILD_WITH_INSTALL_RPATH TRUE)
 
 elseif(PLD_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
@@ -89,7 +93,7 @@ pld_add_dependency_houdini(${PROJECT_NAME})
 
 ### setup install target
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION . LIBRARY DESTINATION .)
+# note: the target itself (palladio.so) is installed by the houdini cmake helper methods
 install(FILES ${PRT_LIBRARIES} DESTINATION .)
 install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/../../doc DESTINATION .)

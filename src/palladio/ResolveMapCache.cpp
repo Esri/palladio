@@ -10,23 +10,23 @@ namespace {
 
 const ResolveMapUPtr RESOLVE_MAP_NONE;
 
-std::chrono::system_clock::time_point getFileModificationTime(const boost::filesystem::path& p) {
-	return std::chrono::system_clock::from_time_t(boost::filesystem::last_write_time(p));
+std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS::filesystem::path& p) {
+	return std::chrono::system_clock::from_time_t(PLD_BOOST_NS::filesystem::last_write_time(p));
 }
 
 } // namespace
 
 
 ResolveMapCache::~ResolveMapCache() {
-    boost::filesystem::remove_all(mRPKUnpackPath);
+    PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath);
     LOG_INF << "Removed RPK unpack directory";
 }
 
-ResolveMapCache::LookupResult ResolveMapCache::get(const boost::filesystem::path& rpk) {
+ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesystem::path& rpk) {
 	if (rpk.empty())
 		return { RESOLVE_MAP_NONE, CacheStatus::MISS };
 
-	if (!boost::filesystem::exists(rpk))
+	if (!PLD_BOOST_NS::filesystem::exists(rpk))
 		return { RESOLVE_MAP_NONE, CacheStatus::MISS };
 
 	const auto timeStamp = getFileModificationTime(rpk);
@@ -38,7 +38,7 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const boost::filesystem::path
 		LOG_DBG << "rpk: cache timestamp: " << std::chrono::duration_cast<std::chrono::nanoseconds>(it->second.mTimeStamp.time_since_epoch()).count() << "ns";
 		if (it->second.mTimeStamp != timeStamp) {
 			mCache.erase(it);
-			const auto cnt = boost::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
+			const auto cnt = PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
 			LOG_INF << "RPK change detected, forcing reload and clearing cache for " << rpk << " (removed " << cnt << " files)";
 			cs = CacheStatus::MISS;
 		}

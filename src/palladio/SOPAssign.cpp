@@ -28,7 +28,8 @@
 
 #include "UT/UT_Interrupt.h"
 
-#include "boost/algorithm/string.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 
 
 namespace {

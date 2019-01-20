@@ -22,7 +22,8 @@
 
 #include "GU/GU_HoleInfo.h"
 
-#include "boost/variant.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/variant.hpp)
 
 #include <mutex>
 
