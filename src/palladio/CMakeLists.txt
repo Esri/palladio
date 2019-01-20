@@ -93,7 +93,7 @@ pld_add_dependency_houdini(${PROJECT_NAME})
 
 ### setup install target
 
-# note: the target itself (palladio.so) is installed by the houdini cmake helper methods
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION . LIBRARY DESTINATION .)
 install(FILES ${PRT_LIBRARIES} DESTINATION .)
 install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/../../doc DESTINATION .)
