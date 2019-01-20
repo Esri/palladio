@@ -74,16 +74,31 @@ list(APPEND CMAKE_PREFIX_PATH "${CONAN_HOUDINI_ROOT}/toolkit/cmake")
 find_package(Houdini REQUIRED)
 
 function(pld_add_dependency_houdini TGT)
-	target_link_libraries(${TGT} PRIVATE Houdini)
-	# houdini_configure_target(${TGT})
-	# note: the above disabled function (provided by sidefx) does weird things with the install prefix
+	if(${Houdini_VERSION_MAJOR} STREQUAL "17")
+		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
+		if(PLD_WINDOWS)
+			set(houdini_lib_path "${_houdini_install_root}/custom/houdini/dsolib")
+			set(houdini_hboost_fs hboost_filesystem-mt)
+		elseif(PLD_LINUX)
+			set(houdini_lib_path "${_houdini_install_root}/dsolib")
+			set(houdini_hboost_fs hboost_filesystem)
+		endif()
+		find_library(HBOOST_FILESYSTEM ${houdini_hboost_fs} ${houdini_lib_path})
+		target_link_libraries(${TGT} PRIVATE Houdini ${HBOOST_FILESYSTEM})
+		houdini_configure_target(${TGT})
+	elseif(${Houdini_VERSION_MAJOR} STREQUAL "16")
+		target_link_libraries(${TGT} PRIVATE Houdini)
+		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=boost)
+	endif()
 endfunction()
 
 
 ### boost dependency
 
 function(pld_add_dependency_boost TGT)
-	target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
+	if(${Houdini_VERSION_MAJOR} STREQUAL "16")
+		target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
+	endif()
 endfunction()
 
 

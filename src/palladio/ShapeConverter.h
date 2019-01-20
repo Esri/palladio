@@ -21,7 +21,8 @@
 
 #include "UT/UT_String.h"
 
-#include "boost/filesystem/path.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
 
 #include <string>
 
@@ -56,7 +57,7 @@ public:
 	std::wstring getFullyQualifiedStartRule() const;
 
 public:
-	boost::filesystem::path mRPK;
+	PLD_BOOST_NS::filesystem::path mRPK;
 	std::wstring            mRuleFile;
 	std::wstring            mStyle;
 	std::wstring            mStartRule;

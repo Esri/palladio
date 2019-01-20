@@ -19,7 +19,8 @@
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
-#include "boost/algorithm/string.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 
 #include <mutex>
 #include <bitset>
@@ -33,7 +34,7 @@ namespace StringConversionCaches {
 	LockedLRUCache<std::wstring, UT_String> toPrimAttr(1 << 12);
 }
 
-class HandleVisitor : public boost::static_visitor<> {
+class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {
 private:
 	const AttributeConversion::ProtoHandle& protoHandle;
 	const prt::AttributeMap*                attrMap;
@@ -289,7 +290,7 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
 	for (auto& h: handleMap) {
 		if (hasKeys(attrMap, h.second.keys)) {
 			const HandleVisitor hv(h.second, attrMap, primIndexMap, rangeStart, rangeSize);
-			boost::apply_visitor(hv, h.second.handleType);
+			PLD_BOOST_NS::apply_visitor(hv, h.second.handleType);
 		}
 	}
 }
@@ -331,7 +332,7 @@ UT_String toPrimAttr(const std::wstring& name) {
 
 	std::string s = toOSNarrowFromUTF16(removeStyle(name));
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
+		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
 
 	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
 	StringConversionCaches::toPrimAttr.insert(name, primAttr);
@@ -343,7 +344,7 @@ std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) 
 
 	std::string s = name.toStdString();
 	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		boost::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
+		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
 	return addStyle(toUTF16FromOSNarrow(s), style);
 }
 

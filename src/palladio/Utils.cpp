@@ -24,8 +24,9 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
+#include PLD_BOOST_INCLUDE(/filesystem.hpp)
 #ifndef _WIN32
 #	pragma GCC diagnostic pop
 #endif
@@ -56,7 +57,7 @@ void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::w
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
 	std::vector<std::wstring> tok;
-	boost::split(tok, cgbList, boost::is_any_of(L";"), boost::algorithm::token_compress_on);
+	PLD_BOOST_NS::split(tok, cgbList, PLD_BOOST_NS::is_any_of(L";"), PLD_BOOST_NS::algorithm::token_compress_on);
 	for(const std::wstring& t: tok) {
 		if (t.empty()) continue;
 		LOG_DBG << "token: '" << t << "'";
@@ -91,7 +92,7 @@ std::string objectToXML(prt::Object const* obj) {
 	return std::string(buffer.data());
 }
 
-void getLibraryPath(boost::filesystem::path& path, const void* func) {
+void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func) {
 #ifdef _WIN32
 	HMODULE dllHandle = 0;
 	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)getLibraryPath, &dllHandle)) {
@@ -182,7 +183,7 @@ std::string toUTF8FromOSNarrow(const std::string& osString) {
 	return std::string(temp.data());
 }
 
-std::wstring toFileURI(const boost::filesystem::path& p) {
+std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p) {
 #ifdef _WIN32
 	static const std::wstring schema = L"file:/";
 #else

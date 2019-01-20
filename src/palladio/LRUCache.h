@@ -1,6 +1,7 @@
 # pragma once
 
-#include <boost/optional.hpp>
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/optional.hpp)
 
 #include <list>
 #include <map>
@@ -78,13 +79,13 @@ public:
         }
     }
 
-    boost::optional<value_type> get(const key_type &key)
+    PLD_BOOST_NS::optional<value_type> get(const key_type &key)
     {
         // lookup value in the mCache
         typename map_type::iterator i = m_map.find(key);
         if(i == m_map.end()){
             // value not in mCache
-            return boost::none;
+            return PLD_BOOST_NS::none;
         }
 
         // return the value, but first update its place in the most
@@ -176,7 +177,7 @@ public:
         Base::insert(key, value);
     }
 
-    boost::optional<V> get(const K& key) {
+    PLD_BOOST_NS::optional<V> get(const K& key) {
 		std::lock_guard<std::mutex> guard(mMutex);
         auto v = Base::get(key);
 

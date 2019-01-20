@@ -31,7 +31,8 @@
 #include <string>
 #include <vector>
 
-namespace boost { namespace filesystem { class path; } }
+
+namespace PLD_BOOST_NS { namespace filesystem { class path; } }
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
@@ -61,7 +62,7 @@ PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pai
 PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
 PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);
 
-void getLibraryPath(boost::filesystem::path& path, const void* func);
+void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
 
@@ -69,7 +70,7 @@ PLD_TEST_EXPORTS_API std::string toOSNarrowFromUTF16(const std::wstring& osWStri
 std::wstring toUTF16FromOSNarrow(const std::string& osString);
 std::string toUTF8FromOSNarrow(const std::string& osString);
 
-PLD_TEST_EXPORTS_API std::wstring toFileURI(const boost::filesystem::path& p);
+PLD_TEST_EXPORTS_API std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p);
 PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
 
 inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {

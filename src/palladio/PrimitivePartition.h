@@ -22,16 +22,18 @@
 #include "GA/GA_Primitive.h"
 #include "GU/GU_Detail.h"
 
-#include "boost/variant.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/variant.hpp)
 
 #include <vector>
 #include <map>
+
 
 class PrimitiveClassifier;
 
 class PrimitivePartition {
 public:
-	using ClassifierValueType = boost::variant<UT_String, int32>;
+	using ClassifierValueType = PLD_BOOST_NS::variant<UT_String, int32>;
 	using PrimitiveVector     = std::vector<const GA_Primitive*>;
 	using PartitionMap        = std::map<ClassifierValueType, PrimitiveVector>;
 

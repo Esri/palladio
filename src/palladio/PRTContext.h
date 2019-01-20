@@ -23,7 +23,8 @@
 #include "prt/Object.h"
 #include "prt/FlexLicParams.h"
 
-#include "boost/filesystem.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/filesystem.hpp)
 
 #include <map>
 
@@ -37,14 +38,14 @@ using LogHandlerPtr = std::unique_ptr<LogHandler>;
  * manage PRT "lifetime" (actually, its license lifetime)
  */
 struct PLD_TEST_EXPORTS_API PRTContext final {
-	explicit PRTContext(const std::vector<boost::filesystem::path>& addExtDirs = {});
+	explicit PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExtDirs = {});
 	PRTContext(const PRTContext&) = delete;
 	PRTContext(PRTContext&&) = delete;
 	PRTContext& operator=(PRTContext&) = delete;
 	PRTContext& operator=(PRTContext&&) = delete;
 	~PRTContext();
 
-	const ResolveMapUPtr& getResolveMap(const boost::filesystem::path& rpk);
+	const ResolveMapUPtr& getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk);
 
 	logging::LogHandlerPtr  mLogHandler;
 	ObjectUPtr              mLicHandle;

@@ -28,7 +28,8 @@
 #include "GA/GA_Types.h"
 #include "OP/OP_Node.h"
 
-#include "boost/filesystem/path.hpp"
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
 
 
 namespace AssignNodeParams {
@@ -57,7 +58,7 @@ static PRM_Default RPK_DEFAULT(0, "");
 int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback rpkCallback(&updateRPK);
 
-const auto getRPK = [](const OP_Node* node, fpreal t) -> boost::filesystem::path {
+const auto getRPK = [](const OP_Node* node, fpreal t) -> PLD_BOOST_NS::filesystem::path {
 	UT_String s;
 	node->evalString(s, RPK.getToken(), 0, t);
 	return s.toStdString();
