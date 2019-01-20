@@ -75,10 +75,14 @@ def taskBuildPalladio(cfg) {
 	papl.buildConfig(REPO, myBranch, SOURCE, BUILD_TARGET, cfg, deps, defs)
 	
 	def versionExtractor = { p ->
-		def vers = (p =~ /.*palladio-(.*)-(windows|linux)\..*/)
+		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
 		return vers[0][1]
 	}
-	papl.publish('palladio', myBranch, "palladio-*", versionExtractor, cfg)
+	def classifierExtractor = { p ->
+		def cls = (p =~ /.*palladio-.*\.(hdn.*)-(windows|linux)\..*/)
+		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
+	}
+	papl.publish('palladio', myBranch, "palladio-*", versionExtractor, cfg, classifierExtractor)
 }
 
 
