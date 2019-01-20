@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.3.0 (Jan 20, 2019)
+* Update build system to support both Houdini 16.5 and 17.0.
+* For Houdini 17, use bundled boost libraries.
+
 ## v1.2.0 (Jan 17, 2019)
 * Build System changes to improve continuous integration support (Jenkins).
 * Updated required cmake version to 3.13 (preparation for Houdini 17 support).
