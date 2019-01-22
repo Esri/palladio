@@ -11,7 +11,9 @@
 
 class ResolveMapCache {
 public:
-	ResolveMapCache(const PLD_BOOST_NS::filesystem::path& unpackPath) : mRPKUnpackPath{unpackPath} { }
+	using KeyType = std::string;
+
+	explicit ResolveMapCache(const PLD_BOOST_NS::filesystem::path& unpackPath) : mRPKUnpackPath{unpackPath} { }
 	ResolveMapCache(const ResolveMapCache&) = delete;
 	ResolveMapCache(ResolveMapCache&&) = delete;
 	ResolveMapCache& operator=(ResolveMapCache const&) = delete;
@@ -27,7 +29,7 @@ private:
 		ResolveMapUPtr mResolveMap;
 		std::chrono::system_clock::time_point mTimeStamp;
 	};
-	using Cache = std::map<PLD_BOOST_NS::filesystem::path, ResolveMapCacheEntry>;
+	using Cache = std::map<KeyType, ResolveMapCacheEntry>;
 	Cache mCache;
 
 	const PLD_BOOST_NS::filesystem::path mRPKUnpackPath;
