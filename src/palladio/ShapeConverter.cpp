@@ -301,6 +301,9 @@ void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primi
 }
 
 RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
+	if (!resolveMap->hasKey(mRuleFile.c_str())) // workaround for bug in getString
+		return {};
+
 	const auto cgbURI = resolveMap->getString(mRuleFile.c_str());
 	if (cgbURI == nullptr)
 		return {};
