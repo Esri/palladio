@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.3.1 (Feb 20, 2019)
+* Added a workaround to prevent a crash in PRT 1.9 when using an invalid CGB path in the assign node.
+
 ## v1.3.0 (Jan 20, 2019)
 * Update build system to support both Houdini 16.5 and 17.0.
 * For Houdini 17, use bundled boost libraries.
