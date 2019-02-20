@@ -38,9 +38,10 @@ PRTContextUPtr prtCtx;
 
 
 void newSopOperator(OP_OperatorTable *table) {
-	assert(!prtCtx);
-	prtCtx.reset(new PRTContext());
-	UT_Exit::addExitCallback([](void*){ prtCtx.reset(); });
+	if (!prtCtx) {
+		prtCtx.reset(new PRTContext());
+		UT_Exit::addExitCallback([](void *) { prtCtx.reset(); });
+	}
 
 	if (!prtCtx->mLicHandle)
 		return;
