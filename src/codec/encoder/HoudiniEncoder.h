@@ -42,8 +42,8 @@ struct SerializedGeometry {
 	prtx::DoubleVector              coords;
 	prtx::DoubleVector              normals; // uses same indexing as coords
 	std::vector<prtx::DoubleVector> uvs;     // uses same indexing as coords per uv set
-	prtx::IndexVector               counts;
-	prtx::IndexVector               indices;
+	std::vector<uint32_t>           counts;
+	std::vector<uint32_t>           indices;
 
 	SerializedGeometry(uint32_t uvSets) : uvs(uvSets) { }
 };

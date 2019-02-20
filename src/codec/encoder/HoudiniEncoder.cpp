@@ -20,6 +20,7 @@
 #include "prtx/Exception.h"
 #include "prtx/Log.h"
 #include "prtx/Geometry.h"
+#include "prtx/Mesh.h"
 #include "prtx/Material.h"
 #include "prtx/Shape.h"
 #include "prtx/ShapeIterator.h"

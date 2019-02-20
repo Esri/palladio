@@ -43,7 +43,7 @@ void newSopOperator(OP_OperatorTable *table) {
 		UT_Exit::addExitCallback([](void *) { prtCtx.reset(); });
 	}
 
-	if (!prtCtx->mLicHandle)
+	if (!prtCtx->isAlive())
 		return;
 
 	// instantiate assign sop

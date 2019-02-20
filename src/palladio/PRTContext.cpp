@@ -19,6 +19,10 @@
 #include "LogHandler.h"
 #include "SOPAssign.h"
 
+#if PRT_VERSION_MAJOR < 2
+#	include "prt/FlexLicParams.h"
+#endif
+
 #include "OP/OP_Node.h"
 #include "OP/OP_Director.h"
 #include "OP/OP_Network.h"
@@ -42,6 +46,7 @@ constexpr const char*         PRT_LOG_LEVEL_ENV_VAR   = "CITYENGINE_LOG_LEVEL";
 constexpr const char*         PRT_LOG_LEVEL_STRINGS[] = { "trace", "debug", "info", "warning", "error", "fatal" };
 constexpr const size_t        PRT_LOG_LEVEL_STRINGS_N = sizeof(PRT_LOG_LEVEL_STRINGS)/sizeof(PRT_LOG_LEVEL_STRINGS[0]);
 
+#if PRT_VERSION_MAJOR < 2
 class License {
 private:
     prt::FlexLicParams flexLicParams;
@@ -75,6 +80,7 @@ public:
 		return &flexLicParams;
 	}
 };
+#endif
 
 // TODO: move to LogHandler
 prt::LogLevel getLogLevel() {
@@ -135,7 +141,7 @@ PLD_BOOST_NS::filesystem::path getProcessTempDir() {
 
 PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExtDirs)
         : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)),
-          mLicHandle{nullptr},
+          mPRTHandle{nullptr},
           mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)},
           mCores{getNumCores()},
           mResolveMapCache{new ResolveMapCache(getProcessTempDir())}
@@ -151,8 +157,11 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
 		return prtCorePath.parent_path();
 	}();
 
+
+#if PRT_VERSION_MAJOR < 2
 	// -- detect license
 	const License license(rootPath);
+#endif
 
 	// -- scan for directories with prt extensions
 	const std::vector<PLD_BOOST_NS::filesystem::path> extDirs = [&rootPath,&addExtDirs](){
@@ -177,9 +186,13 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
 
 	// -- initialize PRT
     prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-    mLicHandle.reset(prt::init(extDirCStrs.data(), extDirCStrs.size(), logLevel, license.getParams(), &status));
+    mPRTHandle.reset(prt::init(extDirCStrs.data(), extDirCStrs.size(), logLevel,
+#if PRT_VERSION_MAJOR < 2
+    		license.getParams(),
+#endif
+    		&status));
     if (status != prt::STATUS_OK) {
-        LOG_ERR << "Could not get license: " << prt::getStatusDescription(status);
+        LOG_FTL << "Could not initialize PRT: " << prt::getStatusDescription(status);
     }
 }
 
@@ -190,7 +203,7 @@ PRTContext::~PRTContext() {
 	mPRTCache.reset(); // calling reset manually to ensure order
 	LOG_INF << "Released PRT cache";
 
-	mLicHandle.reset(); // same here
+	mPRTHandle.reset(); // same here
 	LOG_INF << "Shutdown PRT & returned license";
 
     prt::removeLogHandler(mLogHandler.get());
