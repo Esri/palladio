@@ -54,6 +54,7 @@ struct ProtoHandle {
 	HandleType handleType;
 	std::vector<std::wstring> keys;
 	prt::AttributeMap::PrimitiveType type; // original PRT type
+	size_t cardinality;
 };
 
 using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
