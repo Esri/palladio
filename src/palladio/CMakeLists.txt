@@ -47,9 +47,15 @@ if(PLD_WINDOWS)
 	# nothing, inheriting compiler flags from houdini
 
 elseif(PLD_LINUX)
+	if(${PLD_HDN_VER_MAJ} STREQUAL "17")
+		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
+	elseif(${PLD_HDN_VER_MAJ} STREQUAL "16")
+		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11)
+	endif()
+
 	target_compile_options(${PROJECT_NAME} PRIVATE
+			-D_GLIBCXX_USE_CXX11_ABI=0
 			-mtune=generic -m64 -fPIC -mmmx -msse -msse2 -msse3
-			-std=c++11
 			-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder
 			-Wno-uninitialized -Wunused -Wno-unused-parameter
 			-fno-strict-aliasing -Wno-unused-local-typedefs)
@@ -73,7 +79,7 @@ elseif(PLD_LINUX)
 
 elseif(PLD_MACOS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
-			-std=c++11)
+			-std=c++11) # TODO
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -g)
