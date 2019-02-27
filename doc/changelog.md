@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.4.0 (Feb 27, 2019)
+* Generated material primitive attributes now use the "generic names" instead of the "CGA names" (see PRT reference for file prtx/Material.h for details).
+* Fixed wrong texture paths for assets that originated in another CityEngine project (e.g. ESRI.lib) at RPK creation time.
+
 ## v1.3.1 (Feb 20, 2019)
 * Added a workaround to prevent a crash in PRT 1.9 when using an invalid CGB path in the assign node.
 
