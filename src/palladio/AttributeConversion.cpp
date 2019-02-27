@@ -34,6 +34,49 @@ namespace StringConversionCaches {
 	LockedLRUCache<std::wstring, UT_String> toPrimAttr(1 << 12);
 }
 
+template<typename H, typename V>
+void setHandleRange(const GA_IndexMap& indexMap, H& handle, GA_Offset start, GA_Size size, int component, const V& value);
+
+template<>
+void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleC& handle, GA_Offset start, GA_Size size, int component, const bool& value) {
+	constexpr int8_t valFalse = 0;
+	constexpr int8_t valTrue  = 1;
+	const int8_t hv = value ? valTrue : valFalse;
+	handle.setBlock(start, size, &hv, 0, component);
+	if (DBG) LOG_DBG << "bool attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << value;
+}
+
+template<>
+void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleI& handle, GA_Offset start, GA_Size size, int component, const int32_t& value) {
+	handle.setBlock(start, size, &value, 0, component);
+	if (DBG) LOG_DBG << "int attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << value;
+}
+
+template<>
+void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleF& handle, GA_Offset start, GA_Size size, int component, const double& value) {
+	const auto hv = static_cast<fpreal32>(value);
+	handle.setBlock(start, size, &hv, 0, component); // using stride = 0 to always set the same value
+	if (DBG) LOG_DBG << "float attr: component = " << component << ", range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << value;
+}
+
+template<>
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_Offset start, GA_Size size, int component, const std::wstring& value) {
+    const UT_String hv = [&value]() {
+	    const auto sh = StringConversionCaches::toPrimAttr.get(value);
+	    if (sh)
+		    return sh.get();
+	    const std::string nv = toOSNarrowFromUTF16(value);
+	    UT_String hv(UT_String::ALWAYS_DEEP, nv); // ensure owning UT_String inside cache
+	    StringConversionCaches::toPrimAttr.insert(value, hv);
+	    return hv;
+    }();
+
+	const GA_Range range(indexMap, start, start+size);
+	handle.set(range, component, hv);
+
+    if (DBG) LOG_DBG << "string attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << hv;
+}
+
 class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {
 private:
 	const AttributeConversion::ProtoHandle& protoHandle;
@@ -50,105 +93,57 @@ public:
     void operator()(const AttributeConversion::NoHandle& handle) const { }
 
     void operator()(GA_RWBatchHandleS& handle) const {
-		assert(protoHandle.keys.size() == handle.getTupleSize());
-	    assert(protoHandle.keys.size() == 1);
-	    const wchar_t* v = attrMap->getString(protoHandle.keys.front().c_str());
-		if (v && std::wcslen(v) > 0) {
-
-			const UT_String hv = [&v]() {
-				const auto sh = StringConversionCaches::toPrimAttr.get(v);
-				if (sh)
-					return sh.get();
-				const std::string nv = toOSNarrowFromUTF16(v);
-				UT_String hv(UT_String::ALWAYS_DEEP, nv); // ensure owning UT_String inside cache
-				StringConversionCaches::toPrimAttr.insert(v, hv);
-				return hv;
-			}();
-
-			const GA_Range range(primIndexMap, rangeStart, rangeStart+rangeSize);
-			handle.set(range, 0, hv);
-			if (DBG) LOG_DBG << "string attr: range = [" << rangeStart << ", " << rangeStart+rangeSize << "): "
-			                 << handle.getAttribute()->getName() << " = " << hv;
-		}
+	    if (protoHandle.type == prt::Attributable::PT_STRING) {
+		    wchar_t const* const v = attrMap->getString(protoHandle.key.c_str());
+	    	if (v && std::wcslen(v) > 0) {
+			    setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, std::wstring(v));
+		    }
+	    }
+	    else if (protoHandle.type == prt::Attributable::PT_STRING_ARRAY) {
+			size_t arraySize = 0;
+			wchar_t const* const* const v = attrMap->getStringArray(protoHandle.key.c_str(), &arraySize);
+			for (size_t i = 0; i < arraySize; i++) {
+				if (v && v[i] && std::wcslen(v[i]) > 0) {
+					setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, std::wstring(v[i]));
+				}
+			}
+	    }
     }
 
     void operator()(const GA_RWHandleI& handle) const {
-		assert(protoHandle.keys.size() == handle.getTupleSize());
-		assert(protoHandle.keys.size() == 1);
-		const int32_t v = attrMap->getInt(protoHandle.keys.front().c_str());
-	    handle.setBlock(rangeStart, rangeSize, &v, 0, 0);
-		if (DBG) LOG_DBG << "int attr: range = [" << rangeStart << ", " << rangeStart+rangeSize << "): "
-		                 << handle.getAttribute()->getName() << " = " << v;
+		if (protoHandle.type == prt::Attributable::PT_INT) {
+			const int32_t v = attrMap->getInt(protoHandle.key.c_str());
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
+		}
+		else if (protoHandle.type == prt::Attributable::PT_INT_ARRAY) {
+			LOG_ERR << "int arrays not yet implemented";
+		}
     }
 
     void operator()(const GA_RWHandleC& handle) const {
-		constexpr int8_t valFalse = 0;
-		constexpr int8_t valTrue  = 1;
-
-		assert(protoHandle.keys.size() == handle.getTupleSize());
-		assert(protoHandle.keys.size() == 1);
-	    const bool v = attrMap->getBool(protoHandle.keys.front().c_str());
-	    const int8_t hv = v ? valTrue : valFalse;
-	    handle.setBlock(rangeStart, rangeSize, &hv, 0, 0);
-		if (DBG) LOG_DBG << "bool attr: range = [" << rangeStart << ", " << rangeStart+rangeSize << "): "
-		                 << handle.getAttribute()->getName() << " = " << v;
+		if (protoHandle.type == prt::Attributable::PT_BOOL) {
+			const bool v = attrMap->getBool(protoHandle.key.c_str());
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
+		}
+		else if (protoHandle.type == prt::Attributable::PT_BOOL_ARRAY) {
+			LOG_ERR << "bool arrays not yet implemented";
+		}
     }
 
     void operator()(const GA_RWHandleF& handle) const {
-		assert(protoHandle.keys.size() == handle.getTupleSize());
-		for (size_t c = 0; c < protoHandle.keys.size(); c++) {
-	        const auto v = attrMap->getFloat(protoHandle.keys[c].c_str());
-			const auto hv = static_cast<fpreal32>(v);
-		    handle.setBlock(rangeStart, rangeSize, &hv, 0, c); // using stride = 0 to always set the same value
-		    if (DBG) LOG_DBG << "float attr: component = " << c
-		                     << ", range = [" << rangeStart << ", " << rangeStart+rangeSize << "): "
-			                 << handle.getAttribute()->getName() << " = " << v;
+		if (protoHandle.type == prt::Attributable::PT_FLOAT) {
+			const auto v = attrMap->getFloat(protoHandle.key.c_str());
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
+		}
+		else if (protoHandle.type == prt::Attributable::PT_FLOAT_ARRAY) {
+			size_t arraySize = 0;
+			const double* const v = attrMap->getFloatArray(protoHandle.key.c_str(), &arraySize);
+			for (size_t i = 0; i < arraySize; i++) {
+				setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, v[i]);
+			}
 		}
 	}
 };
-
-bool hasKeys(const prt::AttributeMap* attrMap, const std::vector<std::wstring>& keys) {
-	for (const auto& k: keys)
-		if (!attrMap->hasKey(k.c_str()))
-			return false;
-	return true;
-}
-
-struct Candidate {
-	std::vector<std::wstring> keys;
-	std::string::size_type dotPos = -1;
-};
-
-using Candidates = std::map<std::wstring, Candidate>;
-
-/**
- * specific test for float attributes which match the "foo.{r,g,b}" pattern (for color)
- */
-bool isColorGroup(const std::wstring& primary, const Candidate& candidate, const prt::AttributeMap* attrMap) {
-	WA("all");
-
-	const auto& keys = candidate.keys;
-	if ((candidate.dotPos == std::wstring::npos) || keys.size() != 3)
-		return false;
-
-	const auto firstType = attrMap->getType(keys.front().c_str());
-	if (firstType != prt::AttributeMap::PT_FLOAT)
-		return false;
-
-	std::bitset<3> flags; // r g b found
-	for (const auto& k: keys) {
-		const auto t = attrMap->getType(k.c_str());
-		if (t != firstType)
-			return false;
-
-		const std::wstring s = k.substr(candidate.dotPos+1);
-		if (s == L"r") flags[0] = true;
-		if (s == L"g") flags[1] = true;
-		if (s == L"b") flags[2] = true;
-	}
-
-	return flags.all();
-}
 
 void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstring& handleName,
                     AttributeConversion::ProtoHandle&& ph)
@@ -160,73 +155,49 @@ void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstrin
 	handleMap.emplace(utName, std::move(ph));
 }
 
+size_t getAttributeCardinality(const prt::AttributeMap* attrMap, const std::wstring& key, const prt::Attributable::PrimitiveType& type) {
+	size_t cardinality = -1;
+	switch (type) {
+		case prt::Attributable::PT_STRING_ARRAY: {
+			attrMap->getStringArray(key.c_str(), &cardinality);
+			break;
+		}
+		case prt::Attributable::PT_FLOAT_ARRAY: {
+			attrMap->getFloatArray(key.c_str(), &cardinality);
+			break;
+		}
+		case prt::Attributable::PT_INT_ARRAY: {
+			attrMap->getIntArray(key.c_str(), &cardinality);
+			break;
+		}
+		case prt::Attributable::PT_BOOL_ARRAY: {
+			attrMap->getBoolArray(key.c_str(), &cardinality);
+			break;
+		}
+		default: {
+			cardinality = 1;
+			break;
+		}
+	}
+	return cardinality;
+}
+
 } // namespace
 
 
 namespace AttributeConversion {
 
 void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap) {
-	WA("all");
+	size_t keyCount = 0;
+	wchar_t const* const* keys = attrMap->getKeys(&keyCount);
+	for (size_t k = 0; k < keyCount; k++) {
+		wchar_t const* key = keys[k];
 
-	Candidates candidates;
-
-	// split keys with a dot
-	{
-		WA("split");
-
-		size_t keyCount = 0;
-		wchar_t const* const* keys = attrMap->getKeys(&keyCount);
-		for (size_t k = 0; k < keyCount; k++) {
-			std::wstring key(keys[k]);
-
-			auto p = key.find_first_of(L'.');
-
-			std::wstring primary;
-			if (p != std::wstring::npos)
-				primary = key.substr(0, p);
-			else
-				primary = key;
-
-			auto r = candidates.emplace(primary, Candidate());
-			Candidate& c = r.first->second;
-			c.keys.emplace_back(std::move(key));
-			c.dotPos = p;
-		}
-	}
-
-	// detect keys which match the "foo.{r,g,b}" pattern
-	{
-		WA("detect/add attr groups");
-
-		for (auto& c: candidates) {
-			const auto& primary = c.first;
-			auto& candidate = c.second;
-
-			const bool groupable = isColorGroup(primary, candidate, attrMap);
-			if (groupable) {
-				WA("add color groups");
-
-				ProtoHandle ph;
-				ph.type = attrMap->getType(candidate.keys.front().c_str());
-
-				// naive way to get the r,g,b order
-				std::sort(candidate.keys.begin(), candidate.keys.end());
-				std::reverse(candidate.keys.begin(), candidate.keys.end());
-				ph.keys = std::move(candidate.keys);
-
-				addProtoHandle(handleMap, primary, std::move(ph));
-			}
-			else {
-				WA("add individual attrs");
-
-				for (const auto& key: candidate.keys) {
-					ProtoHandle ph;
-					ph.type = attrMap->getType(key.c_str());
-					ph.keys.emplace_back(key);
-					addProtoHandle(handleMap, key, std::move(ph));
-				}
-			}
-		}
+		ProtoHandle ph;
+		ph.type = attrMap->getType(key);
+		ph.key.assign(key);
+		ph.cardinality = getAttributeCardinality(attrMap, ph.key, ph.type);
+		addProtoHandle(handleMap, key, std::move(ph));
 	}
 }
 
@@ -236,39 +207,38 @@ void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap) {
 	for (auto& hm: handleMap) {
 		const auto& utKey = hm.first;
 		const auto& type = hm.second.type;
-		const size_t tupleSize = hm.second.keys.size();
 
 		HandleType handle; // set to NoHandle by default
 		assert(handle.which() == 0);
 		switch (type) {
-			case prt::Attributable::PT_BOOL: {
-				GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, tupleSize, GA_Defaults(0),
-				                                   nullptr, nullptr, GA_STORE_INT8));
+			case prt::Attributable::PT_BOOL:
+			case prt::Attributable::PT_BOOL_ARRAY: {
+				GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
 				if (h.isValid())
 					handle = h;
 				break;
 			}
-			case prt::Attributable::PT_FLOAT: {
-				GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, utKey, tupleSize));
+			case prt::Attributable::PT_FLOAT:
+			case prt::Attributable::PT_FLOAT_ARRAY: {
+				GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
 				if (h.isValid())
 					handle = h;
 				break;
 			}
-			case prt::Attributable::PT_INT: {
-				GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, tupleSize));
+			case prt::Attributable::PT_INT:
+			case prt::Attributable::PT_INT_ARRAY: {
+				GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
 				if (h.isValid())
 					handle = h;
 				break;
 			}
-			case prt::Attributable::PT_STRING: {
-				GA_RWBatchHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, utKey, tupleSize));
+			case prt::Attributable::PT_STRING:
+			case prt::Attributable::PT_STRING_ARRAY: {
+				GA_RWBatchHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
 				if (h.isValid())
 					handle = h;
 				break;
 			}
-
-			// TODO: add support for array attributes
-
 			default:
 				if (DBG) LOG_DBG << "ignored: " << utKey;
 				break;
@@ -285,10 +255,8 @@ void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap) {
 void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
                         const GA_IndexMap& primIndexMap, const GA_Offset rangeStart, const GA_Size rangeSize)
 {
-	WA("all");
-
 	for (auto& h: handleMap) {
-		if (hasKeys(attrMap, h.second.keys)) {
+		if (attrMap->hasKey(h.second.key.c_str())) {
 			const HandleVisitor hv(h.second, attrMap, primIndexMap, rangeStart, rangeSize);
 			PLD_BOOST_NS::apply_visitor(hv, h.second.handleType);
 		}

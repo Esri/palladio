@@ -37,6 +37,8 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include <set>
+#include <memory>
 
 
 namespace {
@@ -64,13 +66,74 @@ std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	return pw;
 }
 
-void convertAttributabletoAttributeMap(
+std::wstring uriToPath(const prtx::TexturePtr& t){
+	return t->getURI()->getPath();
+}
+
+// we blacklist all CGA-style material attribute keys, see prtx/Material.h
+const std::set<std::wstring> MATERIAL_ATTRIBUTE_BLACKLIST = {
+	L"ambient.b",
+	L"ambient.g",
+	L"ambient.r",
+	L"bumpmap.rw",
+	L"bumpmap.su",
+	L"bumpmap.sv",
+	L"bumpmap.tu",
+	L"bumpmap.tv",
+	L"color.a",
+	L"color.b",
+	L"color.g",
+	L"color.r",
+	L"color.rgb",
+	L"colormap.rw",
+	L"colormap.su",
+	L"colormap.sv",
+	L"colormap.tu",
+	L"colormap.tv",
+	L"dirtmap.rw",
+	L"dirtmap.su",
+	L"dirtmap.sv",
+	L"dirtmap.tu",
+	L"dirtmap.tv",
+	L"normalmap.rw",
+	L"normalmap.su",
+	L"normalmap.sv",
+	L"normalmap.tu",
+	L"normalmap.tv",
+	L"opacitymap.rw",
+	L"opacitymap.su",
+	L"opacitymap.sv",
+	L"opacitymap.tu",
+	L"opacitymap.tv",
+	L"specular.b",
+	L"specular.g",
+	L"specular.r",
+	L"specularmap.rw",
+	L"specularmap.su",
+	L"specularmap.sv",
+	L"specularmap.tu",
+	L"specularmap.tv",
+	L"bumpmap",
+	L"colormap",
+	L"dirtmap",
+	L"normalmap",
+	L"opacitymap",
+	L"specularmap"
+};
+
+void convertMaterialToAttributeMap(
 		prtx::PRTUtils::AttributeMapBuilderPtr& aBuilder,
-		const prtx::Attributable& prtxAttr,
+		const prtx::Material& prtxAttr,
 		const prtx::WStringVector& keys,
 		const prt::ResolveMap* rm
 ) {
+//	log_wdebug(L"-- converting material: %1%") % prtxAttr.name();
 	for(const auto& key : keys) {
+		if (MATERIAL_ATTRIBUTE_BLACKLIST.count(key) > 0)
+			continue;
+
+//		log_wdebug(L"   key: %1%") % key;
+
 		switch(prtxAttr.getType(key)) {
 			case prt::Attributable::PT_BOOL:
 				aBuilder->setBool(key.c_str(), prtxAttr.getBool(key) == prtx::PRTX_TRUE);
@@ -85,35 +148,17 @@ void convertAttributabletoAttributeMap(
 				break;
 
 			case prt::Attributable::PT_STRING: {
-				std::wstring v = prtxAttr.getString(key); // explicit copy
-				if (v.length() > 0) {
-
-					// resolvemap search heuristic
-					std::vector<std::wstring> rmKeys;
-					rmKeys.push_back(v);
-					rmKeys.push_back(L"assets/" + v);
-
-					for (const auto& rmKey: rmKeys) {
-						if (rm->hasKey(rmKey.c_str())) {
-							const wchar_t* tmp = rm->getString(rmKey.c_str());
-							if (tmp && (std::wcslen(tmp) > 0)) {
-								prtx::URIPtr u(prtx::URI::create(tmp));
-								v = u->getPath();
-							}
-							break;
-						}
-					}
-				}
+				const std::wstring& v = prtxAttr.getString(key); // explicit copy
 				aBuilder->setString(key.c_str(), v.c_str()); // also passing on empty strings
 				break;
 			}
+
 			case prt::Attributable::PT_BOOL_ARRAY: {
 				const std::vector<uint8_t>& ba = prtxAttr.getBoolArray(key);
-				auto* boo = new bool[ba.size()];
+				auto boo = std::unique_ptr<bool[]>(new bool[ba.size()]);
 				for (size_t i = 0; i < ba.size(); i++)
 					boo[i] = (ba[i] == prtx::PRTX_TRUE);
-				aBuilder->setBoolArray(key.c_str(), boo, ba.size());
-				delete [] boo;
+				aBuilder->setBoolArray(key.c_str(), boo.get(), ba.size());
 				break;
 			}
 
@@ -129,14 +174,30 @@ void convertAttributabletoAttributeMap(
 				break;
 			}
 
-			case prt::Attributable::PT_STRING_ARRAY:{
+			case prt::Attributable::PT_STRING_ARRAY: {
 				const prtx::WStringVector& a = prtxAttr.getStringArray(key);
 				std::vector<const wchar_t*> pw = toPtrVec(a);
 				aBuilder->setStringArray(key.c_str(), pw.data(), pw.size());
 				break;
 			}
 
-			// TODO: convert texture members...
+			case prtx::Material::PT_TEXTURE: {
+				const auto& t = prtxAttr.getTexture(key);
+				const std::wstring p = uriToPath(t);
+				aBuilder->setString(key.c_str(), p.c_str());
+				break;
+			}
+
+			case prtx::Material::PT_TEXTURE_ARRAY: {
+				const auto& ta = prtxAttr.getTextureArray(key);
+
+				prtx::WStringVector pa(ta.size());
+				std::transform(ta.begin(), ta.end(), pa.begin(), uriToPath);
+
+				std::vector<const wchar_t*> ppa = toPtrVec(pa);
+				aBuilder->setStringArray(key.c_str(), ppa.data(), ppa.size());
+				break;
+			}
 
 			default:
 				if (DBG) log_wdebug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
@@ -350,7 +411,7 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 			faceRanges.push_back(faceCount);
 
 			if (emitMaterials) {
-				convertAttributabletoAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
+				convertMaterialToAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
 				matAttrMaps.v.push_back(amb->createAttributeMapAndReset());
 			}
 
