@@ -51,10 +51,10 @@ using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandl
 
 // bound to life time of PRT attribute map
 struct ProtoHandle {
-	HandleType handleType;
-	std::vector<std::wstring> keys;
+	HandleType                       handleType;
+	std::wstring                     key;
 	prt::AttributeMap::PrimitiveType type; // original PRT type
-	size_t cardinality;
+	size_t                           cardinality;
 };
 
 using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;

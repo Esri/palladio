@@ -94,19 +94,17 @@ public:
 
     void operator()(GA_RWBatchHandleS& handle) const {
 	    if (protoHandle.type == prt::Attributable::PT_STRING) {
-		    wchar_t const* const v = attrMap->getString(protoHandle.keys.front().c_str());
+		    wchar_t const* const v = attrMap->getString(protoHandle.key.c_str());
 	    	if (v && std::wcslen(v) > 0) {
 			    setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, std::wstring(v));
 		    }
 	    }
 	    else if (protoHandle.type == prt::Attributable::PT_STRING_ARRAY) {
-			for (size_t c = 0; c < protoHandle.keys.size(); c++) {
-				size_t arraySize = 0;
-				wchar_t const* const* v = attrMap->getStringArray(protoHandle.keys[c].c_str(), &arraySize);
-				for (size_t i = 0; i < arraySize; i++) {
-			    	if (v && v[i] && std::wcslen(v[i]) > 0) {
-					    setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, std::wstring(v[i]));
-				    }
+			size_t arraySize = 0;
+			wchar_t const* const* const v = attrMap->getStringArray(protoHandle.key.c_str(), &arraySize);
+			for (size_t i = 0; i < arraySize; i++) {
+				if (v && v[i] && std::wcslen(v[i]) > 0) {
+					setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, std::wstring(v[i]));
 				}
 			}
 	    }
@@ -114,7 +112,7 @@ public:
 
     void operator()(const GA_RWHandleI& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_INT) {
-			const int32_t v = attrMap->getInt(protoHandle.keys.front().c_str());
+			const int32_t v = attrMap->getInt(protoHandle.key.c_str());
 			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
 		}
 		else if (protoHandle.type == prt::Attributable::PT_INT_ARRAY) {
@@ -124,7 +122,7 @@ public:
 
     void operator()(const GA_RWHandleC& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_BOOL) {
-			const bool v = attrMap->getBool(protoHandle.keys.front().c_str());
+			const bool v = attrMap->getBool(protoHandle.key.c_str());
 			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
 		}
 		else if (protoHandle.type == prt::Attributable::PT_BOOL_ARRAY) {
@@ -134,65 +132,18 @@ public:
 
     void operator()(const GA_RWHandleF& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_FLOAT) {
-			for (size_t c = 0; c < protoHandle.keys.size(); c++) {
-				const auto v = attrMap->getFloat(protoHandle.keys[c].c_str());
-				setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
-			}
+			const auto v = attrMap->getFloat(protoHandle.key.c_str());
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
 		}
 		else if (protoHandle.type == prt::Attributable::PT_FLOAT_ARRAY) {
-			for (size_t c = 0; c < protoHandle.keys.size(); c++) {
-				size_t arraySize = 0;
-				const double* v = attrMap->getFloatArray(protoHandle.keys[c].c_str(), &arraySize);
-				for (size_t i = 0; i < arraySize; i++) {
-					setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, v[i]);
-				}
+			size_t arraySize = 0;
+			const double* const v = attrMap->getFloatArray(protoHandle.key.c_str(), &arraySize);
+			for (size_t i = 0; i < arraySize; i++) {
+				setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, v[i]);
 			}
 		}
 	}
 };
-
-bool hasKeys(const prt::AttributeMap* attrMap, const std::vector<std::wstring>& keys) {
-	for (const auto& k: keys)
-		if (!attrMap->hasKey(k.c_str()))
-			return false;
-	return true;
-}
-
-struct Candidate {
-	std::vector<std::wstring> keys;
-	std::string::size_type dotPos = -1;
-};
-
-using Candidates = std::map<std::wstring, Candidate>;
-
-/**
- * specific test for float attributes which match the "foo.{r,g,b}" pattern (for color)
- */
-bool isColorGroup(const std::wstring& primary, const Candidate& candidate, const prt::AttributeMap* attrMap) {
-	WA("all");
-
-	const auto& keys = candidate.keys;
-	if ((candidate.dotPos == std::wstring::npos) || keys.size() != 3)
-		return false;
-
-	const auto firstType = attrMap->getType(keys.front().c_str());
-	if (firstType != prt::AttributeMap::PT_FLOAT)
-		return false;
-
-	std::bitset<3> flags; // r g b found
-	for (const auto& k: keys) {
-		const auto t = attrMap->getType(k.c_str());
-		if (t != firstType)
-			return false;
-
-		const std::wstring s = k.substr(candidate.dotPos+1);
-		if (s == L"r") flags[0] = true;
-		if (s == L"g") flags[1] = true;
-		if (s == L"b") flags[2] = true;
-	}
-
-	return flags.all();
-}
 
 void addProtoHandle(AttributeConversion::HandleMap& handleMap, const std::wstring& handleName,
                     AttributeConversion::ProtoHandle&& ph)
@@ -237,68 +188,16 @@ size_t getAttributeCardinality(const prt::AttributeMap* attrMap, const std::wstr
 namespace AttributeConversion {
 
 void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap) {
-	WA("all");
+	size_t keyCount = 0;
+	wchar_t const* const* keys = attrMap->getKeys(&keyCount);
+	for (size_t k = 0; k < keyCount; k++) {
+		wchar_t const* key = keys[k];
 
-	Candidates candidates;
-
-	// split keys with a dot
-	{
-		WA("split");
-
-		size_t keyCount = 0;
-		wchar_t const* const* keys = attrMap->getKeys(&keyCount);
-		for (size_t k = 0; k < keyCount; k++) {
-			std::wstring key(keys[k]);
-
-			auto p = key.find_first_of(L'.');
-
-			std::wstring primary;
-			if (p != std::wstring::npos)
-				primary = key.substr(0, p);
-			else
-				primary = key;
-
-			auto r = candidates.emplace(primary, Candidate());
-			Candidate& c = r.first->second;
-			c.keys.emplace_back(std::move(key));
-			c.dotPos = p;
-		}
-	}
-
-	// detect keys which match the "foo.{r,g,b}" pattern
-	{
-		WA("detect/add attr groups");
-
-		for (auto& c: candidates) {
-			const auto& primary = c.first;
-			auto& candidate = c.second;
-
-			const bool groupable = isColorGroup(primary, candidate, attrMap);
-			if (groupable) {
-				WA("add color groups");
-
-				ProtoHandle ph;
-				ph.type = attrMap->getType(candidate.keys.front().c_str());
-
-				// naive way to get the r,g,b order
-				std::sort(candidate.keys.begin(), candidate.keys.end());
-				std::reverse(candidate.keys.begin(), candidate.keys.end());
-				ph.keys = std::move(candidate.keys);
-
-				addProtoHandle(handleMap, primary, std::move(ph));
-			}
-			else {
-				WA("add individual attrs");
-
-				for (const auto& key: candidate.keys) {
-					ProtoHandle ph;
-					ph.type = attrMap->getType(key.c_str());
-					ph.keys.emplace_back(key);
-					ph.cardinality = getAttributeCardinality(attrMap, key, ph.type);
-					addProtoHandle(handleMap, key, std::move(ph));
-				}
-			}
-		}
+		ProtoHandle ph;
+		ph.type = attrMap->getType(key);
+		ph.key.assign(key);
+		ph.cardinality = getAttributeCardinality(attrMap, ph.key, ph.type);
+		addProtoHandle(handleMap, key, std::move(ph));
 	}
 }
 
@@ -356,10 +255,8 @@ void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap) {
 void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap,
                         const GA_IndexMap& primIndexMap, const GA_Offset rangeStart, const GA_Size rangeSize)
 {
-	WA("all");
-
 	for (auto& h: handleMap) {
-		if (hasKeys(attrMap, h.second.keys)) {
+		if (attrMap->hasKey(h.second.key.c_str())) {
 			const HandleVisitor hv(h.second, attrMap, primIndexMap, rangeStart, rangeSize);
 			PLD_BOOST_NS::apply_visitor(hv, h.second.handleType);
 		}
