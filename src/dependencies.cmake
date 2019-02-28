@@ -70,13 +70,13 @@ conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SE
 
 find_package(prt CONFIG REQUIRED)
 
+install(FILES ${PRT_LIBRARIES} DESTINATION .)
+install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
+
 function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
 	target_include_directories(${TGT} PRIVATE ${PRT_INCLUDE_PATH})
 	target_link_libraries(${TGT} PRIVATE ${PRT_LINK_LIBRARIES})
-
-	install(FILES ${PRT_LIBRARIES} DESTINATION .)
-	install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
 endfunction()
 
 
