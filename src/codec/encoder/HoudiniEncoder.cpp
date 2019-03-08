@@ -206,6 +206,17 @@ void convertMaterialToAttributeMap(
 	}
 }
 
+void convertReportsToAttributeMap(prtx::PRTUtils::AttributeMapBuilderPtr& amb, const prtx::ReportsPtr& r) {
+	if (!r)
+		return;
+
+	for (const auto& b: r->mBools)
+		amb->setBool(b.first->c_str(), b.second);
+	for (const auto& f: r->mFloats)
+		amb->setFloat(f.first->c_str(), f.second);
+	for (const auto& s: r->mStrings)
+		amb->setString(s.first->c_str(), s.second->c_str());
+}
 
 } // namespace
 
@@ -416,17 +427,9 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 			}
 
 			if (emitReports) {
-				const auto& r = *repIt;
-				if (r) {
-					for (const auto& b: r->mBools)
-						amb->setBool(b.first->c_str(), b.second);
-					for (const auto& f: r->mFloats)
-						amb->setFloat(f.first->c_str(), f.second);
-					for (const auto& s: r->mStrings)
-						amb->setString(s.first->c_str(), s.second->c_str());
-					reportAttrMaps.v.push_back(amb->createAttributeMapAndReset());
-					if (DBG) log_debug("report attr map: %1%") % prtx::PRTUtils::objectToXML(reportAttrMaps.v.back());
-				}
+				convertReportsToAttributeMap(amb, *repIt);
+				reportAttrMaps.v.push_back(amb->createAttributeMapAndReset());
+				if (DBG) log_debug("report attr map: %1%") % prtx::PRTUtils::objectToXML(reportAttrMaps.v.back());
 			}
 
 			faceCount += m->getFaceCount();
