@@ -218,6 +218,44 @@ void convertReportsToAttributeMap(prtx::PRTUtils::AttributeMapBuilderPtr& amb, c
 		amb->setString(s.first->c_str(), s.second->c_str());
 }
 
+template<typename F>
+void forEachKey(prt::Attributable const* a, F f) {
+	if (a == nullptr)
+		return;
+
+	size_t keyCount = 0;
+	wchar_t const* const* keys = a->getKeys(&keyCount);
+
+	for (size_t k = 0; k < keyCount; k++) {
+		wchar_t const* const key = keys[k];
+		f(a, key);
+	}
+}
+
+void forwardGenericAttributes(HoudiniCallbacks* hc, size_t initialShapeIndex, const prtx::InitialShape& initialShape, const prtx::ShapePtr& shape) {
+	forEachKey(initialShape.getAttributeMap(), [&hc,&shape,&initialShapeIndex,&initialShape](prt::Attributable const* a, wchar_t const* key) {
+		switch (shape->getType(key)) {
+			case prtx::Attributable::PT_STRING: {
+				const auto v = shape->getString(key);
+				hc->attrString(initialShapeIndex, shape->getID(), key, v.c_str());
+				break;
+			}
+			case prtx::Attributable::PT_FLOAT: {
+				const auto v = shape->getFloat(key);
+				hc->attrFloat(initialShapeIndex, shape->getID(), key, v);
+				break;
+			}
+			case prtx::Attributable::PT_BOOL: {
+				const auto v = shape->getBool(key);
+				hc->attrBool(initialShapeIndex, shape->getID(), key, (v == prtx::PRTX_TRUE));
+				break;
+			}
+			default:
+				break;
+		}
+	});
+}
+
 } // namespace
 
 
@@ -244,13 +282,6 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	prtx::NamePreparator::NamespacePtr nsMaterial = namePrep.newNamespace();
 	prtx::EncodePreparatorPtr encPrep = prtx::EncodePreparator::create(true, namePrep, nsMesh, nsMaterial);
 
-	// get attribute names from initial shape
-	const std::vector<std::wstring> isAttrKeys = emitAttrs ? [&initialShape](){
-		size_t keyCount = 0;
-		wchar_t const* const* keys = initialShape.getAttributeMap()->getKeys(&keyCount);
-		return std::vector<std::wstring>(keys, keys+keyCount);
-	}() : std::vector<std::wstring>();
-
 	// generate geometry
 	prtx::ReportsAccumulatorPtr reportsAccumulator{prtx::WriteFirstReportsAccumulator::create()};
 	prtx::ReportingStrategyPtr reportsCollector{prtx::LeafShapeReportingStrategy::create(context, initialShapeIndex, reportsAccumulator)};
@@ -260,29 +291,8 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 		encPrep->add(context.getCache(), shape, initialShape.getAttributeMap(), r);
 
 		// get final values of generic attributes
-		if (emitAttrs) {
-			for (const std::wstring& key: isAttrKeys) {
-				switch (shape->getType(key)) {
-					case prtx::Attributable::PT_STRING: {
-						const auto v = shape->getString(key);
-						cb->attrString(initialShapeIndex, shape->getID(), key.c_str(), v.c_str());
-						break;
-					}
-					case prtx::Attributable::PT_FLOAT: {
-						const auto v = shape->getFloat(key);
-						cb->attrFloat(initialShapeIndex, shape->getID(), key.c_str(), v);
-						break;
-					}
-					case prtx::Attributable::PT_BOOL: {
-						const auto v = shape->getBool(key);
-						cb->attrBool(initialShapeIndex, shape->getID(), key.c_str(), (v == prtx::PRTX_TRUE));
-						break;
-					}
-					default:
-						break;
-				}
-			}
-		}
+		if (emitAttrs)
+			forwardGenericAttributes(cb, initialShapeIndex, initialShape, shape);
 	}
 
 	prtx::EncodePreparator::InstanceVector instances;
