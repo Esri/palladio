@@ -62,8 +62,6 @@ void setVertexNormals(
 	}
 }
 
-constexpr auto UV_IDX_NO_VALUE = uint32_t(-1);
-
 std::mutex mDetailMutex; // guard the houdini detail object
 
 } // namespace
@@ -71,75 +69,12 @@ std::mutex mDetailMutex; // guard the houdini detail object
 
 namespace ModelConversion {
 
-void getUVSet(std::vector<uint32_t>& uvIndicesPerSet,
-              const uint32_t* counts, size_t countsSize,
-              const uint32_t* uvCounts, size_t uvCountsSize,
-              uint32_t uvSet, uint32_t uvSets,
-              const uint32_t* uvIndices, size_t uvIndicesSize)
-{
-	assert(uvSet < uvSets);
-
-	uint32_t uvIdxBase = 0;
-	for (size_t c = 0; c < countsSize; c++) {
-		const uint32_t vtxCnt = counts[c];
-
-		assert(uvSets * c + uvSet < uvCountsSize);
-		const uint32_t uvCnt = uvCounts[uvSets * c + uvSet]; // 0 or vtxCnt
-		assert(uvCnt == 0 || uvCnt == vtxCnt);
-		if (uvCnt == vtxCnt) {
-
-			// skip to desired uv set index range
-			uint32_t uvIdxOff = 0;
-			for (size_t uvi = 0; uvi < uvSet; uvi++)
-				uvIdxOff += uvCounts[c*uvSets + uvi];
-
-			const uint32_t uvIdxPos = uvIdxBase + uvIdxOff;
-			for (size_t vi = 0; vi < uvCnt; vi++) {
-				assert(uvIdxPos + vi < uvIndicesSize);
-				const uint32_t uvIdx = uvIndices[uvIdxPos + vi];
-				uvIndicesPerSet.push_back(uvIdx);
-			}
-		} else
-			uvIndicesPerSet.insert(uvIndicesPerSet.end(), vtxCnt, UV_IDX_NO_VALUE);
-
-		// skip to next face
-		for (size_t u = 0; u < uvSets; u++)
-			uvIdxBase += uvCounts[c*uvSets + u];
-	}
-}
-
-void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker,
-            const uint32_t* counts, size_t countsSize,
-            const uint32_t* uvCounts, size_t uvCountsSize,
-            uint32_t uvSet, uint32_t uvSets,
-            const uint32_t* uvIndices, size_t uvIndicesSize,
-            const double* uvs, size_t uvsSize)
-{
-	std::vector<uint32_t> uvIndicesPerSet;
-	getUVSet(uvIndicesPerSet, counts, countsSize, uvCounts, uvCountsSize, uvSet, uvSets, uvIndices, uvIndicesSize);
-
-	uint32_t vi = 0;
-	for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, vi++) {
-		const uint32_t uvIdx = uvIndicesPerSet[vi];
-		if (uvIdx == UV_IDX_NO_VALUE)
-			continue;
-		assert(uvIdx * 2 + 1 < uvsSize);
-		const auto du = uvs[uvIdx * 2 + 0];
-		const auto dv = uvs[uvIdx * 2 + 1];
-		const auto u = static_cast<fpreal32>(du);
-		const auto v = static_cast<fpreal32>(dv);
-		handle.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
-	}
-}
-
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name,
                            const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize,
-                           const double* uvs, size_t uvsSize,
                            const uint32_t* counts, size_t countsSize,
                            const uint32_t* indices, size_t indicesSize,
-                           const uint32_t* uvCounts, size_t uvCountsSize,
-                           const uint32_t* uvIndices, size_t uvIndicesSize, uint32_t uvSets)
+                           double const* const* uvs, size_t const* uvsSizes, uint32_t uvSets)
 {
 	WA("all");
 
@@ -162,15 +97,27 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 
 	// -- add texture coordinates
 	for (size_t uvSet = 0; uvSet < uvSets; uvSet++) {
-		GA_RWHandleV3 uvh;
-		if (uvSet == 0)
-			uvh.bind(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32)); // adds "uv" vertex attribute
-		else {
-			const std::string n = "uv" + std::to_string(uvSet);
-			uvh.bind(mDetail->addTuple(GA_STORE_REAL32, GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, n.c_str(), 3));
+		if (uvsSizes[uvSet] > 0) {
+			GA_RWHandleV3 uvh;
+			if (uvSet == 0)
+				uvh.bind(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32)); // adds "uv" vertex attribute
+			else {
+				const std::string n = "uv" + std::to_string(uvSet);
+				uvh.bind(mDetail->addTuple(GA_STORE_REAL32, GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, n.c_str(), 3));
+			}
+
+			uint32_t vi = 0;
+			for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, vi++) {
+				assert(uvsSizes[uvSet] > 0);
+				const uint32_t uvIdx = indices[vi];
+				assert(uvIdx * 2 + 1 < uvsSizes[uvSet]);
+				const auto du = uvs[uvSet][uvIdx * 2 + 0];
+				const auto dv = uvs[uvSet][uvIdx * 2 + 1];
+				const auto u = static_cast<fpreal32>(du);
+				const auto v = static_cast<fpreal32>(dv);
+				uvh.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
+			}
 		}
-		ModelConversion::setUVs(uvh, marker, counts, countsSize, uvCounts, uvCountsSize,
-		                        uvSet, uvSets, uvIndices, uvIndicesSize, uvs, uvsSize);
 	}
 
 	// -- optionally create primitive groups
@@ -190,28 +137,25 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<prt::Status>& statuses, UT_AutoInterrupt* autoInterrupt)
 : mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) { }
 
-void ModelConverter::add(const wchar_t* name,
-                         const double* vtx, size_t vtxSize,
-                         const double* nrm, size_t nrmSize,
-                         const double* uvs, size_t uvsSize,
-                         const uint32_t* counts, size_t countsSize,
-                         const uint32_t* indices, size_t indicesSize,
-                         const uint32_t* uvCounts, size_t uvCountsSize,
-                         const uint32_t* uvIndices, size_t uvIndicesSize,
-                         uint32_t uvSets,
-                         const uint32_t* faceRanges, size_t faceRangesSize,
-                         const prt::AttributeMap** materials,
-                         const prt::AttributeMap** reports,
-                         const int32_t* shapeIDs)
+void ModelConverter::add(
+		const wchar_t* name,
+		const double* vtx, size_t vtxSize,
+		const double* nrm, size_t nrmSize,
+		const uint32_t* counts, size_t countsSize,
+		const uint32_t* indices, size_t indicesSize,
+		double const* const* uvs, size_t const* uvsSize, uint32_t uvSets,
+		const uint32_t* faceRanges, size_t faceRangesSize,
+		const prt::AttributeMap** materials,
+		const prt::AttributeMap** reports,
+		const int32_t* shapeIDs)
 {
 	// we need to protect mDetail, it is accessed by multiple generate threads
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
 	const GA_Offset primStartOffset = ModelConversion::createPrimitives(mDetail, mGroupCreation, name,
-	                                                                    vtx, vtxSize, nrm, nrmSize, uvs, uvsSize,
+	                                                                    vtx, vtxSize, nrm, nrmSize,
 	                                                                    counts, countsSize, indices, indicesSize,
-	                                                                    uvCounts, uvCountsSize,
-	                                                                    uvIndices, uvIndicesSize, uvSets);
+	                                                                    uvs, uvsSize, uvSets);
 
 	// -- convert materials/reports into primitive attributes based on face ranges
 	if (DBG) LOG_DBG << "got " << faceRangesSize-1 << " face ranges";

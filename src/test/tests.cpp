@@ -197,17 +197,13 @@ TEST_CASE("serialize basic mesh") {
 
     const prtx::GeometryPtrVector geos = { geo };
 
-    SerializedGeometry sg;
-    serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
     CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
 	CHECK(sg.indices == vtxIndRev); // reverses winding
 
-	CHECK(sg.uvSets == 0);
-
-	const prtx::IndexVector uvCountsExp = { };
-	CHECK(sg.uvCounts == uvCountsExp);
+	CHECK(sg.uvs.size() == 0);
 }
 
 TEST_CASE("serialize mesh with one uv set") {
@@ -232,23 +228,15 @@ TEST_CASE("serialize mesh with one uv set") {
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
 
-    SerializedGeometry sg;
-    serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	CHECK(sg.uvCoords == uvs);
-
-	CHECK(sg.uvSets == 2); // TODO: actually wrong expected value
-
-	const prtx::IndexVector uvCountsExp = { 4, 0 };
-	CHECK(sg.uvCounts == uvCountsExp);
-
-	const prtx::IndexVector uvIdxExp = { 3, 2, 1, 0 };
-	CHECK(sg.uvIndices == uvIdxExp);
+	CHECK(sg.uvs.size() == 2); // TODO: actually wrong expected value
+	CHECK(sg.uvs[0] == uvs);
 }
 
 TEST_CASE("serialize mesh with two uv sets") {
@@ -277,24 +265,19 @@ TEST_CASE("serialize mesh with two uv sets") {
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
 
-    SerializedGeometry sg;
-    serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	const prtx::DoubleVector uvsExp = { 0.0, 0.0,  1.0, 0.0,  1.0, 1.0,  0.0, 1.0,   0.0, 0.0,  0.5, 0.0,  0.5, 0.5,  0.0, 0.5 };
-	CHECK(sg.uvCoords == uvsExp);
+	CHECK(sg.uvs.size() == 2);
 
-	CHECK(sg.uvSets == 2);
-
-	const prtx::IndexVector uvCountsExp = { 4, 4 };
-	CHECK(sg.uvCounts == uvCountsExp);
-
-	const prtx::IndexVector uvIdxExp = { 3, 2, 1, 0,  4, 5, 6, 7 };
-	CHECK(sg.uvIndices == uvIdxExp);
+	const prtx::DoubleVector uvs0Exp = { 0.0, 0.0,  1.0, 0.0,  1.0, 1.0,  0.0, 1.0 };
+	CHECK(sg.uvs[0] == uvs0Exp);
+	const prtx::DoubleVector uvs1Exp = { 0.0, 0.0,  0.5, 0.0,  0.5, 0.5,  0.0, 0.5 };
+	CHECK(sg.uvs[1] == uvs1Exp);
 }
 
 TEST_CASE("serialize mesh with two non-consecutive uv sets") {
@@ -323,24 +306,20 @@ TEST_CASE("serialize mesh with two non-consecutive uv sets") {
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
 
-    SerializedGeometry sg;
-    serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	const prtx::DoubleVector uvsExp = { 0.0, 0.0,  1.0, 0.0,  1.0, 1.0,  0.0, 1.0,   0.0, 0.0,  0.5, 0.0,  0.5, 0.5,  0.0, 0.5 };
-	CHECK(sg.uvCoords == uvsExp);
+	CHECK(sg.uvs.size() == 4); // TODO: wrong!
 
-	CHECK(sg.uvSets == 4); // TODO: wrong!
-
-	const prtx::IndexVector uvCountsExp = { 4, 0, 4, 0 };
-	CHECK(sg.uvCounts == uvCountsExp);
-
-	const prtx::IndexVector uvIdxExp = { 3, 2, 1, 0,  4, 5, 6, 7 };
-	CHECK(sg.uvIndices == uvIdxExp);
+	const prtx::DoubleVector uvs0Exp = { 0.0, 0.0,  1.0, 0.0,  1.0, 1.0,  0.0, 1.0 };
+	CHECK(sg.uvs[0] == uvs0Exp);
+	CHECK(sg.uvs[1] == uvs0Exp); // fallback to uv set 0
+	const prtx::DoubleVector uvs2Exp = { 0.0, 0.0,  0.5, 0.0,  0.5, 0.5,  0.0, 0.5 };
+	CHECK(sg.uvs[2] == uvs2Exp);
 }
 
 TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
@@ -375,8 +354,7 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
 
-    SerializedGeometry sg;
-    serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
     CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
@@ -384,15 +362,9 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0,  4, 1, 0,   4, 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	CHECK(sg.uvCoords == uvs);
+	CHECK(sg.uvs.size() == 2); // TODO
+	CHECK(sg.uvs[0] == uvs);
 
-	CHECK(sg.uvSets == 2); // TODO
-
-	const prtx::IndexVector uvCountsExp = { 4, 0, 0, 0, 5, 0 };
-	CHECK(sg.uvCounts == uvCountsExp);
-
-	const prtx::IndexVector uvIdxExp = { 3, 2, 1, 0,   0, 3, 2, 1, 0 };
-	CHECK(sg.uvIndices == uvIdxExp);
 }
 
 TEST_CASE("serialize two meshes with one uv set") {
@@ -420,8 +392,7 @@ TEST_CASE("serialize two meshes with one uv set") {
 	auto geo = gb.createShared();
 	const prtx::GeometryPtrVector geos = {geo};
 
-	SerializedGeometry sg;
-	serializeGeometry(sg, geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
 
 	const prtx::IndexVector expFaceCnt = {4, 4};
 	CHECK(sg.counts == expFaceCnt);
@@ -433,18 +404,11 @@ TEST_CASE("serialize two meshes with one uv set") {
 	const prtx::IndexVector expVtxIdx = { 3, 2, 1, 0, 7, 6, 5, 4 };
 	CHECK(sg.indices == expVtxIdx);
 
+	CHECK(sg.uvs.size() == 2); // TODO: actually wrong expected value
+
 	const prtx::DoubleVector expUvs = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 	                                    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
-	CHECK(sg.uvCoords == expUvs);
-
-	CHECK(sg.uvSets == 2); // TODO: actually wrong expected value
-
-	const prtx::IndexVector uvCountsExp = { 4, 0, 4, 0 };
-	CHECK(sg.uvCounts == uvCountsExp);
-
-
-	const prtx::IndexVector expUvIdx = { 3, 2, 1, 0,   7, 6, 5, 4 };
-	CHECK(sg.uvIndices == expUvIdx);
+	CHECK(sg.uvs[0] == expUvs);
 }
 
 TEST_CASE("generate two cubes with two uv sets") {
@@ -482,13 +446,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 		const std::vector<uint32_t> idxExp = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20 };
 		CHECK(cr.idx == idxExp);
 
-		const std::vector<uint32_t> uvCntsExp = { 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
-		CHECK(cr.uvCnts == uvCntsExp);
-
-		const std::vector<uint32_t> uvIdxExp = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20 };
-		CHECK(cr.uvIdx == uvIdxExp);
-
-		CHECK(cr.uvSets == 2);
+		CHECK(cr.uvs.size() == 2);
 
 		const std::vector<uint32_t> faceRangesExp = { 0, 6 };
 		CHECK(cr.faceRanges == faceRangesExp);
@@ -505,16 +463,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 		                                       15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20 };
 		CHECK(cr.idx == idxExp);
 
-		const std::vector<uint32_t> uvCntsExp = { 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0,
-		                                          4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
-		CHECK(cr.uvCnts == uvCntsExp);
-
-		const std::vector<uint32_t> uvIdxExp = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23,
-		                                         22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28, 35, 34, 33, 32, 39, 38, 37, 36,
-		                                         43, 42, 41, 40, 47, 46, 45, 44 };
-		CHECK(cr.uvIdx == uvIdxExp);
-
-		CHECK(cr.uvSets == 4);
+		CHECK(cr.uvs.size() == 4);
 
 		const std::vector<uint32_t> faceRangesExp = { 0, 1, 2, 3, 4, 5, 6 };
 		CHECK(cr.faceRanges == faceRangesExp);
