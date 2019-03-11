@@ -298,22 +298,23 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries) 
 
 	// PASS 2: copy
 	uint32_t vertexIndexBase = 0;
-	for (const auto &geo: geometries) {
-		const prtx::MeshPtrVector &meshes = geo->getMeshes();
-		for (const auto &mesh: meshes) {
-			const prtx::DoubleVector &verts = mesh->getVertexCoords();
+	for (const auto& geo: geometries) {
+		const prtx::MeshPtrVector& meshes = geo->getMeshes();
+		for (const auto& mesh: meshes) {
+			const prtx::DoubleVector& verts = mesh->getVertexCoords();
 			sg.coords.insert(sg.coords.end(), verts.begin(), verts.end());
 
-			const prtx::DoubleVector &norms = mesh->getVertexNormalsCoords();
+			const prtx::DoubleVector& norms = mesh->getVertexNormalsCoords();
 			sg.normals.insert(sg.normals.end(), norms.begin(), norms.end());
 
 			const uint32_t numUVSets = mesh->getUVSetsCount();
+			log_wdebug(L"mesh name: %1% (numUVSets %2%)") % mesh->getName() % numUVSets;
 			if (numUVSets > 0) {
-				const prtx::DoubleVector &uvs0 = mesh->getUVCoords(0);
+				const prtx::DoubleVector& uvs0 = mesh->getUVCoords(0);
 				for (uint32_t uvSet = 0; uvSet < sg.uvs.size(); uvSet++) {
-					const prtx::DoubleVector &uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet)
-																		: prtx::DoubleVector();
-					auto &suvs = sg.uvs[uvSet];
+					const prtx::DoubleVector& uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet) : prtx::DoubleVector();
+					log_wdebug(L"uvSet %1%: uvs.size() = %2%") % uvSet % uvs.size();
+					auto& suvs = sg.uvs[uvSet];
 					if (!uvs.empty())
 						suvs.insert(suvs.end(), uvs.begin(), uvs.end());
 					else if (!uvs0.empty()) // fallback to uv set 0
@@ -323,7 +324,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries) 
 
 			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
 			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
-				const uint32_t *vtxIdx = mesh->getFaceVertexIndices(fi);
+				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
 				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
 				sg.counts.push_back(vtxCnt);
 				sg.indices.reserve(sg.indices.size() + vtxCnt);
@@ -331,7 +332,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries) 
 					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt - vi - 1]); // reverse winding
 			}
 
-			vertexIndexBase += (uint32_t) verts.size() / 3u;
+			vertexIndexBase += (uint32_t)verts.size() / 3u;
 		} // for all meshes
 	} // for all geometries
 
