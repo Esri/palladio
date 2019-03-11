@@ -66,6 +66,16 @@ std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	return pw;
 }
 
+std::pair<std::vector<const double*>, std::vector<size_t>> toPtrVec(const std::vector<prtx::DoubleVector>& v) {
+	std::vector<const double*> pv(v.size());
+	std::vector<size_t> ps(v.size());
+	for (size_t i = 0; i < v.size(); i++) {
+		pv[i] = v[i].data();
+		ps[i] = v[i].size();
+	}
+	return std::make_pair(pv, ps);
+}
+
 std::wstring uriToPath(const prtx::TexturePtr& t){
 	return t->getURI()->getPath();
 }
@@ -256,7 +266,79 @@ void forwardGenericAttributes(HoudiniCallbacks* hc, size_t initialShapeIndex, co
 	});
 }
 
+using AttributeMapNOPtrVector = std::vector<const prt::AttributeMap*>;
+
+struct AttributeMapNOPtrVectorOwner {
+	AttributeMapNOPtrVector v;
+	~AttributeMapNOPtrVectorOwner() {
+		for (const auto& m: v) {
+			if (m) m->destroy();
+		}
+	}
+};
+
 } // namespace
+
+
+namespace detail {
+
+SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries) {
+	// PASS 1: scan
+	uint32_t maxNumUVSets = 0;
+	for (const auto &geo: geometries) {
+		const prtx::MeshPtrVector &meshes = geo->getMeshes();
+		for (const auto &mesh: meshes) {
+			// TODO: use opportunity to count/reserve space in containers
+
+			// scan for largest uv set count
+			maxNumUVSets = std::max(maxNumUVSets, mesh->getUVSetsCount());
+		}
+	}
+	detail::SerializedGeometry sg(maxNumUVSets);
+
+	// PASS 2: copy
+	uint32_t vertexIndexBase = 0;
+	for (const auto &geo: geometries) {
+		const prtx::MeshPtrVector &meshes = geo->getMeshes();
+		for (const auto &mesh: meshes) {
+			const prtx::DoubleVector &verts = mesh->getVertexCoords();
+			sg.coords.insert(sg.coords.end(), verts.begin(), verts.end());
+
+			const prtx::DoubleVector &norms = mesh->getVertexNormalsCoords();
+			sg.normals.insert(sg.normals.end(), norms.begin(), norms.end());
+
+			const uint32_t numUVSets = mesh->getUVSetsCount();
+			if (numUVSets > 0) {
+				const prtx::DoubleVector &uvs0 = mesh->getUVCoords(0);
+				for (uint32_t uvSet = 0; uvSet < sg.uvs.size(); uvSet++) {
+					const prtx::DoubleVector &uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet)
+																		: prtx::DoubleVector();
+					auto &suvs = sg.uvs[uvSet];
+					if (!uvs.empty())
+						suvs.insert(suvs.end(), uvs.begin(), uvs.end());
+					else if (!uvs0.empty()) // fallback to uv set 0
+						suvs.insert(suvs.end(), uvs0.begin(), uvs0.end());
+				}
+			}
+
+			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
+			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
+				const uint32_t *vtxIdx = mesh->getFaceVertexIndices(fi);
+				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
+				sg.counts.push_back(vtxCnt);
+				sg.indices.reserve(sg.indices.size() + vtxCnt);
+				for (uint32_t vi = 0; vi < vtxCnt; vi++)
+					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt - vi - 1]); // reverse winding
+			}
+
+			vertexIndexBase += (uint32_t) verts.size() / 3u;
+		} // for all meshes
+	} // for all geometries
+
+	return sg;
+}
+
+} // namespace detail
 
 
 HoudiniEncoder::HoudiniEncoder(const std::wstring& id, const prt::AttributeMap* options, prt::Callbacks* callbacks)
@@ -300,88 +382,6 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 	convertGeometry(initialShape, instances, cb);
 }
 
-void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& geometries) {
-	// PASS 1: scan
-	for (const auto& geo: geometries) {
-		const prtx::MeshPtrVector& meshes = geo->getMeshes();
-		for (const auto& mesh: meshes) {
-			// TODO: use opportunity to count/reserve space in containers
-
-			// scan for largest uv set count
-			sg.uvSets = std::max(sg.uvSets, mesh->getUVSetsCount());
-		}
-	}
-
-	// PASS 2: copy
-	uint32_t vertexIndexBase = 0;
-	uint32_t uvIndexBase = 0;
-	for (const auto& geo: geometries) {
-		const prtx::MeshPtrVector& meshes = geo->getMeshes();
-		for (const auto& mesh: meshes) {
-			const prtx::DoubleVector& verts = mesh->getVertexCoords();
-			sg.coords.insert(sg.coords.end(), verts.begin(), verts.end());
-
-			const prtx::DoubleVector& norms = mesh->getVertexNormalsCoords();
-			sg.normals.insert(sg.normals.end(), norms.begin(), norms.end());
-
-			const uint32_t numUVSets = mesh->getUVSetsCount();
-
-			std::vector<uint32_t> uvSetIndexBases(sg.uvSets, 0u); // first value is always 0
-			const uint32_t uvsBefore = (uint32_t)sg.uvCoords.size();
-			for (uint32_t uvSet = 0; uvSet < numUVSets; uvSet++) {
-
-				if (uvSet > 0)
-					uvSetIndexBases[uvSet] = uvSetIndexBases[uvSet-1] + (uint32_t)mesh->getUVCoords(uvSet-1).size() / 2u;
-
-				const prtx::DoubleVector& uvs = mesh->getUVCoords(uvSet);
-				if (!uvs.empty())
-					sg.uvCoords.insert(sg.uvCoords.end(), uvs.begin(), uvs.end());
-			}
-			const uint32_t uvsDelta = (uint32_t)sg.uvCoords.size() - uvsBefore;
-
-			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
-
-			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
-				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
-				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
-
-				sg.counts.push_back(vtxCnt);
-				sg.indices.reserve(sg.indices.size() + vtxCnt);
-				for (uint32_t vi = 0; vi < vtxCnt; vi++)
-					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt-vi-1]); // reverse winding
-
-				for (uint32_t uvSet = 0; uvSet < sg.uvSets; uvSet++) {
-					const uint32_t uvCount = (uvSet < numUVSets) ? mesh->getFaceUVCount(fi, uvSet) : 0u;
-					if (uvCount == vtxCnt) {
-						const uint32_t* uvIdx = mesh->getFaceUVIndices(fi, uvSet);
-						for (uint32_t vi = 0; vi < uvCount; ++vi)
-							sg.uvIndices.push_back(uvIndexBase + uvSetIndexBases[uvSet] + uvIdx[uvCount - vi - 1u]); // reverse winding
-					}
-					sg.uvCounts.push_back(uvCount);
-				}
-			}
-
-			vertexIndexBase += (uint32_t)verts.size() / 3u;
-			uvIndexBase += uvsDelta / 2u; // TODO: directly add to per uv set index bases
-		}
-	}
-}
-
-namespace {
-
-using AttributeMapNOPtrVector = std::vector<const prt::AttributeMap*>;
-
-struct AttributeMapNOPtrVectorOwner {
-	AttributeMapNOPtrVector v;
-	~AttributeMapNOPtrVectorOwner() {
-		for (const auto& m: v) {
-			if (m) m->destroy();
-		}
-	}
-};
-
-} // namespace
-
 void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
                                      const prtx::EncodePreparator::InstanceVector& instances,
                                      HoudiniCallbacks* cb)
@@ -406,11 +406,12 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 		shapeIDs.push_back(inst.getShapeId());
 	}
 
-	SerializedGeometry sg;
-	serializeGeometry(sg, geometries);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geometries);
 
-	// log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
-	if (DBG) log_debug("encoder #materials = %s") % materials.size();
+	if (DBG) {
+		log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
+		log_debug("encoder #materials = %s") % materials.size();
+	}
 
 	uint32_t faceCount = 0;
 	std::vector<uint32_t> faceRanges;
@@ -454,15 +455,14 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	assert(reportAttrMaps.v.empty() || reportAttrMaps.v.size() == faceRanges.size()-1);
 	assert(shapeIDs.size() == faceRanges.size()-1);
 
+	const std::pair<std::vector<const double*>, std::vector<size_t>> puvs = toPtrVec(sg.uvs);
+
 	cb->add(initialShape.getName(),
 	        sg.coords.data(), sg.coords.size(),
 			sg.normals.data(), sg.normals.size(),
-			sg.uvCoords.data(), sg.uvCoords.size(),
 			sg.counts.data(), sg.counts.size(),
 			sg.indices.data(), sg.indices.size(),
-			sg.uvCounts.data(), sg.uvCounts.size(),
-			sg.uvIndices.data(), sg.uvIndices.size(),
-	        sg.uvSets,
+			puvs.first.data(), puvs.second.data(), sg.uvs.size(),
 			faceRanges.data(), faceRanges.size(),
 	        matAttrMaps.v.empty() ? nullptr : matAttrMaps.v.data(),
 	        reportAttrMaps.v.empty() ? nullptr : reportAttrMaps.v.data(),

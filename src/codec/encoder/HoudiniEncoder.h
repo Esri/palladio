@@ -36,22 +36,23 @@
 
 class HoudiniCallbacks;
 
+namespace detail {
+
 struct SerializedGeometry {
-	prtx::DoubleVector coords;
-	prtx::DoubleVector normals; // uses same indexing as coords
+	prtx::DoubleVector              coords;
+	prtx::DoubleVector              normals; // uses same indexing as coords
+	std::vector<prtx::DoubleVector> uvs;     // uses same indexing as coords per uv set
+	prtx::IndexVector               counts;
+	prtx::IndexVector               indices;
 
-	prtx::IndexVector  counts;
-	prtx::IndexVector  indices;
-
-	uint32_t           uvSets = 0;
-	prtx::DoubleVector uvCoords;
-	prtx::IndexVector  uvCounts; // face 0: uv idx cnt set 0 | face 0: uv idx cnt set 1 | ... | face 0: uv idx cnt set uvSets-1 | face 1: uv idx cnt set 0 | ... | face n-1: ...
-	prtx::IndexVector  uvIndices;
+	SerializedGeometry(uint32_t uvSets) : uvs(uvSets) { }
 };
 
-// made visible for tests
-// TODO: put into namespace or such
-CODEC_EXPORTS_API void serializeGeometry(SerializedGeometry& sg, const prtx::GeometryPtrVector& geometries);
+// visible for tests
+CODEC_EXPORTS_API SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries);
+
+} // namespace detail
+
 
 class HoudiniEncoder : public prtx::GeometryEncoder {
 public:
