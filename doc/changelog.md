@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.4.1 (Mar 11, 2019)
+* Always use UV set 0 as a fallback (mimics CityEngine behavior).
+* Internal cleanup: Simplified UV coordinate transport between PRT and Palladio.
+
 ## v1.4.0 (Feb 27, 2019)
 * Generated material primitive attributes now use the "generic names" instead of the "CGA names" (see PRT reference for file prtx/Material.h for details).
 * Fixed wrong texture paths for assets that originated in another CityEngine project (e.g. ESRI.lib) at RPK creation time.
