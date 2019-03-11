@@ -277,22 +277,63 @@ struct AttributeMapNOPtrVectorOwner {
 	}
 };
 
+// return the highest required uv set (where a valid texture is present)
+uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
+	uint32_t uvSetByPresentTexture = 0;
+
+	const auto& diffuseMaps = mat->getTextureArray(L"diffuseMap");
+	const auto& bumpMap = mat->getTextureArray(L"bumpMap");
+	const auto& specularMap = mat->getTextureArray(L"specularMap");
+	const auto& opacityMap = mat->getTextureArray(L"opacityMap");
+	const auto& normalMap = mat->getTextureArray(L"normalMap");
+
+	// TODO for PRT 2
+	//6	emissivemap
+	//7	occlusionmap
+	//8	roughnessmap
+	//9	metallicmap
+
+	if (diffuseMaps.size() > 0 && diffuseMaps[0]->isValid())
+		uvSetByPresentTexture = 0; // colormap
+
+	if (bumpMap.size() > 0 && bumpMap[0]->isValid())
+		uvSetByPresentTexture = 1; // bumpMap
+
+	if (diffuseMaps.size() > 1 && diffuseMaps[1]->isValid())
+		uvSetByPresentTexture = 2; // dirtmap
+
+	if (specularMap.size() > 0 && specularMap[0]->isValid())
+		uvSetByPresentTexture = 3; // specularMap
+
+	if (opacityMap.size() > 0 && opacityMap[0]->isValid())
+		uvSetByPresentTexture = 4; // opacityMap
+
+	if (normalMap.size() > 0 && normalMap[0]->isValid())
+		uvSetByPresentTexture = 5; // normalMap
+
+	return uvSetByPresentTexture;
+}
+
 } // namespace
 
 
 namespace detail {
 
-SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries) {
+SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& materials) {
 	// PASS 1: scan
 	uint32_t maxNumUVSets = 0;
-	for (const auto &geo: geometries) {
-		const prtx::MeshPtrVector &meshes = geo->getMeshes();
-		for (const auto &mesh: meshes) {
-			// TODO: use opportunity to count/reserve space in containers
-
-			// scan for largest uv set count
-			maxNumUVSets = std::max(maxNumUVSets, mesh->getUVSetsCount());
+	auto matsIt = materials.cbegin();
+	for (const auto& geo: geometries) {
+		const prtx::MeshPtrVector& meshes = geo->getMeshes();
+		const prtx::MaterialPtrVector& mats = *matsIt;
+		auto matIt = mats.cbegin();
+		for (const auto& mesh: meshes) {
+			const prtx::MaterialPtr& mat = *matIt;
+			const uint32_t requiredUVSetsByMaterial = scanValidTextures(mat);
+			maxNumUVSets = std::max(maxNumUVSets, std::max(mesh->getUVSetsCount(), requiredUVSetsByMaterial+1));
+			++matIt;
 		}
+		++matsIt;
 	}
 	detail::SerializedGeometry sg(maxNumUVSets);
 
@@ -407,7 +448,7 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 		shapeIDs.push_back(inst.getShapeId());
 	}
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geometries);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geometries, materials);
 
 	if (DBG) {
 		log_debug("resolvemap: %s") % prtx::PRTUtils::objectToXML(initialShape.getResolveMap());
