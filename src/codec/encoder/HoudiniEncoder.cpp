@@ -277,41 +277,35 @@ struct AttributeMapNOPtrVectorOwner {
 	}
 };
 
+struct TextureUVMapping {
+	std::wstring key;
+	uint8_t      index;
+	uint8_t      uvSet;
+};
+
+const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = {
+		{ L"diffuseMap",  0, 0 }, // colormap
+		{ L"bumpMap",     0, 1 }, // bumpmap
+		{ L"diffuseMap",  1, 2 }, // dirtmap
+		{ L"specularMap", 0, 3 }, // specularmap
+		{ L"opacityMap",  0, 4 }, // opacitymap
+		{ L"normalMap",   0, 5 }  // normalmap
+		// TODO for PRT 2
+		//6	emissivemap
+		//7	occlusionmap
+		//8	roughnessmap
+		//9	metallicmap
+};
+
 // return the highest required uv set (where a valid texture is present)
-uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
-	uint32_t uvSetByPresentTexture = 0;
-
-	const auto& diffuseMaps = mat->getTextureArray(L"diffuseMap");
-	const auto& bumpMap = mat->getTextureArray(L"bumpMap");
-	const auto& specularMap = mat->getTextureArray(L"specularMap");
-	const auto& opacityMap = mat->getTextureArray(L"opacityMap");
-	const auto& normalMap = mat->getTextureArray(L"normalMap");
-
-	// TODO for PRT 2
-	//6	emissivemap
-	//7	occlusionmap
-	//8	roughnessmap
-	//9	metallicmap
-
-	if (diffuseMaps.size() > 0 && diffuseMaps[0]->isValid())
-		uvSetByPresentTexture = 0; // colormap
-
-	if (bumpMap.size() > 0 && bumpMap[0]->isValid())
-		uvSetByPresentTexture = 1; // bumpMap
-
-	if (diffuseMaps.size() > 1 && diffuseMaps[1]->isValid())
-		uvSetByPresentTexture = 2; // dirtmap
-
-	if (specularMap.size() > 0 && specularMap[0]->isValid())
-		uvSetByPresentTexture = 3; // specularMap
-
-	if (opacityMap.size() > 0 && opacityMap[0]->isValid())
-		uvSetByPresentTexture = 4; // opacityMap
-
-	if (normalMap.size() > 0 && normalMap[0]->isValid())
-		uvSetByPresentTexture = 5; // normalMap
-
-	return uvSetByPresentTexture;
+uint8_t scanValidTextures(const prtx::MaterialPtr& mat) {
+	uint8_t highestUVSet = 0;
+	for (const auto& t: TEXTURE_UV_MAPPINGS) {
+		const auto& ta = mat->getTextureArray(t.key);
+		if (ta.size() > t.index && ta[t.index]->isValid())
+			highestUVSet = std::max(highestUVSet, t.uvSet);
+	}
+	return highestUVSet;
 }
 
 } // namespace
