@@ -49,7 +49,7 @@ struct SerializedGeometry {
 };
 
 // visible for tests
-CODEC_EXPORTS_API SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries);
+CODEC_EXPORTS_API SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries, const std::vector<prtx::MaterialPtrVector>& materials);
 
 } // namespace detail
 

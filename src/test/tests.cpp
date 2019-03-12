@@ -156,25 +156,6 @@ TEST_CASE("separate fully qualified name into style and name", "[NameConversion]
 
 }
 
-TEST_CASE("deserialize uv set", "[ModelConversion]") {
-	const prtx::IndexVector faceCnt  = { 4 };
-	const prtx::IndexVector uvCounts = { 4, 4 };
-	const prtx::IndexVector uvIdx    = { 3, 2, 1, 0,  4, 5, 6, 7 };
-	std::vector<uint32_t> uvIndicesPerSet;
-
-	SECTION("test uv set 0") {
-		ModelConversion::getUVSet(uvIndicesPerSet, faceCnt.data(), faceCnt.size(), uvCounts.data(), uvCounts.size(), 0, 2, uvIdx.data(), uvIdx.size());
-		const prtx::IndexVector uvIndicesPerSetExp = { 3, 2, 1, 0 };
-		CHECK(uvIndicesPerSet == uvIndicesPerSetExp);
-	}
-
-	SECTION("test uv set 1") {
-		ModelConversion::getUVSet(uvIndicesPerSet, faceCnt.data(), faceCnt.size(), uvCounts.data(), uvCounts.size(), 1, 2, uvIdx.data(), uvIdx.size());
-		const prtx::IndexVector uvIndicesPerSetExp = { 4, 5, 6, 7 };
-		CHECK(uvIndicesPerSet == uvIndicesPerSetExp);
-	}
-}
-
 
 // -- encoder test cases
 
@@ -196,8 +177,9 @@ TEST_CASE("serialize basic mesh") {
 	CHECK(geo->getMeshes().front()->getUVSetsCount() == 0);
 
     const prtx::GeometryPtrVector geos = { geo };
+    const std::vector<prtx::MaterialPtrVector> mats = { geo->getMeshes().front()->getMaterials() };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
     CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
@@ -227,8 +209,9 @@ TEST_CASE("serialize mesh with one uv set") {
     gb.addMesh(m);
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
+    const std::vector<prtx::MaterialPtrVector> mats = { m->getMaterials() };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
@@ -264,8 +247,9 @@ TEST_CASE("serialize mesh with two uv sets") {
     gb.addMesh(m);
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
+    const std::vector<prtx::MaterialPtrVector> mats = { m->getMaterials() };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
@@ -305,8 +289,9 @@ TEST_CASE("serialize mesh with two non-consecutive uv sets") {
     gb.addMesh(m);
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
+    const std::vector<prtx::MaterialPtrVector> mats = { m->getMaterials() };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
     CHECK(sg.counts == faceCnt);
     CHECK(sg.coords == vtx);
@@ -353,8 +338,9 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
     gb.addMesh(m);
     auto geo = gb.createShared();
     const prtx::GeometryPtrVector geos = { geo };
+    const std::vector<prtx::MaterialPtrVector> mats = { m->getMaterials() };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
     CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
@@ -391,8 +377,9 @@ TEST_CASE("serialize two meshes with one uv set") {
 	gb.addMesh(m2);
 	auto geo = gb.createShared();
 	const prtx::GeometryPtrVector geos = {geo};
+    const std::vector<prtx::MaterialPtrVector> mats = { { geo->getMeshes()[0]->getMaterials().front(), geo->getMeshes()[1]->getMaterials().front() } };
 
-	const detail::SerializedGeometry sg = detail::serializeGeometry(geos);
+	const detail::SerializedGeometry sg = detail::serializeGeometry(geos, mats);
 
 	const prtx::IndexVector expFaceCnt = {4, 4};
 	CHECK(sg.counts == expFaceCnt);
