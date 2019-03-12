@@ -280,7 +280,7 @@ struct AttributeMapNOPtrVectorOwner {
 struct TextureUVMapping {
 	std::wstring key;
 	uint8_t      index;
-	uint8_t      uvSet;
+	int8_t       uvSet;
 };
 
 const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = {
@@ -298,14 +298,17 @@ const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = {
 };
 
 // return the highest required uv set (where a valid texture is present)
-uint8_t scanValidTextures(const prtx::MaterialPtr& mat) {
-	uint8_t highestUVSet = 0;
+uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
+	int8_t highestUVSet = -1;
 	for (const auto& t: TEXTURE_UV_MAPPINGS) {
 		const auto& ta = mat->getTextureArray(t.key);
 		if (ta.size() > t.index && ta[t.index]->isValid())
 			highestUVSet = std::max(highestUVSet, t.uvSet);
 	}
-	return highestUVSet;
+	if (highestUVSet < 0)
+		return 0;
+	else
+		return highestUVSet+1;
 }
 
 } // namespace
@@ -324,7 +327,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, 
 		for (const auto& mesh: meshes) {
 			const prtx::MaterialPtr& mat = *matIt;
 			const uint32_t requiredUVSetsByMaterial = scanValidTextures(mat);
-			maxNumUVSets = std::max(maxNumUVSets, std::max(mesh->getUVSetsCount(), requiredUVSetsByMaterial+1));
+			maxNumUVSets = std::max(maxNumUVSets, std::max(mesh->getUVSetsCount(), requiredUVSetsByMaterial));
 			++matIt;
 		}
 		++matsIt;
