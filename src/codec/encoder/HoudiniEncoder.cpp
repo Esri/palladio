@@ -137,12 +137,12 @@ void convertMaterialToAttributeMap(
 		const prtx::WStringVector& keys,
 		const prt::ResolveMap* rm
 ) {
-//	log_wdebug(L"-- converting material: %1%") % prtxAttr.name();
+	if (DBG) log_wdebug(L"-- converting material: %1%") % prtxAttr.name();
 	for(const auto& key : keys) {
 		if (MATERIAL_ATTRIBUTE_BLACKLIST.count(key) > 0)
 			continue;
 
-//		log_wdebug(L"   key: %1%") % key;
+		if (DBG) log_wdebug(L"   key: %1%") % key;
 
 		switch(prtxAttr.getType(key)) {
 			case prt::Attributable::PT_BOOL:
