@@ -17,11 +17,17 @@ import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
 @Field final String SOURCE       = "palladio.git/src"
 @Field final String BUILD_TARGET = 'package'
 
-@Field final List CONFIGS = [
+@Field final List CONFIGS_HOUDINI_165 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC48, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '16.5' ],
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC140, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '16.5' ],
+]
+
+@Field final List CONFIGS_HOUDINI_170 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC63, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.0' ],
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC141, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.0' ],
+]
+
+@Field final List CONFIGS_HOUDINI_175 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC63, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.5' ],
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC141, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '17.5' ],
 ]
@@ -50,7 +56,12 @@ Map getTasks(String branchName = null) {
 // -- TASK GENERATORS
 
 Map taskGenPalladio() {
-	return cepl.generateTasks('palladio', this.&taskBuildPalladio, CONFIGS)
+    Map tasks = [:]
+    // FIXME: this is a workaround to get unique task names
+	tasks << cepl.generateTasks('pld-hdn16.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_165)
+	tasks << cepl.generateTasks('pld-hdn17.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_170)
+	tasks << cepl.generateTasks('pld-hdn17.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_175)
+	return tasks;
 }
 
 
