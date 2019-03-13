@@ -15,8 +15,18 @@ string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
 list(GET PLD_HDN_VER 0 PLD_HDN_VER_MAJ)
 list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 
+# Houdini 17.5
+if (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+	message(STATUS "Asking Conan for Houdini 17.5...")
+	set(PLD_CONANFILE "conanfile-h175.py")
+	if(PLD_WINDOWS)
+		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
+	elseif(PLD_LINUX)
+		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
+	endif()
+
 # Houdini 17.0
-if (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 17.0...")
 	set(PLD_CONANFILE "conanfile-h17.py")
 	if(PLD_WINDOWS)
@@ -24,10 +34,9 @@ if (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	elseif(PLD_LINUX)
 		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
 	endif()
-endif()
 
 # Houdini 16.5
-if (${PLD_HDN_VER_MAJ} STREQUAL "16" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "16" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 16.5...")
 	set(PLD_CONANFILE "conanfile-h16.py")
 	if(PLD_WINDOWS)
