@@ -23,13 +23,23 @@ bool isEmbedded(const PLD_BOOST_NS::filesystem::path& p) {
 	return startsWithAnyOf(p.string(), EMBEDDED_SCHEMAS);
 }
 
+UT_StringHolder getFSReaderFilename(const FS_Reader& fsr) {
+#if HOUDINI_VERSION_MAJOR > 16
+	return fsr.getFilename();
+#else
+	UT_String fsrFileName;
+	fsr.getFilename(fsrFileName);
+	return UT_StringHolder(fsrFileName);
+#endif
+}
+
 std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS::filesystem::path& p) {
 	auto actualPath = p;
 	if (isEmbedded(p)) {
 		FS_Reader fsr(p.c_str());
 		if (!fsr.isGood())
 			return INVALID_TIMESTAMP;
-		actualPath = fsr.getFilename().toStdString();
+		actualPath = getFSReaderFilename(fsr).toStdString();
 	}
 	return std::chrono::system_clock::from_time_t(PLD_BOOST_NS::filesystem::last_write_time(actualPath));
 }
@@ -53,7 +63,7 @@ ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
 
 	FS_Reader fsr(p.c_str()); // is able to resolve opdef/oplib URIs
-	UT_StringHolder container = fsr.getFilename();
+	UT_StringHolder container = getFSReaderFilename(fsr);
 	LOG_DBG << "resource container: " << container;
 
 	auto resName = p.leaf().string();
@@ -108,7 +118,7 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 
 	if (cs == CacheStatus::MISS) {
 		ScopedPath extractedPath; // if set, will resolve the extracted RPK from HDA
-		const auto actualRPK = [&extractedPath](const auto& p) {
+		const auto actualRPK = [&extractedPath](const PLD_BOOST_NS::filesystem::path& p) {
 			if (isEmbedded(p)) {
 				extractedPath = resolveFromHDA(p);
 				return *extractedPath;
