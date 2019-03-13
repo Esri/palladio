@@ -36,7 +36,7 @@ UT_StringHolder getFSReaderFilename(const FS_Reader& fsr) {
 std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS::filesystem::path& p) {
 	auto actualPath = p;
 	if (isEmbedded(p)) {
-		FS_Reader fsr(p.c_str());
+		FS_Reader fsr(p.string().c_str());
 		if (!fsr.isGood())
 			return INVALID_TIMESTAMP;
 		actualPath = getFSReaderFilename(fsr).toStdString();
@@ -62,7 +62,7 @@ using ScopedPath = std::unique_ptr<PLD_BOOST_NS::filesystem::path,PathRemover>;
 ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
 
-	FS_Reader fsr(p.c_str()); // is able to resolve opdef/oplib URIs
+	FS_Reader fsr(p.string().c_str()); // is able to resolve opdef/oplib URIs
 	UT_StringHolder container = getFSReaderFilename(fsr);
 	LOG_DBG << "resource container: " << container;
 
