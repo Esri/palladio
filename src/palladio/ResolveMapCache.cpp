@@ -74,7 +74,7 @@ ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 		UT_WorkBuffer wb;
 		fsr.getStream()->getAll(wb);
 
-		std::ofstream out(extractedResource->string());
+		std::ofstream out(extractedResource->string(), std::ofstream::binary);
 		out.write(wb.buffer(), wb.length());
 		out.close();
 
