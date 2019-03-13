@@ -24,6 +24,7 @@
 #include "OP/OP_Network.h"
 
 #include <thread>
+#include <mutex>
 
 
 namespace {
@@ -195,8 +196,14 @@ PRTContext::~PRTContext() {
     prt::removeLogHandler(mLogHandler.get());
 }
 
+namespace {
+	std::mutex mResolveMapCacheMutex;
+}
+
 const ResolveMapUPtr& PRTContext::getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk) {
-	auto lookupResult = mResolveMapCache->get(rpk);
+	std::lock_guard<std::mutex> lock(mResolveMapCacheMutex);
+
+	auto lookupResult = mResolveMapCache->get(rpk.string());
 	if (lookupResult.second == ResolveMapCache::CacheStatus::MISS) {
 		mPRTCache->flushAll();
 		scheduleRecook(rpk);

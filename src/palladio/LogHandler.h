@@ -110,7 +110,7 @@ using _LOG_ERR = LT<prt::LOG_ERROR>;
 using _LOG_FTL = LT<prt::LOG_FATAL>;
 
 // convenience shortcuts in global namespace
-#define LOG_DBG _LOG_DBG()
+#define LOG_DBG _LOG_DBG() << __FUNCTION__ << ": "
 #define LOG_INF _LOG_INF()
 #define LOG_WRN _LOG_WRN()
 #define LOG_ERR _LOG_ERR()

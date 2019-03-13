@@ -82,3 +82,11 @@ inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars
 		s[pos++] = L'_';
 	}
 }
+
+inline bool startsWithAnyOf(const std::string& s, const std::vector<std::string>& sv) {
+	for (const auto& v: sv) {
+		if (s.find(v) == 0)
+			return true;
+	}
+	return false;
+}

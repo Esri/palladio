@@ -77,6 +77,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CONAN_HOUDINI_ROOT}/toolkit/cmake")
 find_package(Houdini REQUIRED)
 
 function(pld_add_dependency_houdini TGT)
+	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
 	if(${Houdini_VERSION_MAJOR} STREQUAL "17")
 		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
 		if(PLD_WINDOWS)
