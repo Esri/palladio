@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.5.0-beta.1 (Mar 14, 2019)
+* Added support for Rule Packages (RPK) embedded in Houdini Digital Assets (HDA)
+* Added support for Houdini 17.5
+
 ## v1.4.1 (Mar 11, 2019)
 * Always use UV set 0 as a fallback (mimics CityEngine behavior).
 * Internal cleanup: Simplified UV coordinate transport between PRT and Palladio.
