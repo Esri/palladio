@@ -311,6 +311,8 @@ uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
 		return highestUVSet+1;
 }
 
+const prtx::DoubleVector EMPTY_UVS;
+
 } // namespace
 
 
@@ -350,13 +352,11 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, 
 			if (numUVSets > 0) {
 				const prtx::DoubleVector& uvs0 = mesh->getUVCoords(0);
 				for (uint32_t uvSet = 0; uvSet < sg.uvs.size(); uvSet++) {
-					const prtx::DoubleVector& uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet) : prtx::DoubleVector();
+					const prtx::DoubleVector& uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet) : EMPTY_UVS;
 					log_wdebug(L"uvSet %1%: uvs.size() = %2%") % uvSet % uvs.size();
-					auto& suvs = sg.uvs[uvSet];
-					if (!uvs.empty())
-						suvs.insert(suvs.end(), uvs.begin(), uvs.end());
-					else if (!uvs0.empty()) // fallback to uv set 0
-						suvs.insert(suvs.end(), uvs0.begin(), uvs0.end());
+					const auto& src = uvs.empty() ? uvs0 : uvs;
+					auto& tgt = sg.uvs[uvSet];
+					tgt.insert(tgt.end(), src.begin(), src.end());
 				}
 			}
 
