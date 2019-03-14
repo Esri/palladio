@@ -108,14 +108,18 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 
 			uint32_t vi = 0;
 			for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, vi++) {
-				assert(uvsSizes[uvSet] > 0);
+				assert(vi < indicesSize);
 				const uint32_t uvIdx = indices[vi];
-				assert(uvIdx * 2 + 1 < uvsSizes[uvSet]);
-				const auto du = uvs[uvSet][uvIdx * 2 + 0];
-				const auto dv = uvs[uvSet][uvIdx * 2 + 1];
-				const auto u = static_cast<fpreal32>(du);
-				const auto v = static_cast<fpreal32>(dv);
-				uvh.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
+				const size_t uvsSize = uvsSizes[uvSet];
+				assert(uvsSize > 0);
+				if (uvIdx*2 < uvsSize) { // TODO: this is a workaround to prevent crashes/illegal UVs, need to fix root cause
+					assert(uvIdx * 2 + 1 < uvsSize);
+					const auto du = uvs[uvSet][uvIdx * 2 + 0];
+					const auto dv = uvs[uvSet][uvIdx * 2 + 1];
+					const auto u = static_cast<fpreal32>(du);
+					const auto v = static_cast<fpreal32>(dv);
+					uvh.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
+				}
 			}
 		}
 	}
