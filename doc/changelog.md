@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.5.0-beta.2 (Mar 19, 2019)
+* Fixed crash in pldAssign node if no RPK is set.
+
 ## v1.5.0-beta.1 (Mar 14, 2019)
 * Added support for Rule Packages (RPK) embedded in Houdini Digital Assets (HDA)
 * Added support for Houdini 17.5
