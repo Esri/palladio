@@ -41,7 +41,12 @@ std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS
 			return INVALID_TIMESTAMP;
 		actualPath = getFSReaderFilename(fsr).toStdString();
 	}
-	return std::chrono::system_clock::from_time_t(PLD_BOOST_NS::filesystem::last_write_time(actualPath));
+	const bool pathExists = PLD_BOOST_NS::filesystem::exists(actualPath);
+	const bool isRegularFile = PLD_BOOST_NS::filesystem::is_regular_file(actualPath);
+	if (!actualPath.empty() && pathExists && isRegularFile)
+		return std::chrono::system_clock::from_time_t(PLD_BOOST_NS::filesystem::last_write_time(actualPath));
+	else
+		return INVALID_TIMESTAMP;
 }
 
 ResolveMapCache::KeyType createCacheKey(const PLD_BOOST_NS::filesystem::path& rpk) {
