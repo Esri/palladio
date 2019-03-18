@@ -25,6 +25,7 @@
 
 #include "prt/AttributeMap.h"
 #include "prtx/Geometry.h"
+#include "prtx/Mesh.h"
 
 #include "../palladio/BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
@@ -47,7 +48,7 @@ int main( int argc, char* argv[] ) {
 	assert(!prtCtx);
 
 	const std::vector<PLD_BOOST_NS::filesystem::path> addExtDirs = {
-		"../lib", // adapt to default prt dir layout (core is in bin subdir)
+		//"../lib", // adapt to default prt dir layout (core is in bin subdir)
 		HOUDINI_CODEC_PATH // set to absolute path to houdini encoder lib via cmake
 	};
 
@@ -160,10 +161,10 @@ TEST_CASE("separate fully qualified name into style and name", "[NameConversion]
 // -- encoder test cases
 
 TEST_CASE("serialize basic mesh") {
-	const prtx::IndexVector  faceCnt   = { 4 };
+	const std::vector<uint32_t>  faceCnt   = { 4 };
 	const prtx::DoubleVector vtx       = { 0.0, 0.0, 0.0,  1.0, 0.0, 0.0,  1.0, 0.0, 1.0,  0.0, 0.0, 1.0 };
-	const prtx::IndexVector  vtxInd    = { 0, 1, 2, 3 };
-	const prtx::IndexVector  vtxIndRev = [&vtxInd]() { auto c = vtxInd; std::reverse_copy(vtxInd.begin(), vtxInd.end(), c.begin()); return c; }();
+	const std::vector<uint32_t> vtxInd = { 0, 1, 2, 3 };
+	const std::vector<uint32_t> vtxIndRev = [&vtxInd]() { auto c = vtxInd; std::reverse_copy(vtxInd.begin(), vtxInd.end(), c.begin()); return c; }();
 
     prtx::MeshBuilder mb;
     mb.addVertexCoords(vtx);
@@ -203,7 +204,11 @@ TEST_CASE("serialize mesh with one uv set") {
 	mb.setFaceUVIndices(faceIdx, 0, uvIdx);
 	const auto m = mb.createShared();
 
-	CHECK(m->getUVSetsCount() == 2); // TODO: correct would be 1!!!
+#if PRT_VERSION_MAJOR < 2
+	CHECK(m->getUVSetsCount() == 2); // bug in 1.x
+#else
+	CHECK(m->getUVSetsCount() == 1);
+#endif
 
     prtx::GeometryBuilder gb;
     gb.addMesh(m);
@@ -218,7 +223,11 @@ TEST_CASE("serialize mesh with one uv set") {
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	CHECK(sg.uvs.size() == 2); // TODO: actually wrong expected value
+#if PRT_VERSION_MAJOR < 2
+	CHECK(sg.uvs.size() == 2); // bug in 1.x
+#else
+	CHECK(sg.uvs.size() == 1);
+#endif
 	CHECK(sg.uvs[0] == uvs);
 }
 
@@ -283,7 +292,11 @@ TEST_CASE("serialize mesh with two non-consecutive uv sets") {
 	mb.setFaceUVIndices(faceIdx, 2, uvIdx2);
 	const auto m = mb.createShared();
 
-	CHECK(m->getUVSetsCount() == 4); // TODO: this is wrong!
+#if PRT_VERSION_MAJOR < 2
+	CHECK(m->getUVSetsCount() == 4); // bug in 1.x
+#else
+	CHECK(m->getUVSetsCount() == 3);
+#endif
 
     prtx::GeometryBuilder gb;
     gb.addMesh(m);
@@ -298,7 +311,11 @@ TEST_CASE("serialize mesh with two non-consecutive uv sets") {
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	CHECK(sg.uvs.size() == 4); // TODO: wrong!
+#if PRT_VERSION_MAJOR < 2
+	CHECK(sg.uvs.size() == 4); // bug in 1.x
+#else
+	CHECK(sg.uvs.size() == 3);
+#endif
 
 	const prtx::DoubleVector uvs0Exp = { 0.0, 0.0,  1.0, 0.0,  1.0, 1.0,  0.0, 1.0 };
 	CHECK(sg.uvs[0] == uvs0Exp);
@@ -332,7 +349,11 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
 
 	const auto m = mb.createShared();
 
-	CHECK(m->getUVSetsCount() == 2); // TODO
+#if PRT_VERSION_MAJOR < 2
+	CHECK(m->getUVSetsCount() == 2); // bug in 1.x
+#else
+	CHECK(m->getUVSetsCount() == 1);
+#endif
 
     prtx::GeometryBuilder gb;
     gb.addMesh(m);
@@ -348,7 +369,11 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
 	const prtx::IndexVector vtxIdxExp = { 3, 2, 1, 0,  4, 1, 0,   4, 3, 2, 1, 0 };
 	CHECK(sg.indices == vtxIdxExp);
 
-	CHECK(sg.uvs.size() == 2); // TODO
+#if PRT_VERSION_MAJOR < 2
+	CHECK(sg.uvs.size() == 2); // bug in 1.x
+#else
+	CHECK(sg.uvs.size() == 1);
+#endif
 	CHECK(sg.uvs[0] == uvs);
 
 }
@@ -369,8 +394,13 @@ TEST_CASE("serialize two meshes with one uv set") {
 	const auto m1 = mb.createShared();
 	const auto m2 = mb.createShared();
 
-	CHECK(m1->getUVSetsCount() == 2); // TODO
-	CHECK(m2->getUVSetsCount() == 2); // TODO
+#if PRT_VERSION_MAJOR < 2
+	CHECK(m1->getUVSetsCount() == 2); // bug in 1.x
+	CHECK(m2->getUVSetsCount() == 2);
+#else
+	CHECK(m1->getUVSetsCount() == 1);
+	CHECK(m2->getUVSetsCount() == 1);
+#endif
 
 	prtx::GeometryBuilder gb;
 	gb.addMesh(m1);
@@ -391,7 +421,11 @@ TEST_CASE("serialize two meshes with one uv set") {
 	const prtx::IndexVector expVtxIdx = { 3, 2, 1, 0, 7, 6, 5, 4 };
 	CHECK(sg.indices == expVtxIdx);
 
-	CHECK(sg.uvs.size() == 2); // TODO: actually wrong expected value
+#if PRT_VERSION_MAJOR < 2
+	CHECK(sg.uvs.size() == 2); // bug in 1.x
+#else
+	CHECK(sg.uvs.size() == 1);
+#endif
 
 	const prtx::DoubleVector expUvs = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 	                                    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
@@ -433,7 +467,11 @@ TEST_CASE("generate two cubes with two uv sets") {
 		const std::vector<uint32_t> idxExp = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20 };
 		CHECK(cr.idx == idxExp);
 
-		CHECK(cr.uvs.size() == 2);
+#if PRT_VERSION_MAJOR < 2
+		CHECK(cr.uvs.size() == 2); // bug in 1.x
+#else
+		CHECK(cr.uvs.size() == 1);
+#endif
 
 		const std::vector<uint32_t> faceRangesExp = { 0, 6 };
 		CHECK(cr.faceRanges == faceRangesExp);
@@ -450,7 +488,11 @@ TEST_CASE("generate two cubes with two uv sets") {
 		                                       15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20 };
 		CHECK(cr.idx == idxExp);
 
-		CHECK(cr.uvs.size() == 4);
+#if PRT_VERSION_MAJOR < 2
+		CHECK(cr.uvs.size() == 4); // bug in 1.x
+#else
+		CHECK(cr.uvs.size() == 3);
+#endif
 
 		const std::vector<uint32_t> faceRangesExp = { 0, 1, 2, 3, 4, 5, 6 };
 		CHECK(cr.faceRanges == faceRangesExp);
