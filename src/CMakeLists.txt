@@ -35,8 +35,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
 ### versioning
 
 set(PLD_VERSION_MAJOR 1)
-set(PLD_VERSION_MINOR 5)
-set(PLD_VERSION_PATCH 0-beta.2)
+set(PLD_VERSION_MINOR 6)
+set(PLD_VERSION_PATCH 0)
 if(NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif()
