@@ -1,4 +1,6 @@
+/src
 /build
+/install
 /.idea
-/src/.idea
-/src/Pipfile.lock
+/_site
+/Gemfile.lock
