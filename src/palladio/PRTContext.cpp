@@ -37,9 +37,6 @@ constexpr const wchar_t*      PLD_LOG_PREFIX          = L"pld";
 constexpr const char*         PLD_TMP_PREFIX          = "palladio_";
 
 constexpr const char*         PRT_LIB_SUBDIR          = "prtlib";
-constexpr const char*         FILE_FLEXNET_LIB        = "flexnet_prt";
-
-constexpr const char*         PRT_LIC_ENV_VAR         = "CITYENGINE_LICENSE_SERVER";
 
 constexpr const prt::LogLevel PRT_LOG_LEVEL_DEFAULT   = prt::LOG_ERROR;
 constexpr const char*         PRT_LOG_LEVEL_ENV_VAR   = "CITYENGINE_LOG_LEVEL";
@@ -47,6 +44,10 @@ constexpr const char*         PRT_LOG_LEVEL_STRINGS[] = { "trace", "debug", "inf
 constexpr const size_t        PRT_LOG_LEVEL_STRINGS_N = sizeof(PRT_LOG_LEVEL_STRINGS)/sizeof(PRT_LOG_LEVEL_STRINGS[0]);
 
 #if PRT_VERSION_MAJOR < 2
+
+constexpr const char*         FILE_FLEXNET_LIB        = "flexnet_prt";
+constexpr const char*         PRT_LIC_ENV_VAR         = "CITYENGINE_LICENSE_SERVER";
+
 class License {
 private:
     prt::FlexLicParams flexLicParams;
@@ -80,7 +81,8 @@ public:
 		return &flexLicParams;
 	}
 };
-#endif
+
+#endif // PRT_VERSION_MAJOR < 2
 
 // TODO: move to LogHandler
 prt::LogLevel getLogLevel() {
