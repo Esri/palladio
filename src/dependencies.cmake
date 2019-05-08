@@ -19,31 +19,16 @@ list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 if (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 17.5...")
 	set(PLD_CONANFILE "conanfile-h175.py")
-	if(PLD_WINDOWS)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
-	elseif(PLD_LINUX)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
-	endif()
 
 # Houdini 17.0
 elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 17.0...")
 	set(PLD_CONANFILE "conanfile-h17.py")
-	if(PLD_WINDOWS)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
-	elseif(PLD_LINUX)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
-	endif()
 
 # Houdini 16.5
 elseif (${PLD_HDN_VER_MAJ} STREQUAL "16" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 16.5...")
 	set(PLD_CONANFILE "conanfile-h16.py")
-	if(PLD_WINDOWS)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v140")
-	elseif(PLD_LINUX)
-		set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc48")
-	endif()
 endif()
 
 # TODO: add support to control micro version of houdini via conan env
@@ -54,8 +39,6 @@ endif()
 if(PLD_CONAN_CESDK_DIR)
 	# make conan ignore cesdk package, we'll set its path manually
 	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
-	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
-	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
 endif()
 
 # TODO: allow actual specification of CE SDK version via conan env
@@ -63,20 +46,34 @@ endif()
 
 ### run conan
 
+if(PLD_WINDOWS)
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
+elseif(PLD_LINUX)
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
+endif()
+
 conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
 
 
 ### PRT dependency
 
+if(PLD_CONAN_CESDK_DIR)
+	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
+	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
+else()
+	message("CONAN_CESDK_ROOT = ${CONAN_CESDK_ROOT}")
+	list(APPEND CMAKE_PREFIX_PATH "${CONAN_CESDK_ROOT}/esri_ce_sdk/cmake")
+endif()
+
 find_package(prt CONFIG REQUIRED)
+
+install(FILES ${PRT_LIBRARIES} DESTINATION .)
+install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
 
 function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
 	target_include_directories(${TGT} PRIVATE ${PRT_INCLUDE_PATH})
 	target_link_libraries(${TGT} PRIVATE ${PRT_LINK_LIBRARIES})
-
-	install(FILES ${PRT_LIBRARIES} DESTINATION .)
-	install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
 endfunction()
 
 

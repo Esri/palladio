@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Esri R&D Zurich and VRBN
+ * Copyright 2014-2019 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "prtx/Exception.h"
 #include "prtx/Log.h"
 #include "prtx/Geometry.h"
+#include "prtx/Mesh.h"
 #include "prtx/Material.h"
 #include "prtx/Shape.h"
 #include "prtx/ShapeIterator.h"
@@ -129,13 +130,45 @@ const std::set<std::wstring> MATERIAL_ATTRIBUTE_BLACKLIST = {
 	L"normalmap",
 	L"opacitymap",
 	L"specularmap"
+
+#if PRT_VERSION_MAJOR > 1
+	// also blacklist CGA-style PBR attrs from CE 2019.0, PRT 2.x
+	,
+	L"opacitymap.mode",
+	L"emissive.b",
+	L"emissive.g",
+	L"emissive.r",
+	L"emissivemap.rw",
+	L"emissivemap.su",
+	L"emissivemap.sv",
+	L"emissivemap.tu",
+	L"emissivemap.tv",
+	L"metallicmap.rw",
+	L"metallicmap.su",
+	L"metallicmap.sv",
+	L"metallicmap.tu",
+	L"metallicmap.tv",
+	L"occlusionmap.rw",
+	L"occlusionmap.su",
+	L"occlusionmap.sv",
+	L"occlusionmap.tu",
+	L"occlusionmap.tv",
+	L"roughnessmap.rw",
+	L"roughnessmap.su",
+	L"roughnessmap.sv",
+	L"roughnessmap.tu",
+	L"roughnessmap.tv",
+	L"emissivemap",
+	L"metallicmap",
+	L"occlusionmap",
+	L"roughnessmap"
+#endif
 };
 
 void convertMaterialToAttributeMap(
 		prtx::PRTUtils::AttributeMapBuilderPtr& aBuilder,
 		const prtx::Material& prtxAttr,
-		const prtx::WStringVector& keys,
-		const prt::ResolveMap* rm
+		const prtx::WStringVector& keys
 ) {
 	if (DBG) log_wdebug(L"-- converting material: %1%") % prtxAttr.name();
 	for(const auto& key : keys) {
@@ -283,19 +316,26 @@ struct TextureUVMapping {
 	int8_t       uvSet;
 };
 
-const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = {
-		{ L"diffuseMap",  0, 0 }, // colormap
-		{ L"bumpMap",     0, 1 }, // bumpmap
-		{ L"diffuseMap",  1, 2 }, // dirtmap
-		{ L"specularMap", 0, 3 }, // specularmap
-		{ L"opacityMap",  0, 4 }, // opacitymap
-		{ L"normalMap",   0, 5 }  // normalmap
-		// TODO for PRT 2
-		//6	emissivemap
-		//7	occlusionmap
-		//8	roughnessmap
-		//9	metallicmap
-};
+const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = []() -> std::vector<TextureUVMapping> {
+	return {
+		// shader key   | idx | uv set  | CGA key
+		{ L"diffuseMap",   0,    0 },  // colormap
+		{ L"bumpMap",      0,    1 },  // bumpmap
+		{ L"diffuseMap",   1,    2 },  // dirtmap
+		{ L"specularMap",  0,    3 },  // specularmap
+		{ L"opacityMap",   0,    4 },  // opacitymap
+		{ L"normalMap",    0,    5 }   // normalmap
+
+#if PRT_VERSION_MAJOR > 1
+		,
+		{ L"emissiveMap",  0,    6 },  // emissivemap
+		{ L"occlusionMap", 0,    7 },  // occlusionmap
+		{ L"roughnessMap", 0,    8 },  // roughnessmap
+		{ L"metallicMap",  0,    9 }   // metallicmap
+#endif
+
+	};
+}();
 
 // return the highest required uv set (where a valid texture is present)
 uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
@@ -472,7 +512,7 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 			faceRanges.push_back(faceCount);
 
 			if (emitMaterials) {
-				convertMaterialToAttributeMap(amb, *(mat.get()), mat->getKeys(), initialShape.getResolveMap());
+				convertMaterialToAttributeMap(amb, *(mat.get()), mat->getKeys());
 				matAttrMaps.v.push_back(amb->createAttributeMapAndReset());
 			}
 

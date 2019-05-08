@@ -8,7 +8,7 @@
 #include <mutex>
 
 
-// shamelessly copied from boost (houdini restricts us to boost 1.55 for the moment)
+// shamelessly copied from boost (houdini's hboost does not include this header)
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
 
 //---------------------------------------------------------------------------//
@@ -134,7 +134,7 @@ private:
 
 
 /*
- * Copyright 2014-2018 Esri R&D Zurich and VRBN
+ * Copyright 2014-2019 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

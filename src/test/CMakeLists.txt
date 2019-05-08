@@ -28,10 +28,9 @@ pld_add_dependency_boost(${PROJECT_NAME})
 pld_add_dependency_prt(${PROJECT_NAME})
 pld_add_dependency_houdini(${PROJECT_NAME})
 
-if(PLD_WINDOWS)
-	# copy libraries next to test excutable so they can be found
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
-		COMMAND ${CMAKE_COMMAND} ARGS -E copy_directory ${PRT_INSTALL_PATH}/lib ${CMAKE_BINARY_DIR}/bin/lib
-		COMMAND ${CMAKE_COMMAND} ARGS -E copy $<TARGET_FILE:palladio_codec> ${CMAKE_BINARY_DIR}/bin/lib)
-endif()
+# copy libraries next to test excutable so they can be found
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${CMAKE_BINARY_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${CMAKE_BINARY_DIR}/lib
+	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_EXT_LIBRARIES} ${CMAKE_BINARY_DIR}/lib)

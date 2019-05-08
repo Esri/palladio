@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Esri R&D Zurich and VRBN
+ * Copyright 2014-2019 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "Utils.h"
 
 #include "prt/Object.h"
-#include "prt/FlexLicParams.h"
 
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
@@ -46,9 +45,10 @@ struct PLD_TEST_EXPORTS_API PRTContext final {
 	~PRTContext();
 
 	const ResolveMapUPtr& getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk);
+	bool isAlive() const { return mPRTHandle.operator bool(); }
 
 	logging::LogHandlerPtr  mLogHandler;
-	ObjectUPtr              mLicHandle;
+	ObjectUPtr              mPRTHandle;
 	CacheObjectUPtr         mPRTCache;
 	const uint32_t          mCores;
 	ResolveMapCacheUPtr     mResolveMapCache;

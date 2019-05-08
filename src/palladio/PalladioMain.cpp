@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Esri R&D Zurich and VRBN
+ * Copyright 2014-2019 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ void newSopOperator(OP_OperatorTable *table) {
 		UT_Exit::addExitCallback([](void *) { prtCtx.reset(); });
 	}
 
-	if (!prtCtx->mLicHandle)
+	if (!prtCtx->isAlive())
 		return;
 
 	// instantiate assign sop

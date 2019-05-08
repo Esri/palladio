@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Esri R&D Zurich and VRBN
+ * Copyright 2014-2019 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ struct SerializedGeometry {
 	prtx::DoubleVector              coords;
 	prtx::DoubleVector              normals; // uses same indexing as coords
 	std::vector<prtx::DoubleVector> uvs;     // uses same indexing as coords per uv set
-	prtx::IndexVector               counts;
-	prtx::IndexVector               indices;
+	std::vector<uint32_t>           counts;
+	std::vector<uint32_t>           indices;
 
 	SerializedGeometry(uint32_t uvSets) : uvs(uvSets) { }
 };
