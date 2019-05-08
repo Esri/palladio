@@ -1,10 +1,13 @@
-# ![](doc/img/Palladio_icon_v1_32.png) Palladio
+# ![](doc/img/Palladio_icon_v1_32.png) Palladio - CityEngine Plugin for Houdini
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) 'rules' within Houdini networks. This provides a convenient combination of the generic procedural modelling capabilities of Houdini with the architecture-specific procedural modeling language 'CGA' of CityEngine.
+Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) ‘rules’ within Houdini networks. Therefore, a 3D environment artist does not have to leave their familiar Houdini toolset anymore to make use of CityEngine’s procedural modeling power. Complicated export-import pipelines are no longer needed, which also means that the procedural building models do not need to be “baked” anymore. The buildings stay procedural during the entire modeling workflow (optionally even at render time). Consequently, the 3D environment artist can change the height, style and appearance of buildings easily with a parametric interface at any point during production.
 
-Palladio is not an Esri nor vrbn product and there is currently no official/commercial support from Esri nor vrbn. However, if you are interested in commercial services related to Palladio, please contact info@vrbn.io
+Palladio requires so-called rule packages (RPK) as input, which are authored in CityEngine. An RPK includes assets and a CGA rule file which encodes an architectural style. Comprehensive RPK examples are available below and can be used “out-of-the-box” in Palladio.
+
+Palladio is well suited for managing the procedural generation of architectural 3D content in digital sets. However, Palladio is restricted to the procedural generation of single buildings / objects. Palladio does not include the city layouting and street network editing tools of CityEngine i.e. the rich CityEngine toolset to design a city from scratch (or based on geographic data) is still needed.
+
+*Palladio is free for non-commercial use.* Commercial use requires at least one commercial license of the latest CityEngine version installed in the organization. No redistribution is allowed. Please refer to the licensing section below for more detailed licensing information.
 
 
 ## Documentation
@@ -15,21 +18,22 @@ Palladio is not an Esri nor vrbn product and there is currently no official/comm
 * [ChangeLog](doc/changelog.md)
 
 External documentation:
-* [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
-* [CityEngine CGA Reference](http://desktop.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
+* [CityEngine Tutorials](https://doc.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
+* [CityEngine CGA Reference](https://doc.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
+* [CityEngine Manual](https://doc.arcgis.com/en/cityengine/latest/help/cityengine-help-intro.htm)
 * [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
 * [Houdini HDK Reference](http://www.sidefx.com/docs/hdk)  
 
 
 ## Community
 
-Palladio is maintained as an open-source project by Matthias Buehler (vrbn.io) and Simon Haegler (Esri R&D Zurich). Matthias is focusing on UX/UI topics and use-cases in Urban Planning, while Simon is focusing on the implementation and procedural modelling technology.
+Palladio is maintained as an open-source project by Matthias Buehler ([vrbn studios](https://www.vrbn.io)) and Simon Haegler (Esri R&D Zurich). Matthias is focusing on UX/UI topics and use-cases, while Simon is focusing on the implementation and procedural modelling technology.
 
 Our goal is to bring as many Houdini and CityEngine users and developers on board as possible. Anyone is invited to submit issues and/or to fork and contribute to this project.
 
 [Join us on slack!](https://join.slack.com/t/palladio-houdini-ce/shared_invite/enQtMzAzNTc4MzIzNjA1LTEwYmQ1ZjE0MTExODIxNTA4ZDEzYWYyYzNkZGZmMWQ0NmM2MjMzYTllOGI5OTQwNGM0N2RjYjFlNjJjNzVhMjE)
 
-Our thanks also go to the fine folks at Esri R&D Zurich and VRBN which provided valuable comments and feedback.
+Our thanks also go to the fine folks at Esri R&D Zurich and vrbn studios which provided valuable comments and feedback.
 
 
 ## History
@@ -39,14 +43,8 @@ Palladio has been invented by Matthias Buehler and Simon Haegler in early 2015. 
 
 ## Licensing
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this work except in compliance with the License.
-You may obtain a copy of the License at
+Palladio is under the same license as the included [CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk#licensing).
 
-> http://www.apache.org/licenses/LICENSE-2.0
+An exception is the Palladio source code (without CityEngine SDK, binaries, or object code), which is licensed under the Apache License, Version 2.0 (the “License”); you may not use this work except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+The "Favela" example data is copyrighted by [vrbn studios](https://www.vrbn.io). Please contact vrbn_studios for commercial licensing options.
