@@ -1,29 +1,34 @@
 ---
-title: Palladio
+title: Palladio - CityEngine Plugin for Houdini
 ---
 
-<img src="images/Palladio_icon_v1_512.png" width="110" align="right" /> Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) 'rules' within Houdini networks. This provides a convenient combination of the generic procedural modelling capabilities of Houdini with the architecture-specific procedural modeling language 'CGA' of CityEngine.
+<img src="images/Palladio_icon_v1_512.png" width="110" align="right" />Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [Esri CityEngine](http://www.esri.com/software/cityengine) ‘rules’ within Houdini networks. Therefore, a 3D environment artist does not have to leave their familiar Houdini toolset anymore to make use of CityEngine’s procedural modeling power. Complicated export-import pipelines are no longer needed, which also means that the procedural building models do not need to be “baked” anymore. The buildings stay procedural during the entire modeling workflow (optionally even at render time). Consequently, the 3D environment artist can change the height, style and appearance of buildings easily with a parametric interface at any point during production.
+
+Palladio requires so-called rule packages (RPK) as input, which are authored in CityEngine. An RPK includes assets and a CGA rule file which encodes an architectural style. Comprehensive RPK examples are available below and can be used “out-of-the-box” in Palladio.
+
+Palladio is well suited for managing the procedural generation of architectural 3D content in digital sets. However, Palladio is restricted to the procedural generation of single buildings / objects. Palladio does not include the city layouting and street network editing tools of CityEngine i.e. the rich CityEngine toolset to design a city from scratch (or based on geographic data) is still needed.
+
+*Palladio is free for non-commercial use.* Commercial use requires at least one commercial license of the latest CityEngine version installed in the organization. No redistribution is allowed. Please refer to the licensing section below for more detailed licensing information.
 
 
 ## Downloads
 
-### Latest Stable Release
+| ![Linux](images/linux.png)   | [Palladio 1.6.0, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.0/palladio-1.6.0+b178-hdn17-5-229.prt2-0-5403.rhel7-gcc63-x86_64-rel-opt.tgz) |
+| ![Windows](images/win32.png) | [Palladio 1.6.0, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.0/palladio-1.6.0+b178-hdn17-5-229.prt2-0-5403.win10-vc141-x86_64-rel-opt.zip) |
 
-| ![Linux](images/linux.png)   | [Palladio 1.4.1, Houdini 17.0, PRT 1.9](https://github.com/Esri/palladio/releases/download/v1.4.1/palladio-1.4.1+b166-hdn16-5-634.prt1-9-3786.rhel7-gcc48-x86_64-rel-opt.tgz) |
-| ![Windows](images/win32.png) | [Palladio 1.4.1, Houdini 17.0, PRT 1.9](https://github.com/Esri/palladio/releases/download/v1.4.1/palladio-1.4.1+b166-hdn17-0-416.prt1-9-3786.win10-vc141-x86_64-rel-opt.zip) |
-
-### Latest Pre-Release / Beta
-
-| ![Linux](images/linux.png)   | [Palladio 1.5.0 Beta2, Houdini 17.5, PRT 1.9](https://github.com/Esri/palladio/releases/download/v1.5.0-beta.2/palladio-1.5.0-beta.2+b171-hdn17-5-173.prt1-9-3786.rhel7-gcc63-x86_64-rel-opt.tgz) |
-| ![Windows](images/win32.png) | [Palladio 1.5.0 Beta2, Houdini 17.0, PRT 1.9](https://github.com/Esri/palladio/releases/download/v1.5.0-beta.2/palladio-1.5.0-beta.2+b171-hdn17-5-173.prt1-9-3786.win10-vc141-x86_64-rel-opt.zip) |
-
-More pre-built binaries are available on the [github release page](https://github.com/Esri/palladio/releases).
+More binaries (for older Houdini versions) are available on the [github release page](https://github.com/Esri/palladio/releases).
 
 
 ## Example Content
 
+### Rule Packages
+<table>
+<tr><td><img src="images/favela_render_1.png" width="400" /></td><td><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">FAVELA.rpk</a></td></tr>
+</table>
+
 ### Houdini Digital Assets
-* (coming soon)
+* [HDA (NC) with above Favela RPK](https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioFavela.hdanc)
+* [HDA (NC) to assign CityEngine material for Mantra](https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioCityEngineMaterial.hdanc)
 
 ### Houdini Example Scenes
 <table>
@@ -40,28 +45,15 @@ More pre-built binaries are available on the [github release page](https://githu
 * More documentation is available on the main [README.md](https://github.com/Esri/palladio/blob/master/README.md)
 
 External documentation:
-* [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
 * [CityEngine CGA Reference](http://desktop.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
-* [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
-* [Houdini HDK Reference](http://www.sidefx.com/docs/hdk)  
+* [CityEngine Manual](https://doc.arcgis.com/en/cityengine/latest/help/cityengine-help-intro.htm)
+* [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
 
 
 ## Licensing
 
-### Palladio Source Code
+Palladio is under the same license as the included [CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk#licensing).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this work except in compliance with the License.
-You may obtain a copy of the License at
+An exception is the Palladio source code (without CityEngine SDK, binaries, or object code), which is licensed under the Apache License, Version 2.0 (the “License”); you may not use this work except in compliance with the License. You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-> http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-### Terms-of-Use for Pre-Built Binaries
-
-(coming soon)
+The "Favela" example data is copyrighted by [vrbn studios](https://www.vrbn.io). Please contact vrbn_studios for commercial licensing options.
