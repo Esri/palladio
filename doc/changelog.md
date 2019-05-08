@@ -2,6 +2,9 @@
 
 ## v1.6.0 (May 8, 2019)
 * Added support for PRT 2
+* Removed technical requirement for CityEngine license.
+* Added support for new PRT PBR material attributes.
+* Various build system improvements (supports both PRT 1.x and 2.x).
 
 ## v1.5.0 (May 7, 2019)
 * No functional change to beta 2.
