@@ -8,7 +8,7 @@ conan_check(VERSION 1.11 REQUIRED)
 ### select Houdini version and required toolchain
 
 if (NOT PLD_HOUDINI_VERSION)
-	set(PLD_HOUDINI_VERSION "17.0") # use latest Houdini 17 by default
+	set(PLD_HOUDINI_VERSION "17.5") # use Houdini 17.5 by default
 endif()
 
 string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
