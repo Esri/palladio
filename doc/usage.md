@@ -3,18 +3,18 @@
 ## Prerequisites
 * RHEL/CentOS 6/7 (or a compatible distribution)
 * or Windows 7/8.1/10
-* Houdini 16.5 or 17.0 (including Apprentice edition)
-* CityEngine 2017.x with valid Advanced license (node-locked or network)
+* Houdini 16.5 or later (Apprentice edition is supported as well)
+* Optional, CityEngine 2017.1 or later with valid license to author rule packages.
 
 ## Execute a simple CityEngine Rule
 
 1. [Build](build.md) Palladio
-1. Verify that Palladio is installed and all necessary files are present in ``<User Home>/houdini17.0/dso``:
+1. Verify that Palladio is installed and all necessary files are present in ``<User Home>/houdini17.5/dso``:
 
     ![](img/installation01.png)
     
-1. Windows only: ensure that the ``<User Home>/houdini17.0/dso`` and the `bin` subdirectory of your Houdini installation are on the `PATH`
-1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere:
+1. Windows only: ensure that the ``<User Home>/houdini17.5/dso`` and the `bin` subdirectory of your Houdini installation are on the `PATH`
+1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere (or download one of the provided examples):
    ```
    attr height = 1
    
@@ -22,13 +22,9 @@
    Init -->
       extrude(height)
    ```
-1. Optional for CityEngine network license:
-    ```
-    export CITYENGINE_LICENSE_SERVER="27000@my.license.server"
-    ```
 1. Start Houdini in a bash console (adapt to your Houdini installation location):
     ```
-    /opt/hfs17.0/bin/houdini
+    /opt/hfs17.5/bin/houdini
     ```
     (Use ``happrentice`` or ``hindie`` instead of ``houdini``, depending on our license.)
 1. In a new scene, add a ``grid`` node.
