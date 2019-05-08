@@ -3,6 +3,9 @@
 ## v1.6.0 (May 8, 2019)
 * Added support for PRT 2
 
+## v1.5.0 (May 7, 2019)
+* No functional change to beta 2.
+
 ## v1.5.0-beta.2 (Mar 19, 2019)
 * Fixed crash in pldAssign node if no RPK is set.
 
