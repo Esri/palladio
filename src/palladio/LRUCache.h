@@ -8,7 +8,7 @@
 #include <mutex>
 
 
-// shamelessly copied from boost (houdini restricts us to boost 1.55 for the moment)
+// shamelessly copied from boost (houdini's hboost does not include this header)
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
 
 //---------------------------------------------------------------------------//
