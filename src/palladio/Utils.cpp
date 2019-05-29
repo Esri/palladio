@@ -39,7 +39,7 @@
 #endif
 
 
-void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
+void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
 	constexpr const wchar_t* PROJECT    = L"";
 	constexpr const wchar_t* PATTERN    = L"*.cgb";
 	constexpr const size_t   START_SIZE = 16 * 1024;

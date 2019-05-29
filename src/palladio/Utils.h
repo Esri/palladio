@@ -20,6 +20,7 @@
 
 #include "prt/Object.h"
 #include "prt/AttributeMap.h"
+#include "prt/ResolveMap.h"
 #include "prt/InitialShape.h"
 #include "prt/RuleFileInfo.h"
 #include "prt/EncoderInfo.h"
@@ -52,13 +53,14 @@ using AttributeMapBuilderUPtr   = std::unique_ptr<prt::AttributeMapBuilder, PRTD
 using AttributeMapBuilderVector = std::vector<AttributeMapBuilderUPtr>;
 using InitialShapeBuilderUPtr   = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
 using InitialShapeBuilderVector = std::vector<InitialShapeBuilderUPtr>;
+using ResolveMapSPtr            = std::shared_ptr<const prt::ResolveMap>;
 using ResolveMapUPtr            = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
 using ResolveMapBuilderUPtr     = std::unique_ptr<prt::ResolveMapBuilder, PRTDestroyer>;
 using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 using EncoderInfoUPtr           = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr          = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
-PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapUPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
+PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
 PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
 PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);
 

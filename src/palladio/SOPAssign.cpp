@@ -60,7 +60,7 @@ bool evaluateDefaultRuleAttributes(
 	const prt::AttributeMap* encsOpts[] = { encOpts.get() };
 
 	// try to get a resolve map
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
 	if (!resolveMap) {
 		LOG_WRN << "Could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
 		return false;

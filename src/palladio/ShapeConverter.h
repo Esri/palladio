@@ -53,7 +53,7 @@ public:
 	bool getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim);
 	void putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const;
 
-	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
+	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) const;
 	std::wstring getFullyQualifiedStartRule() const;
 
 public:

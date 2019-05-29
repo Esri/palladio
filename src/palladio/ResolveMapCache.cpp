@@ -23,7 +23,7 @@
 
 namespace {
 
-const ResolveMapUPtr RESOLVE_MAP_NONE;
+const ResolveMapSPtr RESOLVE_MAP_NONE;
 const ResolveMapCache::LookupResult LOOKUP_FAILURE = { RESOLVE_MAP_NONE, ResolveMapCache::CacheStatus::MISS };
 const std::chrono::system_clock::time_point INVALID_TIMESTAMP;
 
@@ -151,7 +151,7 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		LOG_DBG << "createResolveMap from " << rpkURI;
-		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status));
+		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status), PRTDestroyer());
 		if (status != prt::STATUS_OK)
 			return LOOKUP_FAILURE;
 

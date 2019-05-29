@@ -44,7 +44,7 @@ struct PLD_TEST_EXPORTS_API PRTContext final {
 	PRTContext& operator=(PRTContext&&) = delete;
 	~PRTContext();
 
-	const ResolveMapUPtr& getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk);
+	ResolveMapSPtr getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk);
 	bool isAlive() const { return mPRTHandle.operator bool(); }
 
 	logging::LogHandlerPtr  mLogHandler;

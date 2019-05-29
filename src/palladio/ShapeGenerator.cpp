@@ -91,7 +91,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		if (!getMainAttributes(detail, firstPrimitive))
 			continue;
 
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(mRPK);
+		ResolveMapSPtr assetsMap = prtCtx->getResolveMap(mRPK);
 		if (!assetsMap)
 			continue;
 

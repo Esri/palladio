@@ -300,7 +300,7 @@ void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primi
 	mah.style.set(off, toOSNarrowFromUTF16(mStyle).c_str());
 }
 
-RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
+RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) const {
 	if (!resolveMap->hasKey(mRuleFile.c_str())) // workaround for bug in getString
 		return {};
 
