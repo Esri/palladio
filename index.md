@@ -31,31 +31,87 @@ More binaries (for older Houdini versions) are available on the [github release 
 
 <table>
 
+<tr><td colspan="2"><h3>Angkor Thom</h3></td></tr>
 <tr>
-	<td><img src="images/favela_render_1.png" width="400" /></td>
+	<td width="420px">
+		<a href="images/AngkorThom/angkorThom_1.jpg"><img src="images/AngkorThom/angkorThom_1.jpg" width="400" /></a>
+		<a href="images/AngkorThom/Angkor_Thom_CityEngine_Scene.png"><img src="images/AngkorThom/Angkor_Thom_CityEngine_Scene.png" width="400" /></a>
+		<a href="images/AngkorThom/Angkor_Thom_Houdini_Scene.png"><img src="images/AngkorThom/Angkor_Thom_Houdini_Scene.png" width="400" /></a>
+	</td>
 	<td>
-		"Favela" Example Scene
+		<p>This example includes full CityEngine and Houdini projects. It demonstrates how to use CityEngine to author procedural assets like Walls, Stairs, Porticos and combine them in Houdini via Palladio and Rule Packages. The scene consists of three major steps:
+		<ol>
+			<li>The "/obj/PALLADIO_BASE" geometry node generates the various CityEngine Rules via Palladio and assigns them to multiple outputs.</li>
+			<li>Multiple "/obj/process_palladio_xxx" nodes reference above outputs, apply a stone weathering effect and cache out the geometry.</li>
+			<li>The "/obj/creepers_xxx" nodes apply some creeper plant effects.</li>
+		</ol>
+		</p>
+
+		<p>Downloads:</p>
 		<ul>
-		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">RPK</a></li>
-		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioFavela.hdanc">HDANC (with RPK included)</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/Palladio_Example_Angkor_Thom_NC_v1.zip">Houdini and CityEngine Projects</a></li>
+		</ul>
+
+		<p>Notes:</p>
+		<ul>
+			<li>Created by Matthias Buehler</li>
+			<li>Also covered in "Digital Production" <a href="https://www.digitalproduction.com/ausgabe/digital-production-05-2018/">Issue 05/18</a> (Article in German).</li>
 		</ul>
 	</td>
 </tr>
 
+<tr><td colspan="2"><h3>Favela</h3></td></tr>
 <tr>
-	<td><img src="https://user-images.githubusercontent.com/1630632/53511493-e44e9d80-3ac0-11e9-8578-a6fc2093d312.png" width="400" /></td>
 	<td>
-		CityEngine Material for Mantra
+		<img src="images/Favela/favela_render_1.png" width="400" />
+	</td>
+	<td>
+		<p>Downloads:</p>
 		<ul>
-		<li><a href="https://github.com/Esri/palladio/releases/download/v1.4.0/PalladioDemo03.zip">HIPNC</a></li>
-		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioCityEngineMaterial.hdanc">HDANC</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">RPK</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioFavela.hdanc">HDANC (with RPK included)</a></li>
+		</ul>
+
+		<p>Notes:</p>
+		<ul>
+			<li>Created by Matthias Buehler</li>
 		</ul>
 	</td>
 </tr>
 
-<tr><td><img src="https://user-images.githubusercontent.com/1630632/38602293-9e48da0c-3d6a-11e8-88b9-bb930d7b6a38.jpg" width="400" /></td><td><a href="https://github.com/Esri/palladio/releases/download/v1.1/PalladioDemo02.zip">Computer Case Graveyard (Houdini Scene)</a></td></tr>
+<tr><td colspan="2"><h3>CityEngine Material Handling (Mantra)</h3></td></tr>
+<tr>
+	<td>
+		<img src="https://user-images.githubusercontent.com/1630632/53511493-e44e9d80-3ac0-11e9-8578-a6fc2093d312.png" width="400" />
+	</td>
+	<td>
+		<ul>
+		<li><a href="https://github.com/Esri/palladio/releases/download/v1.4.0/PalladioDemo03.zip">Houdini Scene (HIPNC)</a></li>
+		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioCityEngineMaterial.hdanc">Houdini Digital Asset (HDANC)</a></li>
+		</ul>
+	</td>
+</tr>
 
-<tr><td><img src="https://user-images.githubusercontent.com/1630632/35410758-ae41d858-0216-11e8-8ba6-286dc87f532a.png" width="400" /></td><td><a href="https://github.com/Esri/palladio/releases/download/v1.0/PalladioDemo01.zip">Basic Use Case (Houdini Scene)</a></td></tr>
+<tr><td colspan="2"><h3>Computer Case Graveyard</h3></td></tr>
+<tr>
+	<td>
+		<img src="https://user-images.githubusercontent.com/1630632/38602293-9e48da0c-3d6a-11e8-88b9-bb930d7b6a38.jpg" width="400" />
+	</td>
+	<td>
+		<a href="https://github.com/Esri/palladio/releases/download/v1.1/PalladioDemo02.zip">Houdini Scene (HIPNC)</a>
+	</td>
+</tr>
+
+<tr><td colspan="2"><h3>Palladio Basic Use Case</h3></td></tr>
+<tr>
+	<td>
+		<img src="https://user-images.githubusercontent.com/1630632/35410758-ae41d858-0216-11e8-8ba6-286dc87f532a.png" width="400" />
+	</td>
+	<td>
+		<a href="https://github.com/Esri/palladio/releases/download/v1.0/PalladioDemo01.zip">Houdini Scene (HIPNC)</a>
+	</td>
+</tr>
+
 </table>
 
 
