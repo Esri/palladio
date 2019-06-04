@@ -28,7 +28,7 @@ public:
 	~SOPAssign() override = default;
 
 	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
-	const PLD_BOOST_NS::filesystem::path& getRPK() const { return mShapeConverter->mRPK; }
+	const PLD_BOOST_NS::filesystem::path& getRPK() const { return mShapeConverter->mDefaultMainAttributes.mRPK; }
 
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 

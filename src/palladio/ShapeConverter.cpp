@@ -35,13 +35,6 @@ namespace {
 
 constexpr bool DBG = false;
 
-template<typename T>
-T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
-	GA_ROHandleS h(ref);
-	const char* s = h.get(off);
-	return (s != nullptr) ? T{s} : T{};
-}
-
 } // namespace
 
 
@@ -211,7 +204,7 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 		for (auto& prim: pv) {
 			primCls.put(prim);
-			putMainAttributes(mah, prim);
+			putMainAttributes(detail, mah, prim);
 
 			const GA_Offset& off = prim->getMapOffset();
 
@@ -260,62 +253,64 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-	mRPK       = AssignNodeParams::getRPK(node, now);
-	mRuleFile  = AssignNodeParams::getRuleFile(node, now);
-	mStyle     = AssignNodeParams::getStyle(node, now);
-	mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mRPK       = AssignNodeParams::getRPK(node, now);
+	mDefaultMainAttributes.mRuleFile  = AssignNodeParams::getRuleFile(node, now);
+	mDefaultMainAttributes.mStyle     = AssignNodeParams::getStyle(node, now);
+	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
 }
 
-bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {
+namespace {
+
+template<typename T>
+T convert(const UT_StringHolder& s) {
+	return T{s.toStdString()};
+}
+
+template<>
+std::wstring convert(const UT_StringHolder& s) {
+	return toUTF16FromOSNarrow(s.toStdString());
+}
+
+template<typename T>
+void tryAssign(T& v, const GA_ROAttributeRef& ref, const GA_Offset& off) {
+	if (ref.isInvalid())
+		return;
+
+	GA_ROHandleS h(ref);
+	const UT_StringHolder& s = h.get(off);
+
+	T t = convert<T>(s);
+	if (!t.empty())
+		v = t;
+}
+
+} // namespace
+
+MainAttributes ShapeConverter::getMainAttributesFromPrimitive(const GU_Detail* detail, const GA_Primitive* prim) const {
+	MainAttributes ma = mDefaultMainAttributes;
+	const GA_Offset firstOffset = prim->getMapOffset();
+
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(PLD_RPK));
-	if (rpkRef.isInvalid())
-		return false;
+	tryAssign(ma.mRPK, rpkRef, firstOffset);
 
 	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(PLD_RULE_FILE));
-	if (ruleFileRef.isInvalid())
-		return false;
+	tryAssign(ma.mRuleFile, ruleFileRef, firstOffset);
 
 	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(PLD_START_RULE));
-	if (startRuleRef.isInvalid())
-		return false;
+	tryAssign(ma.mStartRule, startRuleRef, firstOffset);
 
 	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(PLD_STYLE));
-	if (styleRef.isInvalid())
-		return false;
+	tryAssign(ma.mStyle, styleRef, firstOffset);
 
-	const GA_Offset firstOffset = prim->getMapOffset();
-	mRPK       = safeGet<PLD_BOOST_NS::filesystem::path>(firstOffset, rpkRef);
-	mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
-	mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
-	mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
-
-	return true;
+	return ma;
 }
 
-void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const {
-	const GA_Offset &off = primitive->getMapOffset();
-	mah.rpk.set(off, mRPK.string().c_str());
-	mah.ruleFile.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
-	mah.startRule.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
-	mah.style.set(off, toOSNarrowFromUTF16(mStyle).c_str());
-}
+void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHandles& mah, const GA_Primitive* primitive) const {
+	MainAttributes ma = getMainAttributesFromPrimitive(detail, primitive);
 
-RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
-	if (!resolveMap->hasKey(mRuleFile.c_str())) // workaround for bug in getString
-		return {};
-
-	const auto cgbURI = resolveMap->getString(mRuleFile.c_str());
-	if (cgbURI == nullptr)
-		return {};
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
-	if (status != prt::STATUS_OK)
-		return {};
-
-	return rfi;
-}
-
-std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
-	return mStyle + L'$' + mStartRule;
+	const GA_Offset& off = primitive->getMapOffset();
+	mah.rpk.set(off, ma.mRPK.string().c_str());
+	mah.ruleFile.set(off, toOSNarrowFromUTF16(ma.mRuleFile).c_str());
+	mah.startRule.set(off, toOSNarrowFromUTF16(ma.mStartRule).c_str());
+	mah.style.set(off, toOSNarrowFromUTF16(ma.mStyle).c_str());
 }

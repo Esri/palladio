@@ -43,24 +43,25 @@ const UT_String PLD_RANDOM_SEED = "pldRandomSeed";
 
 enum class GroupCreation { NONE, PRIMCLS };
 
+struct MainAttributes {
+	PLD_BOOST_NS::filesystem::path mRPK;
+	std::wstring                   mRuleFile;
+	std::wstring                   mStyle;
+	std::wstring                   mStartRule;
+};
+
 class ShapeConverter {
 public:
 	virtual void get(const GU_Detail* detail,  const PrimitiveClassifier& primCls,
 	                 ShapeData& shapeData, const PRTContextUPtr& prtCtx);
 	void put(GU_Detail* detail, PrimitiveClassifier& primCls, const ShapeData& shapeData) const;
 
-	void getMainAttributes(SOP_Node* node, const OP_Context& context);
-	bool getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim);
-	void putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const;
-
-	RuleFileInfoUPtr getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const;
-	std::wstring getFullyQualifiedStartRule() const;
+	void getMainAttributes(SOP_Node* node, const OP_Context& context); // TODO: integrate into get
+	MainAttributes getMainAttributesFromPrimitive(const GU_Detail* detail, const GA_Primitive* prim) const;
+	void putMainAttributes(const GU_Detail* detail, MainAttributeHandles& mah, const GA_Primitive* primitive) const;
 
 public:
-	PLD_BOOST_NS::filesystem::path mRPK;
-	std::wstring            mRuleFile;
-	std::wstring            mStyle;
-	std::wstring            mStartRule;
+	MainAttributes mDefaultMainAttributes;
 };
 
 using ShapeConverterUPtr = std::unique_ptr<ShapeConverter>;

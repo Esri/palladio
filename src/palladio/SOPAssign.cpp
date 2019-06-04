@@ -44,6 +44,22 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	return AttributeMapUPtr(encOpts);
 }
 
+RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) {
+	if (!resolveMap->hasKey(ma.mRuleFile.c_str())) // workaround for bug in getString
+		return {};
+
+	const auto cgbURI = resolveMap->getString(ma.mRuleFile.c_str());
+	if (cgbURI == nullptr)
+		return {};
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	if (status != prt::STATUS_OK)
+		return {};
+
+	return rfi;
+}
+
 bool evaluateDefaultRuleAttributes(
 		ShapeData& shapeData,
 		const ShapeConverterUPtr& shapeConverter,
@@ -60,16 +76,16 @@ bool evaluateDefaultRuleAttributes(
 	const prt::AttributeMap* encsOpts[] = { encOpts.get() };
 
 	// try to get a resolve map
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
+	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mDefaultMainAttributes.mRPK);
 	if (!resolveMap) {
-		LOG_WRN << "Could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
+		LOG_WRN << "Could not create resolve map from rpk " << shapeConverter->mDefaultMainAttributes.mRPK << ", aborting default rule attribute evaluation";
 		return false;
 	}
 
 	// try to get rule file info
-	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
+	const RuleFileInfoUPtr ruleFileInfo(getRuleFileInfo(shapeConverter->mDefaultMainAttributes, resolveMap, prtCtx->mPRTCache.get()));
 	if (!ruleFileInfo) {
-		LOG_WRN << "Could not get rule file info from " << shapeConverter->mRuleFile << ", aborting default rule attribute evaluation";
+		LOG_WRN << "Could not get rule file info from " << shapeConverter->mDefaultMainAttributes.mRuleFile << ", aborting default rule attribute evaluation";
 		return false;
 	}
 
@@ -83,8 +99,8 @@ bool evaluateDefaultRuleAttributes(
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 		isb->setAttributes(
-				shapeConverter->mRuleFile.c_str(),
-				shapeConverter->mStartRule.c_str(),
+				shapeConverter->mDefaultMainAttributes.mRuleFile.c_str(),
+				shapeConverter->mDefaultMainAttributes.mStartRule.c_str(),
 				shapeData.getInitialShapeRandomSeed(isIdx),
 				shapeName.c_str(),
 				ruleAttr.get(),
