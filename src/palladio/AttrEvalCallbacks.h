@@ -20,10 +20,12 @@
 
 #include "prt/Callbacks.h"
 
+#include <vector>
+
 
 class AttrEvalCallbacks: public prt::Callbacks {
 public:
-	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const RuleFileInfoUPtr& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
+	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const std::vector<RuleFileInfoUPtr>& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
 	~AttrEvalCallbacks() override = default;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
@@ -39,5 +41,5 @@ public:
 
 private:
 	AttributeMapBuilderVector& mAMBS;
-	const RuleFileInfoUPtr& mRuleFileInfo;
+	const std::vector<RuleFileInfoUPtr>& mRuleFileInfo;
 };
