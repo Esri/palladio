@@ -33,7 +33,7 @@
 
 namespace {
 
-constexpr bool DBG = false;
+constexpr bool DBG = true;
 
 } // namespace
 
@@ -62,6 +62,20 @@ struct MainAttributeHandles {
 		seed.bind(seedRef);
 	}
 };
+
+namespace {
+
+template<typename P>
+void convertPolygon(std::vector<uint32_t>& faceCounts, std::vector<uint32_t>& indices, const P& p) {
+	const GA_Size vtxCnt = p.getVertexCount();
+	faceCounts.push_back(static_cast<uint32_t>(vtxCnt));
+	for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
+		indices.push_back(static_cast<uint32_t>(p.getPointIndex(i)));
+		if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << p.getPointIndex(i);
+	}
+}
+
+} // namespace
 
 void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
                          ShapeData& shapeData, const PRTContextUPtr& prtCtx)
@@ -94,23 +108,23 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
 		std::vector<uint32_t> indices, faceCounts, holes;
-		std::array<double,3> centroid = { 0.0, 0.0, 0.0 };
 		for (const auto& prim: pIt->second) {
 			if (DBG) LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName() << ", id = " << prim->getTypeId().get();
 			const auto& primType = prim->getTypeId();
-			if (primType == GA_PRIMPOLY || primType == GA_PRIMPOLYSOUP) {
-				const GA_Size vtxCnt = prim->getVertexCount();
-				faceCounts.push_back(static_cast<uint32_t>(vtxCnt));
-				for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
-					indices.push_back(static_cast<uint32_t>(prim->getPointIndex(i)));
-					if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << prim->getPointIndex(i);
-
-					centroid[0] += coords[3*indices.back()+0];
-					centroid[1] += coords[3*indices.back()+1];
-					centroid[2] += coords[3*indices.back()+2];
-				}
+			switch (primType.get()) {
+				case GA_PRIMPOLY:
+					convertPolygon(faceCounts, indices, *prim);
+					break;
+				case GA_PRIMPOLYSOUP:
+					for (GEO_PrimPolySoup::PolygonIterator pit(static_cast<const GEO_PrimPolySoup&>(*prim)); !pit.atEnd(); ++pit) {
+						convertPolygon(faceCounts, indices, pit);
+					}
+					break;
+				default:
+					if (DBG) LOG_DBG << "      ignoring primitive of type " << prim->getTypeName();
+					break;
 			}
-		} // for each polygon
+		} // for each primitive
 
 		// prepare and store initial shape builder
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
@@ -128,6 +142,12 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			randomSeed = seedH.get(pIt->second.front()->getMapOffset());
 		}
 		else {
+			std::array<double,3> centroid = { 0.0, 0.0, 0.0 };
+			for (size_t i = 0; i < indices.size(); i++) {
+				centroid[0] += coords[3*indices[i]+0];
+				centroid[1] += coords[3*indices[i]+1];
+				centroid[2] += coords[3*indices[i]+2];
+			}
 			centroid[0] /= (double)indices.size();
 			centroid[1] /= (double)indices.size();
 			centroid[2] /= (double)indices.size();
