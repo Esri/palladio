@@ -72,7 +72,7 @@ More binaries (for older Houdini versions) are available on the [github release 
 
 		<p>Downloads:</p>
 		<ul>
-			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.1/favela_houdini_project_v1.zip">Houdini Project</a> with HDA and pre-cached geometry included.</li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.1/favela_houdini_project_v1.zip">Houdini Project</a></li>
 			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">Favela RPK</a></li>
 		</ul>
 
