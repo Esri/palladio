@@ -40,7 +40,7 @@ void generate(TestCallbacks& tc,
 {
 	REQUIRE(initialShapeURIs.size() == startRules.size());
 
-	const ResolveMapUPtr& rpkRM = prtCtx->getResolveMap(rpkPath);
+	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
 
 	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
 	getCGBs(rpkRM, cgbs);

@@ -44,7 +44,7 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	return AttributeMapUPtr(encOpts);
 }
 
-RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) {
+RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) {
 	if (!resolveMap->hasKey(ma.mRuleFile.c_str())) // workaround for bug in getString
 		return {};
 
@@ -90,7 +90,7 @@ bool evaluateDefaultRuleAttributes(
 		const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
 
 		// try to get a resolve map
-		const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
+		ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
 		if (!resolveMap) {
 			LOG_WRN << "Could not create resolve map from rpk " << ma.mRPK << ", aborting default rule attribute evaluation";
 			return false;

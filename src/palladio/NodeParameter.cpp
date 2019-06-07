@@ -84,7 +84,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, time);
 	const PLD_BOOST_NS::filesystem::path nextRPK(utNextRPKStr.toStdString());
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(nextRPK);
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(nextRPK);
 	if (!resolveMap ) {
 		LOG_WRN << "invalid resolve map";
 		return NOT_CHANGED;
@@ -150,7 +150,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
@@ -206,7 +206,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
     const fpreal now = CHgetEvalTime();
 	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
 		theMenu[0].setToken(nullptr);
 		return;
@@ -237,7 +237,7 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
 	const std::wstring ruleFile = getRuleFile(node, now);
 
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(rpk);
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;

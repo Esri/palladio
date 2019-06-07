@@ -215,7 +215,7 @@ namespace {
 	std::mutex mResolveMapCacheMutex;
 }
 
-const ResolveMapUPtr& PRTContext::getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk) {
+ResolveMapSPtr PRTContext::getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk) {
 	std::lock_guard<std::mutex> lock(mResolveMapCacheMutex);
 
 	auto lookupResult = mResolveMapCache->get(rpk.string());

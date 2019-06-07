@@ -94,7 +94,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		// extract main attrs from first prim in initial shape prim group
 		const MainAttributes ma = getMainAttributesFromPrimitive(detail, firstPrimitive);
 
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(ma.mRPK);
+		ResolveMapSPtr assetsMap = prtCtx->getResolveMap(ma.mRPK);
 		if (!assetsMap)
 			continue;
 

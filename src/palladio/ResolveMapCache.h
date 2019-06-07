@@ -37,12 +37,12 @@ public:
 	~ResolveMapCache();
 
 	enum class CacheStatus { HIT, MISS };
-	using LookupResult = std::pair<const ResolveMapUPtr&, CacheStatus>;
+	using LookupResult = std::pair<ResolveMapSPtr, CacheStatus>;
 	LookupResult get(const PLD_BOOST_NS::filesystem::path& rpk);
 
 private:
 	struct ResolveMapCacheEntry {
-		ResolveMapUPtr mResolveMap;
+		ResolveMapSPtr mResolveMap;
 		std::chrono::system_clock::time_point mTimeStamp;
 	};
 	using Cache = std::map<KeyType, ResolveMapCacheEntry>;
