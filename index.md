@@ -63,17 +63,23 @@ More binaries (for older Houdini versions) are available on the [github release 
 <tr><td colspan="2"><h3>Favela</h3></td></tr>
 <tr>
 	<td>
-		<img src="images/Favela/favela_render_1.png" width="400" />
+		<a href="images/Favela/favela.mantra_ipr.0001.jpg"><img src="images/Favela/favela.mantra_ipr.0001.jpg" width="400" /></a>
+		<a href="images/Favela/houdini_favela_scene.png"><img src="images/Favela/houdini_favela_scene.png" width="400" /></a>
+		<a href="images/Favela/houdini_favela_hda_params.png"><img src="images/Favela/houdini_favela_hda_params.png" width="400" /></a>
 	</td>
 	<td>
+		<p>The Favela example demonstrates the packaging of a complex Rule Package into a Houdini Digital Asset with custom high-level parameters. The provided Houdini scene additionally shows how to prepare the input geometry for Palladio out of an Alembic archive (setup of random seed and start rule).</p>
+
 		<p>Downloads:</p>
 		<ul>
-			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">RPK</a></li>
-			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioFavela.hdanc">HDANC (with RPK included)</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.1/favela_houdini_project_v1.zip">Houdini Project</a> with HDA and pre-cached geometry included.</li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/FAVELA.rpk">Favela RPK</a></li>
 		</ul>
 
 		<p>Notes:</p>
 		<ul>
+			<li>Requires Houdini 17.5 and Palladio 1.6.1 or later.</li>
+			<li>Based on the original <a href="https://www.youtube.com/watch?v=IY5gU1J39Ec">"Favela" project (YouTube)</a> created with CityEngine, Maya and Maxwell.</li>
 			<li>Created by Matthias Buehler</li>
 		</ul>
 	</td>
@@ -85,9 +91,12 @@ More binaries (for older Houdini versions) are available on the [github release 
 		<img src="https://user-images.githubusercontent.com/1630632/53511493-e44e9d80-3ac0-11e9-8578-a6fc2093d312.png" width="400" />
 	</td>
 	<td>
+		<p>This example shows how to use the generated CityEngine material attributes with Mantra.</p>
+
+		<p>Downloads:</p>
 		<ul>
 		<li><a href="https://github.com/Esri/palladio/releases/download/v1.4.0/PalladioDemo03.zip">Houdini Scene (HIPNC)</a></li>
-		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/PalladioCityEngineMaterial.hdanc">Houdini Digital Asset (HDANC)</a></li>
+		<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.1/PalladioCityEngineMaterial-v2.hdanc">Houdini Digital Asset (HDANC)</a></li>
 		</ul>
 	</td>
 </tr>
