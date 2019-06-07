@@ -44,7 +44,24 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	return AttributeMapUPtr(encOpts);
 }
 
+RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) {
+	if (!resolveMap->hasKey(ma.mRuleFile.c_str())) // workaround for bug in getString
+		return {};
+
+	const auto cgbURI = resolveMap->getString(ma.mRuleFile.c_str());
+	if (cgbURI == nullptr)
+		return {};
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	if (status != prt::STATUS_OK)
+		return {};
+
+	return rfi;
+}
+
 bool evaluateDefaultRuleAttributes(
+		const GU_Detail* detail,
 		ShapeData& shapeData,
 		const ShapeConverterUPtr& shapeConverter,
 		const PRTContextUPtr& prtCtx
@@ -59,32 +76,39 @@ bool evaluateDefaultRuleAttributes(
 	const AttributeMapUPtr encOpts = getValidEncoderInfo(ENCODER_ID_CGA_EVALATTR);
 	const prt::AttributeMap* encsOpts[] = { encOpts.get() };
 
-	// try to get a resolve map
-	const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(shapeConverter->mRPK);
-	if (!resolveMap) {
-		LOG_WRN << "Could not create resolve map from rpk " << shapeConverter->mRPK << ", aborting default rule attribute evaluation";
-		return false;
-	}
+	const size_t numShapes = shapeData.getInitialShapeBuilders().size();
 
-	// try to get rule file info
-	const RuleFileInfoUPtr ruleFileInfo(shapeConverter->getRuleFileInfo(resolveMap, prtCtx->mPRTCache.get()));
-	if (!ruleFileInfo) {
-		LOG_WRN << "Could not get rule file info from " << shapeConverter->mRuleFile << ", aborting default rule attribute evaluation";
-		return false;
-	}
+	// keep rule file info per initial shape to filter generated attributes
+	std::vector<RuleFileInfoUPtr> ruleFileInfos(numShapes);
 
 	// create initial shapes
-	uint32_t isIdx = 0;
-	for (auto& isb: shapeData.getInitialShapeBuilders()) {
-		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx++);
+	// loop over all initial shapes and use the first primitive to get the attribute values
+	for (size_t isIdx = 0; isIdx < numShapes; isIdx++) {
+		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
+		const auto& firstPrimitive = pv.front();
+
+		const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
+
+		// try to get a resolve map
+		const ResolveMapUPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
+		if (!resolveMap) {
+			LOG_WRN << "Could not create resolve map from rpk " << ma.mRPK << ", aborting default rule attribute evaluation";
+			return false;
+		}
+
+		ruleFileInfos[isIdx] = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+
+		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 		if (DBG) LOG_DBG << "evaluating attrs for shape: " << shapeName;
 
 		// persist rule attributes even if empty (need to live until prt::generate is done)
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
+
+		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
 		isb->setAttributes(
-				shapeConverter->mRuleFile.c_str(),
-				shapeConverter->mStartRule.c_str(),
+				ma.mRuleFile.c_str(),
+				ma.mStartRule.c_str(),
 				shapeData.getInitialShapeRandomSeed(isIdx),
 				shapeName.c_str(),
 				ruleAttr.get(),
@@ -101,7 +125,7 @@ bool evaluateDefaultRuleAttributes(
 	assert(shapeData.isValid());
 
 	// run generate to evaluate default rule attributes
-	AttrEvalCallbacks aec(shapeData.getRuleAttributeMapBuilders(), ruleFileInfo);
+	AttrEvalCallbacks aec(shapeData.getRuleAttributeMapBuilders(), ruleFileInfos);
 	const InitialShapeNOPtrVector& is = shapeData.getInitialShapes();
 	const prt::Status stat = prt::generate(is.data(), is.size(), nullptr, encs, encsCount, encsOpts, &aec,
 	                                       prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
@@ -138,7 +162,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 		ShapeData shapeData;
 		mShapeConverter->get(gdp, primCls, shapeData, mPRTCtx);
-		const bool canContinue = evaluateDefaultRuleAttributes(shapeData, mShapeConverter, mPRTCtx);
+		const bool canContinue = evaluateDefaultRuleAttributes(gdp, shapeData, mShapeConverter, mPRTCtx);
 		if (!canContinue) {
 			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
 			return UT_ERROR_ABORT;

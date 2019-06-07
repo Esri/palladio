@@ -35,6 +35,10 @@ constexpr bool DBG = true;
 const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { PLD_PRIM_CLS_NAME, PLD_RPK, PLD_RULE_FILE,
                                                         PLD_START_RULE, PLD_STYLE, PLD_RANDOM_SEED };
 
+std::wstring getFullyQualifiedStartRule(const MainAttributes& ma) {
+	return ma.mStyle + L'$' + ma.mStartRule;
+}
+
 } // namespace
 
 
@@ -88,10 +92,9 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pv.size();
 
 		// extract main attrs from first prim in initial shape prim group
-		if (!getMainAttributes(detail, firstPrimitive))
-			continue;
+		const MainAttributes ma = getMainAttributesFromPrimitive(detail, firstPrimitive);
 
-		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(mRPK);
+		const ResolveMapUPtr& assetsMap = prtCtx->getResolveMap(ma.mRPK);
 		if (!assetsMap)
 			continue;
 
@@ -103,7 +106,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			if (ar.isInvalid())
 				continue;
 
-			const std::wstring ruleAttrName = NameConversion::toRuleAttr(mStyle, attr.first);
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(ma.mStyle, attr.first);
 
 			switch (ar.getStorageClass()) {
 				case GA_STORECLASS_FLOAT: {
@@ -147,10 +150,10 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
 		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 		const auto& shapeName = shapeData.getInitialShapeName(isIdx);
-		const auto fqStartRule = getFullyQualifiedStartRule();
+		const auto fqStartRule = getFullyQualifiedStartRule(ma);
 
 		isb->setAttributes(
-				mRuleFile.c_str(),
+				ma.mRuleFile.c_str(),
 				fqStartRule.c_str(),
 				randomSeed,
 				shapeName.c_str(),

@@ -22,6 +22,7 @@
 #include "MultiWatch.h"
 
 #include "GU/GU_Detail.h"
+#include "GA/GA_PageHandle.h"
 #include "GEO/GEO_PrimPolySoup.h"
 #include "UT/UT_String.h"
 
@@ -35,15 +36,116 @@ namespace {
 
 constexpr bool DBG = false;
 
-template<typename T>
-T safeGet(GA_Offset off, const GA_ROAttributeRef& ref) {
-	GA_ROHandleS h(ref);
-	const char* s = h.get(off);
-	return (s != nullptr) ? T{s} : T{};
+struct UV {
+	std::vector<double> uvs;
+	std::vector<uint32_t> idx;
+};
+
+struct ConversionHelper {
+	std::vector<uint32_t> indices;
+	std::vector<uint32_t> faceCounts;
+	std::vector<uint32_t> holes;
+	std::vector<UV>       uvSets;
+
+	const std::vector<double>& coords;
+	const std::vector<GA_ROHandleV2D>& uvHandles;
+
+	ConversionHelper(const std::vector<double>& c, const std::vector<GA_ROHandleV2D>& h) : coords(c), uvHandles(h) {
+		uvSets.resize(uvHandles.size());
+	}
+
+	InitialShapeBuilderUPtr createInitialShape() const {
+		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
+
+		isb->setGeometry(coords.data(), coords.size(), indices.data(), indices.size(),
+		                 faceCounts.data(), faceCounts.size(), holes.data(), holes.size());
+
+		for (size_t u = 0; u < uvHandles.size(); u++) {
+			const auto& uvSet = uvSets[u];
+			if (!uvHandles[u].isInvalid() && !uvSet.uvs.empty()) {
+				isb->setUVs(uvSet.uvs.data(), uvSet.uvs.size(), uvSet.idx.data(), uvSet.idx.size(), faceCounts.data(), faceCounts.size(), u);
+			}
+		}
+
+		return isb;
+	}
+};
+
+// transfer texture coordinates
+const std::vector<std::string> UV_ATTR_NAMES{
+		"uv", "uv1", "uv2", "uv3", "uv4", "uv5"
+#if PRT_VERSION_MAJOR > 1
+		, "uv6", "uv7", "uv8", "uv9"
+#endif
+};
+
+template<typename P>
+void convertPolygon(ConversionHelper& ch, const P& p, const std::vector<GA_ROHandleV2D>& uvHandles) {
+	const GA_Size vtxCnt = p.getVertexCount();
+
+	ch.faceCounts.push_back(static_cast<uint32_t>(vtxCnt));
+
+	for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
+		ch.indices.push_back(static_cast<uint32_t>(p.getPointIndex(i)));
+		if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << p.getPointIndex(i);
+	}
+
+	for (size_t u = 0; u < uvHandles.size(); u++) {
+		const auto& uvh = uvHandles[u];
+		if (uvh.isInvalid())
+			continue;
+
+		auto& uvSet = ch.uvSets[u];
+
+		for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
+			GA_Offset off = p.getVertexOffset(i);
+			const auto v = uvh.get(off);
+			uvSet.uvs.push_back(v.x());
+			uvSet.uvs.push_back(v.y());
+			uvSet.idx.push_back(uvSet.idx.size());
+			if (DBG) LOG_DBG << "     uv " << i << ": " << v.x() << ", " << v.y();
+		}
+	}
+}
+
+std::array<double, 3> getCentroid(const std::vector<double>& coords, const ConversionHelper& ch) {
+	std::array<double, 3> centroid = { 0.0, 0.0, 0.0 };
+	for (size_t i = 0; i < ch.indices.size(); i++) {
+		auto idx = ch.indices[i];
+		centroid[0] += coords[3 * idx + 0];
+		centroid[1] += coords[3 * idx + 1];
+		centroid[2] += coords[3 * idx + 2];
+	}
+	centroid[0] /= (double) ch.indices.size();
+	centroid[1] /= (double) ch.indices.size();
+	centroid[2] /= (double) ch.indices.size();
+	return centroid;
+}
+
+// try to get random seed from incoming primitive attributes (important for default rule attr eval)
+// use centroid based hash as fallback
+int32_t getRandomSeed(const GA_Detail* detail, const GA_Offset& primOffset, const std::vector<double>& coords,
+                      const ConversionHelper& ch) {
+	int32_t randomSeed = 0;
+
+	GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(PLD_RANDOM_SEED));
+	if (!seedRef.isInvalid() && (seedRef->getStorageClass() == GA_STORECLASS_INT)) { // TODO: check for 32bit
+		GA_ROHandleI seedH(seedRef);
+		randomSeed = seedH.get(primOffset);
+	}
+	else {
+		const std::array<double, 3> centroid = getCentroid(coords, ch);
+		size_t hash = 0;
+		PLD_BOOST_NS::hash_combine(hash, centroid[0]);
+		PLD_BOOST_NS::hash_combine(hash, centroid[1]);
+		PLD_BOOST_NS::hash_combine(hash, centroid[2]);
+		randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
+	}
+
+	return randomSeed;
 }
 
 } // namespace
-
 
 struct MainAttributeHandles {
 	GA_RWHandleS rpk;
@@ -94,58 +196,42 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		coords.push_back(static_cast<double>(p.z()));
 	}
 
+	// scan for uv attributes
+	std::vector<GA_ROHandleV2D> uvHandles(UV_ATTR_NAMES.size());
+	for (uint32_t uvSet = 0; uvSet < UV_ATTR_NAMES.size(); uvSet++) {
+		const std::string &attrName = UV_ATTR_NAMES[uvSet];
+		const GA_Attribute *attrib = detail->findFloatTuple(GA_ATTRIB_VERTEX, attrName, 2);
+		uvHandles[uvSet].bind(attrib);
+	}
+
 	// -- loop over all primitive partitions and create shape builders
 	uint32_t isIdx = 0;
 	for (auto pIt = partitions.cbegin(); pIt != partitions.cend(); ++pIt, ++isIdx) {
 		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 
+		ConversionHelper ch(coords, uvHandles);
+
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
-		std::vector<uint32_t> indices, faceCounts, holes;
-		std::array<double,3> centroid = { 0.0, 0.0, 0.0 };
 		for (const auto& prim: pIt->second) {
 			if (DBG) LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName() << ", id = " << prim->getTypeId().get();
 			const auto& primType = prim->getTypeId();
-			if (primType == GA_PRIMPOLY || primType == GA_PRIMPOLYSOUP) {
-				const GA_Size vtxCnt = prim->getVertexCount();
-				faceCounts.push_back(static_cast<uint32_t>(vtxCnt));
-				for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
-					indices.push_back(static_cast<uint32_t>(prim->getPointIndex(i)));
-					if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << prim->getPointIndex(i);
-
-					centroid[0] += coords[3*indices.back()+0];
-					centroid[1] += coords[3*indices.back()+1];
-					centroid[2] += coords[3*indices.back()+2];
-				}
+			switch (primType.get()) {
+				case GA_PRIMPOLY:
+					convertPolygon(ch, *prim, uvHandles);
+					break;
+				case GA_PRIMPOLYSOUP:
+					for (GEO_PrimPolySoup::PolygonIterator pit(static_cast<const GEO_PrimPolySoup&>(*prim)); !pit.atEnd(); ++pit) {
+						convertPolygon(ch, pit, uvHandles);
+					}
+					break;
+				default:
+					if (DBG) LOG_DBG << "      ignoring primitive of type " << prim->getTypeName();
+					break;
 			}
-		} // for each polygon
+		} // for each primitive
 
-		// prepare and store initial shape builder
-		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
-		isb->setGeometry(coords.data(), coords.size(),
-		                 indices.data(), indices.size(),
-		                 faceCounts.data(), faceCounts.size(),
-		                 holes.data(), holes.size());
-
-		// try to get random seed from incoming primitive attributes (important for default rule attr eval)
-		// use centroid based hash as fallback
-		int32_t randomSeed = 0;
-		GA_ROAttributeRef seedRef(detail->findPrimitiveAttribute(PLD_RANDOM_SEED));
-		if (!seedRef.isInvalid() && (seedRef->getStorageClass() == GA_STORECLASS_INT)) { // TODO: check for 32bit
-			GA_ROHandleI seedH(seedRef);
-			randomSeed = seedH.get(pIt->second.front()->getMapOffset());
-		}
-		else {
-			centroid[0] /= (double)indices.size();
-			centroid[1] /= (double)indices.size();
-			centroid[2] /= (double)indices.size();
-
-			size_t hash = 0;
-			PLD_BOOST_NS::hash_combine(hash, centroid[0]);
-			PLD_BOOST_NS::hash_combine(hash, centroid[1]);
-			PLD_BOOST_NS::hash_combine(hash, centroid[2]);
-			randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
-		}
-
+		const int32_t randomSeed = getRandomSeed(detail, pIt->second.front()->getMapOffset(), coords, ch);
+		InitialShapeBuilderUPtr isb = ch.createInitialShape();
 		shapeData.addBuilder(std::move(isb), randomSeed, pIt->second, pIt->first);
 	} // for each primitive partition
 
@@ -211,7 +297,7 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 		for (auto& prim: pv) {
 			primCls.put(prim);
-			putMainAttributes(mah, prim);
+			putMainAttributes(detail, mah, prim);
 
 			const GA_Offset& off = prim->getMapOffset();
 
@@ -260,62 +346,64 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-	mRPK       = AssignNodeParams::getRPK(node, now);
-	mRuleFile  = AssignNodeParams::getRuleFile(node, now);
-	mStyle     = AssignNodeParams::getStyle(node, now);
-	mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mRPK       = AssignNodeParams::getRPK(node, now);
+	mDefaultMainAttributes.mRuleFile  = AssignNodeParams::getRuleFile(node, now);
+	mDefaultMainAttributes.mStyle     = AssignNodeParams::getStyle(node, now);
+	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
 }
 
-bool ShapeConverter::getMainAttributes(const GU_Detail* detail, const GA_Primitive* prim) {
+namespace {
+
+template<typename T>
+T convert(const UT_StringHolder& s) {
+	return T{s.toStdString()};
+}
+
+template<>
+std::wstring convert(const UT_StringHolder& s) {
+	return toUTF16FromOSNarrow(s.toStdString());
+}
+
+template<typename T>
+void tryAssign(T& v, const GA_ROAttributeRef& ref, const GA_Offset& off) {
+	if (ref.isInvalid())
+		return;
+
+	GA_ROHandleS h(ref);
+	const UT_StringHolder& s = h.get(off);
+
+	T t = convert<T>(s);
+	if (!t.empty())
+		v = t;
+}
+
+} // namespace
+
+MainAttributes ShapeConverter::getMainAttributesFromPrimitive(const GU_Detail* detail, const GA_Primitive* prim) const {
+	MainAttributes ma = mDefaultMainAttributes;
+	const GA_Offset firstOffset = prim->getMapOffset();
+
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(PLD_RPK));
-	if (rpkRef.isInvalid())
-		return false;
+	tryAssign(ma.mRPK, rpkRef, firstOffset);
 
 	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(PLD_RULE_FILE));
-	if (ruleFileRef.isInvalid())
-		return false;
+	tryAssign(ma.mRuleFile, ruleFileRef, firstOffset);
 
 	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(PLD_START_RULE));
-	if (startRuleRef.isInvalid())
-		return false;
+	tryAssign(ma.mStartRule, startRuleRef, firstOffset);
 
 	GA_ROAttributeRef styleRef(detail->findPrimitiveAttribute(PLD_STYLE));
-	if (styleRef.isInvalid())
-		return false;
+	tryAssign(ma.mStyle, styleRef, firstOffset);
 
-	const GA_Offset firstOffset = prim->getMapOffset();
-	mRPK       = safeGet<PLD_BOOST_NS::filesystem::path>(firstOffset, rpkRef);
-	mRuleFile  = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, ruleFileRef));
-	mStartRule = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, startRuleRef));
-	mStyle     = toUTF16FromOSNarrow(safeGet<std::string>(firstOffset, styleRef));
-
-	return true;
+	return ma;
 }
 
-void ShapeConverter::putMainAttributes(MainAttributeHandles& mah, const GA_Primitive* primitive) const {
-	const GA_Offset &off = primitive->getMapOffset();
-	mah.rpk.set(off, mRPK.string().c_str());
-	mah.ruleFile.set(off, toOSNarrowFromUTF16(mRuleFile).c_str());
-	mah.startRule.set(off, toOSNarrowFromUTF16(mStartRule).c_str());
-	mah.style.set(off, toOSNarrowFromUTF16(mStyle).c_str());
-}
+void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHandles& mah, const GA_Primitive* primitive) const {
+	MainAttributes ma = getMainAttributesFromPrimitive(detail, primitive);
 
-RuleFileInfoUPtr ShapeConverter::getRuleFileInfo(const ResolveMapUPtr& resolveMap, prt::Cache* prtCache) const {
-	if (!resolveMap->hasKey(mRuleFile.c_str())) // workaround for bug in getString
-		return {};
-
-	const auto cgbURI = resolveMap->getString(mRuleFile.c_str());
-	if (cgbURI == nullptr)
-		return {};
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
-	if (status != prt::STATUS_OK)
-		return {};
-
-	return rfi;
-}
-
-std::wstring ShapeConverter::getFullyQualifiedStartRule() const {
-	return mStyle + L'$' + mStartRule;
+	const GA_Offset& off = primitive->getMapOffset();
+	mah.rpk.set(off, ma.mRPK.string().c_str());
+	mah.ruleFile.set(off, toOSNarrowFromUTF16(ma.mRuleFile).c_str());
+	mah.startRule.set(off, toOSNarrowFromUTF16(ma.mStartRule).c_str());
+	mah.style.set(off, toOSNarrowFromUTF16(ma.mStyle).c_str());
 }
