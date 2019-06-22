@@ -74,7 +74,10 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
                            const double* nrm, size_t nrmSize,
                            const uint32_t* counts, size_t countsSize,
                            const uint32_t* indices, size_t indicesSize,
-                           double const* const* uvs, size_t const* uvsSizes, uint32_t uvSets)
+                           double const* const* uvs, size_t const* uvsSizes,
+                           uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+                           uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+                           uint32_t uvSets)
 {
 	WA("all");
 
@@ -97,7 +100,12 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 
 	// -- add texture coordinates
 	for (size_t uvSet = 0; uvSet < uvSets; uvSet++) {
-		if (uvsSizes[uvSet] > 0) {
+		size_t const psUVSSize       = uvsSizes[uvSet];
+		size_t const psUVCountsSize  = uvCountsSizes[uvSet];
+		size_t const psUVIndicesSize = uvIndicesSizes[uvSet];
+		if (DBG) LOG_DBG << "-- uvset " << uvSet << ": psUVCountsSize = " << psUVCountsSize << ", psUVIndicesSize = " << psUVIndicesSize;
+
+		if (psUVSSize > 0 && psUVIndicesSize > 0 && psUVCountsSize > 0) {
 			GA_RWHandleV3 uvh;
 			if (uvSet == 0)
 				uvh.bind(mDetail->addTextureAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32)); // adds "uv" vertex attribute
@@ -106,19 +114,27 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 				uvh.bind(mDetail->addTuple(GA_STORE_REAL32, GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, n.c_str(), 3));
 			}
 
-			uint32_t vi = 0;
-			for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, vi++) {
-				assert(vi < indicesSize);
-				const uint32_t uvIdx = indices[vi];
-				const size_t uvsSize = uvsSizes[uvSet];
-				assert(uvsSize > 0);
-				if (uvIdx*2 < uvsSize) { // TODO: this is a workaround to prevent crashes/illegal UVs, need to fix root cause
-					assert(uvIdx * 2 + 1 < uvsSize);
-					const auto du = uvs[uvSet][uvIdx * 2 + 0];
-					const auto dv = uvs[uvSet][uvIdx * 2 + 1];
-					const auto u = static_cast<fpreal32>(du);
-					const auto v = static_cast<fpreal32>(dv);
-					uvh.set(it.getOffset(), UT_Vector3F(u, v, 0.0f));
+			double const* const psUVS         = uvs[uvSet];
+			uint32_t const* const psUVCounts  = uvCounts[uvSet];
+			uint32_t const* const psUVIndices = uvIndices[uvSet];
+
+			size_t fi = 0;
+			size_t uvi = 0;
+			for (GA_Iterator pit(marker.primitiveRange()); !pit.atEnd(); ++pit, ++fi) {
+				GA_Primitive* prim = mDetail->getPrimitive(pit.getOffset());
+				if (DBG) LOG_DBG << "   fi = " << fi << ": prim vtx cnt = " << prim->getVertexCount() << ", vtx cnt = " << counts[fi] << ", uv cnt = " << psUVCounts[fi];
+
+				if (psUVCounts[fi] > 0) {
+					for (GA_Iterator vit(prim->getVertexRange()); !vit.atEnd(); ++vit, ++uvi) {
+						if (DBG) LOG_DBG << "      vi = " << *vit << ": uvi = " << uvi;
+						assert(uvi < psUVIndicesSize);
+						const uint32_t uvIdx = psUVIndices[uvi];
+						const auto du = psUVS[uvIdx * 2 + 0];
+						const auto dv = psUVS[uvIdx * 2 + 1];
+						const auto u = static_cast<fpreal32>(du);
+						const auto v = static_cast<fpreal32>(dv);
+						uvh.set(vit.getOffset(), UT_Vector3F(u, v, 0.0f));
+					}
 				}
 			}
 		}
@@ -147,7 +163,10 @@ void ModelConverter::add(
 		const double* nrm, size_t nrmSize,
 		const uint32_t* counts, size_t countsSize,
 		const uint32_t* indices, size_t indicesSize,
-		double const* const* uvs, size_t const* uvsSize, uint32_t uvSets,
+		double const* const* uvs, size_t const* uvsSizes,
+		uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+		uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+		uint32_t uvSets,
 		const uint32_t* faceRanges, size_t faceRangesSize,
 		const prt::AttributeMap** materials,
 		const prt::AttributeMap** reports,
@@ -159,7 +178,10 @@ void ModelConverter::add(
 	const GA_Offset primStartOffset = ModelConversion::createPrimitives(mDetail, mGroupCreation, name,
 	                                                                    vtx, vtxSize, nrm, nrmSize,
 	                                                                    counts, countsSize, indices, indicesSize,
-	                                                                    uvs, uvsSize, uvSets);
+	                                                                    uvs, uvsSizes,
+	                                                                    uvCounts, uvCountsSizes,
+	                                                                    uvIndices, uvIndicesSizes,
+	                                                                    uvSets);
 
 	// -- convert materials/reports into primitive attributes based on face ranges
 	if (DBG) LOG_DBG << "got " << faceRangesSize-1 << " face ranges";

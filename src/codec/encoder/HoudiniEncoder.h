@@ -18,6 +18,7 @@
 
 #include "../CodecMain.h"
 
+#include "prtx/Mesh.h"
 #include "prtx/ResolveMap.h"
 #include "prtx/Encoder.h"
 #include "prtx/EncoderFactory.h"
@@ -41,11 +42,14 @@ namespace detail {
 struct SerializedGeometry {
 	prtx::DoubleVector              coords;
 	prtx::DoubleVector              normals; // uses same indexing as coords
-	std::vector<prtx::DoubleVector> uvs;     // uses same indexing as coords per uv set
 	std::vector<uint32_t>           counts;
 	std::vector<uint32_t>           indices;
 
-	SerializedGeometry(uint32_t uvSets) : uvs(uvSets) { }
+	std::vector<prtx::DoubleVector> uvs;
+	std::vector<prtx::IndexVector>  uvCounts;
+	std::vector<prtx::IndexVector>  uvIndices;
+
+	SerializedGeometry(uint32_t uvSets) : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) { }
 };
 
 // visible for tests

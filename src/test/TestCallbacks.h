@@ -34,11 +34,15 @@ struct CallbackResult {
 	std::vector<double> vtx;
 	std::vector<double> nrm;
 	std::vector<std::vector<double>> uvs;
+	std::vector<std::vector<uint32_t>> uvCounts;
+	std::vector<std::vector<uint32_t>> uvIndices;
 	std::vector<uint32_t> cnts;
 	std::vector<uint32_t> idx;
 	std::vector<uint32_t> faceRanges;
 	std::vector<AttributeMapUPtr> materials;
 	std::map<int32_t, AttributeMapUPtr> attrsPerShapeID;
+
+	explicit CallbackResult(size_t uvSets) : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) { }
 };
 
 class TestCallbacks : public HoudiniCallbacks {
@@ -51,13 +55,16 @@ public:
 			 const double* nrm, size_t nrmSize,
 			 const uint32_t* counts, size_t countsSize,
 			 const uint32_t* indices, size_t indicesSize,
-			 double const* const* uvs, size_t const* uvsSizes, uint32_t uvSets,
+			 double const* const* uvs, size_t const* uvsSizes,
+			 uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+			 uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+			 uint32_t uvSets,
 			 const uint32_t* faceRanges, size_t faceRangesSize,
 			 const prt::AttributeMap** materials,
 			 const prt::AttributeMap** reports,
 			 const int32_t* shapeIDs
 	) override {
-		results.emplace_back(CallbackResult());
+		results.emplace_back(CallbackResult(uvSets));
 		auto& cr = results.back();
 
 		cr.name = name;
@@ -66,9 +73,11 @@ public:
 		cr.cnts.assign(counts, counts+countsSize);
 		cr.idx.assign(indices, indices+indicesSize);
 
-		cr.uvs.resize(uvSets);
-		for (size_t i = 0; i < uvSets; i++)
+		for (size_t i = 0; i < uvSets; i++) {
 			cr.uvs[i].assign(uvs[i], uvs[i]+uvsSizes[i]);
+			cr.uvCounts[i].assign(uvCounts[i], uvCounts[i]+uvCountsSizes[i]);
+			cr.uvIndices[i].assign(uvIndices[i], uvIndices[i]+uvIndicesSizes[i]);
+		}
 
 		cr.faceRanges.assign(faceRanges, faceRanges+faceRangesSize);
 

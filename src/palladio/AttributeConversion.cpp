@@ -61,7 +61,7 @@ void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleF& handle, GA_
 
 template<>
 void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_Offset start, GA_Size size, int component, const std::wstring& value) {
-    const UT_String hv = [&value]() {
+    const UT_String attrValue = [&value]() {
 	    const auto sh = StringConversionCaches::toPrimAttr.get(value);
 	    if (sh)
 		    return sh.get();
@@ -72,9 +72,9 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_O
     }();
 
 	const GA_Range range(indexMap, start, start+size);
-	handle.set(range, component, hv);
+	handle.set(range, component, attrValue);
 
-    if (DBG) LOG_DBG << "string attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << hv;
+    if (DBG) LOG_DBG << "string attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName() << " = " << attrValue;
 }
 
 class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {

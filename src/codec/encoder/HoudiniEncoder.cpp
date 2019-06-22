@@ -67,8 +67,9 @@ std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	return pw;
 }
 
-std::pair<std::vector<const double*>, std::vector<size_t>> toPtrVec(const std::vector<prtx::DoubleVector>& v) {
-	std::vector<const double*> pv(v.size());
+template<typename T>
+std::pair<std::vector<const T*>, std::vector<size_t>> toPtrVec(const std::vector<std::vector<T>>& v) {
+	std::vector<const T*> pv(v.size());
 	std::vector<size_t> ps(v.size());
 	for (size_t i = 0; i < v.size(); i++) {
 		pv[i] = v[i].data();
@@ -352,6 +353,7 @@ uint32_t scanValidTextures(const prtx::MaterialPtr& mat) {
 }
 
 const prtx::DoubleVector EMPTY_UVS;
+const prtx::IndexVector EMPTY_IDX;
 
 } // namespace
 
@@ -378,28 +380,54 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, 
 
 	// PASS 2: copy
 	uint32_t vertexIndexBase = 0;
+	std::vector<uint32_t> uvIndexBases(maxNumUVSets, 0u);
 	for (const auto& geo: geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
 		for (const auto& mesh: meshes) {
+			// append points
 			const prtx::DoubleVector& verts = mesh->getVertexCoords();
 			sg.coords.insert(sg.coords.end(), verts.begin(), verts.end());
 
+			// append normals
 			const prtx::DoubleVector& norms = mesh->getVertexNormalsCoords();
 			sg.normals.insert(sg.normals.end(), norms.begin(), norms.end());
 
+			// append uv sets (uv coords, counts, indices) with special cases:
+			// - if mesh has no uv sets but maxNumUVSets is > 0, insert "0" uv face counts to keep in sync
+			// - if mesh has less uv sets than maxNumUVSets, copy uv set 0 to the missing higher sets
 			const uint32_t numUVSets = mesh->getUVSetsCount();
-			log_wdebug(L"mesh name: %1% (numUVSets %2%)") % mesh->getName() % numUVSets;
-			if (numUVSets > 0) {
-				const prtx::DoubleVector& uvs0 = mesh->getUVCoords(0);
-				for (uint32_t uvSet = 0; uvSet < sg.uvs.size(); uvSet++) {
-					const prtx::DoubleVector& uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet) : EMPTY_UVS;
-					log_wdebug(L"uvSet %1%: uvs.size() = %2%") % uvSet % uvs.size();
-					const auto& src = uvs.empty() ? uvs0 : uvs;
-					auto& tgt = sg.uvs[uvSet];
-					tgt.insert(tgt.end(), src.begin(), src.end());
-				}
-			}
+			const prtx::DoubleVector& uvs0 = (numUVSets > 0) ? mesh->getUVCoords(0) : EMPTY_UVS;
+			const prtx::IndexVector faceUVCounts0 = (numUVSets > 0) ? mesh->getFaceUVCounts(0) : prtx::IndexVector(mesh->getFaceCount(), 0);
+			if (DBG) log_debug("-- mesh: numUVSets = %1%") % numUVSets;
 
+			for (uint32_t uvSet = 0; uvSet < sg.uvs.size(); uvSet++) {
+				// append texture coordinates
+				const prtx::DoubleVector& uvs = (uvSet < numUVSets) ? mesh->getUVCoords(uvSet) : EMPTY_UVS;
+				const auto& src = uvs.empty() ? uvs0 : uvs;
+				auto& tgt = sg.uvs[uvSet];
+				tgt.insert(tgt.end(), src.begin(), src.end());
+
+				// append uv face counts
+				const prtx::IndexVector& faceUVCounts = (uvSet < numUVSets && !uvs.empty()) ? mesh->getFaceUVCounts(uvSet) : faceUVCounts0;
+				assert(faceUVCounts.size() == mesh->getFaceCount());
+				auto& tgtCnts = sg.uvCounts[uvSet];
+				tgtCnts.insert(tgtCnts.end(), faceUVCounts.begin(), faceUVCounts.end());
+				if (DBG) log_debug("   -- uvset %1%: face counts size = %2%") % uvSet % faceUVCounts.size();
+
+				// append uv vertex indices
+				for (uint32_t fi = 0, faceCount = faceUVCounts.size(); fi < faceCount; ++fi) {
+					const uint32_t* faceUVIdx0 = (numUVSets > 0) ? mesh->getFaceUVIndices(fi, 0) : EMPTY_IDX.data();
+					const uint32_t* faceUVIdx = (uvSet < numUVSets && !uvs.empty()) ? mesh->getFaceUVIndices(fi, uvSet) : faceUVIdx0;
+					const uint32_t faceUVCnt = faceUVCounts[fi];
+					if (DBG) log_debug("      fi %1%: faceUVCnt = %2%, faceVtxCnt = %3%") % fi % faceUVCnt % mesh->getFaceVertexCount(fi);
+					for (uint32_t vi = 0; vi < faceUVCnt; vi++)
+						sg.uvIndices[uvSet].push_back(uvIndexBases[uvSet] + faceUVIdx[faceUVCnt - vi - 1]); // reverse winding
+				}
+
+				uvIndexBases[uvSet] += src.size() / 2u;
+			} // for all uv sets
+
+			// append counts and indices for vertices and vertex normals
 			sg.counts.reserve(sg.counts.size() + mesh->getFaceCount());
 			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
 				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
@@ -534,14 +562,27 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	assert(reportAttrMaps.v.empty() || reportAttrMaps.v.size() == faceRanges.size()-1);
 	assert(shapeIDs.size() == faceRanges.size()-1);
 
-	const std::pair<std::vector<const double*>, std::vector<size_t>> puvs = toPtrVec(sg.uvs);
+	assert(sg.uvs.size() == sg.uvCounts.size());
+	assert(sg.uvs.size() == sg.uvIndices.size());
+
+	auto puvs = toPtrVec(sg.uvs);
+	auto puvCounts = toPtrVec(sg.uvCounts);
+	auto puvIndices = toPtrVec(sg.uvIndices);
+
+	assert(sg.uvs.size() == puvCounts.first.size());
+	assert(sg.uvs.size() == puvCounts.second.size());
 
 	cb->add(initialShape.getName(),
 	        sg.coords.data(), sg.coords.size(),
 			sg.normals.data(), sg.normals.size(),
 			sg.counts.data(), sg.counts.size(),
 			sg.indices.data(), sg.indices.size(),
-			puvs.first.data(), puvs.second.data(), sg.uvs.size(),
+
+			puvs.first.data(), puvs.second.data(),
+			puvCounts.first.data(), puvCounts.second.data(),
+			puvIndices.first.data(), puvIndices.second.data(),
+			sg.uvs.size(),
+
 			faceRanges.data(), faceRanges.size(),
 	        matAttrMaps.v.empty() ? nullptr : matAttrMaps.v.data(),
 	        reportAttrMaps.v.empty() ? nullptr : reportAttrMaps.v.data(),
