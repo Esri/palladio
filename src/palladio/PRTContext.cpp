@@ -113,9 +113,9 @@ uint32_t getNumCores() {
 void scheduleRecook(const PLD_BOOST_NS::filesystem::path& rpk) {
 	auto visit = [](OP_Node& n, void* data) -> bool {
 		if (n.getOperator()->getName().equal(OP_PLD_ASSIGN)) {
-			auto rpk = reinterpret_cast<PLD_BOOST_NS::filesystem::path*>(data);
+			auto visitedRPK = reinterpret_cast<PLD_BOOST_NS::filesystem::path*>(data);
 			SOPAssign& sa = static_cast<SOPAssign&>(n);
-			if (sa.getRPK() == *rpk) {
+			if (sa.getRPK() == *visitedRPK) {
 				LOG_DBG << "forcing recook of: " << n.getName() << ", " << n.getOpType() << ", " << n.getOperator()->getName();
 				sa.forceRecook();
 			}
