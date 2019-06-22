@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.6.2 (June 22, 2019)
+* Fixed broken texture coordinates in the generated Houdini geometry in case not all PRT meshes had any (#118).
+
 ## v1.6.1 (June 7, 2019)
 * Added support for texture coordinates on incoming initial shapes (#112).
 * Assign SOP: do not overwrite main attributes like pldStartRule if they are already present on the incoming geometry (#111).
