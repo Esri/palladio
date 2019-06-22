@@ -41,6 +41,10 @@ public:
 	 * @param indicesSize vertex attribute index array
 	 * @param uvs array of texture coordinate arrays (same indexing as vertices per uv set)
 	 * @param uvsSizes lengths of uv arrays per uv set
+	 * @param uvCounts uv index count per face per uv set (values are either 0 or same as vertex count for each face)
+	 * @param uvCountsSizes number of uv index counts per face per uv set
+	 * @param uvIndices uv indices per face per uv set
+	 * @param uvIndicesSizes number of uv indices per face per uv set
 	 * @param uvSets number of uv sets
 	 * @param faceRanges ranges for materials and reports
 	 * @param materials contains faceRangesSize-1 attribute maps (all materials must have an identical set of keys and types)
@@ -53,7 +57,12 @@ public:
 			const double* nrm, size_t nrmSize,
 			const uint32_t* counts, size_t countsSize,
 			const uint32_t* indices, size_t indicesSize,
-			double const* const* uvs, size_t const* uvsSizes, uint32_t uvSets,
+
+			double const* const* uvs, size_t const* uvsSizes,
+			uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+			uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+			uint32_t uvSets,
+
 			const uint32_t* faceRanges, size_t faceRangesSize,
 			const prt::AttributeMap** materials,
 			const prt::AttributeMap** reports,
