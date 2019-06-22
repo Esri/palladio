@@ -49,13 +49,14 @@ More binaries (for older Houdini versions) are available on the [github release 
 
 		<p>Downloads:</p>
 		<ul>
-			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/Palladio_Example_Angkor_Thom_NC_v1.zip">Houdini and CityEngine Projects</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/Palladio_Example_Angkor_Thom_NC_v1a.zip">Houdini and CityEngine Projects</a></li>
 		</ul>
 
 		<p>Notes:</p>
 		<ul>
 			<li>Created by Matthias Buehler</li>
 			<li>Also covered in "Digital Production" <a href="https://www.digitalproduction.com/ausgabe/digital-production-05-2018/">Issue 05/18</a> (Article in German).</li>
+			<li>Update 1a on 2019-06-22: Fixed missing textures.</li>
 		</ul>
 	</td>
 </tr>
