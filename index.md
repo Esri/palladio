@@ -143,4 +143,4 @@ Palladio is under the same license as the included [CityEngine SDK](https://gith
 
 An exception is the Palladio source code (without CityEngine SDK, binaries, or object code), which is licensed under the Apache License, Version 2.0 (the “License”); you may not use this work except in compliance with the License. You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-The "Favela" example data is copyrighted by [vrbn studios](https://www.vrbn.io). Please contact vrbn_studios for commercial licensing options.
+The "Favela" example data is copyrighted by [vrbn studios](https://www.vrbn.io). Please contact ​info@vrbn.io for commercial licensing options.
