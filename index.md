@@ -47,16 +47,26 @@ More binaries (for older Houdini versions) are available on the [github release 
 		</ol>
 		</p>
 
+		<p>How to change one of the rule attribute values:</p>
+		<ol>
+			<li>Activate the "render" flag of the "OUT_columnRowWithBeams" node in PALLADIO_BASE.</li>
+			<li>Find "attribcreate3" above the out node and change the value of "Total_Height", the model will regenerate.</li>
+			<li>Go to "process_palladio_columnRowWithBeams" and render "file1", will take a while.</li>
+			<li>Set the "render" flag back to "uvtransform1" and click "reload geometry" on "file2"."</li>
+			<li>Repeat the previous step for the file nodes in "creepers_columnRowWithBeams".</li>
+		</ol>
+
 		<p>Downloads:</p>
 		<ul>
-			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/Palladio_Example_Angkor_Thom_NC_v1a.zip">Houdini and CityEngine Projects</a></li>
+			<li><a href="https://github.com/Esri/palladio/releases/download/v1.6.0/Palladio_Example_Angkor_Thom_v2.zip">Houdini and CityEngine Projects</a></li>
 		</ul>
 
 		<p>Notes:</p>
 		<ul>
 			<li>Created by Matthias Buehler</li>
 			<li>Also covered in "Digital Production" <a href="https://www.digitalproduction.com/ausgabe/digital-production-05-2018/">Issue 05/18</a> (Article in German).</li>
-			<li>Update 1a on 2019-06-22: Fixed missing textures.</li>
+			<li>Update 2 on 2019-06-27: Fixed wrong RPK path and "creepers" input references.</li>
+			<li>Known issue: warning in 17.5 regarding "hair generate" node at scene open (internal Houdini problem).</li>
 		</ul>
 	</td>
 </tr>
