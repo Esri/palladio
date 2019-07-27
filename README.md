@@ -13,8 +13,10 @@ Palladio is well suited for managing the procedural generation of architectural 
 
 ## Documentation
 
+Palladio Documentation
 * [Quick Start](doc/usage.md)
-* [Building Palladio](doc/build.md)
+* [Download Palladio](https://esri.github.io/palladio/#downloads)
+* [Build Palladio](doc/build.md)
 * [Examples](https://esri.github.io/palladio/#examples)
 * [ChangeLog](doc/changelog.md)
 
