@@ -21,8 +21,8 @@ Palladio is well suited for managing the procedural generation of architectural 
 
 ## Downloads
 
-| ![Linux](images/linux.png)   | [Palladio 1.6.2, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.2/palladio-1.6.2+b183-hdn17-5-229.prt2-0-5403.rhel7-gcc63-x86_64-rel-opt.tar.gz) |
-| ![Windows](images/win32.png) | [Palladio 1.6.2, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.2/palladio-1.6.2+b183-hdn17-5-229.prt2-0-5403.win10-vc141-x86_64-rel-opt.zip) |
+| ![Linux](images/linux.png)   | [Palladio 1.6.3, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.3/palladio-1.6.3+b186-hdn17-5-229.prt2-0-5403.rhel7-gcc63-x86_64-rel-opt.tar.gz) |
+| ![Windows](images/win32.png) | [Palladio 1.6.3, Houdini 17.5, PRT 2.0](https://github.com/Esri/palladio/releases/download/v1.6.3/palladio-1.6.3+b186-hdn17-5-229.prt2-0-5403.win10-vc141-x86_64-rel-opt.zip) |
 
 More binaries (for older Houdini versions) are available on the [github release page](https://github.com/Esri/palladio/releases).
 
