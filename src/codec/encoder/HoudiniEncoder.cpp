@@ -362,6 +362,8 @@ namespace detail {
 
 SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, const std::vector<prtx::MaterialPtrVector>& materials) {
 	// PASS 1: scan
+	uint32_t numCoords = 0;
+	uint32_t numNormalCoords = 0;
 	uint32_t numCounts = 0;
 	uint32_t numIndices = 0;
 	uint32_t maxNumUVSets = 0;
@@ -371,6 +373,9 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, 
 		const prtx::MaterialPtrVector& mats = *matsIt;
 		auto matIt = mats.cbegin();
 		for (const auto& mesh: meshes) {
+			numCoords += mesh->getVertexCoords().size();
+			numNormalCoords += mesh->getVertexNormalsCoords().size();
+
 			numCounts += mesh->getFaceCount();
 			const auto& vtxCnts = mesh->getFaceVertexCounts();
 			numIndices = std::accumulate(vtxCnts.begin(), vtxCnts.end(), numIndices);
@@ -382,7 +387,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries, 
 		}
 		++matsIt;
 	}
-	detail::SerializedGeometry sg(numCounts, numIndices, maxNumUVSets);
+	detail::SerializedGeometry sg(numCoords, numNormalCoords, numCounts, numIndices, maxNumUVSets);
 
 	// PASS 2: copy
 	uint32_t vertexIndexBase = 0;

@@ -49,9 +49,11 @@ struct SerializedGeometry {
 	std::vector<prtx::IndexVector>  uvCounts;
 	std::vector<prtx::IndexVector>  uvIndices;
 
-	SerializedGeometry(uint32_t numCounts, uint32_t numIndices, uint32_t uvSets)
+	SerializedGeometry(uint32_t numCoords, uint32_t numNormalCoords, uint32_t numCounts, uint32_t numIndices, uint32_t uvSets)
 		: uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets)
 	{
+		coords.reserve(3 * numCoords);
+		normals.reserve(3 * numNormalCoords);
 		counts.reserve(numCounts);
 		indices.reserve(numIndices);
 	}
