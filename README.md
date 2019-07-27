@@ -13,9 +13,11 @@ Palladio is well suited for managing the procedural generation of architectural 
 
 ## Documentation
 
+Palladio Documentation
 * [Quick Start](doc/usage.md)
-* [Building Palladio](doc/build.md)
-* [Examples](doc/examples.md)
+* [Download Palladio](https://esri.github.io/palladio/#downloads)
+* [Build Palladio](doc/build.md)
+* [Examples](https://esri.github.io/palladio/#examples)
 * [ChangeLog](doc/changelog.md)
 
 External documentation:
@@ -24,6 +26,43 @@ External documentation:
 * [CityEngine Manual](https://doc.arcgis.com/en/cityengine/latest/help/cityengine-help-intro.htm)
 * [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
 * [Houdini HDK Reference](http://www.sidefx.com/docs/hdk)  
+
+### Tips and Tricks
+
+#### How to export an Alembic from CityEngine as input to Palladio
+
+This short CityEngine guide explains how to include the random seed and start rule assignments when exporting input geometry to Alembic.
+
+1. Run the following Python script on your scene objects to assign the random seed as object attributes: 
+   ```python
+   from scripting import *
+
+   ce = CE()
+
+   shapes = ce.getObjectsFrom(ce.scene(), ce.isShape)
+   for s in shapes:
+       seed = ce.getAttribute(s, "/ce/rule/randomSeed")
+       ce.setAttribute(s, "seed", seed)
+   ```
+1. Assign this CGA script to the desired shapes to report out `seed` and `rule` (the start rule):
+   ```
+   version "2019.0"
+
+   attr seed = 0
+
+   Lot --> R	
+   LotInner --> R
+   Street --> R
+   Sidewalk --> R
+   Crossing --> R
+   OpenSpace --> R
+   Joint --> R
+   R -->
+       report("seed", seed)
+       report("rule", initialShape.startRule)
+   ```
+    The `seed` rule attribute should have been connected to the previously assigned `seed` object attribute.
+1. Export the shapes to Alembic, the two report values are now attached as user properties to the meshes.
 
 
 ## Community
