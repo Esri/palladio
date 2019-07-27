@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.6.3 (July 27, 2019)
+* Optimized cooking time of pldGenerate (e.g. Parthenon example from CityEngine tutorial 9 cooks 7x faster)
+* Added "tips and tricks" section with guide how to export Alembics from CityEngine for Palladio
+
 ## v1.6.2 (June 22, 2019)
 * Fixed broken texture coordinates in the generated Houdini geometry in case not all PRT meshes had any (#118).
 
