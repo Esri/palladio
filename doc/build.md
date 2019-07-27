@@ -52,8 +52,6 @@ Note: to e.g. build for Houdini 16.5, add cmake argument `-DPLD_HOUDINI_VERSION=
 1. ```cmake -DCMAKE_BUILD_TYPE=Release ../../src```
 1. ```make install``` (the plugin will be installed into your ~/houdini17.5/dso directory)
 
-Note: the `Debug` build type should also work out of the box. If you want to use the `RelWithDebInfo` build type you need to edit your `~/.conan/settings.yml` file and append `RelWithDebInfo` to the `build_type` array at the bottom.
-
 #### Windows
 1. Open a MSVC 14.1 x64 shell (Visual Studio 2017) and `cd` to the Palladio git repository
 1. ```mkdir build/release```
