@@ -6,7 +6,7 @@ title: Palladio - CityEngine Plugin for Houdini
 <tr>
 	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="#downloads"><img src="images/cog.png" width="100px" /> Downloads</a></td>
 	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="#examples"><img src="images/bldg3d.png" width="100px" /> Examples</a></td>
-	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="#documentation"><img src="images/docs.png" width="100px" /> Documentation</a></td>
+	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="https://github.com/Esri/palladio/blob/master/README.md#documentation"><img src="images/docs.png" width="100px" /> Documentation</a></td>
 </tr>
 </table>
 
@@ -90,7 +90,7 @@ More binaries (for older Houdini versions) are available on the [github release 
 		<p>Notes:</p>
 		<ul>
 			<li>Requires Houdini 17.5 and Palladio 1.6.1 or later.</li>
-			<li>Based on the original <a href="https://www.youtube.com/watch?v=IY5gU1J39Ec">"Favela" project (YouTube)</a> created with CityEngine, Maya and Maxwell.</li>
+			<li>Based on the original <a href="https://www.youtube.com/watch?v=IY5gU1J39Ec">"Favela" project (YouTube)</a> created with CityEngine, Maya and Maxwell.</li>			
 			<li>Created by Matthias Buehler</li>
 		</ul>
 	</td>
@@ -133,18 +133,6 @@ More binaries (for older Houdini versions) are available on the [github release 
 </tr>
 
 </table>
-
-
-## Documentation
-
-* [Quick Start](https://github.com/Esri/palladio/blob/master/doc/usage.md)
-* [ChangeLog](https://github.com/Esri/palladio/blob/master/doc/changelog.md)
-* More documentation is available on the main [README.md](https://github.com/Esri/palladio/blob/master/README.md)
-
-External documentation:
-* [CityEngine CGA Reference](http://desktop.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
-* [CityEngine Manual](https://doc.arcgis.com/en/cityengine/latest/help/cityengine-help-intro.htm)
-* [CityEngine Tutorials](http://desktop.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
 
 
 ## Licensing
