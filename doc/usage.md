@@ -8,7 +8,7 @@
 
 ## Execute a simple CityEngine Rule
 
-1. [Build](build.md) Palladio
+1. [Download](https://esri.github.io/palladio/#downloads) or [build](build.md) Palladio
 1. Verify that Palladio is installed and all necessary files are present in ``<User Home>/houdini17.5/dso``:
 
     ![](img/installation01.png)
