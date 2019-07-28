@@ -36,7 +36,10 @@ const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = { PLD_PRIM_CLS_NAME, PLD_R
                                                         PLD_START_RULE, PLD_STYLE, PLD_RANDOM_SEED };
 
 std::wstring getFullyQualifiedStartRule(const MainAttributes& ma) {
-	return ma.mStyle + L'$' + ma.mStartRule;
+	if (ma.mStartRule.find(L'$') != std::wstring::npos)
+		return ma.mStartRule;
+	else
+		return ma.mStyle + L'$' + ma.mStartRule;
 }
 
 } // namespace
