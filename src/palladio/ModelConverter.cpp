@@ -241,6 +241,7 @@ prt::Status ModelConverter::cgaError(size_t isIndex, int32_t shapeID, prt::CGAEr
 }
 
 prt::Status ModelConverter::cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
+	LOG_INF << isIndex << ": " << shapeID << ": " << txt;
 	return prt::STATUS_OK;
 }
 
