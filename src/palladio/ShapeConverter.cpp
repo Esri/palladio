@@ -246,100 +246,15 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 	MainAttributeHandles mah;
 	mah.setup(detail);
 
-	// generate primitive attribute handles from all default rule attribute names from all initial shapes
-	AttributeMapVector defaultRuleAttributeMaps;
-	std::map<const wchar_t*, GA_RWAttributeRef> mAttrRefs; // key points to defaultRuleAttributeMaps
-	for (auto& amb: shapeData.getRuleAttributeMapBuilders()) {
-		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
-		const auto& dra = defaultRuleAttributeMaps.back();
-
-		size_t keyCount = 0;
-		const wchar_t* const* cKeys = dra->getKeys(&keyCount);
-		for (size_t k = 0; k < keyCount; k++) {
-			const wchar_t* key = cKeys[k];
-
-			// make sure to only generate an attribute handle once
-			if (mAttrRefs.count(key) > 0)
-				continue;
-
-			const UT_String primAttrName = NameConversion::toPrimAttr(key);
-
-			GA_Attribute* primAttr = nullptr;
-			switch (dra->getType(key)) {
-				case prt::AttributeMap::PT_FLOAT: {
-					primAttr = detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use double storage
-					break;
-				}
-				case prt::AttributeMap::PT_BOOL: {
-					primAttr = detail->addIntTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1); // TODO: use store type uint8
-					break;
-				}
-				case prt::AttributeMap::PT_STRING: {
-					primAttr = detail->addStringTuple(GA_ATTRIB_PRIMITIVE, primAttrName, 1);
-					break;
-				}
-				default:
-					break;
-			} // switch type
-
-			if (primAttr != nullptr)
-				mAttrRefs.emplace(key, primAttr);
-			else
-				LOG_ERR << "Could not create primitive attribute handle: " << key << " -> " << primAttrName << " (type " << dra->getType(key) << ")";
-
-		} // for rule attribute
-	} // for each initial shape
-
 	for (size_t isIdx = 0; isIdx < shapeData.getRuleAttributeMapBuilders().size(); isIdx++) {
 		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
-		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
 		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
 		for (auto& prim: pv) {
 			primCls.put(prim);
 			putMainAttributes(detail, mah, prim);
-
 			const GA_Offset& off = prim->getMapOffset();
-
 			mah.seed.set(off, randomSeed);
-
-			size_t keyCount = 0;
-			const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
-			for (size_t k = 0; k < keyCount; k++) {
-				const wchar_t* const key = cKeys[k];
-
-				const auto& attrRefIt = mAttrRefs.find(key);
-				if (attrRefIt == mAttrRefs.end())
-					continue;
-				const auto& attrRef = attrRefIt->second;
-
-				switch (defaultRuleAttributes->getType(key)) {
-					case prt::AttributeMap::PT_FLOAT: {
-						GA_RWHandleD av(attrRef);
-						if (av.isValid()) {
-							const double defVal = defaultRuleAttributes->getFloat(key);
-							av.set(off, defVal);
-						}
-						break;
-					}
-					case prt::AttributeMap::PT_BOOL: {
-						GA_RWHandleI av(attrRef);
-						const bool defVal = defaultRuleAttributes->getBool(key);
-						av.set(off, defVal ? 1 : 0);
-						break;
-					}
-					case prt::AttributeMap::PT_STRING: {
-						GA_RWHandleS av(attrRef);
-						const wchar_t* const defVal = defaultRuleAttributes->getString(key);
-						const std::string nDefVal = toOSNarrowFromUTF16(defVal); // !!!
-						av.set(off, nDefVal.c_str());
-						break;
-					}
-					default: {
-						LOG_ERR << "Array attribute support not implemented yet";
-					}
-				} // switch type
-			} // for default rule attribute keys
 		} // for all primitives in initial shape
 	} // for all initial shapes
 }
