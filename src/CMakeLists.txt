@@ -27,6 +27,14 @@ function(add_toolchain_definition TGT)
 endfunction()
 
 
+### global definitions
+
+set(PRT_RELATIVE_EXTENSION_PATH "prtlib")
+set(HOUDINI_RELATIVE_DSO_PATH "dso")
+set(HOUDINI_RELATIVE_PACKAGES_PATH "packages")
+set(HOUDINI_RELATIVE_PALLADIO_PATH "${HOUDINI_RELATIVE_PACKAGES_PATH}/palladio")
+
+
 ### dependencies
 
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
@@ -61,17 +69,22 @@ add_subdirectory(test EXCLUDE_FROM_ALL)
 
 ### setup installation target
 
-if (NOT HOUDINI_DSO_PATH)
+if (NOT HOUDINI_USER_PATH)
 	if(PLD_WINDOWS)
-		set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}/dso")
+		set(HOUDINI_USER_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}")
 	else()
-		set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}/dso")
+		set(HOUDINI_USER_PATH "$ENV{HOME}/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}")
 	endif()
 endif()
+
+set(HOUDINI_DSO_PATH "${HOUDINI_USER_PATH}/${HOUDINI_RELATIVE_DSO_PATH}")
+set(HOUDINI_PACKAGES_PATH "${HOUDINI_USER_PATH}/${HOUDINI_RELATIVE_PACKAGES_PATH}")
+
 message(STATUS "HOUDINI_DSO_PATH = ${HOUDINI_DSO_PATH}")
+message(STATUS "HOUDINI_PACKAGES_PATH = ${HOUDINI_PACKAGES_PATH}")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX "${HOUDINI_DSO_PATH}" CACHE PATH "default install path" FORCE )
+	set (CMAKE_INSTALL_PREFIX "${HOUDINI_USER_PATH}" CACHE PATH "default install path" FORCE )
 	message(STATUS "Set default install prefix: ${CMAKE_INSTALL_PREFIX}")
 endif()
 
