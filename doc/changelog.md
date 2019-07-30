@@ -1,5 +1,9 @@
 # Palladio ChangeLog
 
+## v1.7.0 (XX, 2019)
+* Improve setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
+* Improved installation experience (avoid setting OS PATH on Windows).
+
 ## v1.6.3 (July 27, 2019)
 * Optimized cooking time of pldGenerate (e.g. Parthenon example from CityEngine tutorial 9 cooks 7x faster)
 * Added "tips and tricks" section with guide how to export Alembics from CityEngine for Palladio

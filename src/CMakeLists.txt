@@ -35,15 +35,16 @@ include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
 ### versioning
 
 set(PLD_VERSION_MAJOR 1)
-set(PLD_VERSION_MINOR 6)
-set(PLD_VERSION_PATCH 3)
+set(PLD_VERSION_MINOR 7)
+set(PLD_VERSION_PATCH 0)
+set(PLD_VERSION_PRE "-pre") # set to empty string for final releases
 if(NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif()
 
 # we use semver.org, Semantic Versioning 2.0.0
 # i.e. <major>.<minor>.<patch>+b<buildnr>.hdn<houdini ver>.prt<prt ver>
-set(PLD_VERSION "${PLD_VERSION_MAJOR}.${PLD_VERSION_MINOR}.${PLD_VERSION_PATCH}\
+set(PLD_VERSION "${PLD_VERSION_MAJOR}.${PLD_VERSION_MINOR}.${PLD_VERSION_PATCH}${PLD_VERSION_PRE}\
 +b${PLD_VERSION_BUILD}\
 .hdn${Houdini_VERSION_MAJOR}-${Houdini_VERSION_MINOR}-${Houdini_VERSION_PATCH}\
 .prt${PRT_VERSION_MAJOR}-${PRT_VERSION_MINOR}-${PRT_VERSION_MICRO}")
@@ -83,7 +84,7 @@ set(CPACK_PACKAGE_VENDOR              "Esri R&D Zurich / VRBN")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Houdini Plugin based on Esri CityEngine")
 set(CPACK_PACKAGE_VERSION_MAJOR       ${PLD_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR       ${PLD_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH       ${PLD_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION_PATCH       ${PLD_VERSION_PATCH}${PLD_VERSION_PRE})
 set(CPACK_PACKAGE_INSTALL_DIRECTORY   "palladio-${PLD_VERSION}")
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
