@@ -18,6 +18,7 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
+#include "LogHandler.h"
 
 #include "SOP/SOP_Node.h"
 
@@ -42,6 +43,14 @@ public:
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
 	void captureOverridableAttributes(const ShapeData& shapeData);
+
+	bool updateParmsFlags() override {
+		bool changed = SOP_Node::updateParmsFlags();
+
+		// TODO: hide non-used value type child parms of ATTRIBUTES_OVERRIDE
+
+		return changed;
+	}
 
 private:
 	const PRTContextUPtr& mPRTCtx;
