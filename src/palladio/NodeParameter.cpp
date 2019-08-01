@@ -295,4 +295,67 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 	}
 }
 
+void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
+	const auto* node = static_cast<SOPAssign*>(data);
+	size_t ri = 0;
+	for (const auto& oa: node->mOverridableAttributes) {
+		if (ri == theMaxSize)
+			break;
+
+		const UT_String primAttr = NameConversion::toPrimAttr(oa.first);
+		theMenu[ri++].setTokenAndLabel(primAttr.c_str(), primAttr.c_str());
+	}
+	theMenu[ri].setTokenAndLabel(nullptr, nullptr); // needs a null terminator
+}
+
+namespace {
+
+class AttributeValueVisitor : public PLD_BOOST_NS::static_visitor<> {
+public:
+	AttributeValueVisitor(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+
+    void operator()(const std::wstring& v) const {
+		UT_String utVal(toOSNarrowFromUTF16(v));
+		mNode->setStringInst(utVal, CH_StringMeaning::CH_STRING_LITERAL, ATTRIBUTE_VALUE.getToken(), &mIndex, 0, mTime, 1);
+	}
+
+    void operator()(const double& v) const {
+		mNode->setFloatInst(v, ATTRIBUTE_VALUE.getToken(), &mIndex, 0, mTime, 1);
+	}
+
+	void operator()(const bool& v) const {
+		mNode->setIntInst(v ? 1 : 0, ATTRIBUTE_VALUE.getToken(), &mIndex, 0, mTime, 1);
+	}
+
+private:
+	SOPAssign* mNode;
+	int mIndex;
+	fpreal32 mTime;
+};
+
+} // namespace
+
+int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template* paramTmpl) {
+	auto* node = static_cast<SOPAssign*>(data);
+
+    const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+
+    for (int i = 0; i < numAttrs; i++) {
+    	const int idx = startIdx + i;
+
+		UT_String utAttributeKey;
+		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+
+		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
+		const auto it = node->mOverridableAttributes.find(ruleAttr);
+		if (it != node->mOverridableAttributes.end()) {
+			AttributeValueVisitor avv(node, idx, time);
+			PLD_BOOST_NS::apply_visitor(avv, it->second);
+		}
+    }
+
+    return CHANGED;
+}
+
 } // namespace AssignNodeParams

@@ -164,6 +164,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			return UT_ERROR_ABORT;
 		}
 		mShapeConverter->put(gdp, primCls, shapeData);
+
+		captureOverridableAttributes(shapeData);
 	}
 
 	unlockInputs();
@@ -177,4 +179,44 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on name change, we use the node name in various output places
 	if (reason == OP_NAME_CHANGED)
 		forceRecook();
+}
+
+void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
+	mOverridableAttributes.clear();
+
+	AttributeMapVector defaultRuleAttributeMaps;
+	for (auto& amb: shapeData.getRuleAttributeMapBuilders()) {
+		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
+	}
+
+	for (size_t isIdx = 0; isIdx < defaultRuleAttributeMaps.size(); isIdx++) {
+		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
+
+		size_t keyCount = 0;
+		const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
+		for (size_t k = 0; k < keyCount; k++) {
+			const wchar_t* const key = cKeys[k];
+			const auto type = defaultRuleAttributes->getType(key);
+
+			AttributeValueType defVal;
+			switch (type) {
+				case prt::AttributeMap::PT_FLOAT: {
+					defVal = defaultRuleAttributes->getFloat(key);
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL: {
+					defVal = defaultRuleAttributes->getBool(key);
+					break;
+				}
+				case prt::AttributeMap::PT_STRING: {
+					defVal = defaultRuleAttributes->getString(key);
+					break;
+				}
+				default:
+					break;
+			}
+			if (!defVal.empty())
+				mOverridableAttributes.emplace(key, defVal);
+		}
+	}
 }
