@@ -49,5 +49,6 @@ private:
 
 public:
 	using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
-	std::map<std::wstring, AttributeValueType> mOverridableAttributes;
+	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
+	AttributeValueMap mOverridableAttributes;
 };

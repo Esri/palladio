@@ -308,11 +308,9 @@ void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	theMenu[ri].setTokenAndLabel(nullptr, nullptr); // needs a null terminator
 }
 
-namespace {
-
-class AttributeValueVisitor : public PLD_BOOST_NS::static_visitor<> {
+class AttributeValueSetter : public PLD_BOOST_NS::static_visitor<> {
 public:
-	AttributeValueVisitor(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+	AttributeValueSetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
 
     void operator()(const std::wstring& v) const {
 		UT_String utVal(toOSNarrowFromUTF16(v));
@@ -333,7 +331,33 @@ private:
 	fpreal32 mTime;
 };
 
-} // namespace
+class AttributeValueGetter : public PLD_BOOST_NS::static_visitor<> {
+public:
+	AttributeValueGetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+
+    void operator()(const std::wstring& v) {
+		UT_String val;
+		mNode->evalStringInst(ATTRIBUTE_VALUE.getToken(), &mIndex, val, 0, mTime, 1);
+		mValue = toUTF16FromOSNarrow(val.c_str());
+	}
+
+    void operator()(const double& v) {
+		mValue = mNode->evalFloatInst(ATTRIBUTE_VALUE.getToken(), &mIndex, 0, mTime, 1);
+	}
+
+	void operator()(const bool& v) {
+		auto val = mNode->evalIntInst(ATTRIBUTE_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		mValue = (val > 0);
+	}
+
+private:
+	SOPAssign* mNode;
+	int mIndex;
+	fpreal32 mTime;
+
+public:
+	SOPAssign::AttributeValueType mValue;
+};
 
 int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template* paramTmpl) {
 	auto* node = static_cast<SOPAssign*>(data);
@@ -349,13 +373,39 @@ int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_
 
 		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
 		const auto it = node->mOverridableAttributes.find(ruleAttr);
-		if (it != node->mOverridableAttributes.end()) {
-			AttributeValueVisitor avv(node, idx, time);
-			PLD_BOOST_NS::apply_visitor(avv, it->second);
-		}
+		assert(it != node->mOverridableAttributes.end());
+
+		AttributeValueSetter avs(node, idx, time);
+		PLD_BOOST_NS::apply_visitor(avs, it->second);
     }
 
     return CHANGED;
+}
+
+SOPAssign::AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
+    const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+
+    SOPAssign::AttributeValueMap ruleAttrs;
+    for (int i = 0; i < numAttrs; i++) {
+    	const int idx = startIdx + i;
+
+		UT_String utAttributeKey;
+		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+
+		if (utAttributeKey.length() == 0) // might happen when attribute is freshly added to the params
+			continue;
+
+		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
+		const auto it = node->mOverridableAttributes.find(ruleAttr);
+		assert(it != node->mOverridableAttributes.end());
+
+		AttributeValueGetter avg(node, idx, time);
+		PLD_BOOST_NS::apply_visitor(avg, it->second);
+
+		ruleAttrs.emplace(ruleAttr, avg.mValue);
+    }
+	return ruleAttrs;
 }
 
 } // namespace AssignNodeParams

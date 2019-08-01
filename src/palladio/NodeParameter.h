@@ -18,6 +18,7 @@
 
 #include "PrimitiveClassifier.h"
 #include "ShapeConverter.h"
+#include "SOPAssign.h"
 #include "Utils.h"
 
 #include "GA/GA_Types.h"
@@ -160,6 +161,8 @@ static PRM_Template PARAM_ATTRIBUTE_TEMPLATE[] = {
 	PRM_Template(PRM_STRING, 1, &ATTRIBUTE_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
 	PRM_Template()
 };
+
+SOPAssign::AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time);
 
 
 // -- ASSIGN NODE PARAMS
