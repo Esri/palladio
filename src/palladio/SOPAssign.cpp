@@ -163,9 +163,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
 			return UT_ERROR_ABORT;
 		}
-		mShapeConverter->put(gdp, primCls, shapeData);
-
 		captureOverridableAttributes(shapeData);
+		mShapeConverter->put(this, context, gdp, primCls, shapeData);
 	}
 
 	unlockInputs();
