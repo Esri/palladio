@@ -151,7 +151,7 @@ static PRM_Name ATTRIBUTE("attribute#", "Attribute");
 void buildAttributeMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback attributeCallback(&updateAttributeDefaultValue);
-static PRM_ChoiceList attributeMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildAttributeMenu);
+static PRM_ChoiceList attributeMenu(PRM_CHOICELIST_SINGLE, &buildAttributeMenu);
 
 static PRM_Name ATTRIBUTE_VALUE("value#", "Value");
 
