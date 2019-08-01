@@ -208,7 +208,10 @@ void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
 					break;
 				}
 				case prt::AttributeMap::PT_STRING: {
-					defVal = defaultRuleAttributes->getString(key);
+					const wchar_t* v = defaultRuleAttributes->getString(key);
+					assert(v != nullptr);
+					defVal = std::wstring(v);
+					assert(defVal.which() == 0); // std::wstring is type index 0
 					break;
 				}
 				default:
