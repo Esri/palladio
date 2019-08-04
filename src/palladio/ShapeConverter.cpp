@@ -16,6 +16,7 @@
 
 #include "ShapeConverter.h"
 #include "AttributeConversion.h"
+#include "NodeParameter.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
 #include "PrimitiveClassifier.h"
@@ -316,7 +317,7 @@ void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail
 	mah.setup(detail);
 
 	// generate primitive attribute handles for all overriding rule attributes
-	const SOPAssign::AttributeValueMap overriddenRuleAttributes = AssignNodeParams::getOverriddenRuleAttributes(node, context.getTime());
+	const AssignNodeParams::AttributeValueMap overriddenRuleAttributes = AssignNodeParams::getOverriddenRuleAttributes(node, context.getTime());
 	AttrRefMap attrRefs; // TODO: could be done lazily while assigning
 	for (const auto& ruleAttr: overriddenRuleAttributes) {
 

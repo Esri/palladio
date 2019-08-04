@@ -18,13 +18,13 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
+#include "NodeParameter.h"
 #include "LogHandler.h"
 
 #include "SOP/SOP_Node.h"
 
 #include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-
+#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
 
 class SOPAssign : public SOP_Node {
 public:
@@ -43,21 +43,12 @@ public:
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
 	void captureOverridableAttributes(const ShapeData& shapeData);
-
-	bool updateParmsFlags() override {
-		bool changed = SOP_Node::updateParmsFlags();
-
-		// TODO: hide non-used value type child parms of ATTRIBUTES_OVERRIDE
-
-		return changed;
-	}
+	bool updateParmsFlags() override;
 
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
 
 public:
-	using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
-	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
-	AttributeValueMap mOverridableAttributes;
+	AssignNodeParams::AttributeValueMap mOverridableAttributes;
 };

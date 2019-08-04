@@ -15,6 +15,7 @@
  */
 
 #include "NodeParameter.h"
+#include "SOPAssign.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "SOPAssign.h"
@@ -347,34 +348,6 @@ private:
 	fpreal32 mTime;
 };
 
-class AttributeValueGetter : public PLD_BOOST_NS::static_visitor<> {
-public:
-	AttributeValueGetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
-
-    void operator()(const std::wstring& v) {
-		UT_String val;
-		mNode->evalStringInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex, val, 0, mTime, 1);
-		mValue = toUTF16FromOSNarrow(val.c_str());
-	}
-
-    void operator()(const double& v) {
-		mValue = mNode->evalFloatInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
-	}
-
-	void operator()(const bool& v) {
-		auto val = mNode->evalIntInst(ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex, 0, mTime, 1);
-		mValue = (val > 0);
-	}
-
-private:
-	SOPAssign* mNode;
-	int mIndex;
-	fpreal32 mTime;
-
-public:
-	SOPAssign::AttributeValueType mValue;
-};
-
 int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Template*) {
 	auto* node = static_cast<SOPAssign*>(data);
 
@@ -403,11 +376,39 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
     return CHANGED;
 }
 
-SOPAssign::AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
+class AttributeValueGetter : public PLD_BOOST_NS::static_visitor<> {
+public:
+	AttributeValueGetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+
+    void operator()(const std::wstring& v) {
+		UT_String val;
+		mNode->evalStringInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex, val, 0, mTime, 1);
+		mValue = toUTF16FromOSNarrow(val.c_str());
+	}
+
+    void operator()(const double& v) {
+		mValue = mNode->evalFloatInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
+	}
+
+	void operator()(const bool& v) {
+		auto val = mNode->evalIntInst(ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		mValue = (val > 0);
+	}
+
+private:
+	SOPAssign* mNode;
+	int mIndex;
+	fpreal32 mTime;
+
+public:
+	AttributeValueType mValue;
+};
+
+AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
     const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
     const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
 
-    SOPAssign::AttributeValueMap ruleAttrs;
+    AttributeValueMap ruleAttrs;
     for (int i = 0; i < numAttrs; i++) {
     	const int idx = startIdx + i;
 
@@ -431,6 +432,43 @@ SOPAssign::AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal
 		ruleAttrs.emplace(ruleAttr, avg.mValue);
     }
 	return ruleAttrs;
+}
+
+bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
+	const std::array<const char*,3> tokens = {
+		ATTRIBUTE_STRING_VALUE.getToken(),
+		ATTRIBUTE_FLOAT_VALUE.getToken(),
+		ATTRIBUTE_BOOL_VALUE.getToken()
+	};
+
+    const int numAttrs = assignNode.evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+    bool changed = false;
+    for (int i = 0; i < numAttrs; i++) {
+    	const int idx = startIdx + i;
+
+		UT_String utAttributeKey;
+		assignNode.evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+		const bool isValidAttr = (utAttributeKey.length() > 0) && (utAttributeKey != "(none)");
+
+		int activeType = -1;
+		if (isValidAttr) {
+			const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
+			const AttributeValueType attrDefVal = assignNode.mOverridableAttributes.at(ruleAttr);
+			activeType = attrDefVal.which();
+		}
+
+		for (int ti = 0; ti < tokens.size(); ti++) {
+			const bool prevState = (assignNode.getEnableStateInst(tokens[ti], &idx) > 0);
+			changed |= (prevState != isValidAttr);
+			assignNode.enableParmInst(tokens[ti], &idx, isValidAttr ? 1 : 0);
+
+			const bool makeVisible = (activeType == ti);
+			assignNode.setVisibleStateInst(tokens[ti], &idx, makeVisible ? 1 : 0);
+		}
+    }
+
+    return changed;
 }
 
 } // namespace AssignNodeParams

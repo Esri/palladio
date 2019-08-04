@@ -18,7 +18,6 @@
 
 #include "PrimitiveClassifier.h"
 #include "ShapeConverter.h"
-#include "SOPAssign.h"
 #include "Utils.h"
 
 #include "GA/GA_Types.h"
@@ -34,6 +33,7 @@
 // clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
+#include PLD_BOOST_INCLUDE(/variant.hpp)
 // clang-format on
 
 namespace CommonNodeParams {
@@ -147,15 +147,19 @@ const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 
 // -- OVERRIDABLE ATTRIBUTES
-static PRM_Name ATTRIBUTE("attribute#", "Attribute");
+using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
+using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
+
+	static PRM_Name ATTRIBUTE("attribute#", "Attribute");
 void buildAttributeMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
 int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback attributeCallback(&updateAttributeDefaultValue);
 static PRM_ChoiceList attributeMenu(PRM_CHOICELIST_SINGLE, &buildAttributeMenu);
+bool updateParmsFlags(SOPAssign& opParm, fpreal time);
 
-static PRM_Name ATTRIBUTE_STRING_VALUE("stringValue#", "Value");
-static PRM_Name ATTRIBUTE_FLOAT_VALUE("floatValue#", "Value");
-static PRM_Name ATTRIBUTE_BOOL_VALUE("boolValue#", "Value");
+static PRM_Name ATTRIBUTE_STRING_VALUE("stringValue#", "String Value");
+static PRM_Name ATTRIBUTE_FLOAT_VALUE("floatValue#", "Number Value");
+static PRM_Name ATTRIBUTE_BOOL_VALUE("boolValue#", "Boolean Value");
 
 static PRM_Name ATTRIBUTES_OVERRIDE("attributesOverride", "Attribute Overrides");
 static PRM_Template PARAM_ATTRIBUTE_TEMPLATE[] = {
@@ -166,7 +170,7 @@ static PRM_Template PARAM_ATTRIBUTE_TEMPLATE[] = {
 	PRM_Template()
 };
 
-SOPAssign::AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time);
+AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time);
 
 
 // -- ASSIGN NODE PARAMS
