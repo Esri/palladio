@@ -16,17 +16,15 @@
 
 #include "PalladioMain.h"
 
+#include "LogHandler.h"
 #include "NodeParameter.h"
 #include "PRTContext.h"
 #include "SOPAssign.h"
 #include "SOPGenerate.h"
-#include "LogHandler.h"
 
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"
 
-//#undef major // fixes warning regarding duplicate macros in <sys/types.h> and <sys/sysmacros.h>
-//#undef minor
 #include "UT/UT_DSOVersion.h"
 
 namespace {

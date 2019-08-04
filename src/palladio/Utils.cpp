@@ -185,15 +185,19 @@ std::string toUTF8FromOSNarrow(const std::string& osString) {
 	return std::string(temp.data());
 }
 
-std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p) {
+std::wstring toFileURI(const std::string& p) {
 #ifdef _WIN32
 	static const std::wstring schema = L"file:/";
 #else
 	static const std::wstring schema = L"file:";
 #endif
-	std::string utf8Path = toUTF8FromOSNarrow(p.generic_string());
+	std::string utf8Path = toUTF8FromOSNarrow(p);
 	std::wstring pecString = percentEncode(utf8Path);
 	return schema + pecString;
+}
+
+std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p) {
+	return toFileURI(p.generic_string());
 }
 
 std::wstring percentEncode(const std::string& utf8String) {
