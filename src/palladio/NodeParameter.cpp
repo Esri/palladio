@@ -67,6 +67,10 @@ std::wstring findStartRule(const RuleFileInfoUPtr& info) {
 constexpr const int NOT_CHANGED = 0;
 constexpr const int CHANGED = 1;
 
+bool isValidAttr(const UT_String& name) {
+	return (name.length() > 0) && (name != AssignNodeParams::ATTRIBUTE_NONE);
+}
+
 } // namespace
 
 namespace CommonNodeParams {
@@ -300,7 +304,7 @@ void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	const auto* node = static_cast<SOPAssign*>(data);
 
 	size_t ri = 0;
-	theMenu[ri++].setTokenAndLabel("(none)", "(none)");
+	theMenu[ri++].setTokenAndLabel(ATTRIBUTE_NONE, ATTRIBUTE_NONE);
 
 	for (const auto& oa: node->mOverridableAttributes) {
 		if (ri == theMaxSize)
@@ -360,9 +364,7 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 		UT_String utAttributeKey;
 		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
 
-		if (utAttributeKey.length() == 0) // might happen when attribute is freshly added to the params
-			continue;
-		if (utAttributeKey == "(none)")
+		if (!isValidAttr(utAttributeKey))
 			continue;
 
 		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
@@ -415,9 +417,7 @@ AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 		UT_String utAttributeKey;
 		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
 
-		if (utAttributeKey.length() == 0) // might happen when attribute is freshly added to the params
-			continue;
-		if (utAttributeKey == "(none)")
+		if (!isValidAttr(utAttributeKey))
 			continue;
 
 		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
@@ -449,10 +449,10 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 
 		UT_String utAttributeKey;
 		assignNode.evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
-		const bool isValidAttr = (utAttributeKey.length() > 0) && (utAttributeKey != "(none)");
+		const bool validAttr = isValidAttr(utAttributeKey);
 
 		int activeType = -1;
-		if (isValidAttr) {
+		if (validAttr) {
 			const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
 			const AttributeValueType attrDefVal = assignNode.mOverridableAttributes.at(ruleAttr);
 			activeType = attrDefVal.which();
@@ -460,8 +460,8 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 
 		for (int ti = 0; ti < tokens.size(); ti++) {
 			const bool prevState = (assignNode.getEnableStateInst(tokens[ti], &idx) > 0);
-			changed |= (prevState != isValidAttr);
-			assignNode.enableParmInst(tokens[ti], &idx, isValidAttr ? 1 : 0);
+			changed |= (prevState != validAttr);
+			assignNode.enableParmInst(tokens[ti], &idx, validAttr ? 1 : 0);
 
 			const bool makeVisible = (activeType == ti);
 			assignNode.setVisibleStateInst(tokens[ti], &idx, makeVisible ? 1 : 0);
