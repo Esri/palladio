@@ -1,0 +1,8 @@
+{
+  "enable": true,
+  "env": [
+    {
+      "PATH": "$HOUDINI_USER_PREF_DIR/packages/palladio"
+    }
+  ]
+}

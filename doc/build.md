@@ -1,26 +1,26 @@
 # Build and Run Palladio
 
+
 ## Build Requirements
 
 ### Supported Operating Systems
-- RHEL/CentOS 6/7 (or compatible)
-- Windows 7/8.1/10 
+* RedHat Enterprise Linux 7 (and compatible)
+* Windows 7/8.1/10
  
-### Dependencies
-* Installation of Houdini 16.5 or later (see https://sidefx.com/download)
-* Optional installation and license of CityEngine (2017.1 or later) to author rule packages 
-
-### Toolchain & Compiler
+### Required Toolchain & Compiler
 * [cmake 3.13 or later](https://cmake.org/download)
 * [conan 1.11 or later](https://www.conan.io/downloads)
 * Linux: GCC 6.3
 * Windows: Visual Studio 2017 (MSVC 14.1)
 
-### Dependencies
-The bootstrap steps below will take care of these additional dependencies: 
+### Required Build Dependencies
+* Installation of Houdini 16.5 or later (see https://sidefx.com/download)
+
+The following will be automatically fetched via the bootstrap steps below: 
 * [Esri CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk)
 * SideFX Houdini HDK
 * Boost (only for Houdini older than 17.0)
+
 
 ## Build Instructions
 
@@ -79,10 +79,3 @@ See [Quick Start](usage.md) how to launch Houdini with Palladio.
 1. ```nmake palladio_test```
 1. ensure that the `bin` subdirectory of your Houdini installation is in the `PATH`
 1. run `bin\palladio_test`
-
-
-## Environment Variables
-
-- `CITYENGINE_LOG_LEVEL`: controls global (minimal) log level for all assign and generate nodes. Valid values are "debug", "info", "warning", "error", "fatal"
-- `HOUDINI_DSO_ERROR`: useful to debug loading issues, see http://www.sidefx.com/docs/houdini/ref/env
-
