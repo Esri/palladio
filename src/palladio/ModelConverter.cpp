@@ -241,6 +241,7 @@ prt::Status ModelConverter::cgaError(size_t isIndex, int32_t shapeID, prt::CGAEr
 }
 
 prt::Status ModelConverter::cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) {
+	LOG_INF << isIndex << ": " << shapeID << ": " << txt;
 	return prt::STATUS_OK;
 }
 
@@ -268,16 +269,19 @@ AttributeMapBuilderUPtr& getBuilder(std::map<int32_t, AttributeMapBuilderUPtr>& 
 } // namespace
 
 prt::Status ModelConverter::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
+	if (DBG) LOG_DBG << "attrBool: shapeID :" << shapeID << ", key: " << key << ", val: " << value;
 	getBuilder(mShapeAttributeBuilders, shapeID)->setBool(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status ModelConverter::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
+	if (DBG) LOG_DBG << "attrFloat: shapeID :" << shapeID << ", key: " << key << ", val: " << value;
 	getBuilder(mShapeAttributeBuilders, shapeID)->setFloat(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status ModelConverter::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+	if (DBG) LOG_DBG << "attrString: shapeID :" << shapeID << ", key: " << key << ", val: " << value;
 	getBuilder(mShapeAttributeBuilders, shapeID)->setString(key, value);
 	return prt::STATUS_OK;
 }

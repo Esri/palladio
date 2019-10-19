@@ -169,7 +169,7 @@ const auto getGroupCreation = [](const OP_Node* node, fpreal t) -> GroupCreation
 	}
 };
 
-static PRM_Name EMIT_ATTRS("emitAttrs", "Emit CGA attributes");
+static PRM_Name EMIT_ATTRS("emitAttrs", "Re-emit set CGA attributes");
 static PRM_Name EMIT_MATERIAL("emitMaterials", "Emit material attributes");
 static PRM_Name EMIT_REPORTS("emitReports", "Emit CGA reports");
 static PRM_Template PARAM_TEMPLATES[] {
