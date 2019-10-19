@@ -61,14 +61,14 @@ if(PLD_CONAN_CESDK_DIR)
 	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
 	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
 else()
-	message("CONAN_CESDK_ROOT = ${CONAN_CESDK_ROOT}")
+	message(STATUS "CONAN_CESDK_ROOT = ${CONAN_CESDK_ROOT}")
 	list(APPEND CMAKE_PREFIX_PATH "${CONAN_CESDK_ROOT}/esri_ce_sdk/cmake")
 endif()
 
 find_package(prt CONFIG REQUIRED)
 
-install(FILES ${PRT_LIBRARIES} DESTINATION .)
-install(FILES ${PRT_EXT_LIBRARIES} DESTINATION prtlib)
+install(FILES ${PRT_LIBRARIES} DESTINATION ${HOUDINI_RELATIVE_PALLADIO_PATH})
+install(FILES ${PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
 
 function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})

@@ -95,7 +95,7 @@ std::string objectToXML(prt::Object const* obj) {
 void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func) {
 #ifdef _WIN32
 	HMODULE dllHandle = 0;
-	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)getLibraryPath, &dllHandle)) {
+	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)func, &dllHandle)) {
 		DWORD c = GetLastError();
 		char msg[255];
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);

@@ -96,6 +96,12 @@ protected:
 	prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
 	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
 
+#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 0)
+	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr, size_t size) override { return prt::STATUS_OK; }
+	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr, size_t size) override { return prt::STATUS_OK; }
+	prt::Status attrStringArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* const* ptr, size_t size) override { return prt::STATUS_OK; }
+#endif
+
 	prt::Callbacks::Continuation progress(float percentageCompleted) override {
 		if (mAutoInterrupt && mAutoInterrupt->wasInterrupted()) // TODO: is this thread-safe?
 			return prt::Callbacks::CANCEL_AND_FINISH;

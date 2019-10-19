@@ -64,6 +64,15 @@ This short CityEngine guide explains how to include the random seed and start ru
     The `seed` rule attribute should have been connected to the previously assigned `seed` object attribute.
 1. Export the shapes to Alembic, the two report values are now attached as user properties to the meshes.
 
+#### Keep CityEngine Rule Packages in the Houdini Project
+
+It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini project. If you use `$HIP` to refer to the RPK in the pldAssign node, your Houdini project will stay relocatable.
+
+#### Environment Variables
+
+* `CITYENGINE_LOG_LEVEL`: controls the global (minimal) log level for all assign and generate nodes. Valid values are "debug", "info", "warning", "error", "fatal"
+* `HOUDINI_DSO_ERROR`: useful to debug loading issues, see http://www.sidefx.com/docs/houdini/ref/env
+
 
 ## Community
 

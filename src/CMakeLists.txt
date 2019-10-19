@@ -27,6 +27,14 @@ function(add_toolchain_definition TGT)
 endfunction()
 
 
+### global definitions
+
+set(PRT_RELATIVE_EXTENSION_PATH "prtlib")
+set(HOUDINI_RELATIVE_DSO_PATH "dso")
+set(HOUDINI_RELATIVE_PACKAGES_PATH "packages")
+set(HOUDINI_RELATIVE_PALLADIO_PATH "${HOUDINI_RELATIVE_PACKAGES_PATH}/palladio")
+
+
 ### dependencies
 
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
@@ -35,15 +43,16 @@ include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
 ### versioning
 
 set(PLD_VERSION_MAJOR 1)
-set(PLD_VERSION_MINOR 6)
-set(PLD_VERSION_PATCH 3)
+set(PLD_VERSION_MINOR 7)
+set(PLD_VERSION_PATCH 0)
+set(PLD_VERSION_PRE "-pre") # set to empty string for final releases
 if(NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif()
 
 # we use semver.org, Semantic Versioning 2.0.0
 # i.e. <major>.<minor>.<patch>+b<buildnr>.hdn<houdini ver>.prt<prt ver>
-set(PLD_VERSION "${PLD_VERSION_MAJOR}.${PLD_VERSION_MINOR}.${PLD_VERSION_PATCH}\
+set(PLD_VERSION "${PLD_VERSION_MAJOR}.${PLD_VERSION_MINOR}.${PLD_VERSION_PATCH}${PLD_VERSION_PRE}\
 +b${PLD_VERSION_BUILD}\
 .hdn${Houdini_VERSION_MAJOR}-${Houdini_VERSION_MINOR}-${Houdini_VERSION_PATCH}\
 .prt${PRT_VERSION_MAJOR}-${PRT_VERSION_MINOR}-${PRT_VERSION_MICRO}")
@@ -61,17 +70,22 @@ add_subdirectory(test EXCLUDE_FROM_ALL)
 
 ### setup installation target
 
-if (NOT HOUDINI_DSO_PATH)
+if (NOT HOUDINI_USER_PATH)
 	if(PLD_WINDOWS)
-		set(HOUDINI_DSO_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}/dso")
+		set(HOUDINI_USER_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}/Documents/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}")
 	else()
-		set(HOUDINI_DSO_PATH "$ENV{HOME}/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}/dso")
+		set(HOUDINI_USER_PATH "$ENV{HOME}/houdini${Houdini_VERSION_MAJOR}.${Houdini_VERSION_MINOR}")
 	endif()
 endif()
+
+set(HOUDINI_DSO_PATH "${HOUDINI_USER_PATH}/${HOUDINI_RELATIVE_DSO_PATH}")
+set(HOUDINI_PACKAGES_PATH "${HOUDINI_USER_PATH}/${HOUDINI_RELATIVE_PACKAGES_PATH}")
+
 message(STATUS "HOUDINI_DSO_PATH = ${HOUDINI_DSO_PATH}")
+message(STATUS "HOUDINI_PACKAGES_PATH = ${HOUDINI_PACKAGES_PATH}")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX "${HOUDINI_DSO_PATH}" CACHE PATH "default install path" FORCE )
+	set (CMAKE_INSTALL_PREFIX "${HOUDINI_USER_PATH}" CACHE PATH "default install path" FORCE )
 	message(STATUS "Set default install prefix: ${CMAKE_INSTALL_PREFIX}")
 endif()
 
@@ -83,7 +97,7 @@ set(CPACK_PACKAGE_VENDOR              "Esri R&D Zurich / VRBN")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Houdini Plugin based on Esri CityEngine")
 set(CPACK_PACKAGE_VERSION_MAJOR       ${PLD_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR       ${PLD_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH       ${PLD_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION_PATCH       ${PLD_VERSION_PATCH}${PLD_VERSION_PRE})
 set(CPACK_PACKAGE_INSTALL_DIRECTORY   "palladio-${PLD_VERSION}")
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")

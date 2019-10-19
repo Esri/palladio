@@ -171,12 +171,12 @@ void convertMaterialToAttributeMap(
 		const prtx::Material& prtxAttr,
 		const prtx::WStringVector& keys
 ) {
-	if (DBG) log_wdebug(L"-- converting material: %1%") % prtxAttr.name();
+	if (DBG) log_debug(L"-- converting material: %1%") % prtxAttr.name();
 	for(const auto& key : keys) {
 		if (MATERIAL_ATTRIBUTE_BLACKLIST.count(key) > 0)
 			continue;
 
-		if (DBG) log_wdebug(L"   key: %1%") % key;
+		if (DBG) log_debug(L"   key: %1%") % key;
 
 		switch(prtxAttr.getType(key)) {
 			case prt::Attributable::PT_BOOL:
@@ -244,7 +244,7 @@ void convertMaterialToAttributeMap(
 			}
 
 			default:
-				if (DBG) log_wdebug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
+				if (DBG) log_debug(L"ignored atttribute '%s' with type %d") % key % prtxAttr.getType(key);
 				break;
 		}
 	}
