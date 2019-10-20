@@ -1,10 +1,10 @@
 # Palladio ChangeLog
 
-## v1.7.0 (XX, 2019)
+## v1.7.0-pre (Nov 20, 2019)
 * Improve setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
 * Improved installation experience (avoid setting OS PATH on Windows).
 * Update default CityEngine SDK version to 2.1 (CityEngine 2019.1).
-* Only pass non-default rule attribute value to PRT. This fixes setting inter-dependent rule attributes.
+* Only pass non-default rule attribute values to PRT. This fixes setting inter-dependent rule attributes.
 
 ## v1.6.3 (July 27, 2019)
 * Optimized cooking time of pldGenerate (e.g. Parthenon example from CityEngine tutorial 9 cooks 7x faster)
