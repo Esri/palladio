@@ -71,6 +71,7 @@ def taskBuildPalladio(cfg) {
 	List deps = [] // empty dependencies = by default use conan packages
 	
 	List defs = [
+		[ key: 'HOUDINI_USER_PATH',   val: "${env.WORKSPACE}/install" ],
 		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
