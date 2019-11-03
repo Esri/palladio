@@ -1,6 +1,9 @@
 # Palladio ChangeLog
 
-## v1.7.0-pre (Nov 20, 2019)
+## v1.7.0-beta1 (Nov 3, 2019)
+* Fixed pipeline to not install files outside of the install directory (#138).
+
+## v1.7.0-pre (Oct 20, 2019)
 * Improve setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
 * Improved installation experience (avoid setting OS PATH on Windows).
 * Update default CityEngine SDK version to 2.1 (CityEngine 2019.1).
