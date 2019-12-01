@@ -1,8 +1,8 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.13.cmake)
-conan_check(VERSION 1.11 REQUIRED)
+include(${PLD_CONAN_TOOLS}/conan-0.14.cmake)
+conan_check(VERSION 1.20 REQUIRED)
 
 
 ### select Houdini version and required toolchain
