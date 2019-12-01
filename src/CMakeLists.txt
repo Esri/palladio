@@ -59,15 +59,6 @@ set(PLD_VERSION "${PLD_VERSION_MAJOR}.${PLD_VERSION_MINOR}.${PLD_VERSION_PATCH}$
 message(STATUS "Using PLD_VERSION = ${PLD_VERSION}")
 
 
-### setup sub-projects
-
-add_subdirectory(codec)
-add_subdirectory(palladio)
-add_dependencies(palladio palladio_codec)
-
-add_subdirectory(test EXCLUDE_FROM_ALL)
-
-
 ### setup installation target
 
 if (NOT HOUDINI_USER_PATH)
@@ -88,6 +79,15 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set (CMAKE_INSTALL_PREFIX "${HOUDINI_USER_PATH}" CACHE PATH "default install path" FORCE )
 	message(STATUS "Set default install prefix: ${CMAKE_INSTALL_PREFIX}")
 endif()
+
+
+### setup sub-projects
+
+add_subdirectory(codec)
+add_subdirectory(palladio)
+add_dependencies(palladio palladio_codec)
+
+add_subdirectory(test EXCLUDE_FROM_ALL)
 
 
 ### setup package target

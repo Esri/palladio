@@ -47,7 +47,7 @@ if(PLD_WINDOWS)
 	# nothing, inheriting compiler flags from houdini
 
 elseif(PLD_LINUX)
-	if(${PLD_HDN_VER_MAJ} STREQUAL "17")
+	if(${PLD_HDN_VER_MAJ} STREQUAL "17" OR ${PLD_HDN_VER_MAJ} STREQUAL "18")
 		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
 	elseif(${PLD_HDN_VER_MAJ} STREQUAL "16")
 		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11)
