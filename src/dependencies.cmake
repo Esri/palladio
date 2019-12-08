@@ -30,13 +30,7 @@ elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 17.0...")
 	set(PLD_CONANFILE "conanfile-h17.py")
 
-# Houdini 16.5
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "16" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
-	message(STATUS "Asking Conan for Houdini 16.5...")
-	set(PLD_CONANFILE "conanfile-h16.py")
 endif()
-
-# TODO: add support to control micro version of houdini via conan env
 
 
 ### select required CE SDK version
@@ -45,8 +39,6 @@ if(PLD_CONAN_CESDK_DIR)
 	# make conan ignore cesdk package, we'll set its path manually
 	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
 endif()
-
-# TODO: allow actual specification of CE SDK version via conan env
 
 
 ### run conan
@@ -117,15 +109,6 @@ function(pld_add_dependency_houdini TGT)
 	elseif(${Houdini_VERSION_MAJOR} STREQUAL "16")
 		target_link_libraries(${TGT} PRIVATE Houdini)
 		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=boost)
-	endif()
-endfunction()
-
-
-### boost dependency
-
-function(pld_add_dependency_boost TGT)
-	if(${Houdini_VERSION_MAJOR} STREQUAL "16")
-		target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
 	endif()
 endfunction()
 

@@ -24,7 +24,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 		palladio_codec)
 
 pld_add_dependency_catch2(${PROJECT_NAME})
-pld_add_dependency_boost(${PROJECT_NAME})
 pld_add_dependency_prt(${PROJECT_NAME})
 pld_add_dependency_houdini(${PROJECT_NAME})
 
