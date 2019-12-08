@@ -14,17 +14,16 @@
 * Windows: Visual Studio 2017 (MSVC 14.1)
 
 ### Required Build Dependencies
-* Installation of Houdini 16.5 or later (see https://sidefx.com/download)
+* Installation of Houdini 17.0 or later (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
 * [Esri CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk)
 * SideFX Houdini HDK
-* Boost (only for Houdini older than 17.0)
 
 
 ## Build Instructions
 
-Default is Houdini 17.5. See below how to build for different Houdini versions.
+Default is Houdini 18.0. See below how to build for different Houdini versions.
 
 ### Bootstrap
 
@@ -33,31 +32,31 @@ The below steps will populate your local Conan repository with dependencies for 
 #### Linux
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
 1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc63 conan/cesdk cesdk/2.1.5704@esri-rd-zurich/stable`
-1. Extract and package the HDK from your local Houdini 17 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc63 conan/houdini houdini/17.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs17.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs17.5.Z` for Linux).
+1. Extract and package the HDK from your local Houdini 18 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc63 conan/houdini houdini/18.0.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs18.0.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs18.0.Z` for Linux).
 
 #### Windows
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git`
 1. Open a Windows command shell and `cd` to the Palladio git repository
 1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v141 conan/cesdk cesdk/2.1.5704@esri-rd-zurich/stable`
-1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v141 conan/houdini houdini/17.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
+1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v141 conan/houdini houdini/18.0.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
 
 ### Building Palladio
 
-Note: to e.g. build for Houdini 16.5, add cmake argument `-DPLD_HOUDINI_VERSION=16.5`.
+Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDINI_VERSION=X.Y`.
 
 #### Linux
 1. Ensure GCC 6.3 is active.
 1. `cd` into your Palladio git repository
 1. ```mkdir -p build/release && cd build/release```
 1. ```cmake -DCMAKE_BUILD_TYPE=Release ../../src```
-1. ```make install``` (the plugin will be installed into your ~/houdini17.5/dso directory)
+1. ```make install``` (the plugin will be installed into your ~/houdini18.0/dso directory)
 
 #### Windows
 1. Open a MSVC 14.1 x64 shell (Visual Studio 2017) and `cd` to the Palladio git repository
 1. ```mkdir build/release```
 1. ```cd build/release```
 1. ```cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src```
-1. ```nmake install``` (the plugin will be installed into your ~/houdini17.5/dso directory)
+1. ```nmake install``` (the plugin will be installed into your ~/houdini18.0/dso directory)
 
 ### Running Palladio
 See [Quick Start](usage.md) how to launch Houdini with Palladio.
