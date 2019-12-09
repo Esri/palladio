@@ -1,22 +1,27 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.13.cmake)
-conan_check(VERSION 1.11 REQUIRED)
+include(${PLD_CONAN_TOOLS}/conan-0.14.cmake)
+conan_check(VERSION 1.20 REQUIRED)
 
 
 ### select Houdini version and required toolchain
 
 if (NOT PLD_HOUDINI_VERSION)
-	set(PLD_HOUDINI_VERSION "17.5") # use Houdini 17.5 by default
+	set(PLD_HOUDINI_VERSION "18.0") # use Houdini 18.0 by default
 endif()
 
 string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
 list(GET PLD_HDN_VER 0 PLD_HDN_VER_MAJ)
 list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 
+# Houdini 18.0
+if (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
+	message(STATUS "Asking Conan for Houdini 18.0...")
+	set(PLD_CONANFILE "conanfile-h180.py")
+
 # Houdini 17.5
-if (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 17.5...")
 	set(PLD_CONANFILE "conanfile-h175.py")
 
@@ -25,13 +30,7 @@ elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 17.0...")
 	set(PLD_CONANFILE "conanfile-h17.py")
 
-# Houdini 16.5
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "16" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
-	message(STATUS "Asking Conan for Houdini 16.5...")
-	set(PLD_CONANFILE "conanfile-h16.py")
 endif()
-
-# TODO: add support to control micro version of houdini via conan env
 
 
 ### select required CE SDK version
@@ -40,8 +39,6 @@ if(PLD_CONAN_CESDK_DIR)
 	# make conan ignore cesdk package, we'll set its path manually
 	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
 endif()
-
-# TODO: allow actual specification of CE SDK version via conan env
 
 
 ### run conan
@@ -91,7 +88,20 @@ find_package(Houdini REQUIRED)
 
 function(pld_add_dependency_houdini TGT)
 	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
-	if(${Houdini_VERSION_MAJOR} STREQUAL "17")
+
+	if(${Houdini_VERSION_MAJOR} STREQUAL "18")
+		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
+		if(PLD_WINDOWS)
+			set(houdini_lib_path "${_houdini_install_root}/custom/houdini/dsolib")
+			set(houdini_hboost_fs hboost_filesystem-mt)
+		elseif(PLD_LINUX)
+			set(houdini_lib_path "${_houdini_install_root}/dsolib")
+			set(houdini_hboost_fs hboost_filesystem)
+		endif()
+		find_library(HBOOST_FILESYSTEM ${houdini_hboost_fs} ${houdini_lib_path})
+		target_link_libraries(${TGT} PRIVATE Houdini ${HBOOST_FILESYSTEM})
+		houdini_configure_target(${TGT} INSTDIR ${HOUDINI_USER_PATH})
+	elseif(${Houdini_VERSION_MAJOR} STREQUAL "17")
 		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
 		if(PLD_WINDOWS)
 			set(houdini_lib_path "${_houdini_install_root}/custom/houdini/dsolib")
@@ -106,15 +116,6 @@ function(pld_add_dependency_houdini TGT)
 	elseif(${Houdini_VERSION_MAJOR} STREQUAL "16")
 		target_link_libraries(${TGT} PRIVATE Houdini)
 		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=boost)
-	endif()
-endfunction()
-
-
-### boost dependency
-
-function(pld_add_dependency_boost TGT)
-	if(${Houdini_VERSION_MAJOR} STREQUAL "16")
-		target_link_libraries(${TGT} PRIVATE CONAN_PKG::boost)
 	endif()
 endfunction()
 

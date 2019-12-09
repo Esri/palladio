@@ -1,10 +1,13 @@
 # Palladio ChangeLog
 
-## v1.7.0-beta1 (Nov 3, 2019)
+## v1.7.0-beta.1 (Dec 9, 2019)
+* Added support for Houdini 18 and removed Houdini 16 (#143).
+* Updated built artifacts to latest Houdini versions (#139).
+* Filter unnecessary components of PRT from release (#141).
 * Fixed pipeline to not install files outside of the install directory (#138).
 
 ## v1.7.0-pre (Oct 20, 2019)
-* Improve setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
+* Improved setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
 * Improved installation experience (avoid setting OS PATH on Windows).
 * Update default CityEngine SDK version to 2.1 (CityEngine 2019.1).
 * Only pass non-default rule attribute values to PRT. This fixes setting inter-dependent rule attributes.

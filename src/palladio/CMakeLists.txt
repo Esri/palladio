@@ -47,14 +47,8 @@ if(PLD_WINDOWS)
 	# nothing, inheriting compiler flags from houdini
 
 elseif(PLD_LINUX)
-	if(${PLD_HDN_VER_MAJ} STREQUAL "17")
-		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
-	elseif(${PLD_HDN_VER_MAJ} STREQUAL "16")
-		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11)
-	endif()
-
 	target_compile_options(${PROJECT_NAME} PRIVATE
-			-D_GLIBCXX_USE_CXX11_ABI=0
+			-std=c++14 -D_GLIBCXX_USE_CXX11_ABI=0
 			-mtune=generic -m64 -fPIC -mmmx -msse -msse2 -msse3
 			-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder
 			-Wno-uninitialized -Wunused -Wno-unused-parameter
@@ -92,7 +86,6 @@ endif()
 
 ### dependencies
 
-pld_add_dependency_boost(${PROJECT_NAME})
 pld_add_dependency_prt(${PROJECT_NAME})
 pld_add_dependency_houdini(${PROJECT_NAME})
 
