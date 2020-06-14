@@ -6,7 +6,7 @@ title: Palladio - CityEngine Plugin for Houdini
 <tr>
 	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="#downloads"><img src="images/cog.png" width="100px" /> Downloads</a></td>
 	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="#examples"><img src="images/bldg3d.png" width="100px" /> Examples</a></td>
-	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="https://github.com/Esri/palladio/blob/v1.6.3/README.md#documentation"><img src="images/docs.png" width="100px" /> Documentation</a></td>
+	<td style="font-size:22pt;text-align:center;vertical-align:bottom"><a href="https://github.com/Esri/palladio/blob/master/README.md#documentation"><img src="images/docs.png" width="100px" /> Documentation</a></td>
 </tr>
 </table>
 
