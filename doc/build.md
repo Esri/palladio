@@ -9,7 +9,7 @@
  
 ### Required Toolchain & Compiler
 * [cmake 3.13 or later](https://cmake.org/download)
-* [conan 1.11 or later](https://www.conan.io/downloads)
+* [conan 1.20 or later](https://www.conan.io/downloads)
 * Linux: GCC 6.3
 * Windows: Visual Studio 2017 (MSVC 14.1)
 
