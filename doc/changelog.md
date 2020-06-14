@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.7.0 (June 14, 2020)
+* No functional changes compared to Beta 1 
+
 ## v1.7.0-beta.1 (Dec 9, 2019)
 * Added support for Houdini 18 and removed Houdini 16 (#143).
 * Updated built artifacts to latest Houdini versions (#139).
