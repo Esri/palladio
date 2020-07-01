@@ -5,6 +5,8 @@ import com.esri.zrh.jenkins.PipelineSupportLibrary
 import com.esri.zrh.jenkins.JenkinsTools
 import com.esri.zrh.jenkins.ce.CityEnginePipelineLibrary
 import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
+import com.esri.zrh.jenkins.PslFactory
+import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
 @Field def psl = PslFactory.create(this, UploadTrackingPsl.ID)
 @Field def cepl = new CityEnginePipelineLibrary(this, psl)
