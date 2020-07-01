@@ -6,7 +6,7 @@ import com.esri.zrh.jenkins.JenkinsTools
 import com.esri.zrh.jenkins.ce.CityEnginePipelineLibrary
 import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
 
-@Field def psl = new PipelineSupportLibrary(this)
+@Field def psl = PslFactory.create(this, UploadTrackingPsl.ID)
 @Field def cepl = new CityEnginePipelineLibrary(this, psl)
 @Field def papl = new PrtAppPipelineLibrary(cepl)
 
@@ -39,6 +39,7 @@ import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
 // entry point for standalone pipeline
 def pipeline(String branchName = null) {
 	cepl.runParallel(getTasks(branchName))
+	papl.finalizeRun('palladio', myBranch)
 }
 
 // entry point for embedded pipeline
