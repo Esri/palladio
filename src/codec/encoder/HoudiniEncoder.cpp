@@ -280,19 +280,25 @@ void forwardGenericAttributes(HoudiniCallbacks* hc, size_t initialShapeIndex, co
                               const prtx::ShapePtr& shape) {
 	forEachKey(initialShape.getAttributeMap(),
 	           [&hc, &shape, &initialShapeIndex, &initialShape](prt::Attributable const* a, wchar_t const* key) {
-		           switch (shape->getType(key)) {
+		           assert(key != nullptr);
+		           const std::wstring keyStr(key);
+
+		           if (!shape->hasKey(keyStr))
+			           return;
+
+		           switch (shape->getType(keyStr)) {
 			           case prtx::Attributable::PT_STRING: {
-				           const auto v = shape->getString(key);
+				           const auto v = shape->getString(keyStr);
 				           hc->attrString(initialShapeIndex, shape->getID(), key, v.c_str());
 				           break;
 			           }
 			           case prtx::Attributable::PT_FLOAT: {
-				           const auto v = shape->getFloat(key);
+				           const auto v = shape->getFloat(keyStr);
 				           hc->attrFloat(initialShapeIndex, shape->getID(), key, v);
 				           break;
 			           }
 			           case prtx::Attributable::PT_BOOL: {
-				           const auto v = shape->getBool(key);
+				           const auto v = shape->getBool(keyStr);
 				           hc->attrBool(initialShapeIndex, shape->getID(), key, (v == prtx::PRTX_TRUE));
 				           break;
 			           }
