@@ -21,8 +21,10 @@
 #include "../palladio/PRTContext.h"
 #include "../palladio/Utils.h"
 
+// clang-format off
 #include "../palladio/BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <vector>
 #include <string>

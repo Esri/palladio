@@ -24,9 +24,11 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 #ifndef _WIN32
 #	pragma GCC diagnostic pop
 #endif

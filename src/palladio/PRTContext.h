@@ -22,8 +22,10 @@
 
 #include "prt/Object.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <map>
 

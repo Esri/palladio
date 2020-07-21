@@ -21,8 +21,10 @@
 
 #include "UT/UT_String.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
+// clang-format on
 
 #include <string>
 

@@ -22,8 +22,10 @@
 #include "prt/API.h"
 #include "prt/AttributeMap.h"
 
+// clang-format off
 #include "../palladio/BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/variant.hpp)
+// clang-format on
 
 #include <vector>
 #include <string>

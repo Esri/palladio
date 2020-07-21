@@ -21,8 +21,10 @@
 
 #include "GU/GU_Detail.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/variant.hpp)
+// clang-format on
 
 #include <unordered_map>
 

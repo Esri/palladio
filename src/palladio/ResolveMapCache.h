@@ -18,8 +18,10 @@
 
 #include "Utils.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <map>
 #include <chrono>

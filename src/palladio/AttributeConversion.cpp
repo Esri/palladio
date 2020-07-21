@@ -19,8 +19,10 @@
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
+// clang-format on
 
 #include <mutex>
 #include <bitset>

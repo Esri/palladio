@@ -27,8 +27,10 @@
 #include "prtx/Geometry.h"
 #include "prtx/Mesh.h"
 
+// clang-format off
 #include "../palladio/BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
+// clang-format on
 
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"

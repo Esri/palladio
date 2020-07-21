@@ -1,7 +1,9 @@
 # pragma once
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/optional.hpp)
+// clang-format on
 
 #include <list>
 #include <map>

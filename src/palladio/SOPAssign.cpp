@@ -28,9 +28,10 @@
 
 #include "UT/UT_Interrupt.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-
+// clang-format on
 
 namespace {
 

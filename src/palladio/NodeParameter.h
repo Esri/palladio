@@ -28,9 +28,10 @@
 #include "GA/GA_Types.h"
 #include "OP/OP_Node.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
-
+// clang-format on
 
 namespace AssignNodeParams {
 
