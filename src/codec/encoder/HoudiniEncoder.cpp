@@ -302,6 +302,24 @@ void forwardGenericAttributes(HoudiniCallbacks* hc, size_t initialShapeIndex, co
 				           hc->attrBool(initialShapeIndex, shape->getID(), key, (v == prtx::PRTX_TRUE));
 				           break;
 			           }
+			           case prtx::Attributable::PT_STRING_ARRAY: {
+				           const prtx::WStringVector& v = shape->getStringArray(keyStr);
+				           const std::vector<const wchar_t*> vPtrs = toPtrVec(v);
+				           hc->attrStringArray(initialShapeIndex, shape->getID(), key, vPtrs.data(), vPtrs.size(), 1);
+				           break;
+			           }
+			           case prtx::Attributable::PT_FLOAT_ARRAY: {
+				           const prtx::DoubleVector& v = shape->getFloatArray(keyStr);
+				           hc->attrFloatArray(initialShapeIndex, shape->getID(), key, v.data(), v.size(), 1);
+				           break;
+			           }
+			           case prtx::Attributable::PT_BOOL_ARRAY: {
+				           const prtx::BoolVector& v = shape->getBoolArray(keyStr);
+				           const std::unique_ptr<bool[]> vPtrs(new bool[v.size()]);
+				           for (size_t i = 0; i < v.size(); i++) vPtrs[i] = prtx::toPrimitive(v[i]);
+				           hc->attrBoolArray(initialShapeIndex, shape->getID(), key, vPtrs.get(), v.size(), 1);
+				           break;
+			           }
 			           default:
 				           break;
 		           }
