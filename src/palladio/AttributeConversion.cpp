@@ -40,8 +40,8 @@ void setHandleRange(const GA_IndexMap& indexMap, H& handle, GA_Offset start, GA_
                     const V& value);
 
 template <>
-void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleC& handle, GA_Offset start, GA_Size size,
-                    int component, const bool& value) {
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleC& handle, GA_Offset start, GA_Size size, int component,
+                    const bool& value) {
 	constexpr int8_t valFalse = 0;
 	constexpr int8_t valTrue = 1;
 	const int8_t hv = value ? valTrue : valFalse;
@@ -52,8 +52,8 @@ void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleC& handle, GA_
 }
 
 template <>
-void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleI& handle, GA_Offset start, GA_Size size,
-                    int component, const int32_t& value) {
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleI& handle, GA_Offset start, GA_Size size, int component,
+                    const int32_t& value) {
 	handle.setBlock(start, size, &value, 0, component);
 	if (DBG)
 		LOG_DBG << "int attr: range = [" << start << ", " << start + size << "): " << handle.getAttribute()->getName()
@@ -61,8 +61,8 @@ void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleI& handle, GA_
 }
 
 template <>
-void setHandleRange(const GA_IndexMap& indexMap, const GA_RWHandleF& handle, GA_Offset start, GA_Size size,
-                    int component, const double& value) {
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleF& handle, GA_Offset start, GA_Size size, int component,
+                    const double& value) {
 	const auto hv = static_cast<fpreal32>(value);
 	handle.setBlock(start, size, &hv, 0, component); // using stride = 0 to always set the same value
 	if (DBG)
@@ -89,6 +89,52 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_O
 	if (DBG)
 		LOG_DBG << "string attr: range = [" << start << ", " << start + size
 		        << "): " << handle.getAttribute()->getName() << " = " << attrValue;
+}
+
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleDA& handle, GA_Offset start, GA_Size size,
+                    const double* ptr, size_t ptrSize) {
+	UT_Fpreal64Array hv;
+	hv.append(ptr, ptrSize);
+	for (GA_Offset off = start; off < start + size; off++)
+		handle.set(off, hv);
+	if (DBG)
+		LOG_DBG << "float array attr: range = [" << start << ", " << start + size
+		        << "): " << handle.getAttribute()->getName() << " = " << hv;
+}
+
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleIA& handle, GA_Offset start, GA_Size size,
+                    const int32_t* ptr, size_t ptrSize) {
+	UT_Int32Array hv;
+	hv.append(ptr, ptrSize);
+	for (GA_Offset off = start; off < start + size; off++)
+		handle.set(off, hv);
+	if (DBG)
+		LOG_DBG << "int array attr: range = [" << start << ", " << start + size
+		        << "): " << handle.getAttribute()->getName() << " = " << hv;
+}
+
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleIA& handle, GA_Offset start, GA_Size size, const bool* ptr,
+                    size_t ptrSize) {
+	UT_IntArray hv(ptrSize, ptrSize); // there is no UT_Int8Array
+	for (size_t i = 0; i < ptrSize; i++)
+		hv[i] = ptr[i] ? 1u : 0u;
+	for (GA_Offset off = start; off < start + size; off++)
+		handle.set(off, hv);
+	if (DBG)
+		LOG_DBG << "int array attr: range = [" << start << ", " << start + size
+		        << "): " << handle.getAttribute()->getName() << " = " << hv;
+}
+
+void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleSA& handle, GA_Offset start, GA_Size size,
+                    wchar_t const* const* ptr, size_t ptrSize) {
+	UT_StringArray hv(ptrSize, ptrSize);
+	for (size_t i = 0; i < ptrSize; i++)
+		hv[i] = UT_StringHolder(toOSNarrowFromUTF16(ptr[i]));
+	for (GA_Offset off = start; off < start + size; off++)
+		handle.set(off, hv);
+	if (DBG)
+		LOG_DBG << "int array attr: range = [" << start << ", " << start + size
+		        << "): " << handle.getAttribute()->getName() << " = " << hv;
 }
 
 class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {
@@ -124,27 +170,27 @@ public:
 		}
 	}
 
-	void operator()(const GA_RWHandleI& handle) const {
+	void operator()(GA_RWHandleI& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_INT) {
 			const int32_t v = attrMap->getInt(protoHandle.key.c_str());
 			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
 		}
 		else if (protoHandle.type == prt::Attributable::PT_INT_ARRAY) {
-			LOG_ERR << "int arrays not yet implemented";
+			LOG_ERR << "int arrays as tuples not yet implemented";
 		}
 	}
 
-	void operator()(const GA_RWHandleC& handle) const {
+	void operator()(GA_RWHandleC& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_BOOL) {
 			const bool v = attrMap->getBool(protoHandle.key.c_str());
 			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
 		}
 		else if (protoHandle.type == prt::Attributable::PT_BOOL_ARRAY) {
-			LOG_ERR << "bool arrays not yet implemented";
+			LOG_ERR << "bool arrays as tuples not yet implemented";
 		}
 	}
 
-	void operator()(const GA_RWHandleF& handle) const {
+	void operator()(GA_RWHandleF& handle) const {
 		if (protoHandle.type == prt::Attributable::PT_FLOAT) {
 			const auto v = attrMap->getFloat(protoHandle.key.c_str());
 			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, 0, v);
@@ -156,6 +202,31 @@ public:
 				setHandleRange(primIndexMap, handle, rangeStart, rangeSize, i, v[i]);
 			}
 		}
+	}
+
+	void operator()(GA_RWHandleDA& handle) const {
+		size_t arraySize = 0;
+		const double* const array = attrMap->getFloatArray(protoHandle.key.c_str(), &arraySize);
+		setHandleRange(primIndexMap, handle, rangeStart, rangeSize, array, arraySize);
+	}
+
+	void operator()(GA_RWHandleIA& handle) const {
+		if (protoHandle.type == prt::Attributable::PT_BOOL_ARRAY) {
+			size_t arraySize = 0;
+			const bool* array = attrMap->getBoolArray(protoHandle.key.c_str(), &arraySize);
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, array, arraySize);
+		}
+		else {
+			size_t arraySize = 0;
+			const int32_t* array = attrMap->getIntArray(protoHandle.key.c_str(), &arraySize);
+			setHandleRange(primIndexMap, handle, rangeStart, rangeSize, array, arraySize);
+		}
+	}
+
+	void operator()(GA_RWHandleSA& handle) const {
+		size_t arraySize = 0;
+		wchar_t const* const* const array = attrMap->getStringArray(protoHandle.key.c_str(), &arraySize);
+		setHandleRange(primIndexMap, handle, rangeStart, rangeSize, array, arraySize);
 	}
 };
 
@@ -215,7 +286,7 @@ void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMa
 	}
 }
 
-void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap) {
+void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap, bool useArrayTypes) {
 	WA("all");
 
 	for (auto& hm : handleMap) {
@@ -227,31 +298,63 @@ void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap) {
 		switch (type) {
 			case prt::Attributable::PT_BOOL:
 			case prt::Attributable::PT_BOOL_ARRAY: {
-				GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality, GA_Defaults(0),
-				                                   nullptr, nullptr, GA_STORE_INT8));
-				if (h.isValid())
-					handle = h;
+				if (useArrayTypes && (type == prt::Attributable::PT_BOOL_ARRAY)) {
+					GA_RWHandleIA h(
+					        detail->addIntArray(GA_ATTRIB_PRIMITIVE, utKey, 1, nullptr, nullptr, GA_STORE_INT8));
+					if (h.isValid())
+						handle = h;
+				}
+				else {
+					GA_RWHandleC h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality,
+					                                   GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
+					if (h.isValid())
+						handle = h;
+				}
 				break;
 			}
 			case prt::Attributable::PT_FLOAT:
 			case prt::Attributable::PT_FLOAT_ARRAY: {
-				GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
-				if (h.isValid())
-					handle = h;
+				if (useArrayTypes && (type == prt::Attributable::PT_FLOAT_ARRAY)) {
+					GA_RWHandleDA h(
+					        detail->addFloatArray(GA_ATTRIB_PRIMITIVE, utKey, 1, nullptr, nullptr, GA_STORE_REAL64));
+					if (h.isValid())
+						handle = h;
+				}
+				else {
+					GA_RWHandleF h(detail->addFloatTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
+					if (h.isValid())
+						handle = h;
+				}
 				break;
 			}
 			case prt::Attributable::PT_INT:
 			case prt::Attributable::PT_INT_ARRAY: {
-				GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
-				if (h.isValid())
-					handle = h;
+				if (useArrayTypes && (type == prt::Attributable::PT_INT_ARRAY)) {
+					GA_RWHandleIA h(
+					        detail->addIntArray(GA_ATTRIB_PRIMITIVE, utKey, 1, nullptr, nullptr, GA_STORE_INT32));
+					if (h.isValid())
+						handle = h;
+				}
+				else {
+					GA_RWHandleI h(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
+					if (h.isValid())
+						handle = h;
+				}
 				break;
 			}
 			case prt::Attributable::PT_STRING:
 			case prt::Attributable::PT_STRING_ARRAY: {
-				GA_RWBatchHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
-				if (h.isValid())
-					handle = h;
+				if (useArrayTypes && (type == prt::Attributable::PT_STRING_ARRAY)) {
+					GA_RWHandleSA h(
+					        detail->addStringArray(GA_ATTRIB_PRIMITIVE, utKey, 1, nullptr, nullptr, GA_STORE_STRING));
+					if (h.isValid())
+						handle = h;
+				}
+				else {
+					GA_RWBatchHandleS h(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, utKey, hm.second.cardinality));
+					if (h.isValid())
+						handle = h;
+				}
 				break;
 			}
 			default:

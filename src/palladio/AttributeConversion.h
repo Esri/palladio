@@ -47,7 +47,8 @@ namespace AttributeConversion {
  * double  -> float (single precision!)
  */
 using NoHandle = int8_t;
-using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF>;
+using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
+                                         GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
 
 // bound to life time of PRT attribute map
 struct ProtoHandle {
@@ -60,7 +61,7 @@ struct ProtoHandle {
 using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
 
 PLD_TEST_EXPORTS_API void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap);
-void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap);
+void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap, bool useArrayTypes = false);
 void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap, const GA_IndexMap& primIndexMap,
                         const GA_Offset rangeStart, const GA_Size rangeSize);
 
