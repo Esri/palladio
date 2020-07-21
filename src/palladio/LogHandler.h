@@ -97,17 +97,17 @@ private:
 
 using LogHandlerPtr = std::unique_ptr<LogHandler>;
 
+// switch logger here between PRTLogger and StreamLogger
+template<prt::LogLevel L>
+using LT = PRTLogger<L>;
+
 } // namespace log
 
-
-// switch logger here
-#define LT logging::PRTLogger
-
-using _LOG_DBG = LT<prt::LOG_DEBUG>;
-using _LOG_INF = LT<prt::LOG_INFO>;
-using _LOG_WRN = LT<prt::LOG_WARNING>;
-using _LOG_ERR = LT<prt::LOG_ERROR>;
-using _LOG_FTL = LT<prt::LOG_FATAL>;
+using _LOG_DBG = logging::LT<prt::LOG_DEBUG>;
+using _LOG_INF = logging::LT<prt::LOG_INFO>;
+using _LOG_WRN = logging::LT<prt::LOG_WARNING>;
+using _LOG_ERR = logging::LT<prt::LOG_ERROR>;
+using _LOG_FTL = logging::LT<prt::LOG_FATAL>;
 
 // convenience shortcuts in global namespace
 #define LOG_DBG _LOG_DBG() << __FUNCTION__ << ": "
