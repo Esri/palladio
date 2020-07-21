@@ -278,3 +278,32 @@ prt::Status ModelConverter::attrString(size_t isIndex, int32_t shapeID, const wc
 	getBuilder(mShapeAttributeBuilders, shapeID)->setString(key, value);
 	return prt::STATUS_OK;
 }
+
+#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1)
+
+prt::Status ModelConverter::attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr,
+                                          size_t size, size_t nRows) {
+	if (DBG)
+		LOG_DBG << "attrBoolArray: shapeID :" << shapeID << ", key: " << key << ", val: " << ptr << ", size: " << size;
+	getBuilder(mShapeAttributeBuilders, shapeID)->setBoolArray(key, ptr, size);
+	return prt::STATUS_OK;
+}
+
+prt::Status ModelConverter::attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr,
+                                           size_t size, size_t nRows) {
+	if (DBG)
+		LOG_DBG << "attrFloatArray: shapeID :" << shapeID << ", key: " << key << ", val: " << ptr << ", size: " << size;
+	getBuilder(mShapeAttributeBuilders, shapeID)->setFloatArray(key, ptr, size);
+	return prt::STATUS_OK;
+}
+
+prt::Status ModelConverter::attrStringArray(size_t isIndex, int32_t shapeID, const wchar_t* key,
+                                            const wchar_t* const* ptr, size_t size, size_t nRows) {
+	if (DBG)
+		LOG_DBG << "attrStringArray: shapeID :" << shapeID << ", key: " << key << ", val: " << ptr
+		        << ", size: " << size;
+	getBuilder(mShapeAttributeBuilders, shapeID)->setStringArray(key, ptr, size);
+	return prt::STATUS_OK;
+}
+
+#endif
