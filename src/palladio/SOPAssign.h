@@ -21,14 +21,17 @@
 
 #include "SOP/SOP_Node.h"
 
-
 class SOPAssign : public SOP_Node {
 public:
-	SOPAssign(const PRTContextUPtr& pCtx, OP_Network *net, const char *name, OP_Operator *op);
+	SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op);
 	~SOPAssign() override = default;
 
-	const PRTContextUPtr& getPRTCtx() const { return mPRTCtx; }
-	const PLD_BOOST_NS::filesystem::path& getRPK() const { return mShapeConverter->mDefaultMainAttributes.mRPK; }
+	const PRTContextUPtr& getPRTCtx() const {
+		return mPRTCtx;
+	}
+	const PLD_BOOST_NS::filesystem::path& getRPK() const {
+		return mShapeConverter->mDefaultMainAttributes.mRPK;
+	}
 
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 
@@ -37,5 +40,5 @@ protected:
 
 private:
 	const PRTContextUPtr& mPRTCtx;
-	ShapeConverterUPtr    mShapeConverter;
+	ShapeConverterUPtr mShapeConverter;
 };

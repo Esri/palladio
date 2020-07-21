@@ -16,31 +16,30 @@
 
 #include "ShapeData.h"
 
-
 namespace {
 
-const std::wstring DEFAULT_SHAPE_NAME     = L"pldShape";
+const std::wstring DEFAULT_SHAPE_NAME = L"pldShape";
 const std::wstring GROUP_NAME_LEGAL_CHARS = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
-const std::wstring INVALID_GROUP_NAME     = L"_invalid_";
+const std::wstring INVALID_GROUP_NAME = L"_invalid_";
 
 /**
  * creates initial shape and primitive group name from primitive classifier value
  */
 class NameFromPrimPart : public PLD_BOOST_NS::static_visitor<> {
 public:
-	NameFromPrimPart(std::wstring& name, const std::wstring& prefix) : mName(name), mPrefix(prefix) { }
+	NameFromPrimPart(std::wstring& name, const std::wstring& prefix) : mName(name), mPrefix(prefix) {}
 
-    void operator()(const UT_String& s) {
-        mName.assign(toUTF16FromOSNarrow(s.toStdString()));
-	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
-	    if (mName.empty()) // handle empty primCls string value
-		    mName.assign(INVALID_GROUP_NAME);
-    }
+	void operator()(const UT_String& s) {
+		mName.assign(toUTF16FromOSNarrow(s.toStdString()));
+		replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
+		if (mName.empty()) // handle empty primCls string value
+			mName.assign(INVALID_GROUP_NAME);
+	}
 
-    void operator()(const int32& i) {
-        mName.assign(mPrefix).append(L"_").append(std::to_wstring(i));
-	    replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
-    }
+	void operator()(const int32& i) {
+		mName.assign(mPrefix).append(L"_").append(std::to_wstring(i));
+		replace_all_not_of(mName, GROUP_NAME_LEGAL_CHARS);
+	}
 
 private:
 	std::wstring& mName;
@@ -49,18 +48,15 @@ private:
 
 } // namespace
 
-
 ShapeData::~ShapeData() {
-	std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is){
+	std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is) {
 		if (is)
 			is->destroy();
 	});
 }
 
-void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed,
-                           const PrimitiveNOPtrVector& primMappings,
-                           const PrimitivePartition::ClassifierValueType& clsVal)
-{
+void ShapeData::addBuilder(InitialShapeBuilderUPtr&& isb, int32_t randomSeed, const PrimitiveNOPtrVector& primMappings,
+                           const PrimitivePartition::ClassifierValueType& clsVal) {
 	mInitialShapeBuilders.emplace_back(std::move(isb));
 	mRandomSeeds.push_back(randomSeed);
 	mPrimitiveMapping.emplace_back(primMappings);

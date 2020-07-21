@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "../palladio/Utils.h"
 #include "../codec/encoder/HoudiniCallbacks.h"
+#include "../palladio/Utils.h"
 
 #include "prt/API.h"
 #include "prt/AttributeMap.h"
@@ -29,7 +29,6 @@
 
 #include <vector>
 #include <string>
-
 
 struct CallbackResult {
 	std::wstring name;
@@ -44,7 +43,7 @@ struct CallbackResult {
 	std::vector<AttributeMapUPtr> materials;
 	std::map<int32_t, AttributeMapUPtr> attrsPerShapeID;
 
-	explicit CallbackResult(size_t uvSets) : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) { }
+	explicit CallbackResult(size_t uvSets) : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) {}
 };
 
 class TestCallbacks : public HoudiniCallbacks {
@@ -52,43 +51,35 @@ public:
 	std::vector<CallbackResult> results;
 	std::map<int32_t, AttributeMapBuilderUPtr> attrs;
 
-	void add(const wchar_t* name,
-			 const double* vtx, size_t vtxSize,
-			 const double* nrm, size_t nrmSize,
-			 const uint32_t* counts, size_t countsSize,
-			 const uint32_t* indices, size_t indicesSize,
-			 double const* const* uvs, size_t const* uvsSizes,
-			 uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
-			 uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
-			 uint32_t uvSets,
-			 const uint32_t* faceRanges, size_t faceRangesSize,
-			 const prt::AttributeMap** materials,
-			 const prt::AttributeMap** reports,
-			 const int32_t* shapeIDs
-	) override {
+	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
+	         const uint32_t* counts, size_t countsSize, const uint32_t* indices, size_t indicesSize,
+	         double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
+	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+	         uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize, const prt::AttributeMap** materials,
+	         const prt::AttributeMap** reports, const int32_t* shapeIDs) override {
 		results.emplace_back(CallbackResult(uvSets));
 		auto& cr = results.back();
 
 		cr.name = name;
-		cr.vtx.assign(vtx, vtx+vtxSize);
-		cr.nrm.assign(nrm, nrm+nrmSize);
-		cr.cnts.assign(counts, counts+countsSize);
-		cr.idx.assign(indices, indices+indicesSize);
+		cr.vtx.assign(vtx, vtx + vtxSize);
+		cr.nrm.assign(nrm, nrm + nrmSize);
+		cr.cnts.assign(counts, counts + countsSize);
+		cr.idx.assign(indices, indices + indicesSize);
 
 		for (size_t i = 0; i < uvSets; i++) {
-			cr.uvs[i].assign(uvs[i], uvs[i]+uvsSizes[i]);
-			cr.uvCounts[i].assign(uvCounts[i], uvCounts[i]+uvCountsSizes[i]);
-			cr.uvIndices[i].assign(uvIndices[i], uvIndices[i]+uvIndicesSizes[i]);
+			cr.uvs[i].assign(uvs[i], uvs[i] + uvsSizes[i]);
+			cr.uvCounts[i].assign(uvCounts[i], uvCounts[i] + uvCountsSizes[i]);
+			cr.uvIndices[i].assign(uvIndices[i], uvIndices[i] + uvIndicesSizes[i]);
 		}
 
-		cr.faceRanges.assign(faceRanges, faceRanges+faceRangesSize);
+		cr.faceRanges.assign(faceRanges, faceRanges + faceRangesSize);
 
-		for (size_t mi = 0; mi < faceRangesSize-1; mi++) {
+		for (size_t mi = 0; mi < faceRangesSize - 1; mi++) {
 			AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::createFromAttributeMap(materials[mi]));
 			cr.materials.emplace_back(amb->createAttributeMap());
 		}
 
-		for (size_t si = 0; si < faceRangesSize-1; si++) {
+		for (size_t si = 0; si < faceRangesSize - 1; si++) {
 			const int32_t sid = shapeIDs[si];
 			cr.attrsPerShapeID.emplace(sid, AttributeMapUPtr(attrs.at(sid)->createAttributeMap()));
 		}
@@ -99,11 +90,13 @@ public:
 		return prt::STATUS_OK;
 	}
 
-	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) override {
+	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri,
+	                       const wchar_t* message) override {
 		return prt::STATUS_OK;
 	}
 
-	prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) override {
+	prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc,
+	                     const wchar_t* message) override {
 		return prt::STATUS_OK;
 	}
 

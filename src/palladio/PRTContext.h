@@ -29,11 +29,10 @@
 
 #include <map>
 
-
 namespace logging {
 class LogHandler;
 using LogHandlerPtr = std::unique_ptr<LogHandler>;
-}
+} // namespace logging
 
 /**
  * manage PRT "lifetime" (actually, its license lifetime)
@@ -47,13 +46,15 @@ struct PLD_TEST_EXPORTS_API PRTContext final {
 	~PRTContext();
 
 	ResolveMapSPtr getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk);
-	bool isAlive() const { return mPRTHandle.operator bool(); }
+	bool isAlive() const {
+		return mPRTHandle.operator bool();
+	}
 
-	logging::LogHandlerPtr  mLogHandler;
-	ObjectUPtr              mPRTHandle;
-	CacheObjectUPtr         mPRTCache;
-	const uint32_t          mCores;
-	ResolveMapCacheUPtr     mResolveMapCache;
+	logging::LogHandlerPtr mLogHandler;
+	ObjectUPtr mPRTHandle;
+	CacheObjectUPtr mPRTCache;
+	const uint32_t mCores;
+	ResolveMapCacheUPtr mResolveMapCache;
 };
 
 using PRTContextUPtr = std::unique_ptr<PRTContext>;
