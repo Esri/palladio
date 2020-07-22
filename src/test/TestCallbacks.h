@@ -81,7 +81,8 @@ public:
 
 		for (size_t si = 0; si < faceRangesSize - 1; si++) {
 			const int32_t sid = shapeIDs[si];
-			cr.attrsPerShapeID.emplace(sid, AttributeMapUPtr(attrs.at(sid)->createAttributeMap()));
+			if (attrs.count(sid) > 0)
+				cr.attrsPerShapeID.emplace(sid, AttributeMapUPtr(attrs.at(sid)->createAttributeMap()));
 		}
 		attrs.clear();
 	}
