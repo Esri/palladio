@@ -203,7 +203,7 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 				if (it != mShapeAttributeBuilders.end()) {
 					const AttributeMapUPtr attrMap(it->second->createAttributeMap());
 					AttributeConversion::extractAttributeNames(handleMap, attrMap.get());
-					AttributeConversion::createAttributeHandles(mDetail, handleMap);
+					AttributeConversion::createAttributeHandles(mDetail, handleMap, true);
 					AttributeConversion::setAttributeValues(handleMap, attrMap.get(), primIndexMap, rangeStart,
 					                                        rangeSize);
 				}
