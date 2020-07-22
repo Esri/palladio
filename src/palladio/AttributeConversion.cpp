@@ -375,6 +375,14 @@ void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap, 
 	}
 }
 
+void convertAttributes(GU_Detail* detail, HandleMap& handleMap, const prt::AttributeMap* attrMap,
+                       const GA_Offset rangeStart, const GA_Size rangeSize, ArrayHandling arrayHandling) {
+	const GA_IndexMap& primIndexMap = detail->getIndexMap(GA_ATTRIB_PRIMITIVE);
+	extractAttributeNames(handleMap, attrMap);
+	createAttributeHandles(detail, handleMap, arrayHandling == ArrayHandling::ARRAY);
+	setAttributeValues(handleMap, attrMap, primIndexMap, rangeStart, rangeSize);
+}
+
 } // namespace AttributeConversion
 
 namespace {

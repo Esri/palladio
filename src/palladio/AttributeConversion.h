@@ -60,10 +60,10 @@ struct ProtoHandle {
 
 using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
 
-PLD_TEST_EXPORTS_API void extractAttributeNames(HandleMap& handleMap, const prt::AttributeMap* attrMap);
-void createAttributeHandles(GU_Detail* detail, HandleMap& handleMap, bool useArrayTypes = false);
-void setAttributeValues(HandleMap& handleMap, const prt::AttributeMap* attrMap, const GA_IndexMap& primIndexMap,
-                        const GA_Offset rangeStart, const GA_Size rangeSize);
+enum class ArrayHandling { TUPLE, ARRAY };
+void convertAttributes(GU_Detail* detail, HandleMap& handleMap, const prt::AttributeMap* attrMap,
+                       const GA_Offset rangeStart, const GA_Size rangeSize,
+                       ArrayHandling arrayHandling = ArrayHandling::TUPLE);
 
 } // namespace AttributeConversion
 

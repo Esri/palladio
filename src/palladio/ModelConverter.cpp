@@ -177,23 +177,16 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 		WA("add materials/reports");
 
 		AttributeConversion::HandleMap handleMap;
-		const GA_IndexMap& primIndexMap = mDetail->getIndexMap(GA_ATTRIB_PRIMITIVE);
 		for (size_t fri = 0; fri < faceRangesSize - 1; fri++) {
 			const GA_Offset rangeStart = primStartOffset + faceRanges[fri];
 			const GA_Size rangeSize = faceRanges[fri + 1] - faceRanges[fri];
 
 			if (materials != nullptr) {
-				const prt::AttributeMap* attrMap = materials[fri];
-				AttributeConversion::extractAttributeNames(handleMap, attrMap);
-				AttributeConversion::createAttributeHandles(mDetail, handleMap);
-				AttributeConversion::setAttributeValues(handleMap, attrMap, primIndexMap, rangeStart, rangeSize);
+				AttributeConversion::convertAttributes(mDetail, handleMap, materials[fri], rangeStart, rangeSize);
 			}
 
 			if (reports != nullptr) {
-				const prt::AttributeMap* attrMap = reports[fri];
-				AttributeConversion::extractAttributeNames(handleMap, attrMap);
-				AttributeConversion::createAttributeHandles(mDetail, handleMap);
-				AttributeConversion::setAttributeValues(handleMap, attrMap, primIndexMap, rangeStart, rangeSize);
+				AttributeConversion::convertAttributes(mDetail, handleMap, reports[fri], rangeStart, rangeSize);
 			}
 
 			if (!mShapeAttributeBuilders.empty()) {
@@ -202,10 +195,8 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 				auto it = mShapeAttributeBuilders.find(shapeID);
 				if (it != mShapeAttributeBuilders.end()) {
 					const AttributeMapUPtr attrMap(it->second->createAttributeMap());
-					AttributeConversion::extractAttributeNames(handleMap, attrMap.get());
-					AttributeConversion::createAttributeHandles(mDetail, handleMap, true);
-					AttributeConversion::setAttributeValues(handleMap, attrMap.get(), primIndexMap, rangeStart,
-					                                        rangeSize);
+					AttributeConversion::convertAttributes(mDetail, handleMap, attrMap.get(), rangeStart, rangeSize,
+					                                       AttributeConversion::ArrayHandling::ARRAY);
 				}
 			}
 		}
