@@ -35,11 +35,6 @@ namespace StringConversionCaches {
 LockedLRUCache<std::wstring, UT_String> toPrimAttr(1 << 12);
 }
 
-template <typename H, typename V>
-void setHandleRange(const GA_IndexMap& indexMap, H& handle, GA_Offset start, GA_Size size, int component,
-                    const V& value);
-
-template <>
 void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleC& handle, GA_Offset start, GA_Size size, int component,
                     const bool& value) {
 	constexpr int8_t valFalse = 0;
@@ -51,7 +46,6 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleC& handle, GA_Offset
 		        << " = " << value;
 }
 
-template <>
 void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleI& handle, GA_Offset start, GA_Size size, int component,
                     const int32_t& value) {
 	handle.setBlock(start, size, &value, 0, component);
@@ -60,7 +54,6 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleI& handle, GA_Offset
 		        << " = " << value;
 }
 
-template <>
 void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleF& handle, GA_Offset start, GA_Size size, int component,
                     const double& value) {
 	const auto hv = static_cast<fpreal32>(value);
@@ -70,7 +63,6 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleF& handle, GA_Offset
 		        << "): " << handle.getAttribute()->getName() << " = " << value;
 }
 
-template <>
 void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_Offset start, GA_Size size,
                     int component, const std::wstring& value) {
 	const UT_String attrValue = [&value]() {
