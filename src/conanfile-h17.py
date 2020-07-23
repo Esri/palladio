@@ -12,7 +12,7 @@ class PalladioConan(ConanFile):
         if "PLD_CONAN_HOUDINI_VERSION" in os.environ:
             self.requires("houdini/{}@sidefx/stable".format(os.environ["PLD_CONAN_HOUDINI_VERSION"]))
         else:
-            self.requires("houdini/[>17.0.0,<17.5.0]@sidefx/stable")
+            self.requires("houdini/[>17.0.0 <17.5.0]@sidefx/stable")
 
         if "PLD_CONAN_SKIP_CESDK" not in os.environ:
             if "PLD_CONAN_CESDK_VERSION" in os.environ:
