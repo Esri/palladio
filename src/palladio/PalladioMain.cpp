@@ -20,6 +20,7 @@
 #include "PRTContext.h"
 #include "SOPAssign.h"
 #include "SOPGenerate.h"
+#include "LogHandler.h"
 
 #include "OP/OP_OperatorTable.h"
 #include "UT/UT_Exit.h"
@@ -57,4 +58,6 @@ void newSopOperator(OP_OperatorTable* table) {
 	};
 	table->addOperator(new OP_Operator(OP_PLD_GENERATE, OP_PLD_GENERATE, createSOPGenerate,
 	                                   GenerateNodeParams::PARAM_TEMPLATES, 1, 1, nullptr, OP_FLAG_GENERATOR));
+
+	LOG_INF << "Palladio " << PLD_VERSION << " initialized.";
 }
