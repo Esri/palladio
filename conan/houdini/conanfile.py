@@ -1,4 +1,5 @@
 from conans import ConanFile
+from conans.model.version import Version
 import os
 
 class HoudiniConan(ConanFile):
@@ -38,3 +39,10 @@ class HoudiniConan(ConanFile):
         self.cpp_info.libdirs = ['dsolib']
         self.cpp_info.libs = ['HoudiniUI', 'HoudiniOPZ', 'HoudiniOP3', 'HoudiniOP2',
                               'HoudiniOP1', 'HoudiniGEO', 'HoudiniPRM', 'HoudiniUT']
+
+    def package_id(self):
+        v = Version(str(self.settings.compiler.version))
+        if self.settings.compiler == "Visual Studio" and ("15" <= v <= "16"):
+            self.info.settings.compiler.version = "Compatible with MSVC 14.1 and 14.2"
+        elif self.settings.compiler == "gcc" and ("6" <= v < "9"):
+            self.info.settings.compiler.version = "Compatible with GCC 6 tru 8"
