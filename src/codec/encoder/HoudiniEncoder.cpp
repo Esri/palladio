@@ -402,8 +402,8 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 		const prtx::MaterialPtrVector& mats = *matsIt;
 		auto matIt = mats.cbegin();
 		for (const auto& mesh : meshes) {
-			numCoords += mesh->getVertexCoords().size();
-			numNormalCoords += mesh->getVertexNormalsCoords().size();
+			numCoords += static_cast<uint32_t>(mesh->getVertexCoords().size());
+			numNormalCoords += static_cast<uint32_t>(mesh->getVertexNormalsCoords().size());
 
 			numCounts += mesh->getFaceCount();
 			const auto& vtxCnts = mesh->getFaceVertexCounts();
@@ -459,7 +459,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 					log_debug("   -- uvset %1%: face counts size = %2%") % uvSet % faceUVCounts.size();
 
 				// append uv vertex indices
-				for (uint32_t fi = 0, faceCount = faceUVCounts.size(); fi < faceCount; ++fi) {
+				for (uint32_t fi = 0, faceCount = static_cast<uint32_t>(faceUVCounts.size()); fi < faceCount; ++fi) {
 					const uint32_t* faceUVIdx0 = (numUVSets > 0) ? mesh->getFaceUVIndices(fi, 0) : EMPTY_IDX.data();
 					const uint32_t* faceUVIdx =
 					        (uvSet < numUVSets && !uvs.empty()) ? mesh->getFaceUVIndices(fi, uvSet) : faceUVIdx0;
@@ -472,7 +472,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 						                              faceUVIdx[faceUVCnt - vi - 1]); // reverse winding
 				}
 
-				uvIndexBases[uvSet] += src.size() / 2u;
+				uvIndexBases[uvSet] += static_cast<uint32_t>(src.size()) / 2u;
 			} // for all uv sets
 
 			// append counts and indices for vertices and vertex normals
@@ -623,7 +623,7 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	        sg.counts.data(), sg.counts.size(), sg.indices.data(), sg.indices.size(),
 
 	        puvs.first.data(), puvs.second.data(), puvCounts.first.data(), puvCounts.second.data(),
-	        puvIndices.first.data(), puvIndices.second.data(), sg.uvs.size(),
+	        puvIndices.first.data(), puvIndices.second.data(), static_cast<uint32_t>(sg.uvs.size()),
 
 	        faceRanges.data(), faceRanges.size(), matAttrMaps.v.empty() ? nullptr : matAttrMaps.v.data(),
 	        reportAttrMaps.v.empty() ? nullptr : reportAttrMaps.v.data(), shapeIDs.data());
