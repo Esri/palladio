@@ -113,7 +113,7 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleIA& handle, GA_Offse
 	for (GA_Offset off = start; off < start + size; off++)
 		handle.set(off, hv);
 	if (DBG)
-		LOG_DBG << "int array attr: range = [" << start << ", " << start + size
+		LOG_DBG << "bool array attr: range = [" << start << ", " << start + size
 		        << "): " << handle.getAttribute()->getName() << " = " << hv;
 }
 
@@ -125,7 +125,7 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWHandleSA& handle, GA_Offse
 	for (GA_Offset off = start; off < start + size; off++)
 		handle.set(off, hv);
 	if (DBG)
-		LOG_DBG << "int array attr: range = [" << start << ", " << start + size
+		LOG_DBG << "string array attr: range = [" << start << ", " << start + size
 		        << "): " << handle.getAttribute()->getName() << " = " << hv;
 }
 
