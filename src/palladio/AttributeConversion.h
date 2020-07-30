@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "LogHandler.h"
 #include "PalladioMain.h"
 #include "Utils.h"
+
+#include "prt/AttributeMap.h"
 
 #include "GU/GU_Detail.h"
 
@@ -28,6 +29,7 @@
 // clang-format on
 
 #include <unordered_map>
+#include <string>
 
 namespace std {
 template <>
@@ -40,176 +42,92 @@ struct hash<UT_String> {
 
 namespace AttributeConversion {
 
-class FromHoudini {
-private:
-	static const bool DBG = true;
+/**
+ * attribute type conversion between PRT and Houdini:
+ * wstring <-> narrow string
+ * int32_t <-> int32_t
+ * bool    <-> int8_t
+ * double  <-> double
+ */
 
+class FromHoudini {
 public:
 	FromHoudini(prt::AttributeMapBuilder& builder) : mBuilder(builder) {}
+	FromHoudini(const FromHoudini&) = delete;
+	FromHoudini(FromHoudini&&) = delete;
+	FromHoudini& operator=(const FromHoudini&) = delete;
+	FromHoudini& operator=(FromHoudini&&) = delete;
+	virtual ~FromHoudini() = default;
 
-	bool convert(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name) {
-		if (isArrayAttribute(ar))
-			return handleArray(ar, offset, name);
-		else
-			return handleScalar(ar, offset, name);
-	}
+	bool convert(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name);
 
 private:
-	bool handleScalar(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name) {
-		bool conversionResult = true;
-		switch (ar.getStorageClass()) {
-			case GA_STORECLASS_FLOAT: {
-				GA_ROHandleD av(ar);
-				if (av.isValid()) {
-					double v = av.get(offset);
-					if (DBG)
-						LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
-					mBuilder.setFloat(name.c_str(), v);
-				}
-				break;
-			}
-			case GA_STORECLASS_STRING: {
-				GA_ROHandleS av(ar);
-				if (av.isValid()) {
-					const char* v = av.get(offset);
-					const std::wstring wv = toUTF16FromOSNarrow(v);
-					if (DBG)
-						LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
-					mBuilder.setString(name.c_str(), wv.c_str());
-				}
-				break;
-			}
-			case GA_STORECLASS_INT: {
-				if (ar.getAIFTuple()->getStorage(ar.get()) == GA_STORE_INT8) {
-					GA_ROHandleI av(ar);
-					if (av.isValid()) {
-						const int v = av.get(offset);
-						const bool bv = (v > 0);
-						if (DBG)
-							LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << bv;
-						mBuilder.setBool(name.c_str(), bv);
-					}
-				}
-				else {
-					GA_ROHandleI av(ar);
-					if (av.isValid()) {
-						const int v = av.get(offset);
-						if (DBG)
-							LOG_DBG << "   prim int attr: " << ar->getName() << " = " << v;
-						mBuilder.setInt(name.c_str(), v);
-					}
-				}
-				break;
-			}
-			default: {
-				LOG_WRN << "prim attr " << ar->getName() << ": unsupported storage class";
-				conversionResult = false;
-				break;
-			}
-		}
-		return conversionResult;
-	}
-
-	bool handleArray(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name) {
-		bool conversionResult = true;
-		switch (ar.getStorageClass()) {
-			case GA_STORECLASS_FLOAT: {
-				GA_ROHandleDA av(ar);
-				if (av.isValid()) {
-					UT_Fpreal64Array v;
-					av.get(offset, v);
-					if (DBG)
-						LOG_DBG << "   prim float array attr: " << ar->getName() << " = " << v;
-					mBuilder.setFloatArray(name.c_str(), v.data(), v.size());
-				}
-				break;
-			}
-			case GA_STORECLASS_STRING: {
-				GA_ROHandleSA av(ar);
-				if (av.isValid()) {
-					UT_StringArray v;
-					av.get(offset, v);
-					if (DBG)
-						LOG_DBG << "   prim string array attr: " << ar->getName() << " = " << v;
-
-					std::vector<std::wstring> wstrings(v.size());
-					std::vector<const wchar_t*> wstringPtrs(v.size());
-					for (size_t i = 0; i < v.size(); i++) {
-						wstrings[i] = toUTF16FromOSNarrow(v[i].toStdString());
-						wstringPtrs[i] = wstrings[i].c_str();
-					}
-					mBuilder.setStringArray(name.c_str(), wstringPtrs.data(), wstringPtrs.size());
-				}
-				break;
-			}
-			case GA_STORECLASS_INT: {
-				if (ar.getAIFNumericArray()->getStorage(ar.get()) == GA_STORE_INT8) {
-					GA_ROHandleIA av(ar);
-					if (av.isValid()) {
-						UT_Int32Array v; // there is no U_Int8Array
-						av.get(offset, v);
-						if (DBG)
-							LOG_DBG << "   prim bool array attr: " << ar->getName() << " = " << v;
-						const std::unique_ptr<bool[]> vPtrs(new bool[v.size()]);
-						for (size_t i = 0; i < v.size(); i++)
-							vPtrs[i] = (v[i] > 0);
-						mBuilder.setBoolArray(name.c_str(), vPtrs.get(), v.size());
-					}
-				}
-				else {
-					GA_ROHandleIA av(ar);
-					if (av.isValid()) {
-						UT_Int32Array v;
-						av.get(offset, v);
-						if (DBG)
-							LOG_DBG << "   prim int array attr: " << ar->getName() << " = " << v;
-						mBuilder.setIntArray(name.c_str(), v.data(), v.size());
-					}
-				}
-				break;
-			}
-			default: {
-				LOG_WRN << "prim attr " << ar->getName() << ": unsupported storage class";
-				conversionResult = false;
-				break;
-			}
-		}
-		return conversionResult;
-	}
-
-	bool isArrayAttribute(const GA_ROAttributeRef& ar) {
-		return (ar.getAIFNumericArray() != nullptr) || (ar.getAIFSharedStringArray() != nullptr);
-	}
+	bool handleScalar(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name);
+	bool handleArray(const GA_ROAttributeRef& ar, const GA_Offset& offset, const std::wstring& name);
 
 private:
 	prt::AttributeMapBuilder& mBuilder;
 };
 
-/**
- * attribute type conversion from PRT to Houdini:
- * wstring -> narrow string
- * int32_t -> int32_t
- * bool    -> int8_t
- * double  -> float (single precision!)
- */
-using NoHandle = int8_t;
-using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
-                                         GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
+class ToHoudini {
+public:
+	ToHoudini(GU_Detail* detail) : mDetail(detail) {}
+	ToHoudini(const ToHoudini&) = delete;
+	ToHoudini(ToHoudini&&) = delete;
+	ToHoudini& operator=(const ToHoudini&) = delete;
+	ToHoudini& operator=(ToHoudini&&) = delete;
+	virtual ~ToHoudini() = default;
 
-// bound to life time of PRT attribute map
-struct ProtoHandle {
-	HandleType handleType;
-	std::wstring key;
-	prt::AttributeMap::PrimitiveType type; // original PRT type
-	size_t cardinality;
+	enum class ArrayHandling { TUPLE, ARRAY };
+	void convert(const prt::AttributeMap* attrMap, const GA_Offset rangeStart, const GA_Size rangeSize,
+	             ArrayHandling arrayHandling = ArrayHandling::TUPLE);
+
+private:
+	using NoHandle = int8_t;
+	using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
+	                                         GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
+
+	struct ProtoHandle {
+		HandleType handleType;
+		std::wstring key;
+		prt::AttributeMap::PrimitiveType type; // original PRT type
+		size_t cardinality;
+	};
+
+	class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {
+	public:
+		HandleVisitor(const ProtoHandle& ph, const prt::AttributeMap* m, const GA_IndexMap& pim, GA_Offset rStart,
+		              GA_Size rSize)
+		    : protoHandle(ph), attrMap(m), primIndexMap(pim), rangeStart(rStart), rangeSize(rSize) {}
+		void operator()(const NoHandle& handle) const {}
+		void operator()(GA_RWBatchHandleS& handle) const;
+		void operator()(GA_RWHandleI& handle) const;
+		void operator()(GA_RWHandleC& handle) const;
+		void operator()(GA_RWHandleF& handle) const;
+		void operator()(GA_RWHandleDA& handle) const;
+		void operator()(GA_RWHandleIA& handle) const;
+		void operator()(GA_RWHandleSA& handle) const;
+
+	private:
+		const ProtoHandle& protoHandle;
+		const prt::AttributeMap* attrMap;
+		const GA_IndexMap& primIndexMap;
+		GA_Offset rangeStart;
+		GA_Size rangeSize;
+	};
+
+	using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
+
+	void extractAttributeNames(const prt::AttributeMap* attrMap);
+	void createAttributeHandles(bool useArrayTypes);
+	void setAttributeValues(const prt::AttributeMap* attrMap, const GA_IndexMap& primIndexMap,
+	                        const GA_Offset rangeStart, const GA_Size rangeSize);
+	void addProtoHandle(HandleMap& handleMap, const std::wstring& handleName, ProtoHandle&& ph);
+
+private:
+	GU_Detail* mDetail;
+	HandleMap mHandleMap;
 };
-
-using HandleMap = std::unordered_map<UT_StringHolder, ProtoHandle>;
-
-enum class ArrayHandling { TUPLE, ARRAY };
-void convertAttributes(GU_Detail* detail, HandleMap& handleMap, const prt::AttributeMap* attrMap,
-                       const GA_Offset rangeStart, const GA_Size rangeSize,
-                       ArrayHandling arrayHandling = ArrayHandling::TUPLE);
 
 } // namespace AttributeConversion
 
