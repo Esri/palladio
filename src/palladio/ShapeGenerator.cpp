@@ -41,10 +41,6 @@ std::wstring getFullyQualifiedStartRule(const MainAttributes& ma) {
 		return ma.mStyle + L'$' + ma.mStartRule;
 }
 
-bool isArrayAttribute(const GA_ROAttributeRef& ar) {
-	return (ar.getAIFNumericArray() != nullptr) || (ar.getAIFSharedStringArray() != nullptr);
-}
-
 } // namespace
 
 void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& primCls, ShapeData& shapeData,
@@ -105,122 +101,15 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 
 		// extract primitive attributes
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
+		AttributeConversion::FromHoudini fromHoudini(*amb);
 		for (const auto& attr : attributes) {
 			const GA_ROAttributeRef& ar = attr.second;
-
 			if (ar.isInvalid())
 				continue;
 
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(ma.mStyle, attr.first);
-
-			switch (ar.getStorageClass()) {
-				case GA_STORECLASS_FLOAT: {
-					if (isArrayAttribute(ar)) {
-						GA_ROHandleDA av(ar);
-						if (av.isValid()) {
-							UT_Fpreal64Array v;
-							av.get(primitiveMapOffset, v);
-							if (DBG)
-								LOG_DBG << "   prim float array attr: " << ar->getName() << " = " << v;
-							amb->setFloatArray(ruleAttrName.c_str(), v.data(), v.size());
-						}
-					}
-					else {
-						GA_ROHandleD av(ar);
-						if (av.isValid()) {
-							double v = av.get(primitiveMapOffset);
-							if (DBG)
-								LOG_DBG << "   prim float attr: " << ar->getName() << " = " << v;
-							amb->setFloat(ruleAttrName.c_str(), v);
-						}
-					}
-					break;
-				}
-				case GA_STORECLASS_STRING: {
-					if (isArrayAttribute(ar)) {
-						GA_ROHandleSA av(ar);
-						if (av.isValid()) {
-							UT_StringArray v;
-							av.get(primitiveMapOffset, v);
-							if (DBG)
-								LOG_DBG << "   prim string array attr: " << ar->getName() << " = " << v;
-
-							std::vector<std::wstring> wstrings(v.size());
-							std::vector<const wchar_t*> wstringPtrs(v.size());
-							for (size_t i = 0; i < v.size(); i++) {
-								wstrings[i] = toUTF16FromOSNarrow(v[i].toStdString());
-								wstringPtrs[i] = wstrings[i].c_str();
-							}
-							amb->setStringArray(ruleAttrName.c_str(), wstringPtrs.data(), wstringPtrs.size());
-						}
-					}
-					else {
-						GA_ROHandleS av(ar);
-						if (av.isValid()) {
-							const char* v = av.get(primitiveMapOffset);
-							const std::wstring wv = toUTF16FromOSNarrow(v);
-							if (DBG)
-								LOG_DBG << "   prim string attr: " << ar->getName() << " = " << v;
-							amb->setString(ruleAttrName.c_str(), wv.c_str());
-						}
-					}
-					break;
-				}
-				case GA_STORECLASS_INT: {
-					if (isArrayAttribute(ar)) {
-						if (ar.getAIFNumericArray()->getStorage(ar.get()) == GA_STORE_INT8) {
-							GA_ROHandleIA av(ar);
-							if (av.isValid()) {
-								UT_Int32Array v; // there is no U_Int8Array
-								av.get(primitiveMapOffset, v);
-								if (DBG)
-									LOG_DBG << "   prim bool array attr: " << ar->getName() << " = " << v;
-								const std::unique_ptr<bool[]> vPtrs(new bool[v.size()]);
-								for (size_t i = 0; i < v.size(); i++)
-									vPtrs[i] = (v[i] > 0);
-								amb->setBoolArray(ruleAttrName.c_str(), vPtrs.get(), v.size());
-							}
-						}
-						else {
-							GA_ROHandleIA av(ar);
-							if (av.isValid()) {
-								UT_Int32Array v;
-								av.get(primitiveMapOffset, v);
-								if (DBG)
-									LOG_DBG << "   prim int array attr: " << ar->getName() << " = " << v;
-								amb->setIntArray(ruleAttrName.c_str(), v.data(), v.size());
-							}
-						}
-					}
-					else {
-						if (ar.getAIFTuple()->getStorage(ar.get()) == GA_STORE_INT8) {
-							GA_ROHandleI av(ar);
-							if (av.isValid()) {
-								const int v = av.get(primitiveMapOffset);
-								const bool bv = (v > 0);
-								if (DBG)
-									LOG_DBG << "   prim bool attr: " << ar->getName() << " = " << bv;
-								amb->setBool(ruleAttrName.c_str(), bv);
-							}
-						}
-						else {
-							GA_ROHandleI av(ar);
-							if (av.isValid()) {
-								const int v = av.get(primitiveMapOffset);
-								if (DBG)
-									LOG_DBG << "   prim int attr: " << ar->getName() << " = " << v;
-								amb->setInt(ruleAttrName.c_str(), v);
-							}
-						}
-					} // int
-					break;
-				}
-				default: {
-					LOG_WRN << "prim attr " << ar->getName() << ": unsupported storage class";
-					break;
-				}
-			} // switch key type
-		}     // for each primitive attribute
+			fromHoudini.convert(ar, primitiveMapOffset, ruleAttrName);
+		}
 
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
