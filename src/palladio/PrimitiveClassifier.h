@@ -16,18 +16,17 @@
 
 #pragma once
 
-#include "SOP/SOP_Node.h"
-#include "OP/OP_Context.h"
 #include "GA/GA_Handle.h"
 #include "GA/GA_Types.h"
+#include "OP/OP_Context.h"
+#include "SOP/SOP_Node.h"
 #include "UT/UT_String.h"
-
 
 const UT_String PLD_PRIM_CLS_NAME = "pldPrimClsName";
 
 class PrimitiveClassifier {
 public:
-	UT_String    name;
+	UT_String name;
 	GA_RWHandleS clsAttrNameH;
 
 	PrimitiveClassifier() = default;

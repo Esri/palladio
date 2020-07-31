@@ -13,7 +13,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		-DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 if(PLD_LINUX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11)
+	target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -30,6 +30,6 @@ pld_add_dependency_houdini(${PROJECT_NAME})
 # copy libraries next to test excutable so they can be found
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${CMAKE_BINARY_DIR}/bin
-	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
+	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PLD_PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
 	COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${CMAKE_BINARY_DIR}/lib
-	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PRT_EXT_LIBRARIES} ${CMAKE_BINARY_DIR}/lib)
+	COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PLD_PRT_EXT_LIBRARIES} ${CMAKE_BINARY_DIR}/lib)

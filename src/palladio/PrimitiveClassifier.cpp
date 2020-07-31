@@ -17,12 +17,12 @@
 #include "PrimitiveClassifier.h"
 #include "NodeParameter.h"
 
-
 PrimitiveClassifier::PrimitiveClassifier(SOP_Node* node, const GA_Detail* detail, const OP_Context& context) {
 	get(node, detail, context);
 }
 
-void PrimitiveClassifier::updateFromPrimitive(PrimitiveClassifier& derived, const GA_Detail* detail, const GA_Primitive* p) const {
+void PrimitiveClassifier::updateFromPrimitive(PrimitiveClassifier& derived, const GA_Detail* detail,
+                                              const GA_Primitive* p) const {
 	const GA_ROAttributeRef primClsAttrNameRef = detail->findPrimitiveAttribute(PLD_PRIM_CLS_NAME);
 	if (primClsAttrNameRef.isValid()) {
 		const GA_ROHandleS nameH(primClsAttrNameRef);

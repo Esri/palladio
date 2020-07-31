@@ -17,19 +17,18 @@
 #include "ResolveMapCache.h"
 #include "LogHandler.h"
 
-#include "UT/UT_IStream.h"
 #include "FS/FS_Reader.h"
-
+#include "UT/UT_IStream.h"
 
 namespace {
 
 const ResolveMapSPtr RESOLVE_MAP_NONE;
-const ResolveMapCache::LookupResult LOOKUP_FAILURE = { RESOLVE_MAP_NONE, ResolveMapCache::CacheStatus::MISS };
+const ResolveMapCache::LookupResult LOOKUP_FAILURE = {RESOLVE_MAP_NONE, ResolveMapCache::CacheStatus::MISS};
 const std::chrono::system_clock::time_point INVALID_TIMESTAMP;
 
 constexpr const char* SCHEMA_OPDEF = "opdef:";
 constexpr const char* SCHEMA_OPLIB = "oplib:";
-const std::vector<std::string> EMBEDDED_SCHEMAS = { SCHEMA_OPDEF, SCHEMA_OPLIB };
+const std::vector<std::string> EMBEDDED_SCHEMAS = {SCHEMA_OPDEF, SCHEMA_OPLIB};
 
 bool isEmbedded(const PLD_BOOST_NS::filesystem::path& p) {
 	return startsWithAnyOf(p.string(), EMBEDDED_SCHEMAS);
@@ -74,7 +73,7 @@ struct PathRemover {
 		}
 	}
 };
-using ScopedPath = std::unique_ptr<PLD_BOOST_NS::filesystem::path,PathRemover>;
+using ScopedPath = std::unique_ptr<PLD_BOOST_NS::filesystem::path, PathRemover>;
 
 ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
@@ -85,7 +84,8 @@ ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 
 	auto resName = p.leaf().string();
 	std::replace(resName.begin(), resName.end(), '?', '_'); // TODO: generalize
-	ScopedPath extractedResource(new PLD_BOOST_NS::filesystem::path(PLD_BOOST_NS::filesystem::temp_directory_path() / resName));
+	ScopedPath extractedResource(
+	        new PLD_BOOST_NS::filesystem::path(PLD_BOOST_NS::filesystem::temp_directory_path() / resName));
 
 	if (fsr.isGood()) {
 		UT_WorkBuffer wb;
@@ -103,17 +103,17 @@ ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 
 } // namespace
 
-
 ResolveMapCache::~ResolveMapCache() {
-    PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath);
-    LOG_INF << "Removed RPK unpack directory";
+	PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath);
+	LOG_INF << "Removed RPK unpack directory";
 }
 
 ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesystem::path& rpk) {
 	const auto cacheKey = createCacheKey(rpk);
 
 	const auto timeStamp = getFileModificationTime(rpk);
-	LOG_DBG << "rpk: current timestamp: " << std::chrono::duration_cast<std::chrono::nanoseconds>(timeStamp.time_since_epoch()).count() << "ns";
+	LOG_DBG << "rpk: current timestamp: "
+	        << std::chrono::duration_cast<std::chrono::nanoseconds>(timeStamp.time_since_epoch()).count() << "ns";
 
 	// verify timestamp
 	if (timeStamp == INVALID_TIMESTAMP)
@@ -122,11 +122,15 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 	CacheStatus cs = CacheStatus::HIT;
 	auto it = mCache.find(cacheKey);
 	if (it != mCache.end()) {
-		LOG_DBG << "rpk: cache timestamp: " << std::chrono::duration_cast<std::chrono::nanoseconds>(it->second.mTimeStamp.time_since_epoch()).count() << "ns";
+		LOG_DBG << "rpk: cache timestamp: "
+		        << std::chrono::duration_cast<std::chrono::nanoseconds>(it->second.mTimeStamp.time_since_epoch())
+		                   .count()
+		        << "ns";
 		if (it->second.mTimeStamp != timeStamp) {
 			mCache.erase(it);
 			const auto cnt = PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
-			LOG_INF << "RPK change detected, forcing reload and clearing cache for " << rpk << " (removed " << cnt << " files)";
+			LOG_INF << "RPK change detected, forcing reload and clearing cache for " << rpk << " (removed " << cnt
+			        << " files)";
 			cs = CacheStatus::MISS;
 		}
 	}
@@ -151,7 +155,8 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		LOG_DBG << "createResolveMap from " << rpkURI;
-		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status), PRTDestroyer());
+		rmce.mResolveMap.reset(prt::createResolveMap(rpkURI.c_str(), mRPKUnpackPath.wstring().c_str(), &status),
+		                       PRTDestroyer());
 		if (status != prt::STATUS_OK)
 			return LOOKUP_FAILURE;
 
@@ -159,6 +164,5 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 		LOG_INF << "Upacked RPK " << actualRPK << " to " << mRPKUnpackPath;
 	}
 
-	return { it->second.mResolveMap, cs };
+	return {it->second.mResolveMap, cs};
 }
-

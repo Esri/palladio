@@ -18,40 +18,39 @@
 
 #include "../CodecMain.h"
 
-#include "prtx/Mesh.h"
-#include "prtx/ResolveMap.h"
+#include "prtx/EncodePreparator.h"
 #include "prtx/Encoder.h"
 #include "prtx/EncoderFactory.h"
 #include "prtx/EncoderInfoBuilder.h"
+#include "prtx/Mesh.h"
 #include "prtx/PRTUtils.h"
+#include "prtx/ResolveMap.h"
 #include "prtx/Singleton.h"
-#include "prtx/EncodePreparator.h"
 
 #include "prt/ContentType.h"
 #include "prt/InitialShape.h"
 
-#include <string>
 #include <iostream>
 #include <stdexcept>
-
+#include <string>
 
 class HoudiniCallbacks;
 
 namespace detail {
 
 struct SerializedGeometry {
-	prtx::DoubleVector              coords;
-	prtx::DoubleVector              normals; // uses same indexing as coords
-	std::vector<uint32_t>           counts;
-	std::vector<uint32_t>           indices;
+	prtx::DoubleVector coords;
+	prtx::DoubleVector normals; // uses same indexing as coords
+	std::vector<uint32_t> counts;
+	std::vector<uint32_t> indices;
 
 	std::vector<prtx::DoubleVector> uvs;
-	std::vector<prtx::IndexVector>  uvCounts;
-	std::vector<prtx::IndexVector>  uvIndices;
+	std::vector<prtx::IndexVector> uvCounts;
+	std::vector<prtx::IndexVector> uvIndices;
 
-	SerializedGeometry(uint32_t numCoords, uint32_t numNormalCoords, uint32_t numCounts, uint32_t numIndices, uint32_t uvSets)
-		: uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets)
-	{
+	SerializedGeometry(uint32_t numCoords, uint32_t numNormalCoords, uint32_t numCounts, uint32_t numIndices,
+	                   uint32_t uvSets)
+	    : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) {
 		coords.reserve(3 * numCoords);
 		normals.reserve(3 * numNormalCoords);
 		counts.reserve(numCounts);
@@ -60,10 +59,10 @@ struct SerializedGeometry {
 };
 
 // visible for tests
-CODEC_EXPORTS_API SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector &geometries, const std::vector<prtx::MaterialPtrVector>& materials);
+CODEC_EXPORTS_API SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
+                                                       const std::vector<prtx::MaterialPtrVector>& materials);
 
 } // namespace detail
-
 
 class HoudiniEncoder : public prtx::GeometryEncoder {
 public:
@@ -77,16 +76,14 @@ public:
 
 private:
 	void convertGeometry(const prtx::InitialShape& initialShape,
-	                     const prtx::EncodePreparator::InstanceVector& instances,
-	                     HoudiniCallbacks* callbacks);
+	                     const prtx::EncodePreparator::InstanceVector& instances, HoudiniCallbacks* callbacks);
 };
-
 
 class HoudiniEncoderFactory : public prtx::EncoderFactory, public prtx::Singleton<HoudiniEncoderFactory> {
 public:
 	static HoudiniEncoderFactory* createInstance();
 
-	explicit HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) { }
+	explicit HoudiniEncoderFactory(const prt::EncoderInfo* info) : prtx::EncoderFactory(info) {}
 	~HoudiniEncoderFactory() override = default;
 
 	HoudiniEncoder* create(const prt::AttributeMap* options, prt::Callbacks* callbacks) const override {

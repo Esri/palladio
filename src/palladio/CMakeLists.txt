@@ -37,6 +37,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ### compiler settings
 
 add_toolchain_definition(${PROJECT_NAME})
+pld_add_version_definitions(${PROJECT_NAME})
 
 if(PLD_TEST)
 	message(STATUS "Enabling test exports...")

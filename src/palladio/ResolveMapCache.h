@@ -18,18 +18,19 @@
 
 #include "Utils.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <map>
 #include <chrono>
-
 
 class ResolveMapCache {
 public:
 	using KeyType = std::string;
 
-	explicit ResolveMapCache(const PLD_BOOST_NS::filesystem::path& unpackPath) : mRPKUnpackPath{unpackPath} { }
+	explicit ResolveMapCache(const PLD_BOOST_NS::filesystem::path& unpackPath) : mRPKUnpackPath{unpackPath} {}
 	ResolveMapCache(const ResolveMapCache&) = delete;
 	ResolveMapCache(ResolveMapCache&&) = delete;
 	ResolveMapCache& operator=(ResolveMapCache const&) = delete;

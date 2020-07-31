@@ -44,7 +44,7 @@ endif()
 ### run conan
 
 if(PLD_WINDOWS)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
 endif()

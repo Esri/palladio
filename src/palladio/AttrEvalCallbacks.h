@@ -22,15 +22,17 @@
 
 #include <vector>
 
-
-class AttrEvalCallbacks: public prt::Callbacks {
+class AttrEvalCallbacks : public prt::Callbacks {
 public:
-	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const std::vector<RuleFileInfoUPtr>& ruleFileInfo) : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) { }
+	explicit AttrEvalCallbacks(AttributeMapBuilderVector& ambs, const std::vector<RuleFileInfoUPtr>& ruleFileInfo)
+	    : mAMBS(ambs), mRuleFileInfo(ruleFileInfo) {}
 	~AttrEvalCallbacks() override = default;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
-	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) override;
-	prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) override;
+	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri,
+	                       const wchar_t* message) override;
+	prt::Status cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc,
+	                     const wchar_t* message) override;
 	prt::Status cgaPrint(size_t isIndex, int32_t shapeID, const wchar_t* txt) override;
 	prt::Status cgaReportBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) override;
 	prt::Status cgaReportFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
@@ -39,10 +41,32 @@ public:
 	prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
 	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
 
-#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 0)
-	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr, size_t size) override { return prt::STATUS_OK; }
-	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr, size_t size) override { return prt::STATUS_OK; }
-	prt::Status attrStringArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* const* ptr, size_t size) override { return prt::STATUS_OK; }
+#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1)
+	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr, size_t size,
+	                          size_t nRows) override {
+		return prt::STATUS_OK;
+	}
+	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr, size_t size,
+	                           size_t nRows) override {
+		return prt::STATUS_OK;
+	}
+	prt::Status attrStringArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* const* ptr,
+	                            size_t size, size_t nRows) override {
+		return prt::STATUS_OK;
+	}
+#elif (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 0)
+	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr,
+	                          size_t size) override {
+		return prt::STATUS_OK;
+	}
+	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr,
+	                           size_t size) override {
+		return prt::STATUS_OK;
+	}
+	prt::Status attrStringArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* const* ptr,
+	                            size_t size) override {
+		return prt::STATUS_OK;
+	}
 #endif
 
 private:
