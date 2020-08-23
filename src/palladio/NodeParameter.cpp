@@ -68,6 +68,31 @@ constexpr const int CHANGED = 1;
 
 } // namespace
 
+namespace CommonNodeParams {
+
+prt::LogLevel getLogLevel(const OP_Node* node, fpreal t) {
+	const auto ord = node->evalInt(LOG_LEVEL.getToken(), 0, t);
+	switch (ord) {
+		case 1:
+			return prt::LOG_DEBUG;
+		case 2:
+			return prt::LOG_INFO;
+		case 3:
+			return prt::LOG_WARNING;
+		case 4:
+			return prt::LOG_ERROR;
+		case 5:
+			return prt::LOG_FATAL;
+		case 6:
+			return prt::LOG_NO;
+		default:
+			break;
+	}
+	return logging::getDefaultLogLevel();
+};
+
+} // namespace CommonNodeParams
+
 namespace AssignNodeParams {
 
 /**

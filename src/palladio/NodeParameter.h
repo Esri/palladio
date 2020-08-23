@@ -28,10 +28,29 @@
 #include "PRM/PRM_Shared.h"
 #include "PRM/PRM_SpareData.h"
 
+#include "prt/LogLevel.h"
+
 // clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
 // clang-format on
+
+namespace CommonNodeParams {
+
+static PRM_Name LOG_LEVEL("logLevel", "Log Level");
+static const char* LOG_LEVEL_TOKENS[] = {"Default", "Debug", "Info", "Warning", "Error", "Fatal", "None"};
+static PRM_Name LOG_LEVEL_MENU_ITEMS[] = {PRM_Name(LOG_LEVEL_TOKENS[0]), PRM_Name(LOG_LEVEL_TOKENS[1]),
+                                          PRM_Name(LOG_LEVEL_TOKENS[2]), PRM_Name(LOG_LEVEL_TOKENS[3]),
+                                          PRM_Name(LOG_LEVEL_TOKENS[4]), PRM_Name(LOG_LEVEL_TOKENS[5]),
+                                          PRM_Name(LOG_LEVEL_TOKENS[6]), PRM_Name(nullptr)};
+static PRM_ChoiceList logLevelMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
+                                   LOG_LEVEL_MENU_ITEMS);
+const size_t DEFAULT_LOG_LEVEL_ORDINAL = 0;
+static PRM_Default DEFAULT_LOG_LEVEL(0, LOG_LEVEL_TOKENS[DEFAULT_LOG_LEVEL_ORDINAL]);
+
+prt::LogLevel getLogLevel(const OP_Node* node, fpreal t);
+
+} // namespace CommonNodeParams
 
 namespace AssignNodeParams {
 
@@ -138,6 +157,8 @@ static PRM_Template PARAM_TEMPLATES[] = {
                      STYLE_HELP.c_str()),
         PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu, nullptr, PRM_Callback(), nullptr, 1,
                      START_RULE_HELP.c_str()),
+        PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &CommonNodeParams::LOG_LEVEL,
+                     &CommonNodeParams::DEFAULT_LOG_LEVEL, &CommonNodeParams::logLevelMenu),
         PRM_Template()};
 
 } // namespace AssignNodeParams
@@ -174,6 +195,10 @@ static PRM_Template PARAM_TEMPLATES[]{PRM_Template(PRM_ORD, PRM_Template::PRM_EX
                                                    &DEFAULT_GROUP_CREATION, &groupCreationMenu),
                                       PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
                                       PRM_Template(PRM_TOGGLE, 1, &EMIT_MATERIAL),
-                                      PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORTS), PRM_Template()};
+                                      PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORTS),
+                                      PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1,
+                                                   &CommonNodeParams::LOG_LEVEL, &CommonNodeParams::DEFAULT_LOG_LEVEL,
+                                                   &CommonNodeParams::logLevelMenu),
+                                      PRM_Template()};
 
 } // namespace GenerateNodeParams

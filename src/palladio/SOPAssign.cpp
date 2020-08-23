@@ -142,6 +142,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
 
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
+
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
 		return error();

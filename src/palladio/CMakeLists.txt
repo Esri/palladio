@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME} SHARED
 		AttributeConversion.cpp
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
-		LogHandler.h
+		LogHandler.cpp
 		LRUCache.h
 		BoostRedirect.h)
 

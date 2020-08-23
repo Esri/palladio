@@ -29,6 +29,22 @@
 
 namespace logging {
 
+prt::LogLevel getDefaultLogLevel();
+
+class ScopedLogLevelModifier {
+public:
+	ScopedLogLevelModifier() = delete;
+	explicit ScopedLogLevelModifier(prt::LogLevel newLevel) : mOriginalLevel(prt::getLogLevel()) {
+		prt::setLogLevel(newLevel);
+	}
+	~ScopedLogLevelModifier() {
+		prt::setLogLevel(mOriginalLevel);
+	}
+
+private:
+	prt::LogLevel mOriginalLevel;
+};
+
 struct Logger {};
 
 const std::string LEVELS[] = {"trace", "debug", "info", "warning", "error", "fatal"};

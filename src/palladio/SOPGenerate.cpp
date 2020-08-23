@@ -136,6 +136,8 @@ std::vector<prt::Status> batchGenerate(BatchMode mode, size_t nThreads, std::vec
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	WA("all");
 
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
+
 	if (!handleParams(context))
 		return UT_ERROR_ABORT;
 
