@@ -84,7 +84,7 @@ public:
 #endif // PRT_VERSION_MAJOR < 2
 
 // TODO: move to LogHandler
-prt::LogLevel getLogLevel() {
+prt::LogLevel getDefaultLogLevel() {
 	const char* e = std::getenv(PRT_LOG_LEVEL_ENV_VAR);
 	if (e == nullptr || strlen(e) == 0)
 		return PRT_LOG_LEVEL_DEFAULT;
@@ -144,8 +144,8 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
     : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)), mPRTHandle{nullptr},
       mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}, mCores{getNumCores()},
       mResolveMapCache{new ResolveMapCache(getProcessTempDir())} {
-	const prt::LogLevel logLevel = getLogLevel();
-	prt::setLogLevel(logLevel);
+	const prt::LogLevel defaultLogLevel = getDefaultLogLevel();
+	prt::setLogLevel(defaultLogLevel);
 	prt::addLogHandler(mLogHandler.get());
 
 	// -- get the dir containing prt core library
@@ -183,7 +183,7 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
 
 	// -- initialize PRT
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	mPRTHandle.reset(prt::init(extDirCStrs.data(), extDirCStrs.size(), logLevel,
+	mPRTHandle.reset(prt::init(extDirCStrs.data(), extDirCStrs.size(), defaultLogLevel,
 #if PRT_VERSION_MAJOR < 2
 	                           license.getParams(),
 #endif
