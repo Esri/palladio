@@ -28,6 +28,8 @@
 #include "PRM/PRM_Shared.h"
 #include "PRM/PRM_SpareData.h"
 
+#include "prt/LogLevel.h"
+
 // clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
@@ -45,6 +47,8 @@ static PRM_ChoiceList logLevelMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE
                                    LOG_LEVEL_MENU_ITEMS);
 const size_t DEFAULT_LOG_LEVEL_ORDINAL = 0;
 static PRM_Default DEFAULT_LOG_LEVEL(0, LOG_LEVEL_TOKENS[DEFAULT_LOG_LEVEL_ORDINAL]);
+
+prt::LogLevel getLogLevel(const OP_Node* node, fpreal t);
 
 } // namespace CommonNodeParams
 
