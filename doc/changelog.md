@@ -3,6 +3,7 @@
 ## v1.8.0 Beta 1 (Aug 23, 2020)
 * Update default CityEngine SDK to 2.2 (CityEngine 2020.0) (#146).
 * Added support for CGA array attributes (#146).
+* Added per-node control of log level (#30).
 * At startup, print Palladio version on console if log level is "info" or lower.
 * Development
   * On Windows, building Palladio now requires MSVC 14.2 (#146).
