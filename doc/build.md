@@ -5,7 +5,7 @@
 
 ### Supported Operating Systems
 * RedHat Enterprise Linux 7 (and compatible)
-* Windows 7/8.1/10
+* Windows 10
  
 ### Required Toolchain & Compiler
 * [cmake 3.13 or later](https://cmake.org/download)
