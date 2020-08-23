@@ -17,7 +17,7 @@
 * Installation of Houdini 17.0 or later (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
-* [Esri CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk)
+* [CityEngine SDK](https://github.com/esri/cityengine-sdk)
 * SideFX Houdini HDK
 
 
