@@ -1,7 +1,7 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.14.cmake)
+include(${PLD_CONAN_TOOLS}/conan-0.15.cmake)
 conan_check(VERSION 1.20 REQUIRED)
 
 
