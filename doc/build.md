@@ -11,7 +11,7 @@
 * [cmake 3.13 or later](https://cmake.org/download)
 * [conan 1.20 or later](https://www.conan.io/downloads)
 * Linux: GCC 6.3
-* Windows: Visual Studio 2017 (MSVC 14.1)
+* Windows: Visual Studio 2019 (MSVC 14.2)
 
 ### Required Build Dependencies
 * Installation of Houdini 17.0 or later (see https://sidefx.com/download)
