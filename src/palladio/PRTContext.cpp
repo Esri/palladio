@@ -37,11 +37,6 @@ constexpr const char* PLD_TMP_PREFIX = "palladio_";
 
 constexpr const char* PRT_LIB_SUBDIR = "prtlib";
 
-constexpr const prt::LogLevel PRT_LOG_LEVEL_DEFAULT = prt::LOG_ERROR;
-constexpr const char* PRT_LOG_LEVEL_ENV_VAR = "CITYENGINE_LOG_LEVEL";
-constexpr const char* PRT_LOG_LEVEL_STRINGS[] = {"trace", "debug", "info", "warning", "error", "fatal"};
-constexpr const size_t PRT_LOG_LEVEL_STRINGS_N = sizeof(PRT_LOG_LEVEL_STRINGS) / sizeof(PRT_LOG_LEVEL_STRINGS[0]);
-
 #if PRT_VERSION_MAJOR < 2
 
 constexpr const char* FILE_FLEXNET_LIB = "flexnet_prt";
@@ -82,17 +77,6 @@ public:
 };
 
 #endif // PRT_VERSION_MAJOR < 2
-
-// TODO: move to LogHandler
-prt::LogLevel getDefaultLogLevel() {
-	const char* e = std::getenv(PRT_LOG_LEVEL_ENV_VAR);
-	if (e == nullptr || strlen(e) == 0)
-		return PRT_LOG_LEVEL_DEFAULT;
-	for (size_t i = 0; i < PRT_LOG_LEVEL_STRINGS_N; i++)
-		if (strcmp(e, PRT_LOG_LEVEL_STRINGS[i]) == 0)
-			return static_cast<prt::LogLevel>(i);
-	return PRT_LOG_LEVEL_DEFAULT;
-}
 
 template <typename C>
 std::vector<const C*> toPtrVec(const std::vector<std::basic_string<C>>& sv) {
@@ -144,7 +128,7 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
     : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)), mPRTHandle{nullptr},
       mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}, mCores{getNumCores()},
       mResolveMapCache{new ResolveMapCache(getProcessTempDir())} {
-	const prt::LogLevel defaultLogLevel = getDefaultLogLevel();
+	const prt::LogLevel defaultLogLevel = logging::getDefaultLogLevel();
 	prt::setLogLevel(defaultLogLevel);
 	prt::addLogHandler(mLogHandler.get());
 

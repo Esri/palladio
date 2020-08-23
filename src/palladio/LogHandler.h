@@ -29,6 +29,8 @@
 
 namespace logging {
 
+prt::LogLevel getDefaultLogLevel();
+
 struct Logger {};
 
 const std::string LEVELS[] = {"trace", "debug", "info", "warning", "error", "fatal"};
