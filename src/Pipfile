@@ -6,7 +6,4 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-conan = "==1.20.*"
-
-[requires]
-python_version = "3.6"
+conan = "==1.*"
