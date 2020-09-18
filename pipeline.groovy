@@ -15,7 +15,7 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
 // -- GLOBAL DEFINITIONS
 
-@Field final String REPO         = 'git@github.com:Esri/palladio.git'
+@Field final String REPO         = 'https://github.com/Esri/palladio.git'
 @Field final String SOURCE       = "palladio.git/src"
 @Field final String BUILD_TARGET = 'package'
 
