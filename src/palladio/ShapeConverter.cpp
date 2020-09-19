@@ -16,9 +16,9 @@
 
 #include "ShapeConverter.h"
 #include "AttributeConversion.h"
-#include "NodeParameter.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
+#include "NodeParameter.h"
 #include "PrimitiveClassifier.h"
 #include "ShapeData.h"
 
@@ -256,14 +256,14 @@ using AttrRefMap = std::map<UT_String, GA_RWAttributeRef>;
 class AttributeCreator : public PLD_BOOST_NS::static_visitor<> {
 public:
 	AttributeCreator(UT_String name, GU_Detail* detail, AttrRefMap& attrRefs)
-		: mName(name), mDetail(detail), mAttrRefs(attrRefs) { }
+	    : mName(name), mDetail(detail), mAttrRefs(attrRefs) {}
 
-    void operator()(const std::wstring& v) const {
+	void operator()(const std::wstring& v) const {
 		auto primAttr = mDetail->addStringTuple(GA_ATTRIB_PRIMITIVE, mName, 1);
 		mAttrRefs.emplace(mName, primAttr);
 	}
 
-    void operator()(const double& v) const {
+	void operator()(const double& v) const {
 		auto primAttr = mDetail->addFloatTuple(GA_ATTRIB_PRIMITIVE, mName, 1); // TODO: use double storage
 		mAttrRefs.emplace(mName, primAttr);
 	}
@@ -281,8 +281,7 @@ private:
 
 class AttributeAssigner : public PLD_BOOST_NS::static_visitor<> {
 public:
-	AttributeAssigner(SOPAssign* node, GA_RWAttributeRef ref, GA_Offset off)
-		: mNode(node), mRef(ref), mOff(off) { }
+	AttributeAssigner(SOPAssign* node, GA_RWAttributeRef ref, GA_Offset off) : mNode(node), mRef(ref), mOff(off) {}
 
 	void operator()(const std::wstring& v) const {
 		GA_RWHandleS av(mRef);
@@ -308,7 +307,8 @@ private:
 
 } // namespace
 
-void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail, PrimitiveClassifier& primCls, const ShapeData& shapeData) const {
+void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail, PrimitiveClassifier& primCls,
+                         const ShapeData& shapeData) const {
 	WA("all");
 
 	primCls.setupAttributeHandles(detail);
@@ -317,9 +317,10 @@ void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail
 	mah.setup(detail);
 
 	// generate primitive attribute handles for all overriding rule attributes
-	const AssignNodeParams::AttributeValueMap overriddenRuleAttributes = AssignNodeParams::getOverriddenRuleAttributes(node, context.getTime());
+	const AssignNodeParams::AttributeValueMap overriddenRuleAttributes =
+	        AssignNodeParams::getOverriddenRuleAttributes(node, context.getTime());
 	AttrRefMap attrRefs; // TODO: could be done lazily while assigning
-	for (const auto& ruleAttr: overriddenRuleAttributes) {
+	for (const auto& ruleAttr : overriddenRuleAttributes) {
 
 		const UT_String primAttrName = NameConversion::toPrimAttr(ruleAttr.first);
 		AttributeCreator avv(primAttrName, detail, attrRefs);
@@ -338,7 +339,7 @@ void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail
 			mah.seed.set(off, randomSeed);
 
 			// assign overriding rule attributes
-			for (const auto& ruleAttr: overriddenRuleAttributes) {
+			for (const auto& ruleAttr : overriddenRuleAttributes) {
 				const UT_String primAttrName = NameConversion::toPrimAttr(ruleAttr.first);
 				GA_RWAttributeRef attrRef = attrRefs.at(primAttrName);
 

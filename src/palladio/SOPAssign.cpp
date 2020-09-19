@@ -185,7 +185,7 @@ void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
 	mOverridableAttributes.clear();
 
 	AttributeMapVector defaultRuleAttributeMaps;
-	for (auto& amb: shapeData.getRuleAttributeMapBuilders()) {
+	for (auto& amb : shapeData.getRuleAttributeMapBuilders()) {
 		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
 	}
 

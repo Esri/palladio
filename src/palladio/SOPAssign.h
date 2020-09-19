@@ -16,15 +16,17 @@
 
 #pragma once
 
+#include "LogHandler.h"
+#include "NodeParameter.h"
 #include "PRTContext.h"
 #include "ShapeConverter.h"
-#include "NodeParameter.h"
-#include "LogHandler.h"
 
 #include "SOP/SOP_Node.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
+// clang-format on
 
 class SOPAssign : public SOP_Node {
 public:

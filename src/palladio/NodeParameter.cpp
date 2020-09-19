@@ -15,7 +15,6 @@
  */
 
 #include "NodeParameter.h"
-#include "SOPAssign.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "SOPAssign.h"
@@ -306,7 +305,7 @@ void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	size_t ri = 0;
 	theMenu[ri++].setTokenAndLabel(ATTRIBUTE_NONE, ATTRIBUTE_NONE);
 
-	for (const auto& oa: node->mOverridableAttributes) {
+	for (const auto& oa : node->mOverridableAttributes) {
 		if (ri == theMaxSize)
 			break;
 
@@ -318,7 +317,7 @@ void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 class AttributeDefaultValueSetter : public PLD_BOOST_NS::static_visitor<> {
 public:
-	AttributeDefaultValueSetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+	AttributeDefaultValueSetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) {}
 
 	void operator()(const std::wstring& v) const {
 		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex);
@@ -355,11 +354,11 @@ private:
 int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Template*) {
 	auto* node = static_cast<SOPAssign*>(data);
 
-    const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
 
-    for (int i = 0; i < numAttrs; i++) {
-    	const int idx = startIdx + i;
+	for (int i = 0; i < numAttrs; i++) {
+		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
 		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
@@ -373,22 +372,22 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 
 		AttributeDefaultValueSetter avs(node, idx, time);
 		PLD_BOOST_NS::apply_visitor(avs, it->second);
-    }
+	}
 
-    return CHANGED;
+	return CHANGED;
 }
 
 class AttributeValueGetter : public PLD_BOOST_NS::static_visitor<> {
 public:
-	AttributeValueGetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) { }
+	AttributeValueGetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) {}
 
-    void operator()(const std::wstring& v) {
+	void operator()(const std::wstring& v) {
 		UT_String val;
 		mNode->evalStringInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex, val, 0, mTime, 1);
 		mValue = toUTF16FromOSNarrow(val.c_str());
 	}
 
-    void operator()(const double& v) {
+	void operator()(const double& v) {
 		mValue = mNode->evalFloatInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
 	}
 
@@ -407,12 +406,12 @@ public:
 };
 
 AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
-    const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
 
-    AttributeValueMap ruleAttrs;
-    for (int i = 0; i < numAttrs; i++) {
-    	const int idx = startIdx + i;
+	AttributeValueMap ruleAttrs;
+	for (int i = 0; i < numAttrs; i++) {
+		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
 		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
@@ -430,22 +429,19 @@ AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 		PLD_BOOST_NS::apply_visitor(avg, it->second);
 
 		ruleAttrs.emplace(ruleAttr, avg.mValue);
-    }
+	}
 	return ruleAttrs;
 }
 
 bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
-	const std::array<const char*,3> tokens = {
-		ATTRIBUTE_STRING_VALUE.getToken(),
-		ATTRIBUTE_FLOAT_VALUE.getToken(),
-		ATTRIBUTE_BOOL_VALUE.getToken()
-	};
+	const std::array<const char*, 3> tokens = {ATTRIBUTE_STRING_VALUE.getToken(), ATTRIBUTE_FLOAT_VALUE.getToken(),
+	                                           ATTRIBUTE_BOOL_VALUE.getToken()};
 
-    const int numAttrs = assignNode.evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-    const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
-    bool changed = false;
-    for (int i = 0; i < numAttrs; i++) {
-    	const int idx = startIdx + i;
+	const int numAttrs = assignNode.evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
+	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	bool changed = false;
+	for (int i = 0; i < numAttrs; i++) {
+		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
 		assignNode.evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
@@ -466,9 +462,9 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 			const bool makeVisible = (activeType == ti);
 			assignNode.setVisibleStateInst(tokens[ti], &idx, makeVisible ? 1 : 0);
 		}
-    }
+	}
 
-    return changed;
+	return changed;
 }
 
 } // namespace AssignNodeParams

@@ -145,7 +145,6 @@ const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
 };
 
-
 // -- OVERRIDABLE ATTRIBUTES
 using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
 using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
@@ -153,7 +152,7 @@ using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
 const UT_String ATTRIBUTE_NONE = "(none)";
 static PRM_Default ATTRIBUTE_DEFAULT(0.0, ATTRIBUTE_NONE.c_str());
 static PRM_Name ATTRIBUTE("attribute#", "Attribute");
-void buildAttributeMenu(void *data, PRM_Name *theMenu, int theMaxSize, const PRM_SpareData *, const PRM_Parm *);
+void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
 int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback attributeCallback(&updateAttributeDefaultValue);
 static PRM_ChoiceList attributeMenu(PRM_CHOICELIST_SINGLE, &buildAttributeMenu);
@@ -165,15 +164,14 @@ static PRM_Name ATTRIBUTE_BOOL_VALUE("boolValue#", "Boolean Value");
 
 static PRM_Name ATTRIBUTES_OVERRIDE("attributesOverride", "Attribute Overrides");
 static PRM_Template PARAM_ATTRIBUTE_TEMPLATE[] = {
-	PRM_Template(PRM_STRING,1, &ATTRIBUTE, &ATTRIBUTE_DEFAULT, &attributeMenu, nullptr, attributeCallback, nullptr),
-	PRM_Template(PRM_STRING, 1, &ATTRIBUTE_STRING_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
-	PRM_Template(PRM_FLT, 1, &ATTRIBUTE_FLOAT_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
-	PRM_Template(PRM_TOGGLE, 1, &ATTRIBUTE_BOOL_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
-	PRM_Template()
-};
+        PRM_Template(PRM_STRING, 1, &ATTRIBUTE, &ATTRIBUTE_DEFAULT, &attributeMenu, nullptr, attributeCallback,
+                     nullptr),
+        PRM_Template(PRM_STRING, 1, &ATTRIBUTE_STRING_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
+        PRM_Template(PRM_FLT, 1, &ATTRIBUTE_FLOAT_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
+        PRM_Template(PRM_TOGGLE, 1, &ATTRIBUTE_BOOL_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
+        PRM_Template()};
 
 AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time);
-
 
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
@@ -190,7 +188,8 @@ static PRM_Template PARAM_TEMPLATES[] = {
                      START_RULE_HELP.c_str()),
         PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &CommonNodeParams::LOG_LEVEL,
                      &CommonNodeParams::DEFAULT_LOG_LEVEL, &CommonNodeParams::logLevelMenu),
-	PRM_Template(PRM_MULTITYPE_LIST, PARAM_ATTRIBUTE_TEMPLATE, 0.0f, &ATTRIBUTES_OVERRIDE, nullptr, nullptr, nullptr, nullptr, nullptr, attributeCallback),
+        PRM_Template(PRM_MULTITYPE_LIST, PARAM_ATTRIBUTE_TEMPLATE, 0.0f, &ATTRIBUTES_OVERRIDE, nullptr, nullptr,
+                     nullptr, nullptr, nullptr, attributeCallback),
         PRM_Template()};
 
 } // namespace AssignNodeParams
