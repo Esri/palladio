@@ -499,6 +499,9 @@ AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 		UT_String utAttributeKey;
 		node->evalStringInst(ATTRIBUTE_NAME.getToken(), &idx, utAttributeKey, 0, time, 1);
 
+		if (node->evalIntInst(ENABLED_NAME.getToken(), &idx, 0, time, 1) == 0)
+			continue;
+
 		if (!isValidAttr(utAttributeKey))
 			continue;
 

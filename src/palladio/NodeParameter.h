@@ -149,14 +149,22 @@ using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
 using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
 
 const UT_String ATTRIBUTE_NONE = "(none)";
-static PRM_Default ATTRIBUTE_DEFAULT(0.0, ATTRIBUTE_NONE.c_str());
+
+static PRM_Name ENABLED_NAME("enabled#", "Enabled");
+static PRM_Template ENABLED_TEMPLATE(PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_LABEL_NONE, 1, &ENABLED_NAME,
+                                     PRMoneDefaults);
+
 static PRM_Name ATTRIBUTE_NAME("attribute#", "Attribute");
+static PRM_Default ATTRIBUTE_DEFAULT(0.0, ATTRIBUTE_NONE.c_str());
+
 int updateAttributeDefaultValue(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback attributeCallback(&updateAttributeDefaultValue);
+
 void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
 static PRM_ChoiceList attributeMenu(PRM_CHOICELIST_SINGLE, &buildAttributeMenu);
-static PRM_Template ATTRIBUTE_TEMPLATE(PRM_STRING | PRM_TYPE_JOIN_NEXT, 1, &ATTRIBUTE_NAME, &ATTRIBUTE_DEFAULT,
-                                       &attributeMenu, nullptr, attributeCallback, nullptr);
+
+static PRM_Template ATTRIBUTE_TEMPLATE(PRM_STRING | PRM_TYPE_JOIN_NEXT | PRM_TYPE_LABEL_NONE, 1, &ATTRIBUTE_NAME,
+                                       &ATTRIBUTE_DEFAULT, &attributeMenu, nullptr, attributeCallback, nullptr);
 
 static PRM_Name STRING_NAME("stringValue#", "String Value");
 static PRM_Template STRING_TEMPLATE(PRM_STRING, 1, &STRING_NAME, PRMoneDefaults, nullptr, nullptr, PRM_Callback(),
@@ -170,17 +178,17 @@ static PRM_Template BOOL_TEMPLATE(PRM_TOGGLE, 1, &BOOL_NAME, PRMoneDefaults, nul
 
 int resetAttribute(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback resetCallback(&resetAttribute);
+
 static PRM_Name RESET_NAME("resetValue#", "Reset Value");
 static PRM_Template RESET_TEMPLATE(PRM_CALLBACK, 1, &RESET_NAME, PRMoneDefaults, nullptr, nullptr, resetCallback);
 
 static PRM_Name ATTRIBUTES_OVERRIDE("attributesOverride", "Attribute Overrides");
-static PRM_Template TEMPLATES[] = {ATTRIBUTE_TEMPLATE, RESET_TEMPLATE, STRING_TEMPLATE,
-                                   FLOAT_TEMPLATE,     BOOL_TEMPLATE,  PRM_Template()};
+static PRM_Template TEMPLATES[] = {ENABLED_TEMPLATE, ATTRIBUTE_TEMPLATE, RESET_TEMPLATE, STRING_TEMPLATE,
+                                   FLOAT_TEMPLATE,   BOOL_TEMPLATE,      PRM_Template()};
 
 static PRM_Template MULTI_PARM_TEMPLATE(PRM_MULTITYPE_LIST, TEMPLATES, 0.0f, &ATTRIBUTES_OVERRIDE, nullptr, nullptr,
                                         nullptr, nullptr, nullptr, attributeCallback);
 
-// helper functions for attribute overriding
 AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time);
 bool updateParmsFlags(SOPAssign& opParm, fpreal time);
 
