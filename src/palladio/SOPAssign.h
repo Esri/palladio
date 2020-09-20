@@ -53,4 +53,5 @@ private:
 
 public:
 	AssignNodeParams::AttributeValueMap mOverridableAttributes;
+	std::set<std::wstring> mOverriddenAttributes;
 };

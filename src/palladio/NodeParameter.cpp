@@ -359,6 +359,7 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 	const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
 	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
 
+	std::set<std::wstring> updatedOverridenAttributes;
 	for (int i = 0; i < numAttrs; i++) {
 		const int idx = startIdx + i;
 
@@ -369,12 +370,18 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 			continue;
 
 		const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
+		updatedOverridenAttributes.insert(ruleAttr);
+
+		if (node->mOverriddenAttributes.count(ruleAttr) > 0)
+			continue;
+
 		const auto it = node->mOverridableAttributes.find(ruleAttr);
 		assert(it != node->mOverridableAttributes.end());
 
-		AttributeDefaultValueSetter avs(node, idx, time);
+		AttributeDefaultValueSetter avs(node, idx, time, true);
 		PLD_BOOST_NS::apply_visitor(avs, it->second);
 	}
+	node->mOverriddenAttributes.swap(updatedOverridenAttributes);
 
 	return CHANGED;
 }
