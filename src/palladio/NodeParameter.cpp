@@ -357,7 +357,7 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 	auto* node = static_cast<SOPAssign*>(data);
 
 	const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	const int startIdx = ATTRIBUTE_TEMPLATE.getMultiStartOffset();
 
 	std::set<std::wstring> updatedOverridenAttributes;
 	for (int i = 0; i < numAttrs; i++) {
@@ -416,7 +416,7 @@ public:
 
 AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 	const int numAttrs = node->evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	const int startIdx = ATTRIBUTE_TEMPLATE.getMultiStartOffset();
 
 	AttributeValueMap ruleAttrs;
 	for (int i = 0; i < numAttrs; i++) {
@@ -447,7 +447,7 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 	                                           ATTRIBUTE_BOOL_VALUE.getToken()};
 
 	const int numAttrs = assignNode.evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
-	const int startIdx = PARAM_ATTRIBUTE_TEMPLATE[0].getMultiStartOffset();
+	const int startIdx = ATTRIBUTE_TEMPLATE.getMultiStartOffset();
 	bool changed = false;
 	for (int i = 0; i < numAttrs; i++) {
 		const int idx = startIdx + i;
