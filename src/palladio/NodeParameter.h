@@ -162,10 +162,17 @@ static PRM_Name ATTRIBUTE_STRING_VALUE("stringValue#", "String Value");
 static PRM_Name ATTRIBUTE_FLOAT_VALUE("floatValue#", "Number Value");
 static PRM_Name ATTRIBUTE_BOOL_VALUE("boolValue#", "Boolean Value");
 
+int resetAttribute(void* data, int index, fpreal32 time, const PRM_Template*);
+static PRM_Callback resetCallback(&resetAttribute);
+static PRM_Name ATTRIBUTE_RESET("resetValue#", "Reset Value");
+static PRM_Template ATTRIBUTE_RESET_TEMPLATE(PRM_CALLBACK, 1, &ATTRIBUTE_RESET, PRMoneDefaults, nullptr, nullptr,
+                                             resetCallback);
+
 static PRM_Name ATTRIBUTES_OVERRIDE("attributesOverride", "Attribute Overrides");
 static PRM_Template PARAM_ATTRIBUTE_TEMPLATE[] = {
-        PRM_Template(PRM_STRING, 1, &ATTRIBUTE, &ATTRIBUTE_DEFAULT, &attributeMenu, nullptr, attributeCallback,
-                     nullptr),
+        PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT, 1, &ATTRIBUTE, &ATTRIBUTE_DEFAULT, &attributeMenu, nullptr,
+                     attributeCallback, nullptr),
+        ATTRIBUTE_RESET_TEMPLATE,
         PRM_Template(PRM_STRING, 1, &ATTRIBUTE_STRING_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
         PRM_Template(PRM_FLT, 1, &ATTRIBUTE_FLOAT_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),
         PRM_Template(PRM_TOGGLE, 1, &ATTRIBUTE_BOOL_VALUE, PRMoneDefaults, nullptr, nullptr, PRM_Callback(), nullptr),

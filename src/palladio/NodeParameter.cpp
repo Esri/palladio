@@ -317,11 +317,12 @@ void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 class AttributeDefaultValueSetter : public PLD_BOOST_NS::static_visitor<> {
 public:
-	AttributeDefaultValueSetter(SOPAssign* node, int index, fpreal32 time) : mNode(node), mIndex(index), mTime(time) {}
+	AttributeDefaultValueSetter(SOPAssign* node, int index, fpreal32 time, bool force = false)
+	    : mNode(node), mIndex(index), mTime(time), mForce(force) {}
 
 	void operator()(const std::wstring& v) const {
 		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex);
-		if (!p->isFactoryDefault())
+		if (!mForce && !p->isFactoryDefault())
 			return;
 
 		UT_String utVal(toOSNarrowFromUTF16(v));
@@ -331,7 +332,7 @@ public:
 
 	void operator()(const double& v) const {
 		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex);
-		if (!p->isFactoryDefault())
+		if (!mForce && !p->isFactoryDefault())
 			return;
 
 		mNode->setFloatInst(v, ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
@@ -339,7 +340,7 @@ public:
 
 	void operator()(const bool& v) const {
 		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex);
-		if (!p->isFactoryDefault())
+		if (!mForce && !p->isFactoryDefault())
 			return;
 
 		mNode->setIntInst(v ? 1 : 0, ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex, 0, mTime, 1);
@@ -349,6 +350,7 @@ private:
 	SOPAssign* mNode;
 	int mIndex;
 	fpreal32 mTime;
+	bool mForce;
 };
 
 int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Template*) {
@@ -465,6 +467,30 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 	}
 
 	return changed;
+}
+
+int resetAttribute(void* data, int, fpreal32 time, const PRM_Template* tmpl) {
+	auto* node = static_cast<SOPAssign*>(data);
+
+	const int startIdx = ATTRIBUTE_RESET_TEMPLATE.getMultiStartOffset();
+
+	int instanceIndex = 0;
+	PRM_Template::matchMultiInstance(tmpl->getToken(), ATTRIBUTE_RESET_TEMPLATE.getToken(), startIdx,
+	                                 instanceIndex, nullptr);
+
+	UT_String utAttributeKey;
+	node->evalStringInst(ATTRIBUTE.getToken(), &instanceIndex, utAttributeKey, 0, time, 1);
+
+	if (!isValidAttr(utAttributeKey))
+		return NOT_CHANGED;
+
+	const std::wstring ruleAttr = NameConversion::toRuleAttr(L"Default", utAttributeKey);
+	const auto it = node->mOverridableAttributes.find(ruleAttr);
+
+	AttributeDefaultValueSetter avs(node, instanceIndex, time, true);
+	PLD_BOOST_NS::apply_visitor(avs, it->second);
+
+	return CHANGED;
 }
 
 } // namespace AssignNodeParams
