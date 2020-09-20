@@ -52,6 +52,6 @@ private:
 	ShapeConverterUPtr mShapeConverter;
 
 public:
-	AssignNodeParams::AttributeValueMap mOverridableAttributes;
+	AssignNodeParams::AttributeOverrides::AttributeValueMap mOverridableAttributes;
 	std::set<std::wstring> mOverriddenAttributes;
 };

@@ -317,8 +317,8 @@ void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail
 	mah.setup(detail);
 
 	// generate primitive attribute handles for all overriding rule attributes
-	const AssignNodeParams::AttributeValueMap overriddenRuleAttributes =
-	        AssignNodeParams::getOverriddenRuleAttributes(node, context.getTime());
+	const AssignNodeParams::AttributeOverrides::AttributeValueMap overriddenRuleAttributes =
+	        AssignNodeParams::AttributeOverrides::getOverriddenRuleAttributes(node, context.getTime());
 	AttrRefMap attrRefs; // TODO: could be done lazily while assigning
 	for (const auto& ruleAttr : overriddenRuleAttributes) {
 
@@ -353,10 +353,10 @@ void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-	mDefaultMainAttributes.mRPK = AssignNodeParams::getRPK(node, now);
-	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
-	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
-	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mRPK = AssignNodeParams::RulePackage::getRPK(node, now);
+	mDefaultMainAttributes.mRuleFile = AssignNodeParams::RuleFile::getRuleFile(node, now);
+	mDefaultMainAttributes.mStyle = AssignNodeParams::Style::getStyle(node, now);
+	mDefaultMainAttributes.mStartRule = AssignNodeParams::StartRule::getStartRule(node, now);
 }
 
 namespace {

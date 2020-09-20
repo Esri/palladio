@@ -143,7 +143,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
 
-	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::LogLevel::getLogLevel(this, context.getTime()));
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
@@ -198,7 +198,7 @@ void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
 			const wchar_t* const key = cKeys[k];
 			const auto type = defaultRuleAttributes->getType(key);
 
-			AssignNodeParams::AttributeValueType defVal;
+			AssignNodeParams::AttributeOverrides::AttributeValueType defVal;
 			switch (type) {
 				case prt::AttributeMap::PT_FLOAT: {
 					defVal = defaultRuleAttributes->getFloat(key);
@@ -226,6 +226,6 @@ void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
 
 bool SOPAssign::updateParmsFlags() {
 	bool changed = SOP_Node::updateParmsFlags();
-	changed |= AssignNodeParams::updateParmsFlags(*this, CHgetEvalTime());
+	changed |= AssignNodeParams::AttributeOverrides::updateParmsFlags(*this, CHgetEvalTime());
 	return changed;
 }

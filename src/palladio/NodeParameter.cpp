@@ -67,15 +67,17 @@ constexpr const int NOT_CHANGED = 0;
 constexpr const int CHANGED = 1;
 
 bool isValidAttr(const UT_String& name) {
-	return (name.length() > 0) && (name != AssignNodeParams::ATTRIBUTE_NONE);
+	return (name.length() > 0) && (name != AssignNodeParams::AttributeOverrides::ATTRIBUTE_NONE);
 }
 
 } // namespace
 
 namespace CommonNodeParams {
 
+namespace LogLevel {
+
 prt::LogLevel getLogLevel(const OP_Node* node, fpreal t) {
-	const auto ord = node->evalInt(LOG_LEVEL.getToken(), 0, t);
+	const auto ord = node->evalInt(LogLevel::NAME.getToken(), 0, t);
 	switch (ord) {
 		case 1:
 			return prt::LOG_DEBUG;
@@ -95,19 +97,27 @@ prt::LogLevel getLogLevel(const OP_Node* node, fpreal t) {
 	return logging::getDefaultLogLevel();
 };
 
+} // namespace LogLevel
+
 } // namespace CommonNodeParams
 
 namespace AssignNodeParams {
 
+namespace PrimitiveClassifierName {
+
 UT_String getPrimClsName(const OP_Node* node, fpreal t) {
 	UT_String s;
-	node->evalString(s, PRIM_CLS.getToken(), 0, t);
+	node->evalString(s, NAME.getToken(), 0, t);
 	return s;
 };
 
 void setPrimClsName(OP_Node* node, const UT_String& name, fpreal t) {
-	node->setString(name, CH_STRING_LITERAL, PRIM_CLS.getToken(), 0, t);
+	node->setString(name, CH_STRING_LITERAL, NAME.getToken(), 0, t);
 };
+
+} // namespace PrimitiveClassifierName
+
+namespace RulePackage {
 
 /**
  * validates and updates all parameters/states depending on the rule package
@@ -117,7 +127,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	UT_String utNextRPKStr;
-	node->evalString(utNextRPKStr, AssignNodeParams::RPK.getToken(), 0, time);
+	node->evalString(utNextRPKStr, AssignNodeParams::RulePackage::NAME.getToken(), 0, time);
 	const PLD_BOOST_NS::filesystem::path nextRPK(utNextRPKStr.toStdString());
 
 	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(nextRPK);
@@ -157,9 +167,9 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	LOG_DBG << "start rule: style = " << startRuleComponents.first << ", name = " << startRuleComponents.second;
 
 	// -- update the node
-	AssignNodeParams::setRuleFile(node, cgbKey, time);
-	AssignNodeParams::setStyle(node, startRuleComponents.first, time);
-	AssignNodeParams::setStartRule(node, startRuleComponents.second, time);
+	RuleFile::setRuleFile(node, cgbKey, time);
+	Style::setStyle(node, startRuleComponents.first, time);
+	StartRule::setStartRule(node, startRuleComponents.second, time);
 
 	// reset was successful, try to optimize the cache
 	prtCtx->mPRTCache->flushAll();
@@ -169,16 +179,20 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 
 PLD_BOOST_NS::filesystem::path getRPK(const OP_Node* node, fpreal t) {
 	UT_String s;
-	node->evalString(s, RPK.getToken(), 0, t);
+	node->evalString(s, RulePackage::NAME.getToken(), 0, t);
 	return s.toStdString();
 };
+
+} // namespace RulePackage
+
+namespace RuleFile {
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	const auto* node = static_cast<SOPAssign*>(data);
 	const auto& prtCtx = node->getPRTCtx();
 
 	const fpreal now = CHgetEvalTime();
-	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
+	const PLD_BOOST_NS::filesystem::path rpk = RulePackage::getRPK(node, now);
 
 	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
@@ -199,14 +213,18 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 
 std::wstring getRuleFile(const OP_Node* node, fpreal t) {
 	UT_String s;
-	node->evalString(s, RULE_FILE.getToken(), 0, t);
+	node->evalString(s, RuleFile::NAME.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
 void setRuleFile(OP_Node* node, const std::wstring& ruleFile, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(ruleFile));
-	node->setString(val, CH_STRING_LITERAL, RULE_FILE.getToken(), 0, t);
+	node->setString(val, CH_STRING_LITERAL, RuleFile::NAME.getToken(), 0, t);
 };
+
+} // namespace RuleFile
+
+namespace Style {
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 	std::wstring style, name;
@@ -214,13 +232,13 @@ std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
 	return toOSNarrowFromUTF16(style);
 }
 
-void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+void buildMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	const fpreal now = CHgetEvalTime();
-	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
-	const std::wstring ruleFile = getRuleFile(node, now);
+	const PLD_BOOST_NS::filesystem::path rpk = RulePackage::getRPK(node, now);
+	const std::wstring ruleFile = RuleFile::getRuleFile(node, now);
 
 	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
@@ -258,24 +276,28 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 
 std::wstring getStyle(const OP_Node* node, fpreal t) {
 	UT_String s;
-	node->evalString(s, STYLE.getToken(), 0, t);
+	node->evalString(s, NAME.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
 void setStyle(OP_Node* node, const std::wstring& s, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(s));
-	node->setString(val, CH_STRING_LITERAL, STYLE.getToken(), 0, t);
+	node->setString(val, CH_STRING_LITERAL, NAME.getToken(), 0, t);
 };
 
-void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
+} // namespace Style
+
+namespace StartRule {
+
+void buildMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	constexpr bool DBG = false;
 
 	const auto* node = static_cast<SOPAssign*>(data);
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	const fpreal now = CHgetEvalTime();
-	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
-	const std::wstring ruleFile = getRuleFile(node, now);
+	const PLD_BOOST_NS::filesystem::path rpk = RulePackage::getRPK(node, now);
+	const std::wstring ruleFile = RuleFile::getRuleFile(node, now);
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
@@ -339,14 +361,18 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 std::wstring getStartRule(const OP_Node* node, fpreal t) {
 	UT_String s;
-	node->evalString(s, START_RULE.getToken(), 0, t);
+	node->evalString(s, StartRule::NAME.getToken(), 0, t);
 	return toUTF16FromOSNarrow(s.toStdString());
 };
 
 void setStartRule(OP_Node* node, const std::wstring& s, fpreal t) {
 	const UT_String val(toOSNarrowFromUTF16(s));
-	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
+	node->setString(val, CH_STRING_LITERAL, Style::NAME.getToken(), 0, t);
 };
+
+} // namespace StartRule
+
+namespace AttributeOverrides {
 
 void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	const auto* node = static_cast<SOPAssign*>(data);
@@ -370,29 +396,28 @@ public:
 	    : mNode(node), mIndex(index), mTime(time), mForce(force) {}
 
 	void operator()(const std::wstring& v) const {
-		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex);
+		const PRM_Parm* p = mNode->getParmPtrInst(STRING_NAME.getToken(), &mIndex);
 		if (!mForce && !p->isFactoryDefault())
 			return;
 
 		UT_String utVal(toOSNarrowFromUTF16(v));
-		mNode->setStringInst(utVal, CH_StringMeaning::CH_STRING_LITERAL, ATTRIBUTE_STRING_VALUE.getToken(), &mIndex, 0,
-		                     mTime, 1);
+		mNode->setStringInst(utVal, CH_StringMeaning::CH_STRING_LITERAL, STRING_NAME.getToken(), &mIndex, 0, mTime, 1);
 	}
 
 	void operator()(const double& v) const {
-		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex);
+		const PRM_Parm* p = mNode->getParmPtrInst(FLOAT_NAME.getToken(), &mIndex);
 		if (!mForce && !p->isFactoryDefault())
 			return;
 
-		mNode->setFloatInst(v, ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		mNode->setFloatInst(v, FLOAT_NAME.getToken(), &mIndex, 0, mTime, 1);
 	}
 
 	void operator()(const bool& v) const {
-		const PRM_Parm* p = mNode->getParmPtrInst(ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex);
+		const PRM_Parm* p = mNode->getParmPtrInst(BOOL_NAME.getToken(), &mIndex);
 		if (!mForce && !p->isFactoryDefault())
 			return;
 
-		mNode->setIntInst(v ? 1 : 0, ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		mNode->setIntInst(v ? 1 : 0, BOOL_NAME.getToken(), &mIndex, 0, mTime, 1);
 	}
 
 private:
@@ -413,7 +438,7 @@ int updateAttributeDefaultValue(void* data, int, fpreal32 time, const PRM_Templa
 		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
-		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+		node->evalStringInst(ATTRIBUTE_NAME.getToken(), &idx, utAttributeKey, 0, time, 1);
 
 		if (!isValidAttr(utAttributeKey))
 			continue;
@@ -441,16 +466,16 @@ public:
 
 	void operator()(const std::wstring& v) {
 		UT_String val;
-		mNode->evalStringInst(ATTRIBUTE_STRING_VALUE.getToken(), &mIndex, val, 0, mTime, 1);
+		mNode->evalStringInst(STRING_NAME.getToken(), &mIndex, val, 0, mTime, 1);
 		mValue = toUTF16FromOSNarrow(val.c_str());
 	}
 
 	void operator()(const double& v) {
-		mValue = mNode->evalFloatInst(ATTRIBUTE_FLOAT_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		mValue = mNode->evalFloatInst(FLOAT_NAME.getToken(), &mIndex, 0, mTime, 1);
 	}
 
 	void operator()(const bool& v) {
-		auto val = mNode->evalIntInst(ATTRIBUTE_BOOL_VALUE.getToken(), &mIndex, 0, mTime, 1);
+		auto val = mNode->evalIntInst(BOOL_NAME.getToken(), &mIndex, 0, mTime, 1);
 		mValue = (val > 0);
 	}
 
@@ -472,7 +497,7 @@ AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
-		node->evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+		node->evalStringInst(ATTRIBUTE_NAME.getToken(), &idx, utAttributeKey, 0, time, 1);
 
 		if (!isValidAttr(utAttributeKey))
 			continue;
@@ -492,8 +517,7 @@ AttributeValueMap getOverriddenRuleAttributes(SOPAssign* node, fpreal32 time) {
 }
 
 bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
-	const std::array<const char*, 3> tokens = {ATTRIBUTE_STRING_VALUE.getToken(), ATTRIBUTE_FLOAT_VALUE.getToken(),
-	                                           ATTRIBUTE_BOOL_VALUE.getToken()};
+	const std::array<const char*, 3> tokens = {STRING_NAME.getToken(), FLOAT_NAME.getToken(), BOOL_NAME.getToken()};
 
 	const int numAttrs = assignNode.evalInt(ATTRIBUTES_OVERRIDE.getToken(), 0, time);
 	const int startIdx = ATTRIBUTE_TEMPLATE.getMultiStartOffset();
@@ -502,7 +526,7 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 		const int idx = startIdx + i;
 
 		UT_String utAttributeKey;
-		assignNode.evalStringInst(ATTRIBUTE.getToken(), &idx, utAttributeKey, 0, time, 1);
+		assignNode.evalStringInst(ATTRIBUTE_NAME.getToken(), &idx, utAttributeKey, 0, time, 1);
 		const bool validAttr = isValidAttr(utAttributeKey);
 
 		int activeType = -1;
@@ -528,14 +552,14 @@ bool updateParmsFlags(SOPAssign& assignNode, fpreal time) {
 int resetAttribute(void* data, int, fpreal32 time, const PRM_Template* tmpl) {
 	auto* node = static_cast<SOPAssign*>(data);
 
-	const int startIdx = ATTRIBUTE_RESET_TEMPLATE.getMultiStartOffset();
+	const int startIdx = RESET_TEMPLATE.getMultiStartOffset();
 
 	int instanceIndex = 0;
-	PRM_Template::matchMultiInstance(tmpl->getToken(), ATTRIBUTE_RESET_TEMPLATE.getToken(), startIdx, instanceIndex,
+	PRM_Template::matchMultiInstance(tmpl->getToken(), RESET_TEMPLATE.getToken(), startIdx, instanceIndex,
 	                                 nullptr);
 
 	UT_String utAttributeKey;
-	node->evalStringInst(ATTRIBUTE.getToken(), &instanceIndex, utAttributeKey, 0, time, 1);
+	node->evalStringInst(ATTRIBUTE_NAME.getToken(), &instanceIndex, utAttributeKey, 0, time, 1);
 
 	if (!isValidAttr(utAttributeKey))
 		return NOT_CHANGED;
@@ -548,5 +572,7 @@ int resetAttribute(void* data, int, fpreal32 time, const PRM_Template* tmpl) {
 
 	return CHANGED;
 }
+
+} // namespace AttributeOverrides
 
 } // namespace AssignNodeParams
