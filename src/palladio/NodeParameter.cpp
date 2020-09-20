@@ -99,6 +99,16 @@ prt::LogLevel getLogLevel(const OP_Node* node, fpreal t) {
 
 namespace AssignNodeParams {
 
+UT_String getPrimClsName(const OP_Node* node, fpreal t) {
+	UT_String s;
+	node->evalString(s, PRIM_CLS.getToken(), 0, t);
+	return s;
+};
+
+void setPrimClsName(OP_Node* node, const UT_String& name, fpreal t) {
+	node->setString(name, CH_STRING_LITERAL, PRIM_CLS.getToken(), 0, t);
+};
+
 /**
  * validates and updates all parameters/states depending on the rule package
  */
@@ -156,6 +166,106 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 
 	return CHANGED;
 }
+
+PLD_BOOST_NS::filesystem::path getRPK(const OP_Node* node, fpreal t) {
+	UT_String s;
+	node->evalString(s, RPK.getToken(), 0, t);
+	return s.toStdString();
+};
+
+void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
+	const auto* node = static_cast<SOPAssign*>(data);
+	const auto& prtCtx = node->getPRTCtx();
+
+	const fpreal now = CHgetEvalTime();
+	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
+
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
+	if (!resolveMap) {
+		theMenu[0].setToken(nullptr);
+		return;
+	}
+
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
+	getCGBs(resolveMap, cgbs);
+
+	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
+	for (size_t ri = 0; ri < limit; ri++) {
+		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
+		theMenu[ri].setTokenAndLabel(tok.c_str(), tok.c_str());
+	}
+	theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
+}
+
+std::wstring getRuleFile(const OP_Node* node, fpreal t) {
+	UT_String s;
+	node->evalString(s, RULE_FILE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
+
+void setRuleFile(OP_Node* node, const std::wstring& ruleFile, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(ruleFile));
+	node->setString(val, CH_STRING_LITERAL, RULE_FILE.getToken(), 0, t);
+};
+
+std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
+	std::wstring style, name;
+	NameConversion::separate(re->getName(), style, name);
+	return toOSNarrowFromUTF16(style);
+}
+
+void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
+	const auto* node = static_cast<SOPAssign*>(data);
+	const PRTContextUPtr& prtCtx = node->getPRTCtx();
+
+	const fpreal now = CHgetEvalTime();
+	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
+	const std::wstring ruleFile = getRuleFile(node, now);
+
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
+	if (!resolveMap) {
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
+		return;
+	}
+
+	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
+	if (cgbURI == nullptr) {
+		theMenu[0].setTokenAndLabel(nullptr, nullptr);
+		return;
+	}
+
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	if (rfi && (status == prt::STATUS_OK)) {
+		std::set<std::string> styles;
+		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
+			styles.emplace(extractStyle(re));
+		}
+		for (size_t ai = 0; ai < rfi->getNumAttributes(); ai++) {
+			const prt::RuleFileInfo::Entry* re = rfi->getAttribute(ai);
+			styles.emplace(extractStyle(re));
+		}
+		size_t si = 0;
+		for (const auto& s : styles) {
+			theMenu[si].setTokenAndLabel(s.c_str(), s.c_str());
+			si++;
+		}
+		const size_t limit = std::min<size_t>(styles.size(), static_cast<size_t>(theMaxSize));
+		theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
+	}
+}
+
+std::wstring getStyle(const OP_Node* node, fpreal t) {
+	UT_String s;
+	node->evalString(s, STYLE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
+
+void setStyle(OP_Node* node, const std::wstring& s, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(s));
+	node->setString(val, CH_STRING_LITERAL, STYLE.getToken(), 0, t);
+};
 
 void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	constexpr bool DBG = false;
@@ -227,77 +337,16 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	}
 }
 
-void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
-	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& prtCtx = node->getPRTCtx();
+std::wstring getStartRule(const OP_Node* node, fpreal t) {
+	UT_String s;
+	node->evalString(s, START_RULE.getToken(), 0, t);
+	return toUTF16FromOSNarrow(s.toStdString());
+};
 
-	const fpreal now = CHgetEvalTime();
-	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
-
-	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
-	if (!resolveMap) {
-		theMenu[0].setToken(nullptr);
-		return;
-	}
-
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
-
-	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
-	for (size_t ri = 0; ri < limit; ri++) {
-		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
-		theMenu[ri].setTokenAndLabel(tok.c_str(), tok.c_str());
-	}
-	theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
-}
-
-std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
-	std::wstring style, name;
-	NameConversion::separate(re->getName(), style, name);
-	return toOSNarrowFromUTF16(style);
-}
-
-void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
-	const auto* node = static_cast<SOPAssign*>(data);
-	const PRTContextUPtr& prtCtx = node->getPRTCtx();
-
-	const fpreal now = CHgetEvalTime();
-	const PLD_BOOST_NS::filesystem::path rpk = getRPK(node, now);
-	const std::wstring ruleFile = getRuleFile(node, now);
-
-	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
-	if (!resolveMap) {
-		theMenu[0].setTokenAndLabel(nullptr, nullptr);
-		return;
-	}
-
-	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
-	if (cgbURI == nullptr) {
-		theMenu[0].setTokenAndLabel(nullptr, nullptr);
-		return;
-	}
-
-	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
-	if (rfi && (status == prt::STATUS_OK)) {
-		std::set<std::string> styles;
-		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
-			const prt::RuleFileInfo::Entry* re = rfi->getRule(ri);
-			styles.emplace(extractStyle(re));
-		}
-		for (size_t ai = 0; ai < rfi->getNumAttributes(); ai++) {
-			const prt::RuleFileInfo::Entry* re = rfi->getAttribute(ai);
-			styles.emplace(extractStyle(re));
-		}
-		size_t si = 0;
-		for (const auto& s : styles) {
-			theMenu[si].setTokenAndLabel(s.c_str(), s.c_str());
-			si++;
-		}
-		const size_t limit = std::min<size_t>(styles.size(), static_cast<size_t>(theMaxSize));
-		theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
-	}
-}
+void setStartRule(OP_Node* node, const std::wstring& s, fpreal t) {
+	const UT_String val(toOSNarrowFromUTF16(s));
+	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
+};
 
 void buildAttributeMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
 	const auto* node = static_cast<SOPAssign*>(data);
@@ -482,8 +531,8 @@ int resetAttribute(void* data, int, fpreal32 time, const PRM_Template* tmpl) {
 	const int startIdx = ATTRIBUTE_RESET_TEMPLATE.getMultiStartOffset();
 
 	int instanceIndex = 0;
-	PRM_Template::matchMultiInstance(tmpl->getToken(), ATTRIBUTE_RESET_TEMPLATE.getToken(), startIdx,
-	                                 instanceIndex, nullptr);
+	PRM_Template::matchMultiInstance(tmpl->getToken(), ATTRIBUTE_RESET_TEMPLATE.getToken(), startIdx, instanceIndex,
+	                                 nullptr);
 
 	UT_String utAttributeKey;
 	node->evalStringInst(ATTRIBUTE.getToken(), &instanceIndex, utAttributeKey, 0, time, 1);
