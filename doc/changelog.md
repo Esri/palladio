@@ -1,5 +1,8 @@
 # Palladio ChangeLog
 
+## v1.8.0 (Oct 5, 2020)
+* No functional changes compared to Beta 1.
+
 ## v1.8.0 Beta 1 (Aug 23, 2020)
 * Update default CityEngine SDK to 2.2 (CityEngine 2020.0) (#146).
 * Added support for CGA array attributes (#146).
