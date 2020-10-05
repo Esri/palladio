@@ -1,7 +1,7 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.14.cmake)
+include(${PLD_CONAN_TOOLS}/conan-0.15.cmake)
 conan_check(VERSION 1.20 REQUIRED)
 
 
@@ -44,7 +44,7 @@ endif()
 ### run conan
 
 if(PLD_WINDOWS)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v141")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
 endif()

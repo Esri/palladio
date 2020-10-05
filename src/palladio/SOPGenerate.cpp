@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 
 #include "SOPGenerate.h"
-#include "NodeParameter.h"
-#include "ShapeGenerator.h"
-#include "ShapeData.h"
-#include "PrimitiveClassifier.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
+#include "NodeParameter.h"
+#include "PrimitiveClassifier.h"
+#include "ShapeData.h"
+#include "ShapeGenerator.h"
 
 #include "UT/UT_Interrupt.h"
 
-#include <future>
 #include <algorithm>
-
+#include <future>
 
 namespace {
 
-constexpr const wchar_t* FILE_CGA_ERROR       = L"CGAErrors.txt";
-constexpr const wchar_t* FILE_CGA_PRINT       = L"CGAPrint.txt";
+constexpr const wchar_t* FILE_CGA_ERROR = L"CGAErrors.txt";
+constexpr const wchar_t* FILE_CGA_PRINT = L"CGAPrint.txt";
 
 constexpr const wchar_t* ENCODER_ID_CGA_ERROR = L"com.esri.prt.core.CGAErrorEncoder";
 constexpr const wchar_t* ENCODER_ID_CGA_PRINT = L"com.esri.prt.core.CGAPrintEncoder";
@@ -40,10 +39,8 @@ const PrimitiveClassifier DEFAULT_PRIMITIVE_CLASSIFIER;
 
 } // namespace
 
-
 SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
-: SOP_Node(net, name, op), mPRTCtx(pCtx)
-{
+    : SOP_Node(net, name, op), mPRTCtx(pCtx) {
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 
 	optionsBuilder->setString(L"name", FILE_CGA_ERROR);
@@ -62,8 +59,8 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
 	const bool emitAttributes = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
-	const bool emitMaterial   = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
-	const bool emitReports    = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
+	const bool emitMaterial = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
+	const bool emitReports = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);
@@ -74,8 +71,8 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	if (!mHoudiniEncoderOptions)
 		return false;
 
-	mAllEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
-	mAllEncoderOptions = { mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get() };
+	mAllEncoders = {ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT};
+	mAllEncoderOptions = {mHoudiniEncoderOptions.get(), mCGAErrorOptions.get(), mCGAPrintOptions.get()};
 
 	return true;
 }
@@ -83,26 +80,21 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 namespace {
 
 enum class BatchMode { OCCLUSION, GENERATION };
-const std::vector<std::string> BATCH_MODE_NAMES = { "occlusion", "generation" };
+const std::vector<std::string> BATCH_MODE_NAMES = {"occlusion", "generation"};
 
-std::vector<prt::Status> batchGenerate(BatchMode mode,
-                                       size_t nThreads,
-                                       std::vector<ModelConverterUPtr>& hg,
-                                       size_t isRangeSize,
-                                       const InitialShapeNOPtrVector& is,
+std::vector<prt::Status> batchGenerate(BatchMode mode, size_t nThreads, std::vector<ModelConverterUPtr>& hg,
+                                       size_t isRangeSize, const InitialShapeNOPtrVector& is,
                                        const std::vector<const wchar_t*>& allEncoders,
                                        const AttributeMapNOPtrVector& allEncoderOptions,
                                        std::vector<prt::OcclusionSet::Handle>& occlusionHandles,
-                                       OcclusionSetUPtr& occlusionSet,
-                                       CacheObjectUPtr& prtCache,
-                                       const AttributeMapUPtr& genOpts)
-{
+                                       OcclusionSetUPtr& occlusionSet, CacheObjectUPtr& prtCache,
+                                       const AttributeMapUPtr& genOpts) {
 	std::vector<prt::Status> batchStatus(nThreads, prt::STATUS_UNSPECIFIED_ERROR);
 
 	std::vector<std::future<void>> futures;
 	futures.reserve(nThreads);
 	for (int8_t ti = 0; ti < nThreads; ti++) {
-		auto f = std::async(std::launch::async, [&,ti] { // capture thread index by value, else we have is range chaos
+		auto f = std::async(std::launch::async, [&, ti] { // capture thread index by value, else we have is range chaos
 			const size_t isStartPos = ti * isRangeSize;
 			const size_t isPastEndPos = (ti < nThreads - 1) ? (ti + 1) * isRangeSize : is.size();
 			const size_t isActualRangeSize = isPastEndPos - isStartPos;
@@ -113,8 +105,8 @@ std::vector<prt::Status> batchGenerate(BatchMode mode,
 
 			switch (mode) {
 				case BatchMode::OCCLUSION: {
-					batchStatus[ti] = prt::generateOccluders(isRangeStart, isActualRangeSize, isOcclRangeStart,
-					                                         nullptr, 0, nullptr, hg[ti].get(), prtCache.get(),
+					batchStatus[ti] = prt::generateOccluders(isRangeStart, isActualRangeSize, isOcclRangeStart, nullptr,
+					                                         0, nullptr, hg[ti].get(), prtCache.get(),
 					                                         occlusionSet.get(), genOpts.get());
 					break;
 				}
@@ -127,9 +119,8 @@ std::vector<prt::Status> batchGenerate(BatchMode mode,
 			}
 
 			if (batchStatus[ti] != prt::STATUS_OK) {
-			    LOG_WRN << "batch mode " << BATCH_MODE_NAMES[(int)mode] << " failed with status: '"
-			            << prt::getStatusDescription(batchStatus[ti]) << "' ("
-			            << batchStatus[ti] << ")";
+				LOG_WRN << "batch mode " << BATCH_MODE_NAMES[(int)mode] << " failed with status: '"
+				        << prt::getStatusDescription(batchStatus[ti]) << "' (" << batchStatus[ti] << ")";
 			}
 
 		});
@@ -144,6 +135,8 @@ std::vector<prt::Status> batchGenerate(BatchMode mode,
 
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	WA("all");
+
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
 
 	if (!handleParams(context))
 		return UT_ERROR_ABORT;
@@ -184,15 +177,17 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 			// prt requires one callback instance per generate call
 			std::vector<ModelConverterUPtr> hg(nThreads);
-			std::generate(hg.begin(), hg.end(), [this, &groupCreation, &initialShapeStatus, &progress]() -> ModelConverterUPtr {
-				return ModelConverterUPtr(new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
-			});
+			std::generate(hg.begin(), hg.end(),
+			              [this, &groupCreation, &initialShapeStatus, &progress]() -> ModelConverterUPtr {
+				              return ModelConverterUPtr(
+				                      new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
+			              });
 
 			std::vector<prt::OcclusionSet::Handle> occlusionHandles(is.size());
 			OcclusionSetUPtr occlusionSet{prt::OcclusionSet::create()};
 
-			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = "
-			        << nThreads << ", initial shapes per thread = " << isRangeSize;
+			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = " << nThreads
+			        << ", initial shapes per thread = " << isRangeSize;
 
 			batchGenerate(BatchMode::OCCLUSION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
 			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
@@ -221,10 +216,10 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	return error();
 }
 
-void SOPGenerate::opChanged(OP_EventType reason, void *data) {
-   SOP_Node::opChanged(reason, data);
+void SOPGenerate::opChanged(OP_EventType reason, void* data) {
+	SOP_Node::opChanged(reason, data);
 
-   // trigger recook on name change, we use the node name in various output places
-   if (reason == OP_NAME_CHANGED)
-	   forceRecook();
+	// trigger recook on name change, we use the node name in various output places
+	if (reason == OP_NAME_CHANGED)
+		forceRecook();
 }

@@ -1,15 +1,29 @@
 # Palladio ChangeLog
 
+## v1.8.0 (Oct 5, 2020)
+* No functional changes compared to Beta 1.
+
+## v1.8.0 Beta 1 (Aug 23, 2020)
+* Update default CityEngine SDK to 2.2 (CityEngine 2020.0) (#146).
+* Added support for CGA array attributes (#146).
+* Added per-node control of log level (#30).
+* At startup, print Palladio version on console if log level is "info" or lower.
+* Development
+  * On Windows, building Palladio now requires MSVC 14.2 (#146).
+  * Various code cleanups and adoption of clang-format rules from [Serlio](https://github.com/esri/serlio).
+  * Pruned releasing for Houdini 17.0 (you can still build yourself for 17.0).
+  * Relaxed Python/Conan version requirements.
+
 ## v1.7.0 (June 14, 2020)
 * No functional changes compared to Beta 1 
 
-## v1.7.0-beta.1 (Dec 9, 2019)
+## v1.7.0 Beta 1 (Dec 9, 2019)
 * Added support for Houdini 18 and removed Houdini 16 (#143).
 * Updated built artifacts to latest Houdini versions (#139).
 * Filter unnecessary components of PRT from release (#141).
 * Fixed pipeline to not install files outside of the install directory (#138).
 
-## v1.7.0-pre (Oct 20, 2019)
+## v1.7.0 Pre-Release (Oct 20, 2019)
 * Improved setting start rule from primitive attribute (i.e. do not prepend style to start rule if it is already present).
 * Improved installation experience (avoid setting OS PATH on Windows).
 * Update default CityEngine SDK version to 2.1 (CityEngine 2019.1).
@@ -37,10 +51,10 @@
 ## v1.5.0 (May 7, 2019)
 * No functional change to beta 2.
 
-## v1.5.0-beta.2 (Mar 19, 2019)
+## v1.5.0 Beta 2 (Mar 19, 2019)
 * Fixed crash in pldAssign node if no RPK is set.
 
-## v1.5.0-beta.1 (Mar 14, 2019)
+## v1.5.0 Beta 1 (Mar 14, 2019)
 * Added support for Rule Packages (RPK) embedded in Houdini Digital Assets (HDA)
 * Added support for Houdini 17.5
 
@@ -65,7 +79,7 @@
 * Added pipenv script for easier access to conan.
 * Reduced Houdini package size.
 
-## v1.2.0-rc.1 (Jun 11, 2018)
+## v1.2.0 RC 1 (Jun 11, 2018)
 * Support for inter-shape occlusion queries (#33).
 
 ## v1.1.1 (Apr 16, 2018)

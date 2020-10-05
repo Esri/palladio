@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@
 
 #include "PalladioMain.h"
 
-#include "prt/Object.h"
 #include "prt/AttributeMap.h"
-#include "prt/ResolveMap.h"
-#include "prt/InitialShape.h"
-#include "prt/RuleFileInfo.h"
 #include "prt/EncoderInfo.h"
+#include "prt/InitialShape.h"
+#include "prt/Object.h"
 #include "prt/OcclusionSet.h"
+#include "prt/ResolveMap.h"
+#include "prt/RuleFileInfo.h"
 
 #include "GA/GA_Primitive.h"
 
@@ -32,36 +32,41 @@
 #include <string>
 #include <vector>
 
-
-namespace PLD_BOOST_NS { namespace filesystem { class path; } }
+namespace PLD_BOOST_NS {
+namespace filesystem {
+class path;
+}
+} // namespace PLD_BOOST_NS
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
-		if (p) p->destroy();
+		if (p)
+			p->destroy();
 	}
 };
 
-using PrimitiveNOPtrVector      = std::vector<const GA_Primitive*>;
+using PrimitiveNOPtrVector = std::vector<const GA_Primitive*>;
 
-using ObjectUPtr                = std::unique_ptr<const prt::Object, PRTDestroyer>;
-using InitialShapeNOPtrVector   = std::vector<const prt::InitialShape*>;
-using AttributeMapNOPtrVector   = std::vector<const prt::AttributeMap*>;
-using CacheObjectUPtr           = std::unique_ptr<prt::CacheObject, PRTDestroyer>;
-using AttributeMapUPtr          = std::unique_ptr<const prt::AttributeMap, PRTDestroyer>;
-using AttributeMapVector        = std::vector<AttributeMapUPtr>;
-using AttributeMapBuilderUPtr   = std::unique_ptr<prt::AttributeMapBuilder, PRTDestroyer>;
+using ObjectUPtr = std::unique_ptr<const prt::Object, PRTDestroyer>;
+using InitialShapeNOPtrVector = std::vector<const prt::InitialShape*>;
+using AttributeMapNOPtrVector = std::vector<const prt::AttributeMap*>;
+using CacheObjectUPtr = std::unique_ptr<prt::CacheObject, PRTDestroyer>;
+using AttributeMapUPtr = std::unique_ptr<const prt::AttributeMap, PRTDestroyer>;
+using AttributeMapVector = std::vector<AttributeMapUPtr>;
+using AttributeMapBuilderUPtr = std::unique_ptr<prt::AttributeMapBuilder, PRTDestroyer>;
 using AttributeMapBuilderVector = std::vector<AttributeMapBuilderUPtr>;
-using InitialShapeBuilderUPtr   = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
+using InitialShapeBuilderUPtr = std::unique_ptr<prt::InitialShapeBuilder, PRTDestroyer>;
 using InitialShapeBuilderVector = std::vector<InitialShapeBuilderUPtr>;
-using ResolveMapSPtr            = std::shared_ptr<const prt::ResolveMap>;
-using ResolveMapUPtr            = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
-using ResolveMapBuilderUPtr     = std::unique_ptr<prt::ResolveMapBuilder, PRTDestroyer>;
-using RuleFileInfoUPtr          = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
-using EncoderInfoUPtr           = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
-using OcclusionSetUPtr          = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
+using ResolveMapSPtr = std::shared_ptr<const prt::ResolveMap>;
+using ResolveMapUPtr = std::unique_ptr<const prt::ResolveMap, PRTDestroyer>;
+using ResolveMapBuilderUPtr = std::unique_ptr<prt::ResolveMapBuilder, PRTDestroyer>;
+using RuleFileInfoUPtr = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
+using EncoderInfoUPtr = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
+using OcclusionSetUPtr = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
-PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs);
-PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions);
+PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs);
+PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID,
+                                                                     const prt::AttributeMap* unvalidatedOptions);
 PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);
 
 void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func);
@@ -86,7 +91,7 @@ inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars
 }
 
 inline bool startsWithAnyOf(const std::string& s, const std::vector<std::string>& sv) {
-	for (const auto& v: sv) {
+	for (const auto& v : sv) {
 		if (s.find(v) == 0)
 			return true;
 	}

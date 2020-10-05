@@ -1,6 +1,6 @@
 from conans import ConanFile
 from conans import tools
-
+from conans.model.version import Version
 
 class CESDKConan(ConanFile):
     name = "cesdk"
@@ -12,7 +12,8 @@ class CESDKConan(ConanFile):
 
     def build(self):
         if self.settings.os == "Windows":
-            url = self.baseURL.format(self.version, self.version, "win10", "vc141")
+            toolchain = "vc142" if self.version >= Version("2.2.6332") else "vc141"
+            url = self.baseURL.format(self.version, self.version, "win10", toolchain)
         elif self.settings.os == "Linux":
             url = self.baseURL.format(self.version, self.version, "rhel7", "gcc63")
         elif self.settings.os == "Macos":

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 #include "catch.hpp"
 
-
 namespace {
 
 constexpr const wchar_t* ENCODER_ID_CGA_ERROR = L"com.esri.prt.core.CGAErrorEncoder";
@@ -30,14 +29,9 @@ constexpr const wchar_t* FILE_CGA_PRINT = L"CGAPrint.txt";
 
 } // namespace
 
-
-void generate(TestCallbacks& tc,
-              const PRTContextUPtr& prtCtx,
-              const PLD_BOOST_NS::filesystem::path& rpkPath,
-              const std::wstring& ruleFile,
-              const std::vector<std::wstring>& initialShapeURIs,
-              const std::vector<std::wstring>& startRules)
-{
+void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const PLD_BOOST_NS::filesystem::path& rpkPath,
+              const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
+              const std::vector<std::wstring>& startRules) {
 	REQUIRE(initialShapeURIs.size() == startRules.size());
 
 	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
@@ -50,11 +44,20 @@ void generate(TestCallbacks& tc,
 	for (size_t ai = 0, numAttrs = ruleFileInfo->getNumAttributes(); ai < numAttrs; ai++) {
 		const auto* a = ruleFileInfo->getAttribute(ai);
 		switch (a->getReturnType()) {
-			case prt::AAT_BOOL: amb->setBool(a->getName(), false); break;
-			case prt::AAT_FLOAT: amb->setFloat(a->getName(), 0.0); break;
-			case prt::AAT_STR: amb->setString(a->getName(), L""); break;
-			case prt::AAT_INT: amb->setInt(a->getName(), 0); break;
-			default: break;
+			case prt::AAT_BOOL:
+				amb->setBool(a->getName(), false);
+				break;
+			case prt::AAT_FLOAT:
+				amb->setFloat(a->getName(), 0.0);
+				break;
+			case prt::AAT_STR:
+				amb->setString(a->getName(), L"");
+				break;
+			case prt::AAT_INT:
+				amb->setInt(a->getName(), 0);
+				break;
+			default:
+				break;
 		}
 	}
 	const AttributeMapUPtr isAttrsProto(amb->createAttributeMapAndReset());
@@ -67,7 +70,8 @@ void generate(TestCallbacks& tc,
 		gd.mInitialShapeBuilders.emplace_back(prt::InitialShapeBuilder::create());
 		auto& isb = gd.mInitialShapeBuilders.back();
 
-		gd.mRuleAttributeBuilders.emplace_back(prt::AttributeMapBuilder::createFromAttributeMap(isAttrsProto.get())); // TODO: use shared_ptr
+		gd.mRuleAttributeBuilders.emplace_back(
+		        prt::AttributeMapBuilder::createFromAttributeMap(isAttrsProto.get())); // TODO: use shared_ptr
 		const auto& rab = gd.mRuleAttributeBuilders.back();
 		gd.mRuleAttributes.emplace_back(rab->createAttributeMap());
 		const auto& am = gd.mRuleAttributes.back();
@@ -75,7 +79,8 @@ void generate(TestCallbacks& tc,
 		const std::wstring sn = L"shape" + std::to_wstring(i);
 
 		REQUIRE(isb->resolveGeometry(uri.c_str()) == prt::STATUS_OK);
-		REQUIRE(isb->setAttributes(ruleFile.c_str(), sr.c_str(), 0, sn.c_str(), am.get(), rpkRM.get()) == prt::STATUS_OK);
+		REQUIRE(isb->setAttributes(ruleFile.c_str(), sr.c_str(), 0, sn.c_str(), am.get(), rpkRM.get()) ==
+		        prt::STATUS_OK);
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* is = isb->createInitialShapeAndReset(&status);
@@ -100,12 +105,12 @@ void generate(TestCallbacks& tc,
 	amb->setInt(L"numberWorkerThreads", prtCtx->mCores);
 	const AttributeMapUPtr generateOptions(amb->createAttributeMapAndReset());
 
-	const std::vector<const wchar_t*> allEncoders = { ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT };
-	const AttributeMapNOPtrVector allEncoderOptions = { houdiniEncOpts.get(), cgaErrorOptions.get(),
-	                                                    cgaPrintOptions.get() };
+	const std::vector<const wchar_t*> allEncoders = {ENCODER_ID_HOUDINI, ENCODER_ID_CGA_ERROR, ENCODER_ID_CGA_PRINT};
+	const AttributeMapNOPtrVector allEncoderOptions = {houdiniEncOpts.get(), cgaErrorOptions.get(),
+	                                                   cgaPrintOptions.get()};
 
-	prt::Status stat = prt::generate(gd.mInitialShapes.data(), gd.mInitialShapes.size(), nullptr,
-	                                 allEncoders.data(), allEncoders.size(), allEncoderOptions.data(), &tc,
-	                                 prtCtx->mPRTCache.get(), nullptr, generateOptions.get());
+	prt::Status stat = prt::generate(gd.mInitialShapes.data(), gd.mInitialShapes.size(), nullptr, allEncoders.data(),
+	                                 allEncoders.size(), allEncoderOptions.data(), &tc, prtCtx->mPRTCache.get(),
+	                                 nullptr, generateOptions.get());
 	REQUIRE(stat == prt::STATUS_OK);
 }

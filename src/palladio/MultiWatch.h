@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 
 #pragma once
 
-#include <string>
-#include <map>
 #include <chrono>
+#include <map>
+#include <string>
 #include <vector>
 
-
-#define WA(x) //WatchAgent wa_(x, __PRETTY_FUNCTION__)
-#define WA_NEW_LAP //theWatch.newLap();
-#define WA_PRINT_TIMINGS //theWatch.printTimings();
-
+#define WA(x)            // WatchAgent wa_(x, __PRETTY_FUNCTION__)
+#define WA_NEW_LAP       // theWatch.newLap();
+#define WA_PRINT_TIMINGS // theWatch.printTimings();
 
 class MultiWatch {
 public:
@@ -42,7 +40,6 @@ public:
 };
 
 extern MultiWatch theWatch;
-
 
 class WatchAgent {
 public:

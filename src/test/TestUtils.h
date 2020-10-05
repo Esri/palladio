@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,32 +21,29 @@
 #include "../palladio/PRTContext.h"
 #include "../palladio/Utils.h"
 
+// clang-format off
 #include "../palladio/BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <vector>
 #include <string>
 
-
 struct GenerateData { // TODO: could use ShapeData from production code
-	InitialShapeBuilderVector         mInitialShapeBuilders;
-	InitialShapeNOPtrVector           mInitialShapes;
+	InitialShapeBuilderVector mInitialShapeBuilders;
+	InitialShapeNOPtrVector mInitialShapes;
 
-	AttributeMapBuilderVector         mRuleAttributeBuilders;
-	AttributeMapVector                mRuleAttributes;
+	AttributeMapBuilderVector mRuleAttributeBuilders;
+	AttributeMapVector mRuleAttributes;
 
 	~GenerateData() {
-		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is){
+		std::for_each(mInitialShapes.begin(), mInitialShapes.end(), [](const prt::InitialShape* is) {
 			assert(is != nullptr);
 			is->destroy();
 		});
 	}
 };
 
-
-void generate(TestCallbacks& tc,
-              const PRTContextUPtr& prtCtx,
-              const PLD_BOOST_NS::filesystem::path& rpkPath,
-              const std::wstring& ruleFile,
-              const std::vector<std::wstring>& initialShapeURIs,
+void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const PLD_BOOST_NS::filesystem::path& rpkPath,
+              const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
               const std::vector<std::wstring>& startRules);

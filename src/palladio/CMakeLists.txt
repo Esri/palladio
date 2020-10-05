@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME} SHARED
 		AttributeConversion.cpp
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
-		LogHandler.h
+		LogHandler.cpp
 		LRUCache.h
 		BoostRedirect.h)
 
@@ -37,6 +37,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ### compiler settings
 
 add_toolchain_definition(${PROJECT_NAME})
+pld_add_version_definitions(${PROJECT_NAME})
 
 if(PLD_TEST)
 	message(STATUS "Enabling test exports...")

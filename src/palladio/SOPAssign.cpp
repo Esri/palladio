@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,26 @@
 
 #include "SOPAssign.h"
 #include "AttrEvalCallbacks.h"
-#include "PrimitiveClassifier.h"
-#include "ShapeGenerator.h"
-#include "ShapeData.h"
-#include "ModelConverter.h"
-#include "NodeParameter.h"
 #include "LogHandler.h"
+#include "ModelConverter.h"
 #include "MultiWatch.h"
+#include "NodeParameter.h"
+#include "PrimitiveClassifier.h"
+#include "ShapeData.h"
+#include "ShapeGenerator.h"
 
 #include "prt/API.h"
 
 #include "UT/UT_Interrupt.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-
+// clang-format on
 
 namespace {
 
-constexpr bool           DBG                     = false;
+constexpr bool DBG = false;
 constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.AttributeEvalEncoder";
 
 AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
@@ -60,21 +61,17 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 	return rfi;
 }
 
-bool evaluateDefaultRuleAttributes(
-		const GU_Detail* detail,
-		ShapeData& shapeData,
-		const ShapeConverterUPtr& shapeConverter,
-		const PRTContextUPtr& prtCtx
-) {
+bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData,
+                                   const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx) {
 	WA("all");
 
 	assert(shapeData.isValid());
 
 	// setup encoder options for attribute evaluation encoder
-	constexpr const wchar_t* encs[] = { ENCODER_ID_CGA_EVALATTR };
+	constexpr const wchar_t* encs[] = {ENCODER_ID_CGA_EVALATTR};
 	constexpr size_t encsCount = sizeof(encs) / sizeof(encs[0]);
 	const AttributeMapUPtr encOpts = getValidEncoderInfo(ENCODER_ID_CGA_EVALATTR);
-	const prt::AttributeMap* encsOpts[] = { encOpts.get() };
+	const prt::AttributeMap* encsOpts[] = {encOpts.get()};
 
 	const size_t numShapes = shapeData.getInitialShapeBuilders().size();
 
@@ -92,27 +89,24 @@ bool evaluateDefaultRuleAttributes(
 		// try to get a resolve map
 		ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
 		if (!resolveMap) {
-			LOG_WRN << "Could not create resolve map from rpk " << ma.mRPK << ", aborting default rule attribute evaluation";
+			LOG_WRN << "Could not create resolve map from rpk " << ma.mRPK
+			        << ", aborting default rule attribute evaluation";
 			return false;
 		}
 
 		ruleFileInfos[isIdx] = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
 
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
-		if (DBG) LOG_DBG << "evaluating attrs for shape: " << shapeName;
+		if (DBG)
+			LOG_DBG << "evaluating attrs for shape: " << shapeName;
 
 		// persist rule attributes even if empty (need to live until prt::generate is done)
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
-		isb->setAttributes(
-				ma.mRuleFile.c_str(),
-				ma.mStartRule.c_str(),
-				shapeData.getInitialShapeRandomSeed(isIdx),
-				shapeName.c_str(),
-				ruleAttr.get(),
-				resolveMap.get());
+		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), shapeData.getInitialShapeRandomSeed(isIdx),
+		                   shapeName.c_str(), ruleAttr.get(), resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
@@ -130,7 +124,8 @@ bool evaluateDefaultRuleAttributes(
 	const prt::Status stat = prt::generate(is.data(), is.size(), nullptr, encs, encsCount, encsOpts, &aec,
 	                                       prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
-		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat << ")";
+		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat
+		        << ")";
 	}
 
 	assert(shapeData.isValid());
@@ -140,13 +135,14 @@ bool evaluateDefaultRuleAttributes(
 
 } // namespace
 
-
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
-: SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) { }
+    : SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) {}
 
 OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
+
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
@@ -175,10 +171,10 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	return error();
 }
 
-void SOPAssign::opChanged(OP_EventType reason, void *data) {
-   SOP_Node::opChanged(reason, data);
+void SOPAssign::opChanged(OP_EventType reason, void* data) {
+	SOP_Node::opChanged(reason, data);
 
-   // trigger recook on name change, we use the node name in various output places
-   if (reason == OP_NAME_CHANGED)
-	   forceRecook();
+	// trigger recook on name change, we use the node name in various output places
+	if (reason == OP_NAME_CHANGED)
+		forceRecook();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@
 
 constexpr const wchar_t* ENCODER_ID_HOUDINI = L"HoudiniEncoder";
 constexpr const wchar_t* EO_EMIT_ATTRIBUTES = L"emitAttributes";
-constexpr const wchar_t* EO_EMIT_MATERIALS  = L"emitMaterials";
-constexpr const wchar_t* EO_EMIT_REPORTS    = L"emitReports";
-
+constexpr const wchar_t* EO_EMIT_MATERIALS = L"emitMaterials";
+constexpr const wchar_t* EO_EMIT_REPORTS = L"emitReports";
 
 class HoudiniCallbacks : public prt::Callbacks {
 public:
-
 	virtual ~HoudiniCallbacks() override = default;
 
 	/**
@@ -47,25 +45,18 @@ public:
 	 * @param uvIndicesSizes number of uv indices per face per uv set
 	 * @param uvSets number of uv sets
 	 * @param faceRanges ranges for materials and reports
-	 * @param materials contains faceRangesSize-1 attribute maps (all materials must have an identical set of keys and types)
+	 * @param materials contains faceRangesSize-1 attribute maps (all materials must have an identical set of keys and
+	 * types)
 	 * @param reports contains faceRangesSize-1 attribute maps
 	 * @param shapeIDs shape ids per face, contains faceRangesSize-1 values
 	 */
-	virtual void add(
-			const wchar_t* name,
-			const double* vtx, size_t vtxSize,
-			const double* nrm, size_t nrmSize,
-			const uint32_t* counts, size_t countsSize,
-			const uint32_t* indices, size_t indicesSize,
+	virtual void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
+	                 const uint32_t* counts, size_t countsSize, const uint32_t* indices, size_t indicesSize,
 
-			double const* const* uvs, size_t const* uvsSizes,
-			uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
-			uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
-			uint32_t uvSets,
+	                 double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
+	                 size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+	                 uint32_t uvSets,
 
-			const uint32_t* faceRanges, size_t faceRangesSize,
-			const prt::AttributeMap** materials,
-			const prt::AttributeMap** reports,
-			const int32_t* shapeIDs
-	) = 0;
+	                 const uint32_t* faceRanges, size_t faceRangesSize, const prt::AttributeMap** materials,
+	                 const prt::AttributeMap** reports, const int32_t* shapeIDs) = 0;
 };

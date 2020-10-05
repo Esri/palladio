@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #		define PLD_TEST_EXPORTS_API
 #	endif
 #else
-#	define PLD_TEST_EXPORTS_API __attribute__ ((visibility ("default")))
+#	define PLD_TEST_EXPORTS_API __attribute__((visibility("default")))
 #endif
 
-constexpr const char* OP_PLD_ASSIGN   = "pldAssign";
+constexpr const char* OP_PLD_ASSIGN = "pldAssign";
 constexpr const char* OP_PLD_GENERATE = "pldGenerate";

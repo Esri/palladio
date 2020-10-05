@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,23 @@
  */
 
 #include "ShapeConverter.h"
-#include "ShapeData.h"
-#include "PrimitiveClassifier.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
+#include "PrimitiveClassifier.h"
+#include "ShapeData.h"
 
-#include "GU/GU_Detail.h"
 #include "GA/GA_PageHandle.h"
 #include "GEO/GEO_PrimPolySoup.h"
+#include "GU/GU_Detail.h"
 #include "UT/UT_String.h"
 
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/variant.hpp)
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 #include PLD_BOOST_INCLUDE(/functional/hash.hpp)
-
+// clang-format on
 
 namespace {
 
@@ -45,7 +46,7 @@ struct ConversionHelper {
 	std::vector<uint32_t> indices;
 	std::vector<uint32_t> faceCounts;
 	std::vector<uint32_t> holes;
-	std::vector<UV>       uvSets;
+	std::vector<UV> uvSets;
 
 	const std::vector<double>& coords;
 	const std::vector<GA_ROHandleV2D>& uvHandles;
@@ -57,13 +58,14 @@ struct ConversionHelper {
 	InitialShapeBuilderUPtr createInitialShape() const {
 		InitialShapeBuilderUPtr isb(prt::InitialShapeBuilder::create());
 
-		isb->setGeometry(coords.data(), coords.size(), indices.data(), indices.size(),
-		                 faceCounts.data(), faceCounts.size(), holes.data(), holes.size());
+		isb->setGeometry(coords.data(), coords.size(), indices.data(), indices.size(), faceCounts.data(),
+		                 faceCounts.size(), holes.data(), holes.size());
 
 		for (size_t u = 0; u < uvHandles.size(); u++) {
 			const auto& uvSet = uvSets[u];
 			if (!uvHandles[u].isInvalid() && !uvSet.uvs.empty()) {
-				isb->setUVs(uvSet.uvs.data(), uvSet.uvs.size(), uvSet.idx.data(), uvSet.idx.size(), faceCounts.data(), faceCounts.size(), u);
+				isb->setUVs(uvSet.uvs.data(), uvSet.uvs.size(), uvSet.idx.data(), uvSet.idx.size(), faceCounts.data(),
+				            faceCounts.size(), u);
 			}
 		}
 
@@ -72,14 +74,15 @@ struct ConversionHelper {
 };
 
 // transfer texture coordinates
-const std::vector<std::string> UV_ATTR_NAMES{
-		"uv", "uv1", "uv2", "uv3", "uv4", "uv5"
+const std::vector<std::string> UV_ATTR_NAMES {
+	"uv", "uv1", "uv2", "uv3", "uv4", "uv5"
 #if PRT_VERSION_MAJOR > 1
-		, "uv6", "uv7", "uv8", "uv9"
+	        ,
+	        "uv6", "uv7", "uv8", "uv9"
 #endif
 };
 
-template<typename P>
+template <typename P>
 void convertPolygon(ConversionHelper& ch, const P& p, const std::vector<GA_ROHandleV2D>& uvHandles) {
 	const GA_Size vtxCnt = p.getVertexCount();
 
@@ -87,7 +90,8 @@ void convertPolygon(ConversionHelper& ch, const P& p, const std::vector<GA_ROHan
 
 	for (GA_Size i = vtxCnt - 1; i >= 0; i--) {
 		ch.indices.push_back(static_cast<uint32_t>(p.getPointIndex(i)));
-		if (DBG) LOG_DBG << "      vtx " << i << ": point idx = " << p.getPointIndex(i);
+		if (DBG)
+			LOG_DBG << "      vtx " << i << ": point idx = " << p.getPointIndex(i);
 	}
 
 	for (size_t u = 0; u < uvHandles.size(); u++) {
@@ -103,22 +107,23 @@ void convertPolygon(ConversionHelper& ch, const P& p, const std::vector<GA_ROHan
 			uvSet.uvs.push_back(v.x());
 			uvSet.uvs.push_back(v.y());
 			uvSet.idx.push_back(uvSet.idx.size());
-			if (DBG) LOG_DBG << "     uv " << i << ": " << v.x() << ", " << v.y();
+			if (DBG)
+				LOG_DBG << "     uv " << i << ": " << v.x() << ", " << v.y();
 		}
 	}
 }
 
 std::array<double, 3> getCentroid(const std::vector<double>& coords, const ConversionHelper& ch) {
-	std::array<double, 3> centroid = { 0.0, 0.0, 0.0 };
+	std::array<double, 3> centroid = {0.0, 0.0, 0.0};
 	for (size_t i = 0; i < ch.indices.size(); i++) {
 		auto idx = ch.indices[i];
 		centroid[0] += coords[3 * idx + 0];
 		centroid[1] += coords[3 * idx + 1];
 		centroid[2] += coords[3 * idx + 2];
 	}
-	centroid[0] /= (double) ch.indices.size();
-	centroid[1] /= (double) ch.indices.size();
-	centroid[2] /= (double) ch.indices.size();
+	centroid[0] /= (double)ch.indices.size();
+	centroid[1] /= (double)ch.indices.size();
+	centroid[2] /= (double)ch.indices.size();
 	return centroid;
 }
 
@@ -167,14 +172,14 @@ struct MainAttributeHandles {
 		GA_RWAttributeRef styleRef(detail->addStringTuple(GA_ATTRIB_PRIMITIVE, PLD_STYLE, 1));
 		style.bind(styleRef);
 
-		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, PLD_RANDOM_SEED, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT32));
+		GA_RWAttributeRef seedRef(detail->addIntTuple(GA_ATTRIB_PRIMITIVE, PLD_RANDOM_SEED, 1, GA_Defaults(0), nullptr,
+		                                              nullptr, GA_STORE_INT32));
 		seed.bind(seedRef);
 	}
 };
 
-void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls,
-                         ShapeData& shapeData, const PRTContextUPtr& prtCtx)
-{
+void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& primCls, ShapeData& shapeData,
+                         const PRTContextUPtr& prtCtx) {
 	WA("all");
 
 	assert(shapeData.isValid());
@@ -186,11 +191,12 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	// -- copy all coordinates
 	std::vector<double> coords;
 	assert(detail->getPointRange().getEntries() == detail->getNumPoints());
-	coords.reserve(detail->getNumPoints()*3);
+	coords.reserve(detail->getNumPoints() * 3);
 	GA_Offset ptoff;
 	GA_FOR_ALL_PTOFF(detail, ptoff) {
 		const UT_Vector3 p = detail->getPos3(ptoff);
-		if (DBG) LOG_DBG << "coords " << coords.size()/3 << ": " << p.x() << ", " << p.y() << ", " << p.z();
+		if (DBG)
+			LOG_DBG << "coords " << coords.size() / 3 << ": " << p.x() << ", " << p.y() << ", " << p.z();
 		coords.push_back(static_cast<double>(p.x()));
 		coords.push_back(static_cast<double>(p.y()));
 		coords.push_back(static_cast<double>(p.z()));
@@ -199,33 +205,38 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	// scan for uv attributes
 	std::vector<GA_ROHandleV2D> uvHandles(UV_ATTR_NAMES.size());
 	for (uint32_t uvSet = 0; uvSet < UV_ATTR_NAMES.size(); uvSet++) {
-		const std::string &attrName = UV_ATTR_NAMES[uvSet];
-		const GA_Attribute *attrib = detail->findFloatTuple(GA_ATTRIB_VERTEX, attrName, 2);
+		const std::string& attrName = UV_ATTR_NAMES[uvSet];
+		const GA_Attribute* attrib = detail->findFloatTuple(GA_ATTRIB_VERTEX, attrName, 2);
 		uvHandles[uvSet].bind(attrib);
 	}
 
 	// -- loop over all primitive partitions and create shape builders
 	uint32_t isIdx = 0;
 	for (auto pIt = partitions.cbegin(); pIt != partitions.cend(); ++pIt, ++isIdx) {
-		if (DBG) LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
+		if (DBG)
+			LOG_DBG << "   -- creating initial shape " << isIdx << ", prim count = " << pIt->second.size();
 
 		ConversionHelper ch(coords, uvHandles);
 
 		// merge primitive geometry inside partition (potential multi-polygon initial shape)
-		for (const auto& prim: pIt->second) {
-			if (DBG) LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName() << ", id = " << prim->getTypeId().get();
+		for (const auto& prim : pIt->second) {
+			if (DBG)
+				LOG_DBG << "   -- prim index " << prim->getMapIndex() << ", type: " << prim->getTypeName()
+				        << ", id = " << prim->getTypeId().get();
 			const auto& primType = prim->getTypeId();
 			switch (primType.get()) {
 				case GA_PRIMPOLY:
 					convertPolygon(ch, *prim, uvHandles);
 					break;
 				case GA_PRIMPOLYSOUP:
-					for (GEO_PrimPolySoup::PolygonIterator pit(static_cast<const GEO_PrimPolySoup&>(*prim)); !pit.atEnd(); ++pit) {
+					for (GEO_PrimPolySoup::PolygonIterator pit(static_cast<const GEO_PrimPolySoup&>(*prim));
+					     !pit.atEnd(); ++pit) {
 						convertPolygon(ch, pit, uvHandles);
 					}
 					break;
 				default:
-					if (DBG) LOG_DBG << "      ignoring primitive of type " << prim->getTypeName();
+					if (DBG)
+						LOG_DBG << "      ignoring primitive of type " << prim->getTypeName();
 					break;
 			}
 		} // for each primitive
@@ -250,36 +261,36 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		for (auto& prim: pv) {
+		for (auto& prim : pv) {
 			primCls.put(prim);
 			putMainAttributes(detail, mah, prim);
 			const GA_Offset& off = prim->getMapOffset();
 			mah.seed.set(off, randomSeed);
 		} // for all primitives in initial shape
-	} // for all initial shapes
+	}     // for all initial shapes
 }
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-	mDefaultMainAttributes.mRPK       = AssignNodeParams::getRPK(node, now);
-	mDefaultMainAttributes.mRuleFile  = AssignNodeParams::getRuleFile(node, now);
-	mDefaultMainAttributes.mStyle     = AssignNodeParams::getStyle(node, now);
+	mDefaultMainAttributes.mRPK = AssignNodeParams::getRPK(node, now);
+	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
+	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
 	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
 }
 
 namespace {
 
-template<typename T>
+template <typename T>
 T convert(const UT_StringHolder& s) {
 	return T{s.toStdString()};
 }
 
-template<>
+template <>
 std::wstring convert(const UT_StringHolder& s) {
 	return toUTF16FromOSNarrow(s.toStdString());
 }
 
-template<typename T>
+template <typename T>
 void tryAssign(T& v, const GA_ROAttributeRef& ref, const GA_Offset& off) {
 	if (ref.isInvalid())
 		return;
@@ -313,7 +324,8 @@ MainAttributes ShapeConverter::getMainAttributesFromPrimitive(const GU_Detail* d
 	return ma;
 }
 
-void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHandles& mah, const GA_Primitive* primitive) const {
+void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHandles& mah,
+                                       const GA_Primitive* primitive) const {
 	MainAttributes ma = getMainAttributesFromPrimitive(detail, primitive);
 
 	const GA_Offset& off = primitive->getMapOffset();

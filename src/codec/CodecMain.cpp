@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,27 @@
 
 #include "encoder/HoudiniEncoder.h"
 
-#include "prtx/prtx.h"
 #include "prtx/ExtensionManager.h"
-
+#include "prtx/prtx.h"
 
 namespace {
 const int VERSION_MAJOR = PRT_VERSION_MAJOR;
 const int VERSION_MINOR = PRT_VERSION_MINOR;
-}
+} // namespace
 
 extern "C" {
-
 
 CODEC_EXPORTS_API void registerExtensionFactories(prtx::ExtensionManager* manager) {
 	manager->addFactory(HoudiniEncoderFactory::createInstance());
 }
 
-
-CODEC_EXPORTS_API void unregisterExtensionFactories(prtx::ExtensionManager* /*manager*/) {
-}
-
+CODEC_EXPORTS_API void unregisterExtensionFactories(prtx::ExtensionManager* /*manager*/) {}
 
 CODEC_EXPORTS_API int getVersionMajor() {
 	return VERSION_MAJOR;
 }
 
-
 CODEC_EXPORTS_API int getVersionMinor() {
 	return VERSION_MINOR;
 }
-
-
 }

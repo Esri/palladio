@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
+// clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 #ifndef _WIN32
 #	pragma GCC diagnostic pop
 #endif
-
 
 #ifdef _WIN32
 #	include <Windows.h>
@@ -38,14 +39,13 @@
 #	include <dlfcn.h>
 #endif
 
-
-void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring,std::wstring>>& cgbs) {
-	constexpr const wchar_t* PROJECT    = L"";
-	constexpr const wchar_t* PATTERN    = L"*.cgb";
-	constexpr const size_t   START_SIZE = 16 * 1024;
+void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
+	constexpr const wchar_t* PROJECT = L"";
+	constexpr const wchar_t* PATTERN = L"*.cgb";
+	constexpr const size_t START_SIZE = 16 * 1024;
 
 	size_t resultSize = START_SIZE;
-	auto * result = new wchar_t[resultSize]; // TODO: use std::array
+	auto* result = new wchar_t[resultSize]; // TODO: use std::array
 	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
 	if (resultSize >= START_SIZE) {
 		delete[] result;
@@ -58,8 +58,9 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring,std::w
 
 	std::vector<std::wstring> tok;
 	PLD_BOOST_NS::split(tok, cgbList, PLD_BOOST_NS::is_any_of(L";"), PLD_BOOST_NS::algorithm::token_compress_on);
-	for(const std::wstring& t: tok) {
-		if (t.empty()) continue;
+	for (const std::wstring& t : tok) {
+		if (t.empty())
+			continue;
 		LOG_DBG << "token: '" << t << "'";
 		const wchar_t* s = rm->getString(t.c_str());
 		if (s != nullptr) {
@@ -73,7 +74,8 @@ const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt:
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* validatedOptions = nullptr;
 	const prt::AttributeMap* optionStates = nullptr;
-	const prt::Status s = encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
+	const prt::Status s =
+	        encInfo->createValidatedOptionsAndStates(unvalidatedOptions, &validatedOptions, &optionStates);
 	if (optionStates != nullptr)
 		optionStates->destroy();
 	return (s == prt::STATUS_OK) ? validatedOptions : nullptr;
@@ -87,7 +89,7 @@ std::string objectToXML(prt::Object const* obj) {
 	std::vector<char> buffer(SIZE, ' ');
 	obj->toXML(buffer.data(), &actualSize);
 	buffer.resize(actualSize);
-	if(actualSize > SIZE)
+	if (actualSize > SIZE)
 		obj->toXML(buffer.data(), &actualSize);
 	return std::string(buffer.data());
 }
@@ -95,26 +97,26 @@ std::string objectToXML(prt::Object const* obj) {
 void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func) {
 #ifdef _WIN32
 	HMODULE dllHandle = 0;
-	if(!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)func, &dllHandle)) {
+	if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)func, &dllHandle)) {
 		DWORD c = GetLastError();
 		char msg[255];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
 		throw std::runtime_error("error while trying to get current module handle': " + std::string(msg));
 	}
 	assert(sizeof(TCHAR) == 1);
 	const size_t PATHMAXSIZE = 4096;
 	TCHAR pathA[PATHMAXSIZE];
 	DWORD pathSize = GetModuleFileName(dllHandle, pathA, PATHMAXSIZE);
-	if(pathSize == 0 || pathSize == PATHMAXSIZE) {
+	if (pathSize == 0 || pathSize == PATHMAXSIZE) {
 		DWORD c = GetLastError();
 		char msg[255];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, c, 0, msg, 255, 0);
 		throw std::runtime_error("error while trying to get current module path': " + std::string(msg));
 	}
 	path = pathA;
 #else /* macosx or linux */
 	Dl_info dl_info;
-	if(dladdr(func, &dl_info) == 0) {
+	if (dladdr(func, &dl_info) == 0) {
 		char* error = dlerror();
 		throw std::runtime_error("error while trying to get current module path': " + std::string(error ? error : ""));
 	}
@@ -151,7 +153,7 @@ std::string toOSNarrowFromUTF16(const std::wstring& osWString) {
 	size_t size = temp.size();
 	prt::Status status = prt::STATUS_OK;
 	prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), temp.data(), &size, &status);
-	if(size > temp.size()) {
+	if (size > temp.size()) {
 		temp.resize(size);
 		prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), temp.data(), &size, &status);
 	}
@@ -163,7 +165,7 @@ std::wstring toUTF16FromOSNarrow(const std::string& osString) {
 	size_t size = temp.size();
 	prt::Status status = prt::STATUS_OK;
 	prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), temp.data(), &size, &status);
-	if(size > temp.size()) {
+	if (size > temp.size()) {
 		temp.resize(size);
 		prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), temp.data(), &size, &status);
 	}
@@ -176,7 +178,7 @@ std::string toUTF8FromOSNarrow(const std::string& osString) {
 	size_t size = temp.size();
 	prt::Status status = prt::STATUS_OK;
 	prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), temp.data(), &size, &status);
-	if(size > temp.size()) {
+	if (size > temp.size()) {
 		temp.resize(size);
 		prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), temp.data(), &size, &status);
 	}
@@ -195,11 +197,11 @@ std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p) {
 }
 
 std::wstring percentEncode(const std::string& utf8String) {
-	std::vector<char> temp(2*utf8String.size());
+	std::vector<char> temp(2 * utf8String.size());
 	size_t size = temp.size();
 	prt::Status status = prt::STATUS_OK;
 	prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
-	if(size > temp.size()) {
+	if (size > temp.size()) {
 		temp.resize(size);
 		prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
 	}
@@ -207,7 +209,7 @@ std::wstring percentEncode(const std::string& utf8String) {
 	std::vector<wchar_t> u16temp(temp.size());
 	size = u16temp.size();
 	prt::StringUtils::toUTF16FromUTF8(temp.data(), u16temp.data(), &size, &status);
-	if(size > u16temp.size()) {
+	if (size > u16temp.size()) {
 		u16temp.resize(size);
 		prt::StringUtils::toUTF16FromUTF8(temp.data(), u16temp.data(), &size, &status);
 	}

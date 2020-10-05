@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
 #include "AttrEvalCallbacks.h"
 #include "LogHandler.h"
 
-
 namespace {
 
-constexpr bool           DBG                   = false;
+constexpr bool DBG = false;
 constexpr const wchar_t* CGA_ANNOTATION_HIDDEN = L"@Hidden";
 
 bool isHiddenAttribute(const RuleFileInfoUPtr& ruleFileInfo, const wchar_t* key) {
@@ -39,16 +38,17 @@ bool isHiddenAttribute(const RuleFileInfoUPtr& ruleFileInfo, const wchar_t* key)
 
 } // namespace
 
-
 prt::Status AttrEvalCallbacks::generateError(size_t isIndex, prt::Status status, const wchar_t* message) {
 	return prt::STATUS_OK;
 }
 
-prt::Status AttrEvalCallbacks::assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri, const wchar_t* message) {
+prt::Status AttrEvalCallbacks::assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key,
+                                          const wchar_t* uri, const wchar_t* message) {
 	return prt::STATUS_OK;
 }
 
-prt::Status AttrEvalCallbacks::cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId, int32_t pc, const wchar_t* message) {
+prt::Status AttrEvalCallbacks::cgaError(size_t isIndex, int32_t shapeID, prt::CGAErrorLevel level, int32_t methodId,
+                                        int32_t pc, const wchar_t* message) {
 	LOG_ERR << message;
 	return prt::STATUS_OK;
 }
@@ -65,26 +65,30 @@ prt::Status AttrEvalCallbacks::cgaReportFloat(size_t isIndex, int32_t shapeID, c
 	return prt::STATUS_OK;
 }
 
-prt::Status AttrEvalCallbacks::cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
+prt::Status AttrEvalCallbacks::cgaReportString(size_t isIndex, int32_t shapeID, const wchar_t* key,
+                                               const wchar_t* value) {
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrBool(size_t isIndex, int32_t shapeID, const wchar_t* key, bool value) {
-	if (DBG) LOG_DBG << "attrBool: isIndex = " << isIndex << ", key = " << key << " = " << value;
+	if (DBG)
+		LOG_DBG << "attrBool: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo[isIndex] && !isHiddenAttribute(mRuleFileInfo[isIndex], key))
 		mAMBS[isIndex]->setBool(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) {
-	if (DBG) LOG_DBG << "attrFloat: isIndex = " << isIndex << ", key = " << key << " = " << value;
+	if (DBG)
+		LOG_DBG << "attrFloat: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo[isIndex] && !isHiddenAttribute(mRuleFileInfo[isIndex], key))
 		mAMBS[isIndex]->setFloat(key, value);
 	return prt::STATUS_OK;
 }
 
 prt::Status AttrEvalCallbacks::attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) {
-	if (DBG) LOG_DBG << "attrString: isIndex = " << isIndex << ", key = " << key << " = " << value;
+	if (DBG)
+		LOG_DBG << "attrString: isIndex = " << isIndex << ", key = " << key << " = " << value;
 	if (mRuleFileInfo[isIndex] && !isHiddenAttribute(mRuleFileInfo[isIndex], key))
 		mAMBS[isIndex]->setString(key, value);
 	return prt::STATUS_OK;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 #pragma once
 
+// clang-format off
 #define PLD_STRINGIFY(x) PLD_STR(x)
 #define PLD_STR(x) #x
 #define PLD_EXPAND(x) x
 #define PLD_BOOST_INCLUDE(p) PLD_STRINGIFY(PLD_EXPAND(PLD_BOOST_NS)PLD_EXPAND(p))
+// clang-format on

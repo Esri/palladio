@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Esri R&D Zurich and VRBN
+ * Copyright 2014-2020 Esri R&D Zurich and VRBN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 #include "MultiWatch.h"
 #include "LogHandler.h"
 
-#include <mutex>
-#include <iomanip>
 #include <algorithm>
-#include <numeric>
 #include <cmath>
-
+#include <iomanip>
+#include <mutex>
+#include <numeric>
 
 namespace {
 
@@ -65,14 +64,14 @@ void MultiWatch::stop(const std::string& name) {
 
 void MultiWatch::printTimings() const {
 	std::map<std::string, std::vector<double>> lapTimes;
-	for (const auto& l: laps) {
-		for (const auto& ctx: l) {
+	for (const auto& l : laps) {
+		for (const auto& ctx : l) {
 			lapTimes[ctx.first].push_back(ctx.second);
 		}
 	}
 
 	LOG_FTL << "-- timings:";
-	for (const auto& l: lapTimes) {
+	for (const auto& l : lapTimes) {
 		const auto& ctxName = l.first;
 		const auto& lt = l.second;
 
@@ -80,9 +79,9 @@ void MultiWatch::printTimings() const {
 		const double lapSum = std::accumulate(lt.begin(), lt.end(), 0.0);
 		const double lapAvg = lapSum / (double)numLaps;
 		const auto avgIntStrWidth = std::to_string(std::trunc(lapAvg)).size();
-		LOG_FTL << "   " << ctxName
-		        << std::setw(75 - ctxName.size()) << std::right << std::fixed << std::setprecision(5-avgIntStrWidth) << lapAvg << "s"
-		        << std::setw(15) << std::right << "(#laps = " << numLaps << ")";
+		LOG_FTL << "   " << ctxName << std::setw(75 - ctxName.size()) << std::right << std::fixed
+		        << std::setprecision(5 - avgIntStrWidth) << lapAvg << "s" << std::setw(15) << std::right
+		        << "(#laps = " << numLaps << ")";
 	}
 }
 
@@ -97,5 +96,5 @@ WatchAgent::~WatchAgent() {
 std::string WatchAgent::stripArgs(const std::string& s) {
 	std::string t = s.substr(0, s.find_first_of('('));
 	auto p = t.find_last_of(' ');
-	return (p != std::string::npos) ? t.substr(p+1) : t;
+	return (p != std::string::npos) ? t.substr(p + 1) : t;
 }

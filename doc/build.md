@@ -5,19 +5,19 @@
 
 ### Supported Operating Systems
 * RedHat Enterprise Linux 7 (and compatible)
-* Windows 7/8.1/10
+* Windows 10
  
 ### Required Toolchain & Compiler
 * [cmake 3.13 or later](https://cmake.org/download)
 * [conan 1.20 or later](https://www.conan.io/downloads)
 * Linux: GCC 6.3
-* Windows: Visual Studio 2017 (MSVC 14.1)
+* Windows: Visual Studio 2019 (MSVC 14.2)
 
 ### Required Build Dependencies
 * Installation of Houdini 17.0 or later (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
-* [Esri CityEngine SDK](https://github.com/Esri/esri-cityengine-sdk)
+* [CityEngine SDK](https://github.com/esri/cityengine-sdk)
 * SideFX Houdini HDK
 
 
