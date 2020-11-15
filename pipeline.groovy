@@ -29,6 +29,12 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC142, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.0' ],
 ]
 
+@Field final List CONFIGS_HOUDINI_185 = [
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC63, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC142, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
+]
+
+
 // -- PIPELINE
 
 @Field String myBranch = env.BRANCH_NAME
@@ -57,6 +63,7 @@ Map taskGenPalladio() {
     // FIXME: this is a workaround to get unique task names
 	tasks << cepl.generateTasks('pld-hdn17.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_175)
 	tasks << cepl.generateTasks('pld-hdn18.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_180)
+	tasks << cepl.generateTasks('pld-hdn18.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_185)
 	return tasks;
 }
 
