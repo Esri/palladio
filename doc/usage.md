@@ -4,7 +4,7 @@
 ## Prerequisites
 
 * RedHat Enterprise Linux 7 (and compatible) or Windows 10
-* Houdini 17.5 or later (building is supported from Houdini 17.0 or later)
+* Houdini 17.5 or later
 * To create CityEngine rule packages, an installation of CityEngine (2019.0 or later)
 * For commercial work, a [license](https://esri.com/cityengine) for CityEngine (2019.0 or later)
 
