@@ -62,7 +62,8 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 }
 
 bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData,
-                                   const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx) {
+                                   const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
+                                   std::string& errors) {
 	WA("all");
 
 	assert(shapeData.isValid());
@@ -89,8 +90,10 @@ bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData
 		// try to get a resolve map
 		ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
 		if (!resolveMap) {
-			LOG_WRN << "Could not create resolve map from rpk " << ma.mRPK
-			        << ", aborting default rule attribute evaluation";
+			errors.append("Could not read Rule Package '")
+			        .append(ma.mRPK.string())
+			        .append("', aborting default rule attribute evaluation");
+			LOG_ERR << errors;
 			return false;
 		}
 
@@ -124,8 +127,13 @@ bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData
 	const prt::Status stat = prt::generate(is.data(), is.size(), nullptr, encs, encsCount, encsOpts, &aec,
 	                                       prtCtx->mPRTCache.get(), nullptr, nullptr, nullptr);
 	if (stat != prt::STATUS_OK) {
-		LOG_ERR << "assign: prt::generate() failed with status: '" << prt::getStatusDescription(stat) << "' (" << stat
-		        << ")";
+		errors.append("Failed to evaluate default attributes with status: '")
+		        .append(prt::getStatusDescription(stat))
+		        .append("' (")
+		        .append(std::to_string(stat))
+		        .append(")");
+		LOG_ERR << errors;
+		return false;
 	}
 
 	assert(shapeData.isValid());
@@ -158,9 +166,14 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 		ShapeData shapeData;
 		mShapeConverter->get(gdp, primCls, shapeData, mPRTCtx);
-		const bool canContinue = evaluateDefaultRuleAttributes(gdp, shapeData, mShapeConverter, mPRTCtx);
+		std::string evalAttrErrorMessage;
+		const bool canContinue =
+		        evaluateDefaultRuleAttributes(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		if (!canContinue) {
-			LOG_ERR << getName() << ": aborting, could not successfully evaluate default rule attributes";
+			const std::string errMsg =
+			        "Could not successfully evaluate default rule attributes:\n" + evalAttrErrorMessage;
+			LOG_ERR << getName() << ": " << errMsg;
+			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
 		mShapeConverter->put(gdp, primCls, shapeData);
