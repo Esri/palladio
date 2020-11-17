@@ -208,7 +208,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	const size_t isSuccesses = std::count(initialShapeStatus.begin(), initialShapeStatus.end(), prt::STATUS_OK);
 	if (isSuccesses == 0) {
 		LOG_ERR << getName() << ": All initial shapes failed to generate, cooking aborted.";
-		addError(UT_ERROR_ABORT, "All initial shapes failed to generate.");
+		addError(SOP_MESSAGE, "All initial shapes failed to generate.");
 		return UT_ERROR_ABORT;
 	}
 	// TODO: evaluate batchStatus as well...
