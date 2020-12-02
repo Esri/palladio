@@ -80,7 +80,7 @@ Palladio is maintained as an open-source project by Matthias Buehler ([vrbn stud
 
 Our goal is to bring as many Houdini and CityEngine users and developers on board as possible. Anyone is invited to submit issues and/or to fork and contribute to this project.
 
-[Join us on slack!](https://join.slack.com/t/palladio-houdini-ce/shared_invite/enQtMzAzNTc4MzIzNjA1LTEwYmQ1ZjE0MTExODIxNTA4ZDEzYWYyYzNkZGZmMWQ0NmM2MjMzYTllOGI5OTQwNGM0N2RjYjFlNjJjNzVhMjE)
+Join us on Slack at [palladio-houdini-ce.slack.com](https://palladio-houdini-ce.slack.com)!
 
 Our thanks also go to the fine folks at Esri R&D Zurich and vrbn studios which provided valuable comments and feedback.
 
