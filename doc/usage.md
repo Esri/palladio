@@ -44,10 +44,15 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 
 In the previous section we've used the default value for the ``height`` attribute. Let's use Houdini tools to modify the rule attribute prior to execution.
 
-1. Right click on the ``pldAssign`` node and bring up the spreadsheet view. Observe how the ``height`` primitive parameter is set to 1 for all primitives. This is the rule attribute default value and we're going to override it now. ![](img/attribute01.png)
 1. Add an ``AttributeCreate`` node between ``pldAssign`` and ``pldGenerate``.
 1. Set the attribute name to ``height`` and the ``Class`` to ``Primitive``. The extrusion vanishes because the default value is 0.
 1. Increase the value for ``height`` to see an actual extrusion: ![](img/attribute02.png)
+
+Please note the steps for the general case:
+1. See the CGA file (or CityEngine) for the available attributes and their data types (number, string, boolean). 
+1. In the ``AttributeCreate`` node, set ``name`` to the name of the CGA attribute (replace dots ``.`` with double underscores ``__``).
+1. Set ``class`` to ``Primitive``.
+1. Set ``type`` to ``Float`` for CGA number attributes, ``String`` for CGA strings and ``Int`` for CGA booleans.
 
 ## Working with Material Attributes
 
