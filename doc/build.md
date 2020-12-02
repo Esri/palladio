@@ -47,16 +47,16 @@ Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDIN
 #### Linux
 1. Ensure GCC 6.3 is active.
 1. `cd` into your Palladio git repository
-1. ```mkdir -p build/release && cd build/release```
-1. ```cmake -DCMAKE_BUILD_TYPE=Release ../../src```
-1. ```make install``` (the plugin will be installed into your `~/houdini18.5/dso` directory)
+1. `mkdir -p build/release && cd build/release`
+1. `cmake -DCMAKE_BUILD_TYPE=Release ../../src`
+1. `make install` (the plugin will be installed into your `~/houdini18.5/dso` directory)
 
 #### Windows
 1. Open a MSVC 14.2 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
-1. ```mkdir build/release```
-1. ```cd build/release```
-1. ```cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src```
-1. ```nmake install``` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini18.5/dso` directory)
+1. `mkdir build/release`
+1. `cd build/release`
+1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src`
+1. `nmake install` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini18.5/dso` directory)
 
 ### Running Palladio
 See [Quick Start](usage.md) how to launch Houdini with Palladio.
@@ -66,16 +66,16 @@ See [Quick Start](usage.md) how to launch Houdini with Palladio.
 #### Linux
 1. Ensure GCC 6.3 is active.
 1. `cd` into your Palladio git repository
-1. ```mkdir -p build/relTest && cd build/relTest```
-1. ```cmake -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src```
-1. ```make palladio_test```
+1. `mkdir -p build/relTest && cd build/relTest`
+1. `cmake -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
+1. `make palladio_test`
 1. run `bin/palladio_test`
 
 #### Windows
 1. Open a MSVC 14.2 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
-1. ```mkdir build/relTest```
-1. ```cd build/relTest```
-1. ```cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src```
-1. ```nmake palladio_test```
+1. `mkdir build/relTest`
+1. `cd build/relTest`
+1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
+1. `nmake palladio_test`
 1. ensure that the `bin` subdirectory of your Houdini installation is in the `PATH`
 1. run `bin\palladio_test`
