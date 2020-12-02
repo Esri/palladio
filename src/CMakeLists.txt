@@ -45,7 +45,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/dependencies.cmake)
 set(PLD_VERSION_MAJOR 1)
 set(PLD_VERSION_MINOR 9)
 set(PLD_VERSION_PATCH 0)
-set(PLD_VERSION_PRE "-beta.1") # set to empty string for final releases
+set(PLD_VERSION_PRE "-beta.2") # set to empty string for final releases
 if(NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif()
