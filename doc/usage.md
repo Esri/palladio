@@ -14,7 +14,7 @@
 ### From Pre-Built Binaries
 
 1. [Download](https://esri.github.io/palladio/#downloads) Palladio 
-1. Extract into your `<home>/houdiniX.Y` directory, so that the files end up in the `dso` and `packages` sub-directories.
+1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the `dso` and `packages` sub-directories.
 1. Start Houdini and Palladio will be loaded automatically.
 
 Note: it is NOT necessary to modify the system `PATH` environment variable.
@@ -22,7 +22,7 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 ### From Source
 
 1. [Build](build.md) Palladio
-1. The `install` step should automatically copy all required files into your `<home>/houdiniX.Y` directory and Palladio is ready to run.
+1. The `install` step should automatically copy all required files into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory and Palladio is ready to run.
 
 
 ## Execute a simple CityEngine Rule
