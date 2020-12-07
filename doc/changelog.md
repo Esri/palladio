@@ -1,5 +1,17 @@
 # Palladio ChangeLog
 
+## v1.9.0 (Dec 7, 2020)
+* No functional changes compared to Beta 2.
+
+## v1.9.0 Beta 2 (Dec 2, 2020)
+* Updated doc section for "overriding rule attributes".
+* General doc cleanup. 
+
+## v1.9.0 Beta 1 (Nov 16, 2020)
+* Update default CityEngine SDK to 2.3 (CityEngine 2020.1).
+* Added support for Houdini 18.5.
+* Add error message to assign node in case of e.g. invalid rule package (#159).
+
 ## v1.8.0 (Oct 5, 2020)
 * No functional changes compared to Beta 1.
 
