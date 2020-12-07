@@ -21,8 +21,8 @@ Palladio is well suited for managing the procedural generation of architectural 
 
 ## Downloads
 
-| ![Linux](images/linux.png)   | [Palladio 1.8.0 (Houdini 18.0.532, PRT 2.2, CityEngine 2020.0)](https://github.com/Esri/palladio/releases/download/v1.8.0/palladio-1.8.0+b202-hdn18-0-532.prt2-2-6332.rhel7-gcc63-x86_64-rel-opt.tar.gz) |
-| ![Windows](images/win32.png) | [Palladio 1.8.0 (Houdini 18.0.532, PRT 2.2, CityEngine 2020.0)](https://github.com/Esri/palladio/releases/download/v1.8.0/palladio-1.8.0+b202-hdn18-0-532.prt2-2-6332.win10-vc142-x86_64-rel-opt.zip) |
+| ![Linux](images/linux.png)   | [Palladio 1.9.0 (Houdini 18.5.408, PRT 2.2, CityEngine 2020.1)](https://github.com/Esri/palladio/releases/download/v1.9.0/palladio-1.9.0+b203-hdn18-5-408.prt2-3-6821.rhel7-gcc63-x86_64-rel-opt.tar.gz) |
+| ![Windows](images/win32.png) | [Palladio 1.9.0 (Houdini 18.5.408, PRT 2.2, CityEngine 2020.1)](https://github.com/Esri/palladio/releases/download/v1.9.0/palladio-1.9.0+b203-hdn18-5-408.prt2-3-6821.win10-vc142-x86_64-rel-opt.zip) |
 
 More binaries (for older Houdini versions) are available on the [github release page](https://github.com/esri/palladio/releases).
 
