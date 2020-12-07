@@ -1,6 +1,9 @@
 # Palladio ChangeLog
 
-## v1.9.0 (Dec 2, 2020)
+## v1.9.0 (Dec 7, 2020)
+* No functional changes compared to Beta 2.
+
+## v1.9.0 Beta 2 (Dec 2, 2020)
 * Updated doc section for "overriding rule attributes".
 * General doc cleanup. 
 
