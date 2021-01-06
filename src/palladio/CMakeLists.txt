@@ -48,13 +48,6 @@ if(PLD_WINDOWS)
 	# nothing, inheriting compiler flags from houdini
 
 elseif(PLD_LINUX)
-	target_compile_options(${PROJECT_NAME} PRIVATE
-			-std=c++14 -D_GLIBCXX_USE_CXX11_ABI=0
-			-mtune=generic -m64 -fPIC -mmmx -msse -msse2 -msse3
-			-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder
-			-Wno-uninitialized -Wunused -Wno-unused-parameter
-			-fno-strict-aliasing -Wno-unused-local-typedefs)
-
 	if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
 		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
@@ -73,9 +66,6 @@ elseif(PLD_LINUX)
 			BUILD_WITH_INSTALL_RPATH TRUE)
 
 elseif(PLD_MACOS)
-	target_compile_options(${PROJECT_NAME} PRIVATE
-			-std=c++11) # TODO
-
 	if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -g)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)

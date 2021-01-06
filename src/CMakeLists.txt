@@ -94,7 +94,8 @@ endif()
 
 add_subdirectory(codec)
 add_subdirectory(palladio)
-add_dependencies(palladio palladio_codec)
+add_subdirectory(palladio_fs)
+add_dependencies(palladio palladio_codec palladio_fs)
 
 add_subdirectory(test EXCLUDE_FROM_ALL)
 

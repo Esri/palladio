@@ -78,6 +78,7 @@ std::wstring toUTF16FromOSNarrow(const std::string& osString);
 std::string toUTF8FromOSNarrow(const std::string& osString);
 
 PLD_TEST_EXPORTS_API std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p);
+std::wstring toFileURI(const std::string& p);
 PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
 
 inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {
