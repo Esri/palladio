@@ -52,7 +52,7 @@ Please note the steps for the general case:
 1. See the CGA file (or CityEngine) for the available attributes and their data types (number, string, boolean). 
 1. In the `AttributeCreate` node, set `name` to the name of the CGA attribute (replace dots `.` with double underscores `__`).
 1. Set `class` to `Primitive`.
-1. Set `type` to `Float` for CGA number attributes, `String` for CGA strings and `Int` for CGA booleans.
+1. Set `type` to `Float` for CGA number attributes, `String` for CGA strings and `Integer` with 8 bit precision for CGA booleans.
 
 ## Working with Material Attributes
 
