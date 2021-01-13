@@ -1,7 +1,5 @@
 # ![](doc/img/Palladio_icon_v1_32.png) Palladio - CityEngine Plugin for Houdini
 
-*Binaries and examples are available at https://esri.github.io/palladio*
-
 Palladio is a plugin for [SideFX Houdini](https://www.sidefx.com). It provides operator nodes which enable the execution of [CityEngine](http://www.esri.com/software/cityengine) ‘rules’ within Houdini networks. Therefore, a 3D environment artist does not have to leave their familiar Houdini toolset anymore to make use of CityEngine’s procedural modeling power. Complicated export-import pipelines are no longer needed, which also means that the procedural building models do not need to be “baked” anymore. The buildings stay procedural during the entire modeling workflow (optionally even at render time). Consequently, the 3D environment artist can change the height, style and appearance of buildings easily with a parametric interface at any point during production.
 
 Palladio requires so-called rule packages (RPK) as input, which are authored in CityEngine. An RPK includes assets and a CGA rule file which encodes an architectural style. Comprehensive RPK examples are available below and can be used “out-of-the-box” in Palladio.
@@ -14,10 +12,10 @@ Palladio is well suited for managing the procedural generation of architectural 
 ## Documentation
 
 Palladio Documentation
+* [Home Page with Examples](https://esri.github.io/cityengine/palladio)
+* [Downloads](https://github.com/esri/palladio/releases)
 * [Quick Start](doc/usage.md)
-* [Download Palladio](https://esri.github.io/palladio/#downloads)
 * [Build Palladio](doc/build.md)
-* [Examples](https://esri.github.io/palladio/#examples)
 * [ChangeLog](doc/changelog.md)
 
 External documentation:
