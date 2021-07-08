@@ -36,12 +36,12 @@ void PrimitiveClassifier::updateFromPrimitive(PrimitiveClassifier& derived, cons
 void PrimitiveClassifier::get(SOP_Node* node, const GA_Detail* detail, const OP_Context& context) {
 	const fpreal now = context.getTime();
 
-	UT_String pcn = AssignNodeParams::getPrimClsName(node, now);
+	UT_String pcn = AssignNodeParams::PrimitiveClassifierName::getPrimClsName(node, now);
 	pcn.trimBoundingSpace();
 	if (pcn.length() > 0)
 		name.adopt(pcn);
 	else
-		AssignNodeParams::setPrimClsName(node, name, now);
+		AssignNodeParams::PrimitiveClassifierName::setPrimClsName(node, name, now);
 }
 
 void PrimitiveClassifier::setupAttributeHandles(GU_Detail* detail) {

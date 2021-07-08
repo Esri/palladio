@@ -18,6 +18,7 @@
 #include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "MultiWatch.h"
+#include "NodeParameter.h"
 #include "PrimitiveClassifier.h"
 #include "ShapeData.h"
 
@@ -28,7 +29,6 @@
 
 // clang-format off
 #include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
 #include PLD_BOOST_INCLUDE(/functional/hash.hpp)
 // clang-format on
@@ -249,7 +249,66 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 	assert(shapeData.isValid());
 }
 
-void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const ShapeData& shapeData) const {
+namespace {
+
+using AttrRefMap = std::map<UT_String, GA_RWAttributeRef>;
+
+class AttributeCreator : public PLD_BOOST_NS::static_visitor<> {
+public:
+	AttributeCreator(UT_String name, GU_Detail* detail, AttrRefMap& attrRefs)
+	    : mName(name), mDetail(detail), mAttrRefs(attrRefs) {}
+
+	void operator()(const std::wstring& v) const {
+		auto primAttr = mDetail->addStringTuple(GA_ATTRIB_PRIMITIVE, mName, 1);
+		mAttrRefs.emplace(mName, primAttr);
+	}
+
+	void operator()(const double& v) const {
+		auto primAttr = mDetail->addFloatTuple(GA_ATTRIB_PRIMITIVE, mName, 1); // TODO: use double storage
+		mAttrRefs.emplace(mName, primAttr);
+	}
+
+	void operator()(const bool& v) const {
+		auto primAttr = mDetail->addIntTuple(GA_ATTRIB_PRIMITIVE, mName, 1); // TODO: use store type uint8
+		mAttrRefs.emplace(mName, primAttr);
+	}
+
+private:
+	UT_String mName;
+	GU_Detail* mDetail;
+	AttrRefMap& mAttrRefs;
+};
+
+class AttributeAssigner : public PLD_BOOST_NS::static_visitor<> {
+public:
+	AttributeAssigner(SOPAssign* node, GA_RWAttributeRef ref, GA_Offset off) : mNode(node), mRef(ref), mOff(off) {}
+
+	void operator()(const std::wstring& v) const {
+		GA_RWHandleS av(mRef);
+		const std::string nVal = toOSNarrowFromUTF16(v);
+		av.set(mOff, nVal.c_str());
+	}
+
+	void operator()(const double& v) const {
+		GA_RWHandleD av(mRef);
+		av.set(mOff, v);
+	}
+
+	void operator()(const bool& v) const {
+		GA_RWHandleI av(mRef);
+		av.set(mOff, v ? 1 : 0);
+	}
+
+private:
+	SOPAssign* mNode;
+	GA_RWAttributeRef mRef;
+	GA_Offset mOff;
+};
+
+} // namespace
+
+void ShapeConverter::put(SOPAssign* node, OP_Context& context, GU_Detail* detail, PrimitiveClassifier& primCls,
+                         const ShapeData& shapeData) const {
 	WA("all");
 
 	primCls.setupAttributeHandles(detail);
@@ -257,6 +316,18 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 	MainAttributeHandles mah;
 	mah.setup(detail);
 
+	// generate primitive attribute handles for all overriding rule attributes
+	const AssignNodeParams::AttributeOverrides::AttributeValueMap overriddenRuleAttributes =
+	        AssignNodeParams::AttributeOverrides::getOverriddenRuleAttributes(node, context.getTime());
+	AttrRefMap attrRefs; // TODO: could be done lazily while assigning
+	for (const auto& ruleAttr : overriddenRuleAttributes) {
+
+		const UT_String primAttrName = NameConversion::toPrimAttr(ruleAttr.first);
+		AttributeCreator avv(primAttrName, detail, attrRefs);
+		PLD_BOOST_NS::apply_visitor(avv, ruleAttr.second);
+	}
+
+	// assign primitive attributes
 	for (size_t isIdx = 0; isIdx < shapeData.getRuleAttributeMapBuilders().size(); isIdx++) {
 		const auto& pv = shapeData.getPrimitiveMapping(isIdx);
 		const int32_t randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
@@ -266,16 +337,26 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			putMainAttributes(detail, mah, prim);
 			const GA_Offset& off = prim->getMapOffset();
 			mah.seed.set(off, randomSeed);
+
+			// assign overriding rule attributes
+			for (const auto& ruleAttr : overriddenRuleAttributes) {
+				const UT_String primAttrName = NameConversion::toPrimAttr(ruleAttr.first);
+				GA_RWAttributeRef attrRef = attrRefs.at(primAttrName);
+
+				AttributeAssigner aa(node, attrRef, off);
+				PLD_BOOST_NS::apply_visitor(aa, ruleAttr.second);
+			}
+
 		} // for all primitives in initial shape
 	}     // for all initial shapes
 }
 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
-	mDefaultMainAttributes.mRPK = AssignNodeParams::getRPK(node, now);
-	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
-	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
-	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mRPK = AssignNodeParams::RulePackage::getRPK(node, now);
+	mDefaultMainAttributes.mRuleFile = AssignNodeParams::RuleFile::getRuleFile(node, now);
+	mDefaultMainAttributes.mStyle = AssignNodeParams::Style::getStyle(node, now);
+	mDefaultMainAttributes.mStartRule = AssignNodeParams::StartRule::getStartRule(node, now);
 }
 
 namespace {

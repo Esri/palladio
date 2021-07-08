@@ -16,10 +16,17 @@
 
 #pragma once
 
+#include "LogHandler.h"
+#include "NodeParameter.h"
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
 #include "SOP/SOP_Node.h"
+
+// clang-format off
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
+// clang-format on
 
 class SOPAssign : public SOP_Node {
 public:
@@ -37,8 +44,14 @@ public:
 
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
+	void captureOverridableAttributes(const ShapeData& shapeData);
+	bool updateParmsFlags() override;
 
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
+
+public:
+	AssignNodeParams::AttributeOverrides::AttributeValueMap mOverridableAttributes;
+	std::set<std::wstring> mOverriddenAttributes;
 };

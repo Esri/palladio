@@ -26,6 +26,7 @@
 
 #include "prt/API.h"
 
+#include "CH/CH_Manager.h"
 #include "UT/UT_Interrupt.h"
 
 // clang-format off
@@ -150,7 +151,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");
 
-	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::LogLevel::getLogLevel(this, context.getTime()));
 
 	if (lockInputs(context) >= UT_ERROR_ABORT) {
 		LOG_DBG << "lockInputs error";
@@ -176,7 +177,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
-		mShapeConverter->put(gdp, primCls, shapeData);
+		captureOverridableAttributes(shapeData);
+		mShapeConverter->put(this, context, gdp, primCls, shapeData);
 	}
 
 	unlockInputs();
@@ -190,4 +192,53 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on name change, we use the node name in various output places
 	if (reason == OP_NAME_CHANGED)
 		forceRecook();
+}
+
+void SOPAssign::captureOverridableAttributes(const ShapeData& shapeData) {
+	mOverridableAttributes.clear();
+
+	AttributeMapVector defaultRuleAttributeMaps;
+	for (auto& amb : shapeData.getRuleAttributeMapBuilders()) {
+		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
+	}
+
+	for (size_t isIdx = 0; isIdx < defaultRuleAttributeMaps.size(); isIdx++) {
+		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
+
+		size_t keyCount = 0;
+		const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
+		for (size_t k = 0; k < keyCount; k++) {
+			const wchar_t* const key = cKeys[k];
+			const auto type = defaultRuleAttributes->getType(key);
+
+			AssignNodeParams::AttributeOverrides::AttributeValueType defVal;
+			switch (type) {
+				case prt::AttributeMap::PT_FLOAT: {
+					defVal = defaultRuleAttributes->getFloat(key);
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL: {
+					defVal = defaultRuleAttributes->getBool(key);
+					break;
+				}
+				case prt::AttributeMap::PT_STRING: {
+					const wchar_t* v = defaultRuleAttributes->getString(key);
+					assert(v != nullptr);
+					defVal = std::wstring(v);
+					assert(defVal.which() == 0); // std::wstring is type index 0
+					break;
+				}
+				default:
+					break;
+			}
+			if (!defVal.empty())
+				mOverridableAttributes.emplace(key, defVal);
+		}
+	}
+}
+
+bool SOPAssign::updateParmsFlags() {
+	bool changed = SOP_Node::updateParmsFlags();
+	changed |= AssignNodeParams::AttributeOverrides::updateParmsFlags(*this, CHgetEvalTime());
+	return changed;
 }

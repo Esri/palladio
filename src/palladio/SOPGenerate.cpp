@@ -58,9 +58,9 @@ SOPGenerate::SOPGenerate(const PRTContextUPtr& pCtx, OP_Network* net, const char
 
 bool SOPGenerate::handleParams(OP_Context& context) {
 	const auto now = context.getTime();
-	const bool emitAttributes = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
-	const bool emitMaterial = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
-	const bool emitReports = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
+	const bool emitAttributes = (evalInt(GenerateNodeParams::EmitAttributes::NAME.getToken(), 0, now) > 0);
+	const bool emitMaterial = (evalInt(GenerateNodeParams::EmitMaterial::NAME.getToken(), 0, now) > 0);
+	const bool emitReports = (evalInt(GenerateNodeParams::EmitReports::NAME.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);
@@ -136,7 +136,7 @@ std::vector<prt::Status> batchGenerate(BatchMode mode, size_t nThreads, std::vec
 OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 	WA("all");
 
-	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::getLogLevel(this, context.getTime()));
+	logging::ScopedLogLevelModifier scopedLogLevel(CommonNodeParams::LogLevel::getLogLevel(this, context.getTime()));
 
 	if (!handleParams(context))
 		return UT_ERROR_ABORT;
@@ -151,7 +151,7 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 
 	UT_AutoInterrupt progress("Generating CityEngine geometry...");
 
-	const auto groupCreation = GenerateNodeParams::getGroupCreation(this, context.getTime());
+	const auto groupCreation = GenerateNodeParams::Group::getGroupCreation(this, context.getTime());
 	ShapeData shapeData(groupCreation, toUTF16FromOSNarrow(getName().toStdString()));
 
 	ShapeGenerator shapeGen;
