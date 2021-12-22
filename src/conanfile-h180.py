@@ -7,7 +7,7 @@ class PalladioConan(ConanFile):
     generators = "cmake"
 
     def requirements(self):
-        self.requires("catch2/2.0.1@bincrafters/stable")
+        self.requires("catch2/2.13.7")
 
         if "PLD_CONAN_HOUDINI_VERSION" in os.environ:
             self.requires("houdini/{}@sidefx/stable".format(os.environ["PLD_CONAN_HOUDINI_VERSION"]))
