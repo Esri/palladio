@@ -12,12 +12,19 @@ class CESDKConan(ConanFile):
 
     def build(self):
         if self.settings.os == "Windows":
-            toolchain = "vc142" if self.version >= Version("2.2.6332") else "vc141"
+            if self.version >= Version("2.4.7316"):
+                toolchain = "vc1427"
+            elif self.version >= Version("2.2.6332"):
+                toolchain = "vc142"
+            else:
+                toolchain = "vc141"
             url = self.baseURL.format(self.version, self.version, "win10", toolchain)
         elif self.settings.os == "Linux":
-            url = self.baseURL.format(self.version, self.version, "rhel7", "gcc63")
-        elif self.settings.os == "Macos":
-            url = self.baseURL.format(self.version, self.version, "osx12", "ac81")
+            if self.version >= Version("2.4.7316"):
+                gccVersion = "gcc93"
+            else:
+                gccVersion = "gcc63"
+            url = self.baseURL.format(self.version, self.version, "rhel7", gccVersion)
         else:
             raise Exception("Unsupported configuration")
         tools.get(url, verify=False)
