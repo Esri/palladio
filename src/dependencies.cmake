@@ -51,7 +51,7 @@ endif()
 if(PLD_WINDOWS)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
 endif()
 
 conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
