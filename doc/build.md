@@ -14,7 +14,7 @@
 * Windows: Visual Studio 2019 (MSVC 14.2)
 
 ### Required Build Dependencies
-* Installation of Houdini 17.5 or later (see https://sidefx.com/download)
+* Installation of Houdini 18.0 or later (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
 * [CityEngine SDK](https://github.com/esri/cityengine-sdk)

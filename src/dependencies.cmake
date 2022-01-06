@@ -25,16 +25,6 @@ elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 18.0...")
 	set(PLD_CONANFILE "conanfile-h180.py")
 
-# Houdini 17.5
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
-	message(STATUS "Asking Conan for Houdini 17.5...")
-	set(PLD_CONANFILE "conanfile-h175.py")
-
-# Houdini 17.0
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
-	message(STATUS "Asking Conan for Houdini 17.0...")
-	set(PLD_CONANFILE "conanfile-h17.py")
-
 endif()
 
 
