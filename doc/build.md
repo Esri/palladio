@@ -31,7 +31,7 @@ The below steps will populate your local Conan repository with dependencies for 
 
 #### Linux
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
-1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc63 conan/cesdk cesdk/2.6.8135@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/2.6.8135@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini 18.5 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc63 conan/houdini houdini/18.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs18.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs18.5.Z` for Linux).
 
 #### Windows
