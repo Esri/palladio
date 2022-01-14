@@ -40,6 +40,7 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <cassert>
 
 namespace {
 

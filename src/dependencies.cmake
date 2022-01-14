@@ -25,16 +25,6 @@ elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 18.0...")
 	set(PLD_CONANFILE "conanfile-h180.py")
 
-# Houdini 17.5
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
-	message(STATUS "Asking Conan for Houdini 17.5...")
-	set(PLD_CONANFILE "conanfile-h175.py")
-
-# Houdini 17.0
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "17" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
-	message(STATUS "Asking Conan for Houdini 17.0...")
-	set(PLD_CONANFILE "conanfile-h17.py")
-
 endif()
 
 
@@ -51,7 +41,7 @@ endif()
 if(PLD_WINDOWS)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc63")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
 endif()
 
 conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})

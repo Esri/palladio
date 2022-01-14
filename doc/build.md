@@ -14,7 +14,7 @@
 * Windows: Visual Studio 2019 (MSVC 14.2)
 
 ### Required Build Dependencies
-* Installation of Houdini 17.5 or later (see https://sidefx.com/download)
+* Installation of Houdini 18.0 or later (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
 * [CityEngine SDK](https://github.com/esri/cityengine-sdk)
@@ -31,13 +31,13 @@ The below steps will populate your local Conan repository with dependencies for 
 
 #### Linux
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
-1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc63 conan/cesdk cesdk/2.3.6821@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/2.6.8135@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini 18.5 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc63 conan/houdini houdini/18.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs18.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs18.5.Z` for Linux).
 
 #### Windows
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git`
 1. Open a Windows command shell and `cd` to the Palladio git repository
-1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/2.3.6821@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/2.6.8135@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v142 conan/houdini houdini/18.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
 
 ### Building Palladio
