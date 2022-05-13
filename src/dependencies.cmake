@@ -8,15 +8,20 @@ conan_check(VERSION 1.20 REQUIRED)
 ### select Houdini version and required toolchain
 
 if (NOT PLD_HOUDINI_VERSION)
-	set(PLD_HOUDINI_VERSION "18.5") # use Houdini 18.5 by default
+	set(PLD_HOUDINI_VERSION "19.0") # use Houdini 19.0 by default
 endif()
 
 string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
 list(GET PLD_HDN_VER 0 PLD_HDN_VER_MAJ)
 list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 
+# Houdini 19.0
+if (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
+	message(STATUS "Asking Conan for Houdini 19.0...")
+	set(PLD_CONANFILE "conanfile-h190.py")
+
 # Houdini 18.5
-if (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 18.5...")
 	set(PLD_CONANFILE "conanfile-h185.py")
 
@@ -84,7 +89,19 @@ find_package(Houdini REQUIRED)
 function(pld_add_dependency_houdini TGT)
 	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
 
-	if(${Houdini_VERSION_MAJOR} STREQUAL "18")
+	if(${Houdini_VERSION_MAJOR} STREQUAL "19")
+		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
+		if(PLD_WINDOWS)
+			set(houdini_lib_path "${_houdini_install_root}/custom/houdini/dsolib")
+			set(houdini_hboost_fs hboost_filesystem-mt-x64)
+		elseif(PLD_LINUX)
+			set(houdini_lib_path "${_houdini_install_root}/dsolib")
+			set(houdini_hboost_fs hboost_filesystem)
+		endif()
+		find_library(HBOOST_FILESYSTEM ${houdini_hboost_fs} ${houdini_lib_path})
+		target_link_libraries(${TGT} PRIVATE Houdini ${HBOOST_FILESYSTEM})
+		houdini_configure_target(${TGT} INSTDIR ${HOUDINI_USER_PATH})
+	elseif(${Houdini_VERSION_MAJOR} STREQUAL "18")
 		target_compile_definitions(${TGT} PRIVATE -DPLD_BOOST_NS=hboost)
 		if(PLD_WINDOWS)
 			set(houdini_lib_path "${_houdini_install_root}/custom/houdini/dsolib")
