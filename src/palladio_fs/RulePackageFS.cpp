@@ -1,6 +1,7 @@
 #include "RulePackageFS.h"
 
 #include "prtx/DataBackend.h" // !!! use of PRTX requires palladio_fs to be built with the same compiler as PRT
+#include "prtx/URI.h"
 
 #include "FS/FS_ReaderStream.h"
 
@@ -28,11 +29,11 @@ bool isRulePackageURI(const char* p) {
 }
 
 // The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
-std::string getBaseURI(const char* p) {
+std::string getBaseURIPath(const char* p) {
 	const char* lastSchemaSep = std::strrchr(p, ':');
 	const char* firstInnerSep = std::strchr(p, '!');
 	if (lastSchemaSep < firstInnerSep) {
-		return std::string(lastSchemaSep + 1, firstInnerSep);
+		return prtx::URIUtils::percentDecode(std::string(lastSchemaSep + 1, firstInnerSep));
 	}
 	else
 		return {};
@@ -81,7 +82,7 @@ bool RulePackageInfoHelper::canHandle(const char* source) {
 bool RulePackageInfoHelper::hasAccess(const char* source, int mode) {
 	std::string src(source);
 	if (isRulePackageURI(source))
-		src = getBaseURI(source);
+		src = getBaseURIPath(source);
 	FS_Info info(src.c_str());
 	return info.hasAccess(mode);
 }
@@ -96,7 +97,7 @@ bool RulePackageInfoHelper::getIsDirectory(const char* source) {
 int RulePackageInfoHelper::getModTime(const char* source) {
 	std::string src(source);
 	if (isRulePackageURI(source))
-		src = getBaseURI(source);
+		src = getBaseURIPath(source);
 	FS_Info info(src.c_str());
 	return info.getModTime();
 }
