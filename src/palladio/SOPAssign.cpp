@@ -376,13 +376,14 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
+				auto minMax = getAttributeRange(ra.fqName, ruleFileInfo);
 
 				bool isDefaultValFloat = (defaultValIt->second.which() == 1);
 				double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                              ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                              : 0.0;
-				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, min, max, parentFolders);
+				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, minMax.first, minMax.second,
+				                                 parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
