@@ -16,11 +16,14 @@
 
 #include "SOPAssign.h"
 #include "AttrEvalCallbacks.h"
+#include "AttributeConversion.h"
 #include "LogHandler.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
 #include "NodeParameter.h"
+#include "NodeSpareParameter.h"
 #include "PrimitiveClassifier.h"
+#include "RuleAttributes.h"
 #include "ShapeData.h"
 #include "ShapeGenerator.h"
 
@@ -39,6 +42,8 @@ namespace {
 
 constexpr bool DBG = false;
 constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.AttributeEvalEncoder";
+
+constexpr const wchar_t* RULE_ATTRIBUTES_FOLDER_NAME = L"Rule Attributes";
 
 constexpr const wchar_t* NULL_KEY = L"#NULL#";
 constexpr const wchar_t* MIN_KEY = L"min";
@@ -281,6 +286,80 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 			}
 			if (!defVal.valueless_by_exception())
 				mDefaultAttributes.emplace(key, defVal);
+		}
+	}
+}
+
+void SOPAssign::refreshAttributeUI(GU_Detail* detail,
+                                   ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+                                   const PRTContextUPtr& prtCtx, std::string& errors) {
+	const auto& pv = shapeData.getPrimitiveMapping(0);
+	const auto& firstPrimitive = pv.front();
+	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
+
+	// try to get a resolve map
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
+	if (!resolveMap) {
+		errors.append("Could not read Rule Package '")
+			    .append(ma.mRPK.string())
+			    .append("', aborting default rule attribute evaluation");
+		LOG_ERR << errors;
+		return;
+	}
+
+	RuleFileInfoUPtr ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+	RuleAttributeSet ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
+
+	NodeSpareParameter::clearAllParms(this);
+	NodeSpareParameter::addSeparator(this);
+	NodeSpareParameter::addSimpleFolder(this, RULE_ATTRIBUTES_FOLDER_NAME);
+
+	for (const auto& ra : ruleAttributes) {
+		std::wstring attrName = ra.niceName;
+
+		folderVec parentFolders;
+		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
+		parentFolders.push_back(ra.ruleFile);
+		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
+
+		auto defaultValIt = mDefaultAttributes.find(ra.fqName);
+		bool foundDefaultValue = (defaultValIt != mDefaultAttributes.end());
+
+		switch (ra.mType) {
+			case prt::AnnotationArgumentType::AAT_BOOL: {
+				bool isDefaultValBool = (defaultValIt->second.index() == 3);
+				bool defaultValue =
+					    (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
+				NodeSpareParameter::addBoolParm(this, L"boolParm1", attrName, defaultValue, parentFolders);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_INT: {
+				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
+
+				bool isDefaultValInt = (defaultValIt->second.index() == 1);
+				int defaultValue = (foundDefaultValue && isDefaultValInt) ? std::get<int>(defaultValIt->second) : 0;
+				NodeSpareParameter::addIntParm(this, L"intParm1", attrName, defaultValue, min, max, parentFolders);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_FLOAT: {
+				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
+
+				bool isDefaultValFloat = (defaultValIt->second.index() == 2);
+				double defaultValue =
+					    (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
+				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, min, max, parentFolders);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_STR: {
+				bool isDefaultValString = (defaultValIt->second.index() == 0);
+				std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
+					                                ? std::get<std::wstring>(defaultValIt->second)
+					                                : L"";
+				NodeSpareParameter::addStringParm(this, L"stringParm1", attrName, defaultValue, parentFolders);
+				break;
+			}
+			default:
+				break;
 		}
 	}
 }
