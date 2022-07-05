@@ -445,6 +445,12 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	return error();
 }
 
+bool SOPAssign::load(UT_IStream& is, const char* extension, const char* path) {
+	SOP_Node::load(is, extension, path);
+	mWasJustLoaded = true;
+	return false;
+}
+
 void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	SOP_Node::opChanged(reason, data);
 

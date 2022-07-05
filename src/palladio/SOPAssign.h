@@ -38,6 +38,7 @@ public:
 	void refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
 	                        const PRTContextUPtr& prtCtx, std::string& errors);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
+	bool load(UT_IStream& is, const char* extension, const char* path) override;
 
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
@@ -45,6 +46,7 @@ protected:
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
+	bool mWasJustLoaded = false;
 
 public:
 	using AttributeValueType = std::variant<std::wstring, int, double, bool>;
