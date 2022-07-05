@@ -124,7 +124,7 @@ std::pair<double, double> getAttributeRange(const std::wstring& attributeName, c
 		const auto* attr = info->getAttribute(ai);
 		if (std::wcscmp(attributeName.c_str(), attr->getName()) != 0)
 			continue;
-		
+
 		for (size_t a = 0; a < attr->getNumAnnotations(); a++) {
 			const prt::Annotation* an = attr->getAnnotation(a);
 			const wchar_t* anName = an->getName();
@@ -296,7 +296,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
-		if (parm.isSpareParm()){
+		if (parm.isSpareParm()) {
 			UT_StringHolder attributeName(parm.getLabel());
 			PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
@@ -315,7 +315,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					double floatValue = evalFloat(&parm, 0, time);
-					
+
 					GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
 					floatHandle.set(0, floatValue);
 					break;
@@ -333,8 +333,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 	}
 };
 
-void SOPAssign::refreshAttributeUI(GU_Detail* detail,
-                                   ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
                                    const PRTContextUPtr& prtCtx, std::string& errors) {
 	const auto& pv = shapeData.getPrimitiveMapping(0);
 	const auto& firstPrimitive = pv.front();
@@ -344,8 +343,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail,
 	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
 	if (!resolveMap) {
 		errors.append("Could not read Rule Package '")
-			    .append(ma.mRPK.string())
-			    .append("', aborting default rule attribute evaluation");
+		        .append(ma.mRPK.string())
+		        .append("', aborting default rule attribute evaluation");
 		LOG_ERR << errors;
 		return;
 	}
