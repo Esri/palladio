@@ -34,6 +34,7 @@ public:
 	}
 
 	void updateDefaultAttributes(const ShapeData& shapeData);
+	void updateAttributes(GU_Detail* detail);
 	void refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
 	                        const PRTContextUPtr& prtCtx, std::string& errors);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;

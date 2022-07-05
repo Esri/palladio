@@ -31,6 +31,8 @@
 
 #include <numeric>
 
+#include "CH/CH_Manager.h"
+#include "GEO/GEO_AttributeHandle.h"
 #include "UT/UT_Interrupt.h"
 
 // clang-format off
@@ -289,6 +291,47 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 		}
 	}
 }
+
+void SOPAssign::updateAttributes(GU_Detail* detail) {
+	const fpreal time = CHgetEvalTime();
+
+	int numParms = getNumParms();
+
+	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+		const PRM_Parm& parm = getParm(parmIndex);
+
+		if (parm.isSpareParm()){
+			UT_StringHolder attributeName(parm.getLabel());
+			PRM_Type currParmType = parm.getType();
+			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
+
+			switch (currParmType.getBasicType()) {
+				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					int intValue = evalInt(&parm, 0, time);
+
+					GA_RWHandleI floatHandle(detail->addIntTuple(attrOwner, attributeName, 1));
+					floatHandle.set(0, intValue);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					double floatValue = evalFloat(&parm, 0, time);
+					
+					GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
+					floatHandle.set(0, floatValue);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					UT_String stringValue;
+					evalString(stringValue, &parm, 0, time);
+
+					GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+					stringHandle.set(0, stringValue);
+					break;
+				}
+			}
+		}
+	}
+};
 
 void SOPAssign::refreshAttributeUI(GU_Detail* detail,
                                    ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
