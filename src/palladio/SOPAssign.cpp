@@ -457,4 +457,7 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on name change, we use the node name in various output places
 	if (reason == OP_NAME_CHANGED)
 		forceRecook();
+	// trigger recook on parameter/attribute change
+	if (reason == OP_PARM_CHANGED)
+		forceRecook();
 }
