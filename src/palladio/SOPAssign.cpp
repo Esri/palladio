@@ -291,14 +291,14 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 void SOPAssign::updateAttributes(GU_Detail* detail) {
 	const fpreal time = CHgetEvalTime();
 
-	int numParms = getNumParms();
+	const int numParms = getNumParms();
 
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
 		if (parm.isSpareParm()) {
-			UT_StringHolder attributeName(parm.getLabel());
-			PRM_Type currParmType = parm.getType();
+			const UT_StringHolder attributeName(parm.getLabel());
+			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
 
 			switch (currParmType.getBasicType()) {
@@ -307,14 +307,14 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
 						continue;
 
-					int intValue = evalInt(&parm, 0, time);
+					const int intValue = evalInt(&parm, 0, time);
 
 					GA_RWHandleI floatHandle(detail->addIntTuple(attrOwner, attributeName, 1));
 					floatHandle.set(0, intValue);
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					double floatValue = evalFloat(&parm, 0, time);
+					const double floatValue = evalFloat(&parm, 0, time);
 
 					GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
 					floatHandle.set(0, floatValue);
@@ -340,7 +340,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
 
 	// try to get a resolve map
-	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
+	const ResolveMapSPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
 	if (!resolveMap) {
 		errors.append("Could not read Rule Package '")
 		        .append(ma.mRPK.string())
@@ -349,46 +349,46 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 		return;
 	}
 
-	RuleFileInfoUPtr ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	RuleAttributeSet ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
+	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
 
 	NodeSpareParameter::clearAllParms(this);
 	NodeSpareParameter::addSeparator(this);
 	NodeSpareParameter::addSimpleFolder(this, RULE_ATTRIBUTES_FOLDER_NAME);
 
 	for (const auto& ra : ruleAttributes) {
-		std::wstring attrName = ra.niceName;
+		const std::wstring attrName = ra.niceName;
 
 		folderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
-		auto defaultValIt = mDefaultAttributes.find(ra.fqName);
-		bool foundDefaultValue = (defaultValIt != mDefaultAttributes.end());
+		const auto defaultValIt = mDefaultAttributes.find(ra.fqName);
+		const bool foundDefaultValue = (defaultValIt != mDefaultAttributes.end());
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				bool isDefaultValBool = (defaultValIt->second.which() == 2);
-				bool defaultValue =
+				const bool isDefaultValBool = (defaultValIt->second.which() == 2);
+				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
 				NodeSpareParameter::addBoolParm(this, L"boolParm1", attrName, defaultValue, parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				auto minMax = getAttributeRange(ra.fqName, ruleFileInfo);
+				const auto minMax = getAttributeRange(ra.fqName, ruleFileInfo);
 
-				bool isDefaultValFloat = (defaultValIt->second.which() == 1);
-				double defaultValue = (foundDefaultValue && isDefaultValFloat)
+				const bool isDefaultValFloat = (defaultValIt->second.which() == 1);
+				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                              ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                              : 0.0;
-				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, minMax.first, minMax.second,
-				                                 parentFolders);
+				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, minMax.first,
+				                                 minMax.second, parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				bool isDefaultValString = (defaultValIt->second.which() == 0);
-				std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
+				const bool isDefaultValString = (defaultValIt->second.which() == 0);
+				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
 				                                    ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
 				                                    : L"";
 				NodeSpareParameter::addStringParm(this, L"stringParm1", attrName, defaultValue, parentFolders);

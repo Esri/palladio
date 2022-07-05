@@ -46,7 +46,7 @@ void addMissingFolders(OP_Node* node, const folderVec& parentFolders) {
 	PI_EditScriptedParms nodeParms(node, 1, 0);
 	if (!parentFolders.empty()) {
 		const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
-		int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
+		const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
 		if (folderIdx <= 0) {
 			const folderVec newParentFolders =
 			        (parentFolders.size() > 1) ? folderVec(parentFolders.begin(), parentFolders.end() - 1) : folderVec();
@@ -64,16 +64,16 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 	addMissingFolders(node, parentFolders);
 
 	PI_EditScriptedParms nodeParms(node, 1, 0);
-	PI_EditScriptedParms spareParms(node, spareParmTemplates, 1, 0, 0);
+	const PI_EditScriptedParms spareParms(node, spareParmTemplates, 1, 0, 0);
 
 	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
-	int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
+	const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
 	
 	nodeParms.mergeParms(spareParms);
 
 	if (folderIdx > 0) {
-		int folderEndIdx = nodeParms.getMatchingGroupParm(folderIdx);
-		int myParmIdx = nodeParms.getNParms() - 1;
+		const int folderEndIdx = nodeParms.getMatchingGroupParm(folderIdx);
+		const int myParmIdx = nodeParms.getNParms() - 1;
 		nodeParms.moveParms(myParmIdx, myParmIdx, folderEndIdx - myParmIdx);
 	}
 
@@ -135,8 +135,8 @@ void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name
 	newFolders.push_back(name);
 
 	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(newFolders);
-	UT_StringHolder token(toOSNarrowFromUTF16(uniqueFolderId));
-	UT_StringHolder label(toOSNarrowFromUTF16(name));
+	const UT_StringHolder token(toOSNarrowFromUTF16(uniqueFolderId));
+	const UT_StringHolder label(toOSNarrowFromUTF16(name));
 
 	PRM_Name folderName(token, label);
 	PRM_Default folderList[] = {
