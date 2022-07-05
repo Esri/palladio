@@ -101,16 +101,16 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
                   double max, const folderVec& parentFolders) {
-	PRM_Range range = (!std::_Is_nan(min) && !std::_Is_nan(max))
-	                          ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
+	PRM_Range range =
+	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
 	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, parentFolders);
 }
 
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal, double min, double max,
                 const folderVec& parentFolders) {
-	PRM_Range range = (!std::_Is_nan(min) && !std::_Is_nan(max))
-	                          ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
+	PRM_Range range =
+	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
 	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, parentFolders);
 }
