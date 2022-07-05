@@ -146,6 +146,53 @@ bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
     : SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) {}
 
+void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
+	mDefaultAttributes.clear();
+
+	AttributeMapVector defaultRuleAttributeMaps;
+	for (auto& amb : shapeData.getRuleAttributeMapBuilders()) {
+		defaultRuleAttributeMaps.emplace_back(amb->createAttributeMap());
+	}
+
+	for (size_t isIdx = 0; isIdx < defaultRuleAttributeMaps.size(); isIdx++) {
+		const auto& defaultRuleAttributes = defaultRuleAttributeMaps[isIdx];
+
+		size_t keyCount = 0;
+		const wchar_t* const* cKeys = defaultRuleAttributes->getKeys(&keyCount);
+		for (size_t k = 0; k < keyCount; k++) {
+			const wchar_t* const key = cKeys[k];
+			const auto type = defaultRuleAttributes->getType(key);
+
+			AttributeValueType defVal;
+			switch (type) {
+				case prt::AttributeMap::PT_FLOAT: {
+					defVal = defaultRuleAttributes->getFloat(key);
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL: {
+					defVal = defaultRuleAttributes->getBool(key);
+					break;
+				}
+				case prt::AttributeMap::PT_INT: {
+					defVal = defaultRuleAttributes->getInt(key);
+					break;
+				}
+				case prt::AttributeMap::PT_STRING: {
+					const wchar_t* v = defaultRuleAttributes->getString(key);
+					assert(v != nullptr);
+					defVal = std::wstring(v);
+					assert(defVal.index() == 0); // std::wstring is type index 0
+					break;
+				}
+				default:
+					break;
+			}
+			if (!defVal.valueless_by_exception())
+				mDefaultAttributes.emplace(key, defVal);
+		}
+	}
+}
+
 OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 	WA_NEW_LAP
 	WA("all");

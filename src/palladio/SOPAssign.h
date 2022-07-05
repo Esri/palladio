@@ -33,6 +33,7 @@ public:
 		return mShapeConverter->mDefaultMainAttributes.mRPK;
 	}
 
+	void updateDefaultAttributes(const ShapeData& shapeData);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 
 protected:
@@ -41,4 +42,9 @@ protected:
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
+
+public:
+	using AttributeValueType = std::variant<std::wstring, int, double, bool>;
+	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
+	AttributeValueMap mDefaultAttributes;
 };
