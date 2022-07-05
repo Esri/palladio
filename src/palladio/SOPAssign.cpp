@@ -303,6 +303,10 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					// only support booleans, i.e. don't store folders
+					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+						continue;
+
 					int intValue = evalInt(&parm, 0, time);
 
 					GA_RWHandleI floatHandle(detail->addIntTuple(attrOwner, attributeName, 1));
