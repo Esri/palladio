@@ -19,6 +19,8 @@
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
+#include <variant>
+
 #include "SOP/SOP_Node.h"
 
 class SOPAssign : public SOP_Node {
