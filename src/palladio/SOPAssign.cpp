@@ -272,10 +272,6 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 					defVal = defaultRuleAttributes->getBool(key);
 					break;
 				}
-				case prt::AttributeMap::PT_INT: {
-					defVal = defaultRuleAttributes->getInt(key);
-					break;
-				}
 				case prt::AttributeMap::PT_STRING: {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
@@ -370,24 +366,16 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail,
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				bool isDefaultValBool = (defaultValIt->second.index() == 3);
+				bool isDefaultValBool = (defaultValIt->second.index() == 2);
 				bool defaultValue =
 					    (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
 				NodeSpareParameter::addBoolParm(this, L"boolParm1", attrName, defaultValue, parentFolders);
 				break;
 			}
-			case prt::AnnotationArgumentType::AAT_INT: {
-				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
-
-				bool isDefaultValInt = (defaultValIt->second.index() == 1);
-				int defaultValue = (foundDefaultValue && isDefaultValInt) ? std::get<int>(defaultValIt->second) : 0;
-				NodeSpareParameter::addIntParm(this, L"intParm1", attrName, defaultValue, min, max, parentFolders);
-				break;
-			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
 
-				bool isDefaultValFloat = (defaultValIt->second.index() == 2);
+				bool isDefaultValFloat = (defaultValIt->second.index() == 1);
 				double defaultValue =
 					    (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
 				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, min, max, parentFolders);

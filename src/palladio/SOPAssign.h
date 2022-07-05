@@ -49,7 +49,7 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using AttributeValueType = std::variant<std::wstring, int, double, bool>;
+	using AttributeValueType = std::variant<std::wstring, double, bool>;
 	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
 	AttributeValueMap mDefaultAttributes;
 };
