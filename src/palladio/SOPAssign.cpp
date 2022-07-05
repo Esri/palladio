@@ -437,11 +437,18 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
+		auto oldAttributes = mDefaultAttributes;
+		updateDefaultAttributes(shapeData);
+		if ((oldAttributes != mDefaultAttributes) && !mWasJustLoaded)
+			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		updateAttributes(gdp);
+
 		mShapeConverter->put(gdp, primCls, shapeData);
 	}
 
 	unlockInputs();
 
+	mWasJustLoaded = false;
 	return error();
 }
 
