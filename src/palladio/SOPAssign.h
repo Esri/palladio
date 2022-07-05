@@ -19,7 +19,7 @@
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
-#include <variant>
+#include PLD_BOOST_INCLUDE(/variant.hpp)
 
 #include "SOP/SOP_Node.h"
 
@@ -51,7 +51,7 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using AttributeValueType = std::variant<std::wstring, double, bool>;
+	using AttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
 	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
 	AttributeValueMap mDefaultAttributes;
 };

@@ -276,13 +276,13 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
 					defVal = std::wstring(v);
-					assert(defVal.index() == 0); // std::wstring is type index 0
+					assert(defVal.which() == 0); // std::wstring is type index 0
 					break;
 				}
 				default:
 					break;
 			}
-			if (!defVal.valueless_by_exception())
+			if (!defVal.empty())
 				mDefaultAttributes.emplace(key, defVal);
 		}
 	}
@@ -370,26 +370,27 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail,
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				bool isDefaultValBool = (defaultValIt->second.index() == 2);
+				bool isDefaultValBool = (defaultValIt->second.which() == 2);
 				bool defaultValue =
-					    (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
+				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
 				NodeSpareParameter::addBoolParm(this, L"boolParm1", attrName, defaultValue, parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				auto [min, max] = getAttributeRange(ra.fqName, ruleFileInfo);
 
-				bool isDefaultValFloat = (defaultValIt->second.index() == 1);
-				double defaultValue =
-					    (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
+				bool isDefaultValFloat = (defaultValIt->second.which() == 1);
+				double defaultValue = (foundDefaultValue && isDefaultValFloat)
+				                              ? PLD_BOOST_NS::get<double>(defaultValIt->second)
+				                              : 0.0;
 				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, min, max, parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				bool isDefaultValString = (defaultValIt->second.index() == 0);
+				bool isDefaultValString = (defaultValIt->second.which() == 0);
 				std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-					                                ? std::get<std::wstring>(defaultValIt->second)
-					                                : L"";
+				                                    ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
+				                                    : L"";
 				NodeSpareParameter::addStringParm(this, L"stringParm1", attrName, defaultValue, parentFolders);
 				break;
 			}
