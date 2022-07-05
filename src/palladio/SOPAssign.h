@@ -19,6 +19,7 @@
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
+#include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/variant.hpp)
 
 #include "SOP/SOP_Node.h"

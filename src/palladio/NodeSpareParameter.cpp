@@ -21,7 +21,8 @@
 #include "PI/PI_EditScriptedParms.h"
 #include "SOPAssign.h"
 
-#include PLD_BOOST_INCLUDE(/container_hash/hash.hpp)
+#include "BoostRedirect.h"
+#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
 
 namespace {
 const std::wstring parameterPrefix = L"_palladioAttribute_";
