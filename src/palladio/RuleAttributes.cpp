@@ -20,9 +20,10 @@
 #include "prt/Annotation.h"
 #include "prt/RuleFileInfo.h"
 
+#include PLD_BOOST_INCLUDE(/filesystem.hpp)
+
 #include <algorithm>
 #include <cassert>
-#include <filesystem>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -81,7 +82,7 @@ void setGlobalGroupOrder(RuleAttributeVec& ruleAttributes) {
 RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::RuleFileInfo* ruleFileInfo) {
 	RuleAttributeVec ra;
 
-	std::wstring mainCgaRuleName = std::filesystem::path(ruleFile).stem().wstring();
+	std::wstring mainCgaRuleName = PLD_BOOST_NS::filesystem::path(ruleFile).stem().wstring();
 
 	const std::map<std::wstring, int> importOrderMap = getImportOrderMap(ruleFileInfo);
 
