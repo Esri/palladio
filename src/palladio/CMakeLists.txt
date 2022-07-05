@@ -19,6 +19,7 @@ add_library(${PROJECT_NAME} SHARED
 		NodeSpareParameter.cpp
 		PRTContext.cpp
 		ResolveMapCache.cpp
+		RuleAttributes.cpp
 		SOPAssign.cpp
 		SOPGenerate.cpp
 		PrimitivePartition.cpp
