@@ -134,6 +134,7 @@ private:
 namespace NameConversion {
 
 std::wstring addStyle(const std::wstring& n, const std::wstring& style);
+std::wstring removeGroups(const std::wstring& n);
 std::wstring removeStyle(const std::wstring& n);
 PLD_TEST_EXPORTS_API void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name);
 

@@ -508,6 +508,7 @@ constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N =
         sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR) / sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR[0]);
 
 constexpr wchar_t STYLE_SEPARATOR = L'$';
+constexpr wchar_t GROUP_SEPARATOR = L'.';
 
 } // namespace
 
@@ -519,6 +520,13 @@ std::wstring addStyle(const std::wstring& n, const std::wstring& style) {
 
 std::wstring removeStyle(const std::wstring& n) {
 	const auto p = n.find_first_of(STYLE_SEPARATOR);
+	if (p != std::string::npos)
+		return n.substr(p + 1);
+	return n;
+}
+
+std::wstring removeGroups(const std::wstring& n) {
+	const auto p = n.rfind(GROUP_SEPARATOR);
 	if (p != std::string::npos)
 		return n.substr(p + 1);
 	return n;
