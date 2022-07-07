@@ -27,8 +27,6 @@
 namespace {
 const std::wstring parameterPrefix = L"_palladioAttribute_";
 
-static PRM_Range freeRange = PRM_Range(PRM_RANGE_FREE, 0, PRM_RANGE_FREE);
-
 std::wstring getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	std::hash<std::wstring> stringHasher;
 	size_t folderHash = 0;
