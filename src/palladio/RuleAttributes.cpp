@@ -31,14 +31,16 @@
 
 namespace {
 
+using ImportOrderMap = std::map<std::wstring, size_t>;
+
 std::wstring getNiceName(const std::wstring& fqAttrName) {
 	return NameConversion::removeGroups(NameConversion::removeStyle(fqAttrName));
 }
 
 } // namespace
 
-std::map<std::wstring, int> getImportOrderMap(const prt::RuleFileInfo* ruleFileInfo) {
-	std::map<std::wstring, int> importOrderMap;
+ImportOrderMap getImportOrderMap(const prt::RuleFileInfo* ruleFileInfo) {
+	ImportOrderMap importOrderMap;
 	int importOrder = 0;
 	for (size_t i = 0; i < ruleFileInfo->getNumAnnotations(); i++) {
 		const prt::Annotation* an = ruleFileInfo->getAnnotation(i);
@@ -84,7 +86,7 @@ RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::Rule
 
 	std::wstring mainCgaRuleName = PLD_BOOST_NS::filesystem::path(ruleFile).stem().wstring();
 
-	const std::map<std::wstring, int> importOrderMap = getImportOrderMap(ruleFileInfo);
+	const ImportOrderMap importOrderMap = getImportOrderMap(ruleFileInfo);
 
 	std::map<std::wstring, int> nameDuplicateCountMap;
 
