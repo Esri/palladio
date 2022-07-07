@@ -309,7 +309,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 					const int intValue = evalInt(&parm, 0, time);
 
-					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1));
+					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
 					ordinalHandle.set(0, intValue);
 					break;
 				}
