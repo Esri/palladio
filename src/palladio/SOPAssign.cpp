@@ -296,7 +296,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
-		if (parm.isSpareParm()) {
+		if (parm.isSpareParm() && !parm.isDefault()) {
 			const UT_StringHolder attributeName(parm.getLabel());
 			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
