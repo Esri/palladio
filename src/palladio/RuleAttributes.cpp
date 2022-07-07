@@ -64,13 +64,15 @@ ImportOrderMap getImportOrderMap(const prt::RuleFileInfo* ruleFileInfo) {
 	return importOrderMap;
 }
 
+// maps the highest attribute order from all attributes within a group to its group string key
 void setGlobalGroupOrder(RuleAttributeVec& ruleAttributes) {
 	AttributeGroupOrder globalGroupOrder;
 	for (const auto& attribute : ruleAttributes) {
+		// go over all parent group vector and assign the group order
 		for (auto it = std::rbegin(attribute.groups); it != std::rend(attribute.groups); ++it) {
-			std::vector<std::wstring> g(it, std::rend(attribute.groups));
-			std::reverse(g.begin(), g.end());
-			auto ggoIt = globalGroupOrder.emplace(std::make_pair(attribute.ruleFile, g), ORDER_NONE).first;
+			std::vector<std::wstring> groupVec(it, std::rend(attribute.groups));
+			std::reverse(groupVec.begin(), groupVec.end());
+			auto ggoIt = globalGroupOrder.emplace(std::make_pair(attribute.ruleFile, groupVec), ORDER_NONE).first;
 			ggoIt->second = std::min(attribute.groupOrder, ggoIt->second);
 		}
 	}
