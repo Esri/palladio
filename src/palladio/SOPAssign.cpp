@@ -297,7 +297,7 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
 		if (parm.isSpareParm() && !parm.isDefault()) {
-			const UT_StringHolder attributeName(parm.getLabel());
+			const UT_StringHolder attributeName(parm.getToken());
 			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
 
@@ -358,6 +358,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 
 	for (const auto& ra : ruleAttributes) {
 		const std::wstring attrName = ra.niceName;
+		const std::wstring attrId = toUTF16FromOSNarrow(NameConversion::toPrimAttr(ra.fqName).toStdString());
 
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
@@ -372,7 +373,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const bool isDefaultValBool = (defaultValIt->second.which() == 2);
 				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
-				NodeSpareParameter::addBoolParm(this, L"boolParm1", attrName, defaultValue, parentFolders);
+				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
@@ -382,7 +383,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                                    : 0.0;
-				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, minMax.first,
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
 				                                 minMax.second, parentFolders);
 				break;
 			}
@@ -391,7 +392,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
 				                                          ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
 				                                          : L"";
-				NodeSpareParameter::addStringParm(this, L"stringParm1", attrName, defaultValue, parentFolders);
+				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders);
 				break;
 			}
 			default:
