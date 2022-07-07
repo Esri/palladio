@@ -34,11 +34,12 @@ void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal,
                 double min = std::numeric_limits<double>::quiet_NaN(),
                 double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
-void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const FolderVec& parentFolders = {});
-void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal, const FolderVec& parentFolders = {});
+void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
+                 const FolderVec& parentFolders = {});
+void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
+                   const FolderVec& parentFolders = {});
 void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});
-void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name,
-               const FolderVec& parentFolders = {});
+void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name, const FolderVec& parentFolders = {});
 void addSimpleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});
 void addCollapsibleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});
 } // namespace NodeSpareParameter

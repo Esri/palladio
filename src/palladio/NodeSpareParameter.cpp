@@ -16,9 +16,9 @@
 
 #include "NodeSpareParameter.h"
 
-#include "PRM/PRM_SpareData.h"
 #include "OP/OP_Director.h"
 #include "PI/PI_EditScriptedParms.h"
+#include "PRM/PRM_SpareData.h"
 #include "SOPAssign.h"
 
 #include "BoostRedirect.h"
@@ -30,13 +30,13 @@ const std::wstring parameterPrefix = L"_palladioAttribute_";
 std::wstring getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	std::hash<std::wstring> stringHasher;
 	size_t folderHash = 0;
-	
+
 	for (const std::wstring& group : parentFolders) {
 		PLD_BOOST_NS::hash_combine(folderHash, group);
 	}
 	return parameterPrefix + std::to_wstring(folderHash);
 }
-}
+} // namespace
 
 namespace NodeSpareParameter {
 
@@ -46,8 +46,9 @@ void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 		const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
 		const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
 		if (folderIdx <= 0) {
-			const FolderVec newParentFolders =
-			        (parentFolders.size() > 1) ? FolderVec(parentFolders.begin(), parentFolders.end() - 1) : FolderVec();
+			const FolderVec newParentFolders = (parentFolders.size() > 1)
+			                                           ? FolderVec(parentFolders.begin(), parentFolders.end() - 1)
+			                                           : FolderVec();
 			addMissingFolders(node, newParentFolders);
 
 			addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
@@ -66,7 +67,7 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 
 	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
 	const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
-	
+
 	nodeParms.mergeParms(spareParms);
 
 	if (folderIdx > 0) {
@@ -78,21 +79,14 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 	director->changeNodeSpareParms(node, nodeParms, errors);
 }
 
-void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name,
-             PRM_Default defaultVal, PRM_Range* range, const FolderVec& parentFolders) {
+void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
+             PRM_Range* range, const FolderVec& parentFolders) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
 	PRM_Name stringParmName(token, label);
-	PRM_Template templateArr[] = {
-		PRM_Template(parmType, 
-		             1, 
-					 &stringParmName, 
-					 &defaultVal,
-					 nullptr,
-					 range),
-		PRM_Template()
-	};
+	PRM_Template templateArr[] = {PRM_Template(parmType, 1, &stringParmName, &defaultVal, nullptr, range),
+	                              PRM_Template()};
 
 	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
@@ -113,7 +107,8 @@ void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
 	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, parentFolders);
 }
 
-void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const FolderVec& parentFolders) {
+void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
+                 const FolderVec& parentFolders) {
 	addParm(node, PRM_TOGGLE, id, name, PRM_Default(defaultVal), nullptr, parentFolders);
 }
 
@@ -127,8 +122,7 @@ void addSeparator(OP_Node* node, const FolderVec& parentFolders) {
 	addParm(node, PRM_SEPARATOR, L"separator", L"separator", PRM_Default(), nullptr, parentFolders);
 }
 
-void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name,
-               const FolderVec& parentFolders) {
+void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name, const FolderVec& parentFolders) {
 	FolderVec newFolders = parentFolders;
 	newFolders.push_back(name);
 
@@ -170,4 +164,4 @@ void clearAllParms(OP_Node* node) {
 	director->changeNodeSpareParms(node, emptyParms, errors);
 }
 
-}
+} // namespace NodeSpareParameter

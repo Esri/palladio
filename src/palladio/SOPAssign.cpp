@@ -380,8 +380,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 
 				const bool isDefaultValFloat = (defaultValIt->second.which() == 1);
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
-				                              ? PLD_BOOST_NS::get<double>(defaultValIt->second)
-				                              : 0.0;
+				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
+				                                    : 0.0;
 				NodeSpareParameter::addFloatParm(this, L"floatParm1", attrName, defaultValue, minMax.first,
 				                                 minMax.second, parentFolders);
 				break;
@@ -389,8 +389,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 			case prt::AnnotationArgumentType::AAT_STR: {
 				const bool isDefaultValString = (defaultValIt->second.which() == 0);
 				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-				                                    ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
-				                                    : L"";
+				                                          ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
+				                                          : L"";
 				NodeSpareParameter::addStringParm(this, L"stringParm1", attrName, defaultValue, parentFolders);
 				break;
 			}
