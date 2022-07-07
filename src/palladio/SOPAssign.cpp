@@ -309,8 +309,8 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 					const int intValue = evalInt(&parm, 0, time);
 
-					GA_RWHandleI floatHandle(detail->addIntTuple(attrOwner, attributeName, 1));
-					floatHandle.set(0, intValue);
+					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1));
+					ordinalHandle.set(0, intValue);
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
