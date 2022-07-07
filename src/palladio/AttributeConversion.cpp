@@ -27,6 +27,8 @@
 #include <mutex>
 #include <bitset>
 
+#include "UT/UT_VarEncode.h"
+
 namespace {
 
 constexpr bool DBG = false;
@@ -503,10 +505,6 @@ void ToHoudini::HandleVisitor::operator()(GA_RWHandleSA& handle) const {
 
 namespace {
 
-constexpr const char* RULE_ATTR_NAME_TO_PRIM_ATTR[][2] = {{".", "__"}};
-constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N =
-        sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR) / sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR[0]);
-
 constexpr wchar_t STYLE_SEPARATOR = L'$';
 constexpr wchar_t GROUP_SEPARATOR = L'.';
 
@@ -540,11 +538,11 @@ UT_String toPrimAttr(const std::wstring& fullyQuantifiedAttrName) {
 		return cv.get();
 
 	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQuantifiedAttrName));
-	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
 
 	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
 	StringConversionCaches::toPrimAttr.insert(fullyQuantifiedAttrName, primAttr);
+
+	primAttr = UT_VarEncode::encodeAttrib(primAttr);
 	return primAttr;
 }
 
@@ -552,9 +550,11 @@ std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& attrNa
 	WA("all");
 
 	std::string s = attrName.toStdString();
-	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
-	return addStyle(toUTF16FromOSNarrow(s), style);
+
+	UT_StringHolder ruleAttr(s);
+	ruleAttr = UT_VarEncode::decodeAttrib(ruleAttr);
+
+	return addStyle(toUTF16FromOSNarrow(ruleAttr.toStdString()), style);
 }
 
 void separate(const std::wstring& fullyQuantifiedAttrName, std::wstring& style, std::wstring& attrName) {
