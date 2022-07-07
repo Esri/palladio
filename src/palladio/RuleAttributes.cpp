@@ -103,7 +103,6 @@ RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::Rule
 		p.niceName = getNiceName(p.fqName);
 		p.mType = attr->getReturnType();
 
-		// TODO: is this correct? import name != rule file name
 		std::wstring ruleName = p.fqName;
 		size_t idxStyle = ruleName.find(L'$');
 		if (idxStyle != std::wstring::npos)
