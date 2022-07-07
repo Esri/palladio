@@ -458,7 +458,22 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on name change, we use the node name in various output places
 	if (reason == OP_NAME_CHANGED)
 		forceRecook();
+
 	// trigger recook on parameter/attribute change
-	if (reason == OP_PARM_CHANGED)
-		forceRecook();
+	if (reason == OP_PARM_CHANGED) {
+		// parm index is directly stored in the void*, casting to size_t to avoid compiler warnings
+		const PRM_Parm& parm = getParm((size_t)data);
+
+		if (parm.isSpareParm()) {
+			const PRM_Type currParmType = parm.getType();
+
+			const bool isBoolParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
+			                        (currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE);
+			const bool isFloatParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT);
+			const bool isStringParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_STRING);
+
+			if (isBoolParm || isFloatParm || isStringParm)
+				forceRecook();
+		}
+	}
 }
