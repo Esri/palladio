@@ -29,7 +29,7 @@ const std::wstring parameterPrefix = L"_palladioAttribute_";
 
 static PRM_Range freeRange = PRM_Range(PRM_RANGE_FREE, 0, PRM_RANGE_FREE);
 
-std::wstring getUniqueIdFromFolderVec(const folderVec& parentFolders) {
+std::wstring getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	std::hash<std::wstring> stringHasher;
 	size_t folderHash = 0;
 	
@@ -42,14 +42,14 @@ std::wstring getUniqueIdFromFolderVec(const folderVec& parentFolders) {
 
 namespace NodeSpareParameter {
 
-void addMissingFolders(OP_Node* node, const folderVec& parentFolders) {
+void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 	PI_EditScriptedParms nodeParms(node, 1, 0);
 	if (!parentFolders.empty()) {
 		const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
 		const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
 		if (folderIdx <= 0) {
-			const folderVec newParentFolders =
-			        (parentFolders.size() > 1) ? folderVec(parentFolders.begin(), parentFolders.end() - 1) : folderVec();
+			const FolderVec newParentFolders =
+			        (parentFolders.size() > 1) ? FolderVec(parentFolders.begin(), parentFolders.end() - 1) : FolderVec();
 			addMissingFolders(node, newParentFolders);
 
 			addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
@@ -57,7 +57,7 @@ void addMissingFolders(OP_Node* node, const folderVec& parentFolders) {
 	}
 }
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const folderVec& parentFolders) {
+void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders) {
 	UT_String errors;
 	OP_Director* director = OPgetDirector();
 
@@ -81,7 +81,7 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 }
 
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name,
-             PRM_Default defaultVal, PRM_Range* range, const folderVec& parentFolders) {
+             PRM_Default defaultVal, PRM_Range* range, const FolderVec& parentFolders) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
@@ -100,7 +100,7 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 }
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
-                  double max, const folderVec& parentFolders) {
+                  double max, const FolderVec& parentFolders) {
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
@@ -108,30 +108,30 @@ void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 }
 
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal, double min, double max,
-                const folderVec& parentFolders) {
+                const FolderVec& parentFolders) {
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
 	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, parentFolders);
 }
 
-void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const folderVec& parentFolders) {
+void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const FolderVec& parentFolders) {
 	addParm(node, PRM_TOGGLE, id, name, PRM_Default(defaultVal), nullptr, parentFolders);
 }
 
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                   const folderVec& parentFolders) {
+                   const FolderVec& parentFolders) {
 	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
 	        parentFolders);
 }
 
-void addSeparator(OP_Node* node, const folderVec& parentFolders) {
+void addSeparator(OP_Node* node, const FolderVec& parentFolders) {
 	addParm(node, PRM_SEPARATOR, L"separator", L"separator", PRM_Default(), nullptr, parentFolders);
 }
 
 void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name,
-               const folderVec& parentFolders) {
-	folderVec newFolders = parentFolders;
+               const FolderVec& parentFolders) {
+	FolderVec newFolders = parentFolders;
 	newFolders.push_back(name);
 
 	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(newFolders);
@@ -156,11 +156,11 @@ void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name
 	addParmsFromTemplateArray(node, templateList, parentFolders);
 }
 
-void addSimpleFolder(OP_Node* node, const std::wstring& name, const folderVec& parentFolders) {
+void addSimpleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders) {
 	addFolder(node, &PRM_SpareData::groupTypeSimple, name, parentFolders);
 }
 
-void addCollapsibleFolder(OP_Node* node, const std::wstring& name, const folderVec& parentFolders) {
+void addCollapsibleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders) {
 	addFolder(node, &PRM_SpareData::groupTypeCollapsible, name, parentFolders);
 }
 

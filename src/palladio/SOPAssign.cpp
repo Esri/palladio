@@ -359,7 +359,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 	for (const auto& ra : ruleAttributes) {
 		const std::wstring attrName = ra.niceName;
 
-		folderVec parentFolders;
+		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());

@@ -20,25 +20,25 @@
 
 #include "PRM/PRM_Range.h"
 
-using folderVec = std::vector<std::wstring>;
+using FolderVec = std::vector<std::wstring>;
 
 namespace NodeSpareParameter {
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const folderVec& parentFolders = {});
+void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {});
 void clearAllParms(OP_Node* node);
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range = nullptr, const folderVec& parentFolder = {});
+             PRM_Range* range = nullptr, const FolderVec& parentFolder = {});
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
-                  double max = std::numeric_limits<double>::quiet_NaN(), const folderVec& parentFolders = {});
+                  double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal,
                 double min = std::numeric_limits<double>::quiet_NaN(),
-                double max = std::numeric_limits<double>::quiet_NaN(), const folderVec& parentFolders = {});
-void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const folderVec& parentFolders = {});
-void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal, const folderVec& parentFolders = {});
-void addSeparator(OP_Node* node, const folderVec& parentFolders = {});
+                double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
+void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal, const FolderVec& parentFolders = {});
+void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal, const FolderVec& parentFolders = {});
+void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});
 void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name,
-               const folderVec& parentFolders = {});
-void addSimpleFolder(OP_Node* node, const std::wstring& name, const folderVec& parentFolders = {});
-void addCollapsibleFolder(OP_Node* node, const std::wstring& name, const folderVec& parentFolders = {});
+               const FolderVec& parentFolders = {});
+void addSimpleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});
+void addCollapsibleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});
 } // namespace NodeSpareParameter
