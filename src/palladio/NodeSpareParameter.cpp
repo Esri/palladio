@@ -15,26 +15,33 @@
  */
 
 #include "NodeSpareParameter.h"
+#include "SOPAssign.h"
 
 #include "OP/OP_Director.h"
 #include "PI/PI_EditScriptedParms.h"
 #include "PRM/PRM_SpareData.h"
-#include "SOPAssign.h"
+#include "UT/UT_VarEncode.h"
 
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/functional/hash.hpp)
 
 namespace {
-const std::wstring parameterPrefix = L"_palladioAttribute_";
+constexpr wchar_t GROUP_SEPARATOR = L'.';
 
-std::wstring getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
-	std::hash<std::wstring> stringHasher;
-	size_t folderHash = 0;
+std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
+	std::wstring folderString;
 
 	for (const std::wstring& group : parentFolders) {
-		PLD_BOOST_NS::hash_combine(folderHash, group);
+		if (folderString.empty())
+			folderString += group;
+		else
+			folderString += GROUP_SEPARATOR + group;
 	}
-	return parameterPrefix + std::to_wstring(folderHash);
+
+	UT_StringHolder primAttr(toOSNarrowFromUTF16(folderString).c_str());
+	primAttr = UT_VarEncode::encodeAttrib(primAttr);
+
+	return primAttr.toStdString();
 }
 } // namespace
 
@@ -43,8 +50,8 @@ namespace NodeSpareParameter {
 void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 	PI_EditScriptedParms nodeParms(node, 1, 0);
 	if (!parentFolders.empty()) {
-		const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
-		const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
+		const std::string uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
+		const int folderIdx = nodeParms.getFolderIndexWithName(uniqueFolderId);
 		if (folderIdx <= 0) {
 			const FolderVec newParentFolders = (parentFolders.size() > 1)
 			                                           ? FolderVec(parentFolders.begin(), parentFolders.end() - 1)
@@ -65,8 +72,8 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 	PI_EditScriptedParms nodeParms(node, 1, 0);
 	const PI_EditScriptedParms spareParms(node, spareParmTemplates, 1, 0, 0);
 
-	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
-	const int folderIdx = nodeParms.getFolderIndexWithName(toOSNarrowFromUTF16(uniqueFolderId));
+	const std::string uniqueFolderId = getUniqueIdFromFolderVec(parentFolders);
+	const int folderIdx = nodeParms.getFolderIndexWithName(uniqueFolderId);
 
 	nodeParms.mergeParms(spareParms);
 
@@ -126,8 +133,8 @@ void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name
 	FolderVec newFolders = parentFolders;
 	newFolders.push_back(name);
 
-	const std::wstring uniqueFolderId = getUniqueIdFromFolderVec(newFolders);
-	const UT_StringHolder token(toOSNarrowFromUTF16(uniqueFolderId));
+	const std::string uniqueFolderId = getUniqueIdFromFolderVec(newFolders);
+	const UT_StringHolder token(uniqueFolderId);
 	const UT_StringHolder label(toOSNarrowFromUTF16(name));
 
 	PRM_Name folderName(token, label);
