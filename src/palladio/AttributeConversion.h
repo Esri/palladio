@@ -133,6 +133,9 @@ private:
 
 namespace NameConversion {
 
+constexpr wchar_t STYLE_SEPARATOR = L'$';
+constexpr wchar_t GROUP_SEPARATOR = L'.';
+
 std::wstring addStyle(const std::wstring& attrName, const std::wstring& style);
 std::wstring removeGroups(const std::wstring & fullyQuantifiedAttrName);
 std::wstring removeStyle(const std::wstring& fullyQuantifiedAttrName);

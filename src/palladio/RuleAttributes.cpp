@@ -104,10 +104,10 @@ RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::Rule
 		p.mType = attr->getReturnType();
 
 		std::wstring ruleName = p.fqName;
-		size_t idxStyle = ruleName.find(L'$');
+		size_t idxStyle = ruleName.find(NameConversion::STYLE_SEPARATOR);
 		if (idxStyle != std::wstring::npos)
 			ruleName = ruleName.substr(idxStyle + 1);
-		size_t idxDot = ruleName.find_last_of(L'.');
+		size_t idxDot = ruleName.find_last_of(NameConversion::GROUP_SEPARATOR);
 		if (idxDot != std::wstring::npos) {
 			p.ruleFile = ruleName.substr(0, idxDot);
 		}

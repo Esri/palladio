@@ -503,13 +503,6 @@ void ToHoudini::HandleVisitor::operator()(GA_RWHandleSA& handle) const {
 
 } // namespace AttributeConversion
 
-namespace {
-
-constexpr wchar_t STYLE_SEPARATOR = L'$';
-constexpr wchar_t GROUP_SEPARATOR = L'.';
-
-} // namespace
-
 namespace NameConversion {
 
 std::wstring addStyle(const std::wstring& attrName, const std::wstring& style) {
