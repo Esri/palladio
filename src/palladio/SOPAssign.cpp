@@ -328,6 +328,10 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 					stringHandle.set(0, stringValue);
 					break;
 				}
+				default: {
+					// ignore all other types of parameters
+					break;
+				}
 			}
 		}
 	}
