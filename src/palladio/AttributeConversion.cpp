@@ -509,31 +509,31 @@ std::wstring addStyle(const std::wstring& attrName, const std::wstring& style) {
 	return style + STYLE_SEPARATOR + attrName;
 }
 
-std::wstring removeStyle(const std::wstring& fullyQuantifiedAttrName) {
-	const auto p = fullyQuantifiedAttrName.find_first_of(STYLE_SEPARATOR);
+std::wstring removeStyle(const std::wstring& fullyQualifiedAttrName) {
+	const auto p = fullyQualifiedAttrName.find_first_of(STYLE_SEPARATOR);
 	if (p != std::string::npos)
-		return fullyQuantifiedAttrName.substr(p + 1);
-	return fullyQuantifiedAttrName;
+		return fullyQualifiedAttrName.substr(p + 1);
+	return fullyQualifiedAttrName;
 }
 
-std::wstring removeGroups(const std::wstring & fullyQuantifiedAttrName) {
-	const auto p = fullyQuantifiedAttrName.rfind(GROUP_SEPARATOR);
+std::wstring removeGroups(const std::wstring & fullyQualifiedAttrName) {
+	const auto p = fullyQualifiedAttrName.rfind(GROUP_SEPARATOR);
 	if (p != std::string::npos)
-		return fullyQuantifiedAttrName.substr(p + 1);
-	return fullyQuantifiedAttrName;
+		return fullyQualifiedAttrName.substr(p + 1);
+	return fullyQualifiedAttrName;
 }
 
-UT_String toPrimAttr(const std::wstring& fullyQuantifiedAttrName) {
+UT_String toPrimAttr(const std::wstring& fullyQualifiedAttrName) {
 	WA("all");
 
-	const auto cv = StringConversionCaches::toPrimAttr.get(fullyQuantifiedAttrName);
+	const auto cv = StringConversionCaches::toPrimAttr.get(fullyQualifiedAttrName);
 	if (cv)
 		return cv.get();
 
-	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQuantifiedAttrName));
+	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQualifiedAttrName));
 
 	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
-	StringConversionCaches::toPrimAttr.insert(fullyQuantifiedAttrName, primAttr);
+	StringConversionCaches::toPrimAttr.insert(fullyQualifiedAttrName, primAttr);
 
 	primAttr = UT_VarEncode::encodeAttrib(primAttr);
 	return primAttr;
@@ -550,23 +550,23 @@ std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& attrNa
 	return addStyle(toUTF16FromOSNarrow(ruleAttr.toStdString()), style);
 }
 
-void separate(const std::wstring& fullyQuantifiedAttrName, std::wstring& style, std::wstring& attrName) {
-	if (fullyQuantifiedAttrName.length() <= 1)
+void separate(const std::wstring& fullyQualifiedAttrName, std::wstring& style, std::wstring& attrName) {
+	if (fullyQualifiedAttrName.length() <= 1)
 		return;
 
-	const auto p = fullyQuantifiedAttrName.find_first_of(STYLE_SEPARATOR);
+	const auto p = fullyQualifiedAttrName.find_first_of(STYLE_SEPARATOR);
 	if (p == std::wstring::npos) {
-		attrName.assign(fullyQuantifiedAttrName);
+		attrName.assign(fullyQualifiedAttrName);
 	}
-	else if (p > 0 && p < fullyQuantifiedAttrName.length() - 1) {
-		style.assign(fullyQuantifiedAttrName.substr(0, p));
-		attrName.assign(fullyQuantifiedAttrName.substr(p + 1));
+	else if (p > 0 && p < fullyQualifiedAttrName.length() - 1) {
+		style.assign(fullyQualifiedAttrName.substr(0, p));
+		attrName.assign(fullyQualifiedAttrName.substr(p + 1));
 	}
 	else if (p == 0) { // empty style
-		attrName = fullyQuantifiedAttrName.substr(1);
+		attrName = fullyQualifiedAttrName.substr(1);
 	}
-	else if (p == fullyQuantifiedAttrName.length() - 1) { // empty name
-		style = fullyQuantifiedAttrName.substr(0, p);
+	else if (p == fullyQualifiedAttrName.length() - 1) { // empty name
+		style = fullyQualifiedAttrName.substr(0, p);
 	}
 }
 
