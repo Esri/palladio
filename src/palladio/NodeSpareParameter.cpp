@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "AttributeConversion.h"
 #include "NodeSpareParameter.h"
 #include "SOPAssign.h"
 
@@ -26,8 +27,6 @@
 #include PLD_BOOST_INCLUDE(/functional/hash.hpp)
 
 namespace {
-constexpr wchar_t GROUP_SEPARATOR = L'.';
-
 std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	std::wstring folderString;
 
@@ -35,7 +34,7 @@ std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 		if (folderString.empty())
 			folderString += group;
 		else
-			folderString += GROUP_SEPARATOR + group;
+			folderString += NameConversion::GROUP_SEPARATOR + group;
 	}
 
 	UT_StringHolder primAttr(toOSNarrowFromUTF16(folderString).c_str());
