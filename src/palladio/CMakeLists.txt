@@ -16,8 +16,10 @@ add_library(${PROJECT_NAME} SHARED
 		ShapeData.cpp
 		ShapeGenerator.cpp
 		NodeParameter.cpp
+		NodeSpareParameter.cpp
 		PRTContext.cpp
 		ResolveMapCache.cpp
+		RuleAttributes.cpp
 		SOPAssign.cpp
 		SOPGenerate.cpp
 		PrimitivePartition.cpp

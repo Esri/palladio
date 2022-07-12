@@ -133,11 +133,16 @@ private:
 
 namespace NameConversion {
 
-std::wstring addStyle(const std::wstring& n, const std::wstring& style);
-std::wstring removeStyle(const std::wstring& n);
-PLD_TEST_EXPORTS_API void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name);
+constexpr wchar_t STYLE_SEPARATOR = L'$';
+constexpr wchar_t GROUP_SEPARATOR = L'.';
 
-UT_String toPrimAttr(const std::wstring& name);
-std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name);
+std::wstring addStyle(const std::wstring& attrName, const std::wstring& style);
+std::wstring removeGroups(const std::wstring & fullyQuantifiedAttrName);
+std::wstring removeStyle(const std::wstring& fullyQuantifiedAttrName);
+PLD_TEST_EXPORTS_API void separate(const std::wstring& fullyQuantifiedAttrName, std::wstring& style,
+                                   std::wstring& attrName);
+
+UT_String toPrimAttr(const std::wstring& fullyQuantifiedAttrName);
+std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& attrName);
 
 } // namespace NameConversion
