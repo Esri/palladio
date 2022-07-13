@@ -178,6 +178,58 @@ bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
 	return true;
 }
 
+void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
+                                    const SOPAssign::AttributeValueMap& defaultValues) {
+	const fpreal time = CHgetEvalTime();
+
+	const int numParms = node->getNumParms();
+
+	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+		PRM_Parm& parm = node->getParm(parmIndex);
+
+		if (parm.isSpareParm() && parm.isDefault()) {
+			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+			auto it = defaultValues.find(ruleAttrName);
+			if (it == defaultValues.end())
+				continue;
+
+			const PRM_Type currParmType = parm.getType();
+
+			switch (currParmType.getBasicType()) {
+				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					// only support booleans, i.e. don't store folders
+					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+						continue;
+
+					bool value = PLD_BOOST_NS::get<bool>(it->second);
+
+					node->setInt(attributeName, 0, time, value);
+					parm.overwriteDefaults(time);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					double value = PLD_BOOST_NS::get<double>(it->second);
+
+					node->setFloat(attributeName, 0, time, value);
+					parm.overwriteDefaults(time);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					const UT_StringHolder value(toOSNarrowFromUTF16(PLD_BOOST_NS::get<std::wstring>(it->second)));
+
+					node->setString(value, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
+					parm.overwriteDefaults(time);
+					break;
+				}
+				default: {
+					// ignore all other types of parameters
+					break;
+				}
+			}
+		}
+	}
+}
 
 AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const std::wstring& style) {
 	const fpreal time = CHgetEvalTime();
@@ -509,6 +561,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		updateDefaultAttributes(shapeData);
 		if (!compareAttributeTypes(oldAttributes, mDefaultAttributes) && !mWasJustLoaded)
 			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		updateAttributeUIDefaultValues(this, getStyle(), mDefaultAttributes);
 		updateAttributes(gdp);
 
 		mShapeConverter->put(gdp, primCls, shapeData);
