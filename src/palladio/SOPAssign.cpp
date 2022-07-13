@@ -202,14 +202,14 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
 						continue;
 
-					bool value = PLD_BOOST_NS::get<bool>(it->second);
+					const bool value = PLD_BOOST_NS::get<bool>(it->second);
 
 					node->setInt(attributeName, 0, time, value);
 					parm.overwriteDefaults(time);
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					double value = PLD_BOOST_NS::get<double>(it->second);
+					const double value = PLD_BOOST_NS::get<double>(it->second);
 
 					node->setFloat(attributeName, 0, time, value);
 					parm.overwriteDefaults(time);
@@ -266,7 +266,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
 					UT_String stringValue;
 					node->evalString(stringValue, &parm, 0, time);
-					std::wstring wstringValue = toUTF16FromOSNarrow(stringValue.toStdString());
+					const std::wstring wstringValue = toUTF16FromOSNarrow(stringValue.toStdString());
 
 					amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
 					break;
