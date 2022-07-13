@@ -202,23 +202,23 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
 						continue;
 
-					const bool value = PLD_BOOST_NS::get<bool>(it->second);
+					const int intValue = static_cast<int>(PLD_BOOST_NS::get<bool>(it->second));
 
-					node->setInt(attributeName, 0, time, value);
+					node->setInt(attributeName, 0, time, intValue);
 					parm.overwriteDefaults(time);
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double value = PLD_BOOST_NS::get<double>(it->second);
+					const double floatValue = PLD_BOOST_NS::get<double>(it->second);
 
-					node->setFloat(attributeName, 0, time, value);
+					node->setFloat(attributeName, 0, time, floatValue);
 					parm.overwriteDefaults(time);
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					const UT_StringHolder value(toOSNarrowFromUTF16(PLD_BOOST_NS::get<std::wstring>(it->second)));
+					const UT_StringHolder stringValue(toOSNarrowFromUTF16(PLD_BOOST_NS::get<std::wstring>(it->second)));
 
-					node->setString(value, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
+					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
 					parm.overwriteDefaults(time);
 					break;
 				}
@@ -254,7 +254,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 
 					const int intValue = node->evalInt(&parm, 0, time);
 
-					amb->setBool(ruleAttrName.c_str(), intValue);
+					amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
