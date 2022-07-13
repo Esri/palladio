@@ -160,6 +160,24 @@ std::pair<double, double> getAttributeRange(const std::wstring& attributeName, c
 	return minMax;
 }
 
+bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
+                          const SOPAssign::AttributeValueMap& newDefaultValues) {
+	if (refDefaultValues.size() != newDefaultValues.size())
+		return false;
+
+	for (const auto& attributeValuePair : refDefaultValues) {
+		const auto& it = newDefaultValues.find(attributeValuePair.first);
+
+		if (it == newDefaultValues.end())
+			return false;
+
+		// check if attributes have the same data type
+		if (it->second.which() != attributeValuePair.second.which())
+			return false;
+	}
+	return true;
+}
+
 bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData,
                                    const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
                                    std::string& errors) {
@@ -438,7 +456,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		}
 		auto oldAttributes = mDefaultAttributes;
 		updateDefaultAttributes(shapeData);
-		if ((oldAttributes != mDefaultAttributes) && !mWasJustLoaded)
+		if (!compareAttributeTypes(oldAttributes, mDefaultAttributes) && !mWasJustLoaded)
 			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		updateAttributes(gdp);
 
