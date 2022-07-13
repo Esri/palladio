@@ -309,7 +309,8 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 					const int intValue = evalInt(&parm, 0, time);
 
-					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
+					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr,
+					                                               nullptr, GA_STORE_INT8));
 					ordinalHandle.set(0, intValue);
 					break;
 				}
@@ -387,8 +388,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                                    : 0.0;
-				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
-				                                 minMax.second, parentFolders);
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first, minMax.second,
+				                                 parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
