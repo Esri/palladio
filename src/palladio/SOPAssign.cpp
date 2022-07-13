@@ -178,7 +178,58 @@ bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
 	return true;
 }
 
-bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData,
+
+AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const std::wstring& style) {
+	const fpreal time = CHgetEvalTime();
+
+	const int numParms = node->getNumParms();
+	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
+
+	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+		const PRM_Parm& parm = node->getParm(parmIndex);
+
+		if (parm.isSpareParm() && !parm.isDefault()) {
+			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+
+			const PRM_Type currParmType = parm.getType();
+
+			switch (currParmType.getBasicType()) {
+				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					// only support booleans, i.e. don't store folders
+					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+						continue;
+
+					const int intValue = node->evalInt(&parm, 0, time);
+
+					amb->setBool(ruleAttrName.c_str(), intValue);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					const double floatValue = node->evalFloat(&parm, 0, time);
+
+					amb->setFloat(ruleAttrName.c_str(), floatValue);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					UT_String stringValue;
+					node->evalString(stringValue, &parm, 0, time);
+					std::wstring wstringValue = toUTF16FromOSNarrow(stringValue.toStdString());
+
+					amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+					break;
+				}
+				default: {
+					// ignore all other types of parameters
+					break;
+				}
+			}
+		}
+	}
+	return AttributeMapUPtr(amb->createAttributeMap());
+}
+
+bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, ShapeData& shapeData,
                                    const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
                                    std::string& errors) {
 	WA("all");
@@ -222,7 +273,7 @@ bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData
 
 		// persist rule attributes even if empty (need to live until prt::generate is done)
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
-		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
+		AttributeMapUPtr ruleAttr = generateAttributeMapFromParameterValues(node, node->getStyle());
 
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
 		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), shapeData.getInitialShapeRandomSeed(isIdx),
@@ -446,7 +497,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		mShapeConverter->get(gdp, primCls, shapeData, mPRTCtx);
 		std::string evalAttrErrorMessage;
 		const bool canContinue =
-		        evaluateDefaultRuleAttributes(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		        evaluateDefaultRuleAttributes(this, gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		if (!canContinue) {
 			const std::string errMsg =
 			        "Could not successfully evaluate default rule attributes:\n" + evalAttrErrorMessage;
