@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} SHARED
 		PrimitivePartition.cpp
 		AttrEvalCallbacks.cpp
 		AttributeConversion.cpp
+		AnnotationParsing.cpp
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
 		LogHandler.cpp
