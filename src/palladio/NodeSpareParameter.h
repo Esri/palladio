@@ -40,6 +40,10 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
                    const FolderVec& parentFolders = {});
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultIdx,
                  const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders);
+void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
+                 const FolderVec& parentFolders);
+void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
+                      const FolderVec& parentFolders);
 void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});
 void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name, const FolderVec& parentFolders = {});
 void addSimpleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});

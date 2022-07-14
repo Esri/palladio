@@ -153,6 +153,18 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
 
+void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
+                 const FolderVec& parentFolders) {
+	addParm(node, PRM_FILE, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
+	        parentFolders);
+}
+
+void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
+                      const FolderVec& parentFolders) {
+	addParm(node, PRM_DIRECTORY, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
+	        parentFolders);
+}
+
 void addSeparator(OP_Node* node, const FolderVec& parentFolders) {
 	addParm(node, PRM_SEPARATOR, L"separator", L"separator", PRM_Default(), nullptr, parentFolders);
 }
