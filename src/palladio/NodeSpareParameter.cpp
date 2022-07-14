@@ -21,6 +21,7 @@
 #include "OP/OP_Director.h"
 #include "PI/PI_EditScriptedParms.h"
 #include "PRM/PRM_SpareData.h"
+#include "PRM/PRM_ChoiceList.h"
 #include "UT/UT_VarEncode.h"
 
 #include "BoostRedirect.h"
@@ -122,6 +123,34 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
                    const FolderVec& parentFolders) {
 	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
 	        parentFolders);
+}
+
+void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultOption,
+                 const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders) {
+	const size_t optionCount = mOptions.size();
+
+	std::unique_ptr<PRM_Name[]> optionNames = std::make_unique<PRM_Name[]>(optionCount + 1);
+
+	PRM_Default defaultVal(0);
+	for (int i = 0; i < optionCount; ++i) {
+		UT_StringHolder option(toOSNarrowFromUTF16(mOptions[i]));
+		optionNames[i].setTokenAndLabel(option, option);
+		if (mOptions[i] == defaultOption)
+			defaultVal.setOrdinal(i);
+	}
+	optionNames[optionCount].setAsSentinel();
+
+	PRM_ChoiceList enumMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), optionNames.get());
+
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+	PRM_Name stringParmName(token, label);
+
+	PRM_Template templateArr[] = {
+	        PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &stringParmName, &defaultVal, &enumMenu),
+	        PRM_Template()};
+
+	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
 
 void addSeparator(OP_Node* node, const FolderVec& parentFolders) {
