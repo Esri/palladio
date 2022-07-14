@@ -48,10 +48,6 @@ constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.Attribute
 
 constexpr const wchar_t* RULE_ATTRIBUTES_FOLDER_NAME = L"Rule Attributes";
 
-constexpr const wchar_t* NULL_KEY = L"#NULL#";
-constexpr const wchar_t* MIN_KEY = L"min";
-constexpr const wchar_t* MAX_KEY = L"max";
-
 AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* encOpts = nullptr;
@@ -73,92 +69,6 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 		return {};
 
 	return rfi;
-}
-
-enum class RangeType { RANGE, ENUM, INVALID };
-RangeType GetRangeType(const prt::Annotation* an) {
-	const size_t numArgs = an->getNumArguments();
-
-	if (numArgs == 0)
-		return RangeType::INVALID;
-
-	prt::AnnotationArgumentType commonType = an->getArgument(0)->getType();
-
-	bool hasMin = false;
-	bool hasMax = false;
-	bool hasKey = false;
-	bool onlyOneTypeInUse = true;
-
-	for (int argIdx = 0; argIdx < numArgs; argIdx++) {
-		const prt::AnnotationArgument* arg = an->getArgument(argIdx);
-		if (arg->getType() != commonType)
-			onlyOneTypeInUse = false;
-
-		const wchar_t* key = arg->getKey();
-		if (std::wcscmp(key, MIN_KEY) == 0)
-			hasMin = true;
-		else if (std::wcscmp(key, MAX_KEY) == 0)
-			hasMax = true;
-		if (std::wcscmp(key, NULL_KEY) != 0)
-			hasKey = true;
-	}
-
-	// old Range
-	if ((numArgs == 2) && (commonType == prt::AnnotationArgumentType::AAT_FLOAT))
-		return RangeType::RANGE;
-
-	// new Range
-	if ((numArgs >= 2) && (hasMin && hasMax))
-		return RangeType::RANGE;
-
-	// legacy Enum
-	if (!hasKey && onlyOneTypeInUse)
-		return RangeType::ENUM;
-
-	return RangeType::INVALID;
-}
-
-std::pair<double, double> getAttributeRange(const std::wstring& attributeName, const RuleFileInfoUPtr& info) {
-	auto minMax = std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
-
-	for (size_t ai = 0, numAttrs = info->getNumAttributes(); ai < numAttrs; ai++) {
-		const auto* attr = info->getAttribute(ai);
-		if (std::wcscmp(attributeName.c_str(), attr->getName()) != 0)
-			continue;
-
-		for (size_t a = 0; a < attr->getNumAnnotations(); a++) {
-			const prt::Annotation* an = attr->getAnnotation(a);
-			const wchar_t* anName = an->getName();
-
-			if (std::wcscmp(anName, ANNOT_RANGE) == 0) {
-				const RangeType annotationRangeType = GetRangeType(an);
-				if (annotationRangeType != RangeType::RANGE)
-					continue;
-
-				const size_t numArgs = an->getNumArguments();
-
-				for (int argIdx = 0; argIdx < numArgs; argIdx++) {
-					const prt::AnnotationArgument* arg = an->getArgument(argIdx);
-					const wchar_t* key = arg->getKey();
-					if (std::wcscmp(key, MIN_KEY) == 0) {
-						minMax.first = arg->getFloat();
-					}
-					else if (std::wcscmp(key, MAX_KEY) == 0) {
-						minMax.second = arg->getFloat();
-					}
-				}
-
-				// parse old style range
-				if ((std::isnan(minMax.first) || std::isnan(minMax.second)) && (numArgs == 2)) {
-					minMax.first = an->getArgument(0)->getFloat();
-					minMax.second = an->getArgument(1)->getFloat();
-				}
-
-				return minMax;
-			}
-		}
-	}
-	return minMax;
 }
 
 bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
