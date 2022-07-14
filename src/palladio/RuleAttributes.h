@@ -30,11 +30,14 @@ class RuleFileInfo;
 }
 
 constexpr const wchar_t* ANNOT_RANGE = L"@Range";
+constexpr const wchar_t* ANNOT_ANGLE = L"@Angle";
+constexpr const wchar_t* ANNOT_PERCENT = L"@Percent";
 constexpr const wchar_t* ANNOT_ENUM = L"@Enum";
 constexpr const wchar_t* ANNOT_HIDDEN = L"@Hidden";
 constexpr const wchar_t* ANNOT_COLOR = L"@Color";
 constexpr const wchar_t* ANNOT_DIR = L"@Directory";
 constexpr const wchar_t* ANNOT_FILE = L"@File";
+constexpr const wchar_t* ANNOT_DESCRIPTION = L"@Description";
 constexpr const wchar_t* ANNOT_ORDER = L"@Order";
 constexpr const wchar_t* ANNOT_GROUP = L"@Group";
 constexpr const wchar_t* ANNOT_IMPORTS = L"_$IMPORTS";
