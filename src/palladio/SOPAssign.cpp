@@ -199,7 +199,8 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
 					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+					if ((currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
+					    (it->second.which() != 2))
 						continue;
 
 					const int intValue = static_cast<int>(PLD_BOOST_NS::get<bool>(it->second));
@@ -209,6 +210,9 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					if (it->second.which() != 1)
+						continue;
+
 					const double floatValue = PLD_BOOST_NS::get<double>(it->second);
 
 					node->setFloat(attributeName, 0, time, floatValue);
@@ -216,7 +220,12 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					const UT_StringHolder stringValue(toOSNarrowFromUTF16(PLD_BOOST_NS::get<std::wstring>(it->second)));
+					if (it->second.which() != 0)
+						continue;
+
+					const std::wstring wStringValue = PLD_BOOST_NS::get<std::wstring>(it->second);
+
+					const UT_StringHolder stringValue(toOSNarrowFromUTF16(wStringValue));
 
 					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
 					parm.overwriteDefaults(time);
