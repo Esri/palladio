@@ -17,6 +17,7 @@
 #include "SOPAssign.h"
 #include "AttrEvalCallbacks.h"
 #include "AttributeConversion.h"
+#include "AnnotationParsing.h"
 #include "LogHandler.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
@@ -495,6 +496,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 		const std::wstring attrName = ra.niceName;
 		const std::wstring attrId = toUTF16FromOSNarrow(NameConversion::toPrimAttr(ra.fqName).toStdString());
 
+		const auto annotationInfo = AnnotationParsing::getAttributeAnnotationInfo(ra.fqName, ruleFileInfo);
+
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
 		parentFolders.push_back(ra.ruleFile);
@@ -508,18 +511,64 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const bool isDefaultValBool = (defaultValIt->second.which() == 2);
 				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
-				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders);
+				
+				switch (annotationInfo.mAttributeTrait) {
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
+						                                enumAnnotation.mOptions, parentFolders);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders);
+						break;
+					}
+				}
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const auto minMax = getAttributeRange(ra.fqName, ruleFileInfo);
-
 				const bool isDefaultValFloat = (defaultValIt->second.which() == 1);
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                                    : 0.0;
-				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first, minMax.second,
-				                                 parentFolders);
+
+				switch (annotationInfo.mAttributeTrait) { 
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue), enumAnnotation.mOptions,
+						                                parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::RANGE: {
+						AnnotationParsing::RangeAnnotation minMax =
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
+																 minMax.second, parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::ANGLE: {
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
+						                                 360, parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::PERCENT: {
+						// diplay % values with a 0-1 range for now (avoid scaling by 100)
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
+						                                 1, parentFolders);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
+						                                 10, parentFolders);
+						break;
+					}
+				}
+
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
@@ -527,7 +576,39 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
 				                                          ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
 				                                          : L"";
-				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders);
+
+				switch (annotationInfo.mAttributeTrait) {
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue,
+						                                enumAnnotation.mOptions, parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::FILE: {
+						AnnotationParsing::FileAnnotation fileAnnotation =
+						        AnnotationParsing::parseFileAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::DIR: {
+						NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::COLOR: {
+						AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
+
+						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders);
+						break;
+					}
+				}
+
 				break;
 			}
 			default:
