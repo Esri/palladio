@@ -106,6 +106,18 @@ void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, parentFolders);
 }
 
+void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal, const FolderVec& parentFolders) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Default defaultVals[] = {PRM_Default(defaultVal[0]), PRM_Default(defaultVal[1]), PRM_Default(defaultVal[2])};
+
+	PRM_Name stringParmName(token, label);
+	PRM_Template templateArr[] = {PRM_Template(PRM_RGB, 3, &stringParmName, defaultVals), PRM_Template()};
+
+	addParmsFromTemplateArray(node, templateArr, parentFolders);
+}
+
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal, double min, double max,
                 const FolderVec& parentFolders) {
 	PRM_Range range =

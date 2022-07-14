@@ -31,6 +31,8 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
                   double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
+void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal,
+                  const FolderVec& parentFolders);
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal,
                 double min = std::numeric_limits<double>::quiet_NaN(),
                 double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
