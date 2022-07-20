@@ -118,6 +118,7 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 					node->setInt(attributeName, 0, time, intValue);
 					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
@@ -128,6 +129,7 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 					node->setFloat(attributeName, 0, time, floatValue);
 					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
@@ -140,6 +142,7 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
 					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				default: {
