@@ -94,7 +94,12 @@ def taskBuildPalladio(cfg) {
 		defs << [ key: 'PLD_CONAN_CESDK_DIR', val: myCESDK.p ]
 	}
 
-	papl.buildConfig(REPO, env.BRANCH_NAME, SOURCE, BUILD_TARGET, cfg, deps, defs)
+	final String stdOut = papl.buildConfig(REPO, env.BRANCH_NAME, SOURCE, BUILD_TARGET, cfg, deps, defs)
+
+	// dump build log to file for warnings scanner
+	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${cfg.houdini.replace('.', '_')}"
+	final String buildLog = "build-${buildSuf}.log"
+	writeFile(file: buildLog, text: stdOut)
 
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
@@ -105,4 +110,15 @@ def taskBuildPalladio(cfg) {
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
 	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+
+	// scan for compiler warnings
+	final String idSuf = "${cfg.houdini.replace('.', '_')}-${cepl.getArchiveClassifier(cfg)}"
+	if(cepl.isGCC(cfg)) {
+		def gccReports = scanForIssues(tool: gcc4(pattern: buildLog), blameDisabled: true)
+		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [gccReports])
+	}
+	else if(cepl.isMSVC(cfg)) {
+		def msvcReports = scanForIssues(tool: msBuild(pattern: buildLog), blameDisabled: true)
+		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [msvcReports])
+	}
 }
