@@ -22,7 +22,12 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
 @Field final String REPO         = 'https://github.com/Esri/palladio.git'
 @Field final String SOURCE       = "palladio.git/src"
+@Field final String SOURCE_STASH = 'palladio-sources'
 @Field final String BUILD_TARGET = 'package'
+
+@Field final List CONFIGS_PREPARE = [
+	[ os: cepl.CFG_OS_RHEL7 ],
+]
 
 @Field final List CONFIGS_HOUDINI_180 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.0' ],
@@ -55,15 +60,26 @@ env.PIPELINE_ARCHIVING_ALLOWED = "true"
 
 // -- PIPELINE
 
-stage('palladio') {
-	cepl.runParallel(taskGenPalladio())
-	papl.finalizeRun('palladio', env.BRANCH_NAME)
+stage('prepare') {
+	cepl.runParallel(taskGenPrepare())
 }
+
+stage('build') {
+	cepl.runParallel(taskGenBuild())
+}
+
+papl.finalizeRun('palladio', env.BRANCH_NAME)
 
 
 // -- TASK GENERATORS
 
-Map taskGenPalladio() {
+Map taskGenPrepare() {
+	Map tasks = [:]
+	tasks << cepl.generateTasks('prepare', this.&taskPrepare, CONFIGS_PREPARE)
+	return tasks
+}
+
+Map taskGenBuild() {
     Map tasks = [:]
     // FIXME: this is a workaround to get unique task names
 	tasks << cepl.generateTasks('pld-hdn18.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_180)
@@ -74,6 +90,12 @@ Map taskGenPalladio() {
 
 
 // -- TASK BUILDERS
+
+def taskPrepare(cfg) {
+ 	cepl.cleanCurrentDir()
+	papl.checkout(REPO, env.BRANCH_NAME)
+	stash(name: SOURCE_STASH)
+}
 
 def taskBuildPalladio(cfg) {
 	List deps = [] // empty dependencies = by default use conan packages
@@ -94,7 +116,13 @@ def taskBuildPalladio(cfg) {
 		defs << [ key: 'PLD_CONAN_CESDK_DIR', val: myCESDK.p ]
 	}
 
-	final String stdOut = papl.buildConfig(REPO, env.BRANCH_NAME, SOURCE, BUILD_TARGET, cfg, deps, defs)
+	cepl.cleanCurrentDir()
+	unstash(name: SOURCE_STASH)
+
+	deps.each { d -> papl.fetchDependency(d, cfg) }
+	dir(path: 'build') {
+		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+	}
 
 	// dump build log to file for warnings scanner
 	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${cfg.houdini.replace('.', '_')}"
