@@ -2,3 +2,4 @@
 /.idea
 /src/.idea
 /src/Pipfile.lock
+/.venv*
