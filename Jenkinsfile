@@ -48,9 +48,6 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 // -- SETUP
 
 properties([
-	parameters([
-		string(name: 'PRM_CESDK_BRANCH', defaultValue: '')
-	]),
 	disableConcurrentBuilds()
 ])
 
@@ -98,28 +95,15 @@ def taskPrepare(cfg) {
 }
 
 def taskBuildPalladio(cfg) {
-	List deps = [] // empty dependencies = by default use conan packages
-
 	List defs = [
 		[ key: 'HOUDINI_USER_PATH',   val: "${env.WORKSPACE}/install" ],
 		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
 
-	// pipeline params tell us if we need to build with a development version of CESDK
-	if (params.PRM_CESDK_BRANCH) {
-		// redirect the CESDK dependency to the right internal branch build
-		Map myCESDK = PrtAppPipelineLibrary.Dependencies.CESDK.clone()
-		myCESDK.g = { return params.PRM_CESDK_BRANCH.replace('/', '.') }
-		deps << myCESDK
-
-		defs << [ key: 'PLD_CONAN_CESDK_DIR', val: myCESDK.p ]
-	}
-
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 
-	deps.each { d -> papl.fetchDependency(d, cfg) }
 	dir(path: 'build') {
 		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
 	}
