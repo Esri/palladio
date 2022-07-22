@@ -35,6 +35,9 @@ public:
 	const PLD_BOOST_NS::filesystem::path& getRPK() const {
 		return mShapeConverter->mDefaultMainAttributes.mRPK;
 	}
+	const std::wstring& getStyle() const {
+		return mShapeConverter->mDefaultMainAttributes.mStyle;
+	}
 
 	void updateDefaultAttributes(const ShapeData& shapeData);
 	void updateAttributes(GU_Detail* detail);

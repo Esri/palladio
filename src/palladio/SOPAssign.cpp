@@ -160,7 +160,131 @@ std::pair<double, double> getAttributeRange(const std::wstring& attributeName, c
 	return minMax;
 }
 
-bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData,
+bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
+                          const SOPAssign::AttributeValueMap& newDefaultValues) {
+	if (refDefaultValues.size() != newDefaultValues.size())
+		return false;
+
+	for (const auto& attributeValuePair : refDefaultValues) {
+		const auto& it = newDefaultValues.find(attributeValuePair.first);
+
+		if (it == newDefaultValues.end())
+			return false;
+
+		// check if attributes have the same data type
+		if (it->second.which() != attributeValuePair.second.which())
+			return false;
+	}
+	return true;
+}
+
+void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
+                                    const SOPAssign::AttributeValueMap& defaultValues) {
+	const fpreal time = CHgetEvalTime();
+
+	const int numParms = node->getNumParms();
+
+	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+		PRM_Parm& parm = node->getParm(parmIndex);
+
+		if (parm.isSpareParm() && parm.isDefault()) {
+			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+			auto it = defaultValues.find(ruleAttrName);
+			if (it == defaultValues.end())
+				continue;
+
+			const PRM_Type currParmType = parm.getType();
+
+			switch (currParmType.getBasicType()) {
+				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					// only support booleans, i.e. don't store folders
+					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+						continue;
+
+					const int intValue = static_cast<int>(PLD_BOOST_NS::get<bool>(it->second));
+
+					node->setInt(attributeName, 0, time, intValue);
+					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					const double floatValue = PLD_BOOST_NS::get<double>(it->second);
+
+					node->setFloat(attributeName, 0, time, floatValue);
+					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					const UT_StringHolder stringValue(toOSNarrowFromUTF16(PLD_BOOST_NS::get<std::wstring>(it->second)));
+
+					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
+					parm.overwriteDefaults(time);
+					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+					break;
+				}
+				default: {
+					// ignore all other types of parameters
+					break;
+				}
+			}
+		}
+	}
+}
+
+AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const std::wstring& style) {
+	const fpreal time = CHgetEvalTime();
+
+	const int numParms = node->getNumParms();
+	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
+
+	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+		const PRM_Parm& parm = node->getParm(parmIndex);
+
+		if (parm.isSpareParm() && !parm.isDefault()) {
+			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+
+			const PRM_Type currParmType = parm.getType();
+
+			switch (currParmType.getBasicType()) {
+				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+					// only support booleans, i.e. don't store folders
+					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
+						continue;
+
+					const int intValue = node->evalInt(&parm, 0, time);
+
+					amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+					const double floatValue = node->evalFloat(&parm, 0, time);
+
+					amb->setFloat(ruleAttrName.c_str(), floatValue);
+					break;
+				}
+				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					UT_String stringValue;
+					node->evalString(stringValue, &parm, 0, time);
+					const std::wstring wstringValue = toUTF16FromOSNarrow(stringValue.toStdString());
+
+					amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+					break;
+				}
+				default: {
+					// ignore all other types of parameters
+					break;
+				}
+			}
+		}
+	}
+	return AttributeMapUPtr(amb->createAttributeMap());
+}
+
+bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, ShapeData& shapeData,
                                    const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
                                    std::string& errors) {
 	WA("all");
@@ -204,7 +328,7 @@ bool evaluateDefaultRuleAttributes(const GU_Detail* detail, ShapeData& shapeData
 
 		// persist rule attributes even if empty (need to live until prt::generate is done)
 		AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
-		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
+		AttributeMapUPtr ruleAttr = generateAttributeMapFromParameterValues(node, node->getStyle());
 
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
 		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), shapeData.getInitialShapeRandomSeed(isIdx),
@@ -309,7 +433,8 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 					const int intValue = evalInt(&parm, 0, time);
 
-					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr, nullptr, GA_STORE_INT8));
+					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr,
+					                                               nullptr, GA_STORE_INT8));
 					ordinalHandle.set(0, intValue);
 					break;
 				}
@@ -387,8 +512,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                                    : 0.0;
-				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
-				                                 minMax.second, parentFolders);
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first, minMax.second,
+				                                 parentFolders);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
@@ -427,7 +552,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		mShapeConverter->get(gdp, primCls, shapeData, mPRTCtx);
 		std::string evalAttrErrorMessage;
 		const bool canContinue =
-		        evaluateDefaultRuleAttributes(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		        evaluateDefaultRuleAttributes(this, gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		if (!canContinue) {
 			const std::string errMsg =
 			        "Could not successfully evaluate default rule attributes:\n" + evalAttrErrorMessage;
@@ -437,8 +562,9 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		}
 		auto oldAttributes = mDefaultAttributes;
 		updateDefaultAttributes(shapeData);
-		if ((oldAttributes != mDefaultAttributes) && !mWasJustLoaded)
+		if (!compareAttributeTypes(oldAttributes, mDefaultAttributes) && !mWasJustLoaded)
 			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		updateAttributeUIDefaultValues(this, getStyle(), mDefaultAttributes);
 		updateAttributes(gdp);
 
 		mShapeConverter->put(gdp, primCls, shapeData);
