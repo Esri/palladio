@@ -24,10 +24,7 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-// clang-format on
+
 #ifndef _WIN32
 #	pragma GCC diagnostic pop
 #endif
@@ -58,14 +55,18 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
 	std::vector<std::wstring> tok;
-	PLD_BOOST_NS::split(tok, cgbList, PLD_BOOST_NS::is_any_of(L";"), PLD_BOOST_NS::algorithm::token_compress_on);
-	for (const std::wstring& t : tok) {
-		if (t.empty())
+	std::wstringstream ss(cgbList);
+
+	while (ss.good()) {
+		std::wstring token;
+		std::getline(ss, token, L';');
+		if (token.empty())
 			continue;
-		LOG_DBG << "token: '" << t << "'";
-		const wchar_t* s = rm->getString(t.c_str());
-		if (s != nullptr) {
-			cgbs.emplace_back(t, s);
+		LOG_DBG << "token: '" << token << "'";
+
+		const wchar_t* stringValue = rm->getString(token.c_str());
+		if (stringValue != nullptr) {
+			cgbs.emplace_back(token, stringValue);
 			LOG_DBG << L"got cgb: " << cgbs.back().first << L" => " << cgbs.back().second;
 		}
 	}
