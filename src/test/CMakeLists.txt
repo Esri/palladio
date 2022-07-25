@@ -12,10 +12,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		-DHOUDINI_CODEC_PATH="$<TARGET_FILE:palladio_codec>"
 		-DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
-if(PLD_LINUX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
-endif()
-
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${palladio_codec_SOURCE_DIR})
 

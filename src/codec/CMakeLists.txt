@@ -17,16 +17,7 @@ add_library(${PROJECT_NAME} SHARED
 add_toolchain_definition(${PROJECT_NAME})
 
 if(PLD_LINUX)
-	if(${PRT_VERSION_MAJOR} STREQUAL "2")
-		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++14)
-	elseif(${PRT_VERSION_MAJOR} STREQUAL "1")
-		target_compile_options(${PROJECT_NAME} PRIVATE -std=c++11)
-	endif()
-
-	target_compile_options(${PROJECT_NAME} PRIVATE
-			-march=nocona -D_GLIBCXX_USE_CXX11_ABI=0
-			-fvisibility=hidden -fvisibility-inlines-hidden)
-
+	target_compile_options(${PROJECT_NAME} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
@@ -39,10 +30,7 @@ if(PLD_LINUX)
 	endif()
 
 elseif(PLD_MACOS)
-	# TODO
-	target_compile_options(${PROJECT_NAME} PRIVATE
-			-std=c++14
-			-fvisibility=hidden -fvisibility-inlines-hidden)
+	# Nothing for now
 
 elseif(PLD_WINDOWS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
