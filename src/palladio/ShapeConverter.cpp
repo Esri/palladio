@@ -143,9 +143,9 @@ int32_t getRandomSeed(const GA_Detail* detail, const GA_Offset& primOffset, cons
 	else {
 		const std::array<double, 3> centroid = getCentroid(coords, ch);
 		size_t hash = 0;
-		hash_combine(hash, centroid[0]);
-		hash_combine(hash, centroid[1]);
-		hash_combine(hash, centroid[2]);
+		hash_combine(hash, std::hash<double>{}(centroid[0]));
+		hash_combine(hash, std::hash<double>{}(centroid[1]));
+		hash_combine(hash, std::hash<double>{}(centroid[2]));
 		randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
 	}
 
