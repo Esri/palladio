@@ -65,7 +65,7 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_O
 	const UT_String attrValue = [&value]() {
 		const auto sh = StringConversionCaches::toPrimAttr.get(value);
 		if (sh)
-			return sh.get();
+			return sh.value();
 		const std::string nv = toOSNarrowFromUTF16(value);
 		UT_String hv(UT_String::ALWAYS_DEEP, nv); // ensure owning UT_String inside cache
 		StringConversionCaches::toPrimAttr.insert(value, hv);
@@ -523,7 +523,7 @@ UT_String toPrimAttr(const std::wstring& fullyQualifiedAttrName) {
 
 	const auto cv = StringConversionCaches::toPrimAttr.get(fullyQualifiedAttrName);
 	if (cv)
-		return cv.get();
+		return cv.value();
 
 	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQualifiedAttrName));
 

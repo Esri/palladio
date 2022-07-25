@@ -1,13 +1,9 @@
 #pragma once
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/optional.hpp)
-// clang-format on
-
 #include <list>
 #include <map>
 #include <mutex>
+#include <optional>
 
 // shamelessly copied from boost (houdini's hboost does not include this header)
 // http://www.boost.org/doc/libs/1_66_0/boost/compute/detail/lru_cache.hpp
@@ -66,12 +62,12 @@ public:
 		}
 	}
 
-	PLD_BOOST_NS::optional<value_type> get(const key_type& key) {
+	std::optional<value_type> get(const key_type& key) {
 		// lookup value in the mCache
 		typename map_type::iterator i = m_map.find(key);
 		if (i == m_map.end()) {
 			// value not in mCache
-			return PLD_BOOST_NS::none;
+			return std::nullopt;
 		}
 
 		// return the value, but first update its place in the most
@@ -161,7 +157,7 @@ public:
 		Base::insert(key, value);
 	}
 
-	PLD_BOOST_NS::optional<V> get(const K& key) {
+	std::optional<V> get(const K& key) {
 		std::lock_guard<std::mutex> guard(mMutex);
 		auto v = Base::get(key);
 
