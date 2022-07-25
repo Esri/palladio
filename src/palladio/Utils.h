@@ -82,6 +82,12 @@ PLD_TEST_EXPORTS_API std::wstring toFileURI(const std::filesystem::path& p);
 std::wstring toFileURI(const std::string& p);
 PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
 
+// hash_combine function from boost library: https://www.boost.org/doc/libs/1_73_0/boost/container_hash/hash.hpp
+template <class SizeT>
+inline void hash_combine(SizeT& seed, SizeT value) {
+	seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {
 	std::wstring::size_type pos = 0;
 	while (pos < s.size()) {
