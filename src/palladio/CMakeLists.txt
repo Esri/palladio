@@ -28,8 +28,7 @@ add_library(${PROJECT_NAME} SHARED
 		MultiWatch.cpp
 		PrimitiveClassifier.cpp
 		LogHandler.cpp
-		LRUCache.h
-		BoostRedirect.h)
+		LRUCache.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${palladio_codec_SOURCE_DIR}

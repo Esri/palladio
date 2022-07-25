@@ -33,12 +33,6 @@
 #include <vector>
 #include <filesystem>
 
-namespace PLD_BOOST_NS {
-namespace filesystem {
-class path;
-}
-} // namespace PLD_BOOST_NS
-
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
 		if (p)
