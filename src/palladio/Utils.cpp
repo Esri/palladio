@@ -27,7 +27,6 @@
 // clang-format off
 #include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-#include PLD_BOOST_INCLUDE(/filesystem.hpp)
 // clang-format on
 #ifndef _WIN32
 #	pragma GCC diagnostic pop
@@ -38,6 +37,8 @@
 #else
 #	include <dlfcn.h>
 #endif
+
+#include <filesystem>
 
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
 	constexpr const wchar_t* PROJECT = L"";
@@ -94,7 +95,7 @@ std::string objectToXML(prt::Object const* obj) {
 	return std::string(buffer.data());
 }
 
-void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func) {
+void getLibraryPath(std::filesystem::path& path, const void* func) {
 #ifdef _WIN32
 	HMODULE dllHandle = 0;
 	if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)func, &dllHandle)) {
@@ -196,7 +197,7 @@ std::wstring toFileURI(const std::string& p) {
 	return schema + pecString;
 }
 
-std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p) {
+std::wstring toFileURI(const std::filesystem::path& p) {
 	return toFileURI(p.generic_string());
 }
 

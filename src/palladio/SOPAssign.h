@@ -31,7 +31,7 @@ public:
 	const PRTContextUPtr& getPRTCtx() const {
 		return mPRTCtx;
 	}
-	const PLD_BOOST_NS::filesystem::path& getRPK() const {
+	const std::filesystem::path& getRPK() const {
 		return mShapeConverter->mDefaultMainAttributes.mRPK;
 	}
 	const std::wstring& getStyle() const {

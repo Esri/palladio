@@ -21,11 +21,7 @@
 #include "../palladio/PRTContext.h"
 #include "../palladio/Utils.h"
 
-// clang-format off
-#include "../palladio/BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/filesystem.hpp)
-// clang-format on
-
+#include <filesystem>
 #include <vector>
 #include <string>
 
@@ -44,6 +40,6 @@ struct GenerateData { // TODO: could use ShapeData from production code
 	}
 };
 
-void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const PLD_BOOST_NS::filesystem::path& rpkPath,
+void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesystem::path& rpkPath,
               const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
               const std::vector<std::wstring>& startRules);
