@@ -19,11 +19,6 @@
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-// clang-format on
-
 #include <mutex>
 #include <bitset>
 
@@ -326,7 +321,7 @@ void ToHoudini::createAttributeHandles(bool useArrayTypes) {
 		const auto& type = hm.second.type;
 
 		HandleType handle; // set to NoHandle by default
-		assert(handle.which() == 0);
+		assert(handle.index() == 0);
 		switch (type) {
 			case prt::Attributable::PT_BOOL:
 			case prt::Attributable::PT_BOOL_ARRAY: {
@@ -395,10 +390,10 @@ void ToHoudini::createAttributeHandles(bool useArrayTypes) {
 				break;
 		}
 
-		if (handle.which() != 0) {
+		if (handle.index() != 0) {
 			hm.second.handleType = handle;
 			if (DBG)
-				LOG_DBG << "added attr handle " << utKey << " of type " << handle.type().name();
+				LOG_DBG << "added attr handle " << utKey;
 		}
 		else if (DBG)
 			LOG_DBG << "could not update handle for primitive attribute " << utKey;
@@ -410,7 +405,7 @@ void ToHoudini::setAttributeValues(const prt::AttributeMap* attrMap, const GA_In
 	for (auto& h : mHandleMap) {
 		if (attrMap->hasKey(h.second.key.c_str())) {
 			const HandleVisitor hv(h.second, attrMap, primIndexMap, rangeStart, rangeSize);
-			PLD_BOOST_NS::apply_visitor(hv, h.second.handleType);
+			std::visit(hv, h.second.handleType);
 		}
 	}
 }

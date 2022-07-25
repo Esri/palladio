@@ -20,7 +20,10 @@
 #include "prt/Annotation.h"
 #include "prt/RuleFileInfo.h"
 
+// clang-format off
+#include "BoostRedirect.h"
 #include PLD_BOOST_INCLUDE(/filesystem.hpp)
+// clang-format on
 
 #include <algorithm>
 #include <cassert>
