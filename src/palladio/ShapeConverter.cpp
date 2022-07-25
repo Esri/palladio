@@ -27,12 +27,6 @@
 #include "GU/GU_Detail.h"
 #include "UT/UT_String.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
-// clang-format on
-
 #include <variant>
 
 namespace {
