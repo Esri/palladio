@@ -29,9 +29,6 @@ if(PLD_LINUX)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
 	endif()
 
-elseif(PLD_MACOS)
-	# Nothing for now
-
 elseif(PLD_WINDOWS)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 			/bigobj /GR /EHsc /MD)

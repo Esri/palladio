@@ -65,14 +65,6 @@ elseif(PLD_LINUX)
 			INSTALL_RPATH_USE_LINK_PATH FALSE
 			SKIP_RPATH FALSE
 			BUILD_WITH_INSTALL_RPATH TRUE)
-
-elseif(PLD_MACOS)
-	if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -g)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
-	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3)
-	endif()
 endif()
 
 
