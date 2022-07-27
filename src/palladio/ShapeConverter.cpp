@@ -265,7 +265,12 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			primCls.put(prim);
 			putMainAttributes(detail, mah, prim);
 			const GA_Offset& off = prim->getMapOffset();
-			mah.seed.set(off, randomSeed);
+			if (mDefaultMainAttributes.mOverrideSeed) {
+				mah.seed.set(off, mDefaultMainAttributes.mSeed);
+			}
+			else {
+				mah.seed.set(off, randomSeed);
+			}
 		} // for all primitives in initial shape
 	}     // for all initial shapes
 }
@@ -335,4 +340,6 @@ void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHan
 	mah.ruleFile.set(off, toOSNarrowFromUTF16(ma.mRuleFile).c_str());
 	mah.startRule.set(off, toOSNarrowFromUTF16(ma.mStartRule).c_str());
 	mah.style.set(off, toOSNarrowFromUTF16(ma.mStyle).c_str());
+	if (ma.mOverrideSeed)
+		mah.seed.set(off, ma.mSeed);
 }
