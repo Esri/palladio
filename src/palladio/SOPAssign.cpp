@@ -195,9 +195,25 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double floatValue = node->evalFloat(&parm, 0, time);
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_NONE: {
+							const double floatValue = node->evalFloat(&parm, 0, time);
 
-					amb->setFloat(ruleAttrName.c_str(), floatValue);
+							amb->setFloat(ruleAttrName.c_str(), floatValue);
+							break;
+						}
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							const float r = node->evalFloat(&parm, 0, time);
+							const float g = node->evalFloat(&parm, 1, time);
+							const float b = node->evalFloat(&parm, 2, time);
+							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+							amb->setString(ruleAttrName.c_str(), colorString.c_str());
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
@@ -387,10 +403,25 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double floatValue = evalFloat(&parm, 0, time);
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_NONE: {
+							const double floatValue = evalFloat(&parm, 0, time);
 
-					GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-					floatHandle.set(0, floatValue);
+							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
+							floatHandle.set(0, floatValue);
+							break;
+						}
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							const float r = evalFloat(&parm, 0, time);
+							const float g = evalFloat(&parm, 1, time);
+							const float b = evalFloat(&parm, 2, time);
+							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+							UT_String stringValue(toOSNarrowFromUTF16(colorString));
+							GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+							stringHandle.set(0, stringValue);
+						}
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {

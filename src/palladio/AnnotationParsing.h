@@ -42,6 +42,8 @@ struct AttributeAnnotationInfo {
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
+std::wstring getColorString(const std::array<float, 3>& rgb);
+
 RangeAnnotation parseRangeAnnotation(const prt::Annotation* mAnnotation);
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation* mAnnotation);

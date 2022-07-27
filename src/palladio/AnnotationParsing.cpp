@@ -85,6 +85,12 @@ int fromHex(wchar_t c) {
 	}
 	// clang-format on
 }
+
+constexpr const wchar_t* HEXTAB = L"0123456789ABCDEF";
+
+wchar_t toHex(int i) {
+	return HEXTAB[i & 0xF];
+}
 } // namespace
 
 namespace AnnotationParsing {
@@ -185,6 +191,18 @@ ColorAnnotation parseColor(const std::wstring colorString) {
 		color[2] = static_cast<double>((fromHex(colorString[5]) << 4) + fromHex(colorString[6])) / 255.0;
 	}
 	return color;
+}
+
+std::wstring getColorString(const std::array<float, 3>& rgb) {
+	std::wstringstream colStr;
+	colStr << L'#';
+	colStr << toHex(((int)(rgb[0] * 255.0f)) >> 4);
+	colStr << toHex((int)(rgb[0] * 255.0f));
+	colStr << toHex(((int)(rgb[1] * 255.0f)) >> 4);
+	colStr << toHex((int)(rgb[1] * 255));
+	colStr << toHex(((int)(rgb[2] * 255.0f)) >> 4);
+	colStr << toHex((int)(rgb[2] * 255.0f));
+	return colStr.str();
 }
 
 AttributeTrait detectAttributeTrait(const prt::Annotation* annotation) {
