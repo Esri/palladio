@@ -27,6 +27,7 @@
 
 #include <string>
 #include <vector>
+#include <random>
 
 namespace {
 
@@ -221,6 +222,16 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		}
 		theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
 	}
+}
+
+int generateNewSeed(void* data, int, fpreal32 t, const PRM_Template*) {
+	auto* node = static_cast<SOPAssign*>(data);
+	std::random_device rd;
+	std::uniform_int_distribution<int> dist(INT32_MIN, INT32_MAX);
+	const int32_t randomValue = dist(rd);
+	node->setInt(SEED.getToken(), 0, t, randomValue);
+
+	return CHANGED;
 }
 
 void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {

@@ -159,6 +159,10 @@ const auto getOverrideSeed = [](const OP_Node* node, fpreal t) -> bool {
 	return static_cast<bool>(node->evalInt(OVERRIDE_SEED.getToken(), 0, t));
 };
 
+static PRM_Name GENERATE_NEW_SEED("generateNewSeed", "Generate new Seed");
+int generateNewSeed(void* data, int, fpreal32 time, const PRM_Template*);
+static PRM_Callback generateNewSeedCallback(&generateNewSeed);
+
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
         PRM_Template(PRM_STRING, 1, &PRIM_CLS, &PRIM_CLS_DEFAULT, nullptr, nullptr, PRM_Callback(), nullptr, 1,
@@ -179,6 +183,7 @@ static PRM_Template PARAM_TEMPLATES[] = {
                      1, SEED_HELP.c_str()),
         PRM_Template(PRM_TOGGLE, 1, &OVERRIDE_SEED, PRMzeroDefaults, nullptr, nullptr, PRM_Callback(), nullptr, 1,
                      SEED_HELP.c_str()),
+        PRM_Template(PRM_CALLBACK, 1, &GENERATE_NEW_SEED, PRMoneDefaults, nullptr, nullptr, generateNewSeedCallback),
 		PRM_Template()};
 
 } // namespace AssignNodeParams
