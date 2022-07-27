@@ -71,8 +71,8 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 	return rfi;
 }
 
-bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
-                           const SOPAssign::AttributeValueMap& newDefaultValues) {
+bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValues,
+                           const SOPAssign::CGAAttributeValueMap& newDefaultValues) {
 	if (refDefaultValues.size() != newDefaultValues.size())
 		return false;
 
@@ -89,8 +89,8 @@ bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
 	return true;
 }
 
-void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
-                                    const SOPAssign::AttributeValueMap& defaultValues) {
+void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
+                           const SOPAssign::CGAAttributeValueMap& defaultValues) {
 	const fpreal time = CHgetEvalTime();
 
 	const int numParms = node->getNumParms();
@@ -319,8 +319,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
     : SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) {}
 
-void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
-	mDefaultAttributes.clear();
+void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
+	mDefaultCGAAttributes.clear();
 
 	AttributeMapVector defaultRuleAttributeMaps;
 	for (auto& amb : shapeData.getRuleAttributeMapBuilders()) {
@@ -336,7 +336,7 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 			const wchar_t* const key = cKeys[k];
 			const auto type = defaultRuleAttributes->getType(key);
 
-			AttributeValueType defVal;
+			CGAAttributeValueType defVal;
 			switch (type) {
 				case prt::AttributeMap::PT_FLOAT: {
 					defVal = defaultRuleAttributes->getFloat(key);
@@ -357,12 +357,12 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 					break;
 			}
 			if (!defVal.empty())
-				mDefaultAttributes.emplace(key, defVal);
+				mDefaultCGAAttributes.emplace(key, defVal);
 		}
 	}
 }
 
-void SOPAssign::updateAttributes(GU_Detail* detail) {
+void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	const fpreal time = CHgetEvalTime();
 
 	const int numParms = getNumParms();
@@ -441,8 +441,8 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 	}
 };
 
-void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-                                   const PRTContextUPtr& prtCtx, std::string& errors) {
+void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+                        const PRTContextUPtr& prtCtx, std::string& errors) {
 	const auto& pv = shapeData.getPrimitiveMapping(0);
 	const auto& firstPrimitive = pv.front();
 	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
@@ -476,8 +476,8 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
-		const auto defaultValIt = mDefaultAttributes.find(ra.fqName);
-		const bool foundDefaultValue = (defaultValIt != mDefaultAttributes.end());
+		const auto defaultValIt = mDefaultCGAAttributes.find(ra.fqName);
+		const bool foundDefaultValue = (defaultValIt != mDefaultCGAAttributes.end());
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
@@ -624,12 +624,12 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
-		auto oldAttributes = mDefaultAttributes;
-		updateDefaultAttributes(shapeData);
-		if (!compareAttributeTypes(oldAttributes, mDefaultAttributes) && !mWasJustLoaded)
-			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
-		updateAttributeUIDefaultValues(this, getStyle(), mDefaultAttributes);
-		updateAttributes(gdp);
+		auto oldAttributes = mDefaultCGAAttributes;
+		updateDefaultCGAAttributes(shapeData);
+		if (!compareAttributeTypes(oldAttributes, mDefaultCGAAttributes) && !mWasJustLoaded)
+			buildUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		updateUIDefaultValues(this, getStyle(), mDefaultCGAAttributes);
+		updatePrimitiveAttributes(gdp);
 
 		mShapeConverter->put(gdp, primCls, shapeData);
 	}
