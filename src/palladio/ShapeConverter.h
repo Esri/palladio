@@ -49,6 +49,8 @@ struct MainAttributes {
 	std::wstring mRuleFile;
 	std::wstring mStyle;
 	std::wstring mStartRule;
+	int32_t mSeed;
+	bool mOverrideSeed;
 };
 
 class ShapeConverter {
