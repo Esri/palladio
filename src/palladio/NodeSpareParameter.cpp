@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "AttributeConversion.h"
 #include "NodeSpareParameter.h"
+#include "AttributeConversion.h"
 #include "SOPAssign.h"
 
 #include "OP/OP_Director.h"
 #include "PI/PI_EditScriptedParms.h"
-#include "PRM/PRM_SpareData.h"
 #include "PRM/PRM_ChoiceList.h"
+#include "PRM/PRM_SpareData.h"
 #include "UT/UT_VarEncode.h"
 
 #include "BoostRedirect.h"

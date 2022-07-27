@@ -15,9 +15,9 @@
  */
 
 #include "SOPAssign.h"
+#include "AnnotationParsing.h"
 #include "AttrEvalCallbacks.h"
 #include "AttributeConversion.h"
-#include "AnnotationParsing.h"
 #include "LogHandler.h"
 #include "ModelConverter.h"
 #include "MultiWatch.h"
@@ -72,7 +72,7 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 }
 
 bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
-                          const SOPAssign::AttributeValueMap& newDefaultValues) {
+                           const SOPAssign::AttributeValueMap& newDefaultValues) {
 	if (refDefaultValues.size() != newDefaultValues.size())
 		return false;
 
@@ -484,7 +484,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const bool isDefaultValBool = (defaultValIt->second.which() == 2);
 				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
-				
+
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
 						AnnotationParsing::EnumAnnotation enumAnnotation =
@@ -508,12 +508,13 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
 				                                    : 0.0;
 
-				switch (annotationInfo.mAttributeTrait) { 
+				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
 						AnnotationParsing::EnumAnnotation enumAnnotation =
 						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue), enumAnnotation.mOptions, parentFolders, description);
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
+						                                enumAnnotation.mOptions, parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::RANGE: {
@@ -573,8 +574,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::COLOR: {
-						AnnotationParsing::ColorAnnotation color =
-						        AnnotationParsing::parseColor(defaultValue);
+						AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
 
 						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders, description);
 						break;
