@@ -25,6 +25,7 @@
 #include "PRM/PRM_Callback.h"
 #include "PRM/PRM_ChoiceList.h"
 #include "PRM/PRM_Parm.h"
+#include "PRM/PRM_Range.h"
 #include "PRM/PRM_Shared.h"
 #include "PRM/PRM_SpareData.h"
 
@@ -144,6 +145,20 @@ const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 	node->setString(val, CH_STRING_LITERAL, START_RULE.getToken(), 0, t);
 };
 
+// -- SEED
+static PRM_Name SEED("randomSeed", "Seed");
+static PRM_Range SEED_RANGE(PRM_RANGE_RESTRICTED, INT32_MIN, PRM_RANGE_RESTRICTED, INT32_MAX);
+static PRM_Name OVERRIDE_SEED("overrideRandomSeed", "Override");
+const std::string SEED_HELP = "Sets value for primitive attribute '" + PLD_RANDOM_SEED.toStdString() + "' if override is checked";
+
+const auto getSeed = [](const OP_Node* node, fpreal t) -> int {
+	return node->evalInt(SEED.getToken(), 0, t);
+};
+
+const auto getOverrideSeed = [](const OP_Node* node, fpreal t) -> bool {
+	return static_cast<bool>(node->evalInt(OVERRIDE_SEED.getToken(), 0, t));
+};
+
 // -- ASSIGN NODE PARAMS
 static PRM_Template PARAM_TEMPLATES[] = {
         PRM_Template(PRM_STRING, 1, &PRIM_CLS, &PRIM_CLS_DEFAULT, nullptr, nullptr, PRM_Callback(), nullptr, 1,
@@ -159,7 +174,12 @@ static PRM_Template PARAM_TEMPLATES[] = {
                      START_RULE_HELP.c_str()),
         PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &CommonNodeParams::LOG_LEVEL,
                      &CommonNodeParams::DEFAULT_LOG_LEVEL, &CommonNodeParams::logLevelMenu),
-        PRM_Template()};
+        PRM_Template(PRM_INT | PRM_TYPE_JOIN_NEXT | PRM_TYPE_PLAIN, 1, &SEED, PRMzeroDefaults, nullptr, &SEED_RANGE,
+                     PRM_Callback(), nullptr,
+                     1, SEED_HELP.c_str()),
+        PRM_Template(PRM_TOGGLE, 1, &OVERRIDE_SEED, PRMzeroDefaults, nullptr, nullptr, PRM_Callback(), nullptr, 1,
+                     SEED_HELP.c_str()),
+		PRM_Template()};
 
 } // namespace AssignNodeParams
 
