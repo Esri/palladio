@@ -27,25 +27,28 @@ namespace NodeSpareParameter {
 void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {});
 void clearAllParms(OP_Node* node);
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range = nullptr, const FolderVec& parentFolder = {});
+             PRM_Range* range = nullptr, const FolderVec& parentFolders = {}, const std::wstring& annotation = {});
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
-                  double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
+                  double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {},
+                  const std::wstring& annotation = {});
 void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal,
-                  const FolderVec& parentFolders);
+                  const FolderVec& parentFolders, const std::wstring& annotation = {});
 void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal,
                 double min = std::numeric_limits<double>::quiet_NaN(),
-                double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {});
+                double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {},
+                const std::wstring& annotation = {});
 void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
-                 const FolderVec& parentFolders = {});
+                 const FolderVec& parentFolders = {}, const std::wstring& annotation = {});
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                   const FolderVec& parentFolders = {});
+                   const FolderVec& parentFolders = {}, const std::wstring& annotation = {});
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultIdx,
-                 const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders);
+                 const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
+                 const std::wstring& annotation = {});
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                 const FolderVec& parentFolders);
+                 const FolderVec& parentFolders, const std::wstring& annotation = {});
 void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                      const FolderVec& parentFolders);
+                      const FolderVec& parentFolders, const std::wstring& annotation = {});
 void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});
 void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name, const FolderVec& parentFolders = {});
 void addSimpleFolder(OP_Node* node, const std::wstring& name, const FolderVec& parentFolders = {});

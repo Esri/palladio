@@ -469,6 +469,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 		const std::wstring attrId = toUTF16FromOSNarrow(NameConversion::toPrimAttr(ra.fqName).toStdString());
 
 		const auto annotationInfo = AnnotationParsing::getAttributeAnnotationInfo(ra.fqName, ruleFileInfo);
+		const std::wstring description = annotationInfo.mDescription;
 
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
@@ -490,11 +491,12 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
 
 						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
-						                                enumAnnotation.mOptions, parentFolders);
+						                                enumAnnotation.mOptions, parentFolders, description);
 						break;
 					}
 					default: {
-						NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders);
+						NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                description);
 						break;
 					}
 				}
@@ -511,8 +513,7 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 						AnnotationParsing::EnumAnnotation enumAnnotation =
 						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue), enumAnnotation.mOptions,
-						                                parentFolders);
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue), enumAnnotation.mOptions, parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::RANGE: {
@@ -520,23 +521,23 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
 
 						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
-																 minMax.second, parentFolders);
+						                                 minMax.second, parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::ANGLE: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
-						                                 360, parentFolders);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 360, parentFolders,
+						                                 description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::PERCENT: {
 						// diplay % values with a 0-1 range for now (avoid scaling by 100)
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
-						                                 1, parentFolders);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 1, parentFolders,
+						                                 description);
 						break;
 					}
 					default: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0,
-						                                 10, parentFolders);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, parentFolders,
+						                                 description);
 						break;
 					}
 				}
@@ -554,29 +555,33 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 						AnnotationParsing::EnumAnnotation enumAnnotation =
 						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue,
-						                                enumAnnotation.mOptions, parentFolders);
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+						                                parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::FILE: {
 						AnnotationParsing::FileAnnotation fileAnnotation =
 						        AnnotationParsing::parseFileAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders);
+						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::DIR: {
-						NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders);
+						NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                     description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::COLOR: {
-						AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
+						AnnotationParsing::ColorAnnotation color =
+						        AnnotationParsing::parseColor(defaultValue);
 
-						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders);
+						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders, description);
 						break;
 					}
 					default: {
-						NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders);
+						NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                  description);
 						break;
 					}
 				}
