@@ -276,6 +276,8 @@ void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context
 	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
 	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
 	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mSeed = AssignNodeParams::getSeed(node, now);
+	mDefaultMainAttributes.mOverrideSeed = AssignNodeParams::getOverrideSeed(node, now);
 }
 
 namespace {
