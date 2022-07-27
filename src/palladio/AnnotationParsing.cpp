@@ -125,7 +125,6 @@ RangeAnnotation parseRangeAnnotation(const prt::Annotation* annotation) {
 EnumAnnotation parseEnumAnnotation(const prt::Annotation* annotation) {
 	EnumAnnotation enumAttribute;
 
-	uint32_t enumIndex = 1;
 	for (size_t arg = 0; arg < annotation->getNumArguments(); arg++) {
 
 		const wchar_t* key = annotation->getArgument(arg)->getKey();
