@@ -171,13 +171,27 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
-						continue;
-
-					const int intValue = node->evalInt(&parm, 0, time);
-
-					amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							const int intValue = node->evalInt(&parm, 0, time);
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices != nullptr) {
+								UT_String result;
+								if (choices->tokenFromIndex(result, intValue)) {
+									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
+									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+								}
+							}
+							break;
+						}
+						case PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE: {
+							const int intValue = node->evalInt(&parm, 0, time);
+							amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
@@ -347,15 +361,29 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
-						continue;
-
-					const int intValue = evalInt(&parm, 0, time);
-
-					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr,
-					                                               nullptr, GA_STORE_INT8));
-					ordinalHandle.set(0, intValue);
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							const int intValue = evalInt(&parm, 0, time);
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices != nullptr) {
+								UT_String result;
+								if (choices->tokenFromIndex(result, intValue)) {
+									GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+									stringHandle.set(0, result);
+								}
+							}
+							break;
+						}
+						case PRM_Type::PRM_ORD_TOGGLE: {
+							const int intValue = evalInt(&parm, 0, time);
+							GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0),
+							                                               nullptr, nullptr, GA_STORE_INT8));
+							ordinalHandle.set(0, intValue);
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
@@ -597,12 +625,13 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 		if (parm.isSpareParm()) {
 			const PRM_Type currParmType = parm.getType();
 
-			const bool isBoolParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
-			                        (currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE);
+			const bool isOrdParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
+			                       ((currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
+			                        (currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_NONE));
 			const bool isFloatParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT);
 			const bool isStringParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_STRING);
 
-			if (isBoolParm || isFloatParm || isStringParm)
+			if (isOrdParm || isFloatParm || isStringParm)
 				forceRecook();
 		}
 	}
