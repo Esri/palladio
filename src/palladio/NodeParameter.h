@@ -150,7 +150,10 @@ static PRM_Name SEED("randomSeed", "Seed");
 static PRM_Range SEED_RANGE(PRM_RANGE_RESTRICTED, std::numeric_limits<int>::lowest(), PRM_RANGE_RESTRICTED,
                             std::numeric_limits<int>::max());
 static PRM_Name OVERRIDE_SEED("overrideRandomSeed", "Override");
-const std::string SEED_HELP = "Sets value for primitive attribute '" + PLD_RANDOM_SEED.toStdString() + "' if override is checked";
+const std::string SEED_HELP = "Sets the random seed for all input primitives (attribute '" +
+                              PLD_RANDOM_SEED.toStdString() +
+                              "'). This value is ignored if the primitive attribute already exists and \"override\" is "
+                              "not checked. By default, the random seed is derived from the primitive position.";
 
 const auto getSeed = [](const OP_Node* node, fpreal t) -> int {
 	return node->evalInt(SEED.getToken(), 0, t);
