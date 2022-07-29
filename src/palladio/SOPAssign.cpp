@@ -420,7 +420,10 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							UT_String stringValue(toOSNarrowFromUTF16(colorString));
 							GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
 							stringHandle.set(0, stringValue);
+							break;
 						}
+						default:
+							break;
 					}
 					break;
 				}
