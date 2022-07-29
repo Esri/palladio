@@ -17,6 +17,8 @@
 #include "AnnotationParsing.h"
 #include "RuleAttributes.h"
 
+#include <sstream>
+
 namespace {
 
 constexpr const wchar_t* NULL_KEY = L"#NULL#";
