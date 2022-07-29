@@ -59,6 +59,9 @@ using RuleFileInfoUPtr = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 using EncoderInfoUPtr = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
+PLD_TEST_EXPORTS_API std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedString,
+                                                                      wchar_t delimiter);
+
 PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs);
 PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID,
                                                                      const prt::AttributeMap* unvalidatedOptions);

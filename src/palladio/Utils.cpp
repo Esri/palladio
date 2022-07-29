@@ -68,6 +68,31 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 
 } // namespace
 
+std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedString, wchar_t delimiter) {
+	std::vector<std::wstring> out;
+
+	std::wstring_view delimiterStringView(commaSeparatedString);
+	size_t startIdx = 0;
+
+	while (startIdx != std::wstring::npos) {
+		const size_t endIdx = delimiterStringView.find_first_of(delimiter, startIdx);
+		std::wstring_view tokenView;
+
+		if (endIdx == std::wstring::npos) {
+			tokenView = delimiterStringView.substr(startIdx);
+			startIdx = std::wstring::npos;
+		}
+		else {
+			tokenView = delimiterStringView.substr(startIdx, endIdx - startIdx);
+			startIdx = endIdx + 1;
+		}
+
+		if (!tokenView.empty())
+			out.emplace_back(tokenView);
+	}
+	return out;
+}
+
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
 	constexpr const size_t START_SIZE = 16 * 1024;
 	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {
@@ -78,25 +103,9 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
-	std::wstring_view cgbListView(cgbList);
-	size_t startIdx = 0;
-	
-	while (startIdx != std::wstring::npos) {
-		const size_t endIdx = cgbListView.find_first_of(L";", startIdx);
-		std::wstring_view tokenView;
+	const std::vector<std::wstring>& cgbVec = tokenizeStringToVector(cgbList, L';');
 
-		if (endIdx == std::wstring::npos) {
-			tokenView = cgbListView.substr(startIdx);
-			startIdx = std::wstring::npos;
-		}
-		else {
-			tokenView = cgbListView.substr(startIdx, endIdx - startIdx);
-			startIdx = endIdx + 1;
-		}
-
-		if (tokenView.empty())
-			continue;
-		const std::wstring token(tokenView);
+	for (const std::wstring& token : cgbVec) {
 		LOG_DBG << "token: '" << token << "'";
 
 		const wchar_t* stringValue = rm->getString(token.c_str());
