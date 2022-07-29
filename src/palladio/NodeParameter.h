@@ -147,7 +147,8 @@ const auto setStartRule = [](OP_Node* node, const std::wstring& s, fpreal t) {
 
 // -- SEED
 static PRM_Name SEED("randomSeed", "Seed");
-static PRM_Range SEED_RANGE(PRM_RANGE_RESTRICTED, INT32_MIN, PRM_RANGE_RESTRICTED, INT32_MAX);
+static PRM_Range SEED_RANGE(PRM_RANGE_RESTRICTED, std::numeric_limits<int>::lowest(), PRM_RANGE_RESTRICTED,
+                            std::numeric_limits<int>::max());
 static PRM_Name OVERRIDE_SEED("overrideRandomSeed", "Override");
 const std::string SEED_HELP = "Sets value for primitive attribute '" + PLD_RANDOM_SEED.toStdString() + "' if override is checked";
 

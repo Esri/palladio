@@ -25,9 +25,10 @@
 
 #include "CH/CH_Manager.h"
 
+#include <limits>
+#include <random>
 #include <string>
 #include <vector>
-#include <random>
 
 namespace {
 
@@ -227,7 +228,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 int generateNewSeed(void* data, int, fpreal32 t, const PRM_Template*) {
 	auto* node = static_cast<SOPAssign*>(data);
 	std::random_device rd;
-	std::uniform_int_distribution<int> dist(INT32_MIN, INT32_MAX);
+	std::uniform_int_distribution<int> dist(std::numeric_limits<int>::lowest(), std::numeric_limits<int>::max());
 	const int32_t randomValue = dist(rd);
 	node->setInt(SEED.getToken(), 0, t, randomValue);
 
