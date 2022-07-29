@@ -154,6 +154,8 @@ const std::string SEED_HELP = "Sets the random seed for all input primitives (at
                               PLD_RANDOM_SEED.toStdString() +
                               "'). This value is ignored if the primitive attribute already exists and \"override\" is "
                               "not checked. By default, the random seed is derived from the primitive position.";
+const std::string OVERRIDE_SEED_HELP =
+        "Force setting the random seed even if the corresponding primitive attribute already exists.";
 
 const auto getSeed = [](const OP_Node* node, fpreal t) -> int {
 	return node->evalInt(SEED.getToken(), 0, t);
@@ -186,7 +188,7 @@ static PRM_Template PARAM_TEMPLATES[] = {
                      PRM_Callback(), nullptr,
                      1, SEED_HELP.c_str()),
         PRM_Template(PRM_TOGGLE, 1, &OVERRIDE_SEED, PRMzeroDefaults, nullptr, nullptr, PRM_Callback(), nullptr, 1,
-                     SEED_HELP.c_str()),
+                     OVERRIDE_SEED_HELP.c_str()),
         PRM_Template(PRM_CALLBACK, 1, &GENERATE_NEW_SEED, PRMoneDefaults, nullptr, nullptr, generateNewSeedCallback),
 		PRM_Template()};
 
