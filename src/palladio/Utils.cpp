@@ -36,6 +36,7 @@
 #endif
 
 #include <filesystem>
+#include <string_view>
 
 namespace {
 
@@ -77,14 +78,25 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
-	std::vector<std::wstring> tok;
-	std::wstringstream ss(cgbList);
+	std::wstring_view cgbListView(cgbList);
+	size_t startIdx = 0;
+	
+	while (startIdx != std::wstring::npos) {
+		const size_t endIdx = cgbListView.find_first_of(L";", startIdx);
+		std::wstring_view tokenView;
 
-	while (ss.good()) {
-		std::wstring token;
-		std::getline(ss, token, L';');
-		if (token.empty())
+		if (endIdx == std::wstring::npos) {
+			tokenView = cgbListView.substr(startIdx);
+			startIdx = std::wstring::npos;
+		}
+		else {
+			tokenView = cgbListView.substr(startIdx, endIdx - startIdx);
+			startIdx = endIdx + 1;
+		}
+
+		if (tokenView.empty())
 			continue;
+		const std::wstring token(tokenView);
 		LOG_DBG << "token: '" << token << "'";
 
 		const wchar_t* stringValue = rm->getString(token.c_str());
