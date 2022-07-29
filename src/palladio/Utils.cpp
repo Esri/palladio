@@ -37,21 +37,44 @@
 
 #include <filesystem>
 
+namespace {
+
+template <typename inC, typename outC, typename FUNC>
+std::basic_string<outC> callAPI(FUNC f, const std::basic_string<inC>& s) {
+	std::vector<outC> buffer(s.size());
+	size_t size = buffer.size();
+	f(s.c_str(), buffer.data(), &size, nullptr);
+	if (size > buffer.size()) {
+		buffer.resize(size);
+		f(s.c_str(), buffer.data(), &size, nullptr);
+	}
+	return std::basic_string<outC>{buffer.data()};
+}
+
+template <typename C, typename FUNC>
+std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
+	std::vector<C> buffer(initialSize, ' ');
+
+	size_t actualSize = initialSize;
+	f(buffer.data(), &actualSize, nullptr);
+	buffer.resize(actualSize);
+
+	if (initialSize < actualSize)
+		f(buffer.data(), &actualSize, nullptr);
+
+	return std::basic_string<C>{buffer.data()};
+}
+
+} // namespace
+
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
 	constexpr const wchar_t* PROJECT = L"";
 	constexpr const wchar_t* PATTERN = L"*.cgb";
 	constexpr const size_t START_SIZE = 16 * 1024;
-
-	size_t resultSize = START_SIZE;
-	auto* result = new wchar_t[resultSize]; // TODO: use std::array
-	rm->searchKey(PROJECT, PATTERN, result, &resultSize);
-	if (resultSize >= START_SIZE) {
-		delete[] result;
-		result = new wchar_t[resultSize];
-		rm->searchKey(PROJECT, PATTERN, result, &resultSize);
-	}
-	std::wstring cgbList(result);
-	delete[] result;
+	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {
+		rm->searchKey(PROJECT, PATTERN, result, resultSize, status);
+	};
+	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
 	std::vector<std::wstring> tok;
@@ -86,14 +109,10 @@ const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt:
 std::string objectToXML(prt::Object const* obj) {
 	if (obj == nullptr)
 		throw std::invalid_argument("object pointer is not valid");
-	constexpr size_t SIZE = 4096;
-	size_t actualSize = SIZE;
-	std::vector<char> buffer(SIZE, ' ');
-	obj->toXML(buffer.data(), &actualSize);
-	buffer.resize(actualSize);
-	if (actualSize > SIZE)
-		obj->toXML(buffer.data(), &actualSize);
-	return std::string(buffer.data());
+	auto toXMLFunc = [&obj](char* result, size_t* resultSize, prt::Status* status) {
+		obj->toXML(result, resultSize, status);
+	};
+	return callAPI<char>(toXMLFunc, 4096);
 }
 
 void getLibraryPath(std::filesystem::path& path, const void* func) {
@@ -151,40 +170,20 @@ std::string getSharedLibrarySuffix() {
 }
 
 std::string toOSNarrowFromUTF16(const std::wstring& osWString) {
-	std::vector<char> temp(osWString.size());
-	size_t size = temp.size();
-	prt::Status status = prt::STATUS_OK;
-	prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), temp.data(), &size, &status);
-	if (size > temp.size()) {
-		temp.resize(size);
-		prt::StringUtils::toOSNarrowFromUTF16(osWString.c_str(), temp.data(), &size, &status);
-	}
-	return std::string(temp.data());
+	return callAPI<wchar_t, char>(prt::StringUtils::toOSNarrowFromUTF16, osWString);
 }
 
 std::wstring toUTF16FromOSNarrow(const std::string& osString) {
-	std::vector<wchar_t> temp(osString.size());
-	size_t size = temp.size();
-	prt::Status status = prt::STATUS_OK;
-	prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), temp.data(), &size, &status);
-	if (size > temp.size()) {
-		temp.resize(size);
-		prt::StringUtils::toUTF16FromOSNarrow(osString.c_str(), temp.data(), &size, &status);
-	}
-	return std::wstring(temp.data());
+	return callAPI<char, wchar_t>(prt::StringUtils::toUTF16FromOSNarrow, osString);
+}
+
+std::wstring toUTF16FromUTF8(const std::string& utf8String) {
+	return callAPI<char, wchar_t>(prt::StringUtils::toUTF16FromUTF8, utf8String);
 }
 
 std::string toUTF8FromOSNarrow(const std::string& osString) {
 	std::wstring utf16String = toUTF16FromOSNarrow(osString);
-	std::vector<char> temp(utf16String.size());
-	size_t size = temp.size();
-	prt::Status status = prt::STATUS_OK;
-	prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), temp.data(), &size, &status);
-	if (size > temp.size()) {
-		temp.resize(size);
-		prt::StringUtils::toUTF8FromUTF16(utf16String.c_str(), temp.data(), &size, &status);
-	}
-	return std::string(temp.data());
+	return callAPI<wchar_t, char>(prt::StringUtils::toUTF8FromUTF16, utf16String);
 }
 
 std::wstring toFileURI(const std::string& p) {
@@ -203,22 +202,5 @@ std::wstring toFileURI(const std::filesystem::path& p) {
 }
 
 std::wstring percentEncode(const std::string& utf8String) {
-	std::vector<char> temp(2 * utf8String.size());
-	size_t size = temp.size();
-	prt::Status status = prt::STATUS_OK;
-	prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
-	if (size > temp.size()) {
-		temp.resize(size);
-		prt::StringUtils::percentEncode(utf8String.c_str(), temp.data(), &size, &status);
-	}
-
-	std::vector<wchar_t> u16temp(temp.size());
-	size = u16temp.size();
-	prt::StringUtils::toUTF16FromUTF8(temp.data(), u16temp.data(), &size, &status);
-	if (size > u16temp.size()) {
-		u16temp.resize(size);
-		prt::StringUtils::toUTF16FromUTF8(temp.data(), u16temp.data(), &size, &status);
-	}
-
-	return std::wstring(u16temp.data());
+	return toUTF16FromUTF8(callAPI<char, char>(prt::StringUtils::percentEncode, utf8String));
 }
