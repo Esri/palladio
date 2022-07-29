@@ -69,10 +69,10 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 } // namespace
 
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
-	constexpr const wchar_t* PROJECT = L"";
-	constexpr const wchar_t* PATTERN = L"*.cgb";
 	constexpr const size_t START_SIZE = 16 * 1024;
 	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {
+		constexpr const wchar_t* PROJECT = L"";
+		constexpr const wchar_t* PATTERN = L"*.cgb";
 		rm->searchKey(PROJECT, PATTERN, result, resultSize, status);
 	};
 	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
