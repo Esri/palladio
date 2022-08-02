@@ -5,7 +5,7 @@ project(palladio_test CXX)
 add_executable(${PROJECT_NAME}
 		tests.cpp TestUtils.cpp TestCallbacks.h)
 
-add_toolchain_definition(${PROJECT_NAME})
+pld_set_common_compiler_flags(${PROJECT_NAME})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 		-DPLD_TEST_EXPORTS

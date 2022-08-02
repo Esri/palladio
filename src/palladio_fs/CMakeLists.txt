@@ -20,7 +20,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 ### compiler settings
 
-add_toolchain_definition(${PROJECT_NAME})
+pld_set_common_compiler_flags(${PROJECT_NAME})
 pld_add_version_definitions(${PROJECT_NAME})
 
 if(PLD_WINDOWS)

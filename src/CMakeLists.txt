@@ -14,7 +14,7 @@ endif()
 
 ### toolchain configuration
 
-function(add_toolchain_definition TGT)
+function(pld_set_common_compiler_flags TGT)
 	set_target_properties(${TGT} PROPERTIES CXX_STANDARD 17)
 	if(PLD_WINDOWS)
 		target_compile_definitions(${TGT} PRIVATE -DPLD_WINDOWS=1 -DPLD_TC_VC=1)

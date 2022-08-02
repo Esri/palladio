@@ -14,7 +14,7 @@ add_library(${PROJECT_NAME} SHARED
 		encoder/HoudiniEncoder.cpp
 		encoder/HoudiniCallbacks.h)
 
-add_toolchain_definition(${PROJECT_NAME})
+pld_set_common_compiler_flags(${PROJECT_NAME})
 
 if(PLD_LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
