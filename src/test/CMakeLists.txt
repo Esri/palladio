@@ -4,6 +4,7 @@ add_executable(${TGT_TEST}
         tests.cpp TestUtils.cpp TestCallbacks.h)
 
 pld_set_common_compiler_flags(${TGT_TEST})
+pld_set_prtx_compiler_flags(${TGT_TEST}) # we directly link to codecs code
 
 target_compile_definitions(${TGT_TEST} PRIVATE
         -DPLD_TEST_EXPORTS

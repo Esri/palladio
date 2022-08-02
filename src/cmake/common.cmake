@@ -21,3 +21,13 @@ function(pld_set_common_compiler_flags TGT)
         target_compile_options(${TGT} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
     endif ()
 endfunction()
+
+# flags required to be ABI compatible with PRTX (the codecs code),
+# see https://github.com/esri/cityengine-sdk#general-software-requirements
+function(pld_set_prtx_compiler_flags TGT)
+    if (PLD_WINDOWS)
+        target_compile_options(${TGT} PRIVATE -bigobj -GR -EHsc $<IF:$<CONFIG:Debug>,-MDd,-MD>)
+    elseif (PLD_LINUX)
+        target_compile_options(${TGT} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
+    endif ()
+endfunction()
