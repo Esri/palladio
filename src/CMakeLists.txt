@@ -27,6 +27,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/common.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/packaging.cmake)
 
 
 ### setup installation target
@@ -65,34 +66,7 @@ add_subdirectory(test EXCLUDE_FROM_ALL)
 
 ### setup package target
 
-set(CPACK_PACKAGE_NAME                "palladio")
-set(CPACK_PACKAGE_VENDOR              "Esri R&D Zurich / VRBN")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Houdini Plugin based on Esri CityEngine")
-set(CPACK_PACKAGE_VERSION_MAJOR       ${PLD_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR       ${PLD_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH       ${PLD_VERSION_PATCH}${PLD_VERSION_PRE})
-set(CPACK_PACKAGE_INSTALL_DIRECTORY   "palladio-${PLD_VERSION}")
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-	set(PLD_PKG_OS "windows")
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-	set(PLD_PKG_OS "linux")
-endif()
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${PLD_VERSION}-${PLD_PKG_OS}")
-
-if(PLD_WINDOWS)
-    set(CPACK_GENERATOR ZIP)
-else()
-    set(CPACK_GENERATOR TGZ)
-endif()
-
-include(CPack)
-
-# not strictly necessary, useful for IDEs like CLion without direct support to run "make package"
-add_custom_target(palladio_package
-	${CMAKE_MAKE_PROGRAM} package
-    DEPENDS palladio
-    COMMENT "Packaging Palladio")
+pld_setup_packaging()
 
 
 ### setup test target
