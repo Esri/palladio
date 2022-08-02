@@ -26,8 +26,6 @@
 #include "prt/ResolveMap.h"
 #include "prt/RuleFileInfo.h"
 
-#include "GA/GA_Primitive.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,8 +37,6 @@ struct PRTDestroyer {
 			p->destroy();
 	}
 };
-
-using PrimitiveNOPtrVector = std::vector<const GA_Primitive*>;
 
 using ObjectUPtr = std::unique_ptr<const prt::Object, PRTDestroyer>;
 using InitialShapeNOPtrVector = std::vector<const prt::InitialShape*>;

@@ -20,6 +20,10 @@
 #include "PrimitivePartition.h"
 #include "Utils.h"
 
+#include "GA/GA_Primitive.h"
+
+using PrimitiveNOPtrVector = std::vector<const GA_Primitive*>;
+
 class ShapeData final {
 public:
 	ShapeData() = default;
