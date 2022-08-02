@@ -32,6 +32,7 @@ endif ()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/common.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/versioning.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/packaging.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/installation.cmake)
 
