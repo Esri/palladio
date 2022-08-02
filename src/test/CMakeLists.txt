@@ -22,7 +22,7 @@ pld_add_dependency_catch2(${TGT_TEST})
 pld_add_dependency_prt(${TGT_TEST})
 pld_add_dependency_houdini(${TGT_TEST})
 
-# copy libraries next to test excutable so they can be found
+# copy libraries next to test executable so they can be found
 add_custom_command(TARGET ${TGT_TEST} POST_BUILD
         COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${CMAKE_BINARY_DIR}/bin
         COMMAND ${CMAKE_COMMAND} ARGS -E copy ${PLD_PRT_LIBRARIES} ${CMAKE_BINARY_DIR}/bin
