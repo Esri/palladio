@@ -94,6 +94,26 @@ std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedStri
 	return out;
 }
 
+void separate(const std::wstring& fullyQualifiedAttrName, std::wstring& style, std::wstring& attrName, wchar_t delimiter) {
+	if (fullyQualifiedAttrName.length() <= 1)
+		return;
+
+	const auto p = fullyQualifiedAttrName.find_first_of(delimiter);
+	if (p == std::wstring::npos) {
+		attrName.assign(fullyQualifiedAttrName);
+	}
+	else if (p > 0 && p < fullyQualifiedAttrName.length() - 1) {
+		style.assign(fullyQualifiedAttrName.substr(0, p));
+		attrName.assign(fullyQualifiedAttrName.substr(p + 1));
+	}
+	else if (p == 0) { // empty style
+		attrName = fullyQualifiedAttrName.substr(1);
+	}
+	else if (p == fullyQualifiedAttrName.length() - 1) { // empty name
+		style = fullyQualifiedAttrName.substr(0, p);
+	}
+}
+
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
 	constexpr const size_t START_SIZE = 16 * 1024;
 	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {

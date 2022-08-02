@@ -113,47 +113,52 @@ TEST_CASE("replace chars not in set", "[utils]") {
 	}
 }
 
-TEST_CASE("separate fully qualified name into style and name", "[NameConversion]") {
+TEST_CASE("separate fully qualified name into style and name", "[utils]") {
+	auto testCall = [](const std::wstring& input, std::wstring& style, std::wstring& name) {
+		constexpr wchar_t DELIM = L'$';
+		separate(input, style, name, DELIM);
+	};
+
 	std::wstring style, name;
 
 	SECTION("default case") {
-		NameConversion::separate(L"foo$bar", style, name);
+		testCall(L"foo$bar", style, name);
 		CHECK(style == L"foo");
 		CHECK(name == L"bar");
 	}
 
 	SECTION("no style") {
-		NameConversion::separate(L"foo", style, name);
+		testCall(L"foo", style, name);
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("edge case 1") {
-		NameConversion::separate(L"foo$", style, name);
+		testCall(L"foo$", style, name);
 		CHECK(style == L"foo");
 		CHECK(name.empty());
 	}
 
 	SECTION("edge case 2") {
-		NameConversion::separate(L"$foo", style, name);
+		testCall(L"$foo", style, name);
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("separator only") {
-		NameConversion::separate(L"$", style, name);
+		testCall(L"$", style, name);
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("empty") {
-		NameConversion::separate(L"", style, name);
+		testCall(L"", style, name);
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("two separators") {
-		NameConversion::separate(L"foo$bar$baz", style, name);
+		testCall(L"foo$bar$baz", style, name);
 		CHECK(style == L"foo");
 		CHECK(name == L"bar$baz");
 	}
