@@ -19,10 +19,9 @@
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-
 #include "SOP/SOP_Node.h"
+
+#include <variant>
 
 class SOPAssign : public SOP_Node {
 public:
@@ -32,7 +31,7 @@ public:
 	const PRTContextUPtr& getPRTCtx() const {
 		return mPRTCtx;
 	}
-	const PLD_BOOST_NS::filesystem::path& getRPK() const {
+	const std::filesystem::path& getRPK() const {
 		return mShapeConverter->mDefaultMainAttributes.mRPK;
 	}
 	const std::wstring& getStyle() const {
@@ -55,7 +54,7 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using CGAAttributeValueType = PLD_BOOST_NS::variant<std::wstring, double, bool>;
+	using CGAAttributeValueType = std::variant<std::wstring, double, bool>;
 	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
 	CGAAttributeValueMap mDefaultCGAAttributes;
 };

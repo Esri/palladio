@@ -30,10 +30,7 @@
 
 #include "prt/LogLevel.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
-// clang-format on
+#include <filesystem>
 
 namespace CommonNodeParams {
 
@@ -78,7 +75,7 @@ static PRM_Default RPK_DEFAULT(0, "");
 int updateRPK(void* data, int index, fpreal32 time, const PRM_Template*);
 static PRM_Callback rpkCallback(&updateRPK);
 
-const auto getRPK = [](const OP_Node* node, fpreal t) -> PLD_BOOST_NS::filesystem::path {
+const auto getRPK = [](const OP_Node* node, fpreal t) -> std::filesystem::path {
 	UT_String s;
 	node->evalString(s, RPK.getToken(), 0, t);
 	return s.toStdString();

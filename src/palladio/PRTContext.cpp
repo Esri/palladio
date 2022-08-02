@@ -51,7 +51,7 @@ private:
 	std::string licServer;      // owns flexLicParams.mHostName
 
 public:
-	License(const PLD_BOOST_NS::filesystem::path& prtRootPath) {
+	License(const std::filesystem::path& prtRootPath) {
 		const std::string libflexnet = getSharedLibraryPrefix() + FILE_FLEXNET_LIB + getSharedLibrarySuffix();
 
 		libflexnetPath = (prtRootPath / libflexnet).string();
@@ -93,10 +93,10 @@ uint32_t getNumCores() {
 /**
  * schedule recook of all assign nodes with matching rpk
  */
-void scheduleRecook(const PLD_BOOST_NS::filesystem::path& rpk) {
+void scheduleRecook(const std::filesystem::path& rpk) {
 	auto visit = [](OP_Node& n, void* data) -> bool {
 		if (n.getOperator()->getName().equal(OP_PLD_ASSIGN)) {
-			auto visitedRPK = reinterpret_cast<PLD_BOOST_NS::filesystem::path*>(data);
+			auto visitedRPK = reinterpret_cast<std::filesystem::path*>(data);
 			SOPAssign& sa = static_cast<SOPAssign&>(n);
 			if (sa.getRPK() == *visitedRPK) {
 				LOG_DBG << "forcing recook of: " << n.getName() << ", " << n.getOpType() << ", "
@@ -113,9 +113,9 @@ void scheduleRecook(const PLD_BOOST_NS::filesystem::path& rpk) {
 	}
 }
 
-PLD_BOOST_NS::filesystem::path getProcessTempDir() {
-	PLD_BOOST_NS::system::error_code ec;
-	auto tp = PLD_BOOST_NS::filesystem::temp_directory_path(ec);
+std::filesystem::path getProcessTempDir() {
+	std::error_code ec;
+	auto tp = std::filesystem::temp_directory_path(ec);
 	if (!ec)
 		tp = "/tmp/"; // TODO: other OSes
 	std::string n = std::string(PLD_TMP_PREFIX) + std::to_string(::getpid());
@@ -124,7 +124,7 @@ PLD_BOOST_NS::filesystem::path getProcessTempDir() {
 
 } // namespace
 
-PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExtDirs)
+PRTContext::PRTContext(const std::vector<std::filesystem::path>& addExtDirs)
     : mLogHandler(new logging::LogHandler(PLD_LOG_PREFIX)), mPRTHandle{nullptr},
       mPRTCache{prt::CacheObject::create(prt::CacheObject::CACHE_TYPE_DEFAULT)}, mCores{getNumCores()},
       mResolveMapCache{new ResolveMapCache(getProcessTempDir())} {
@@ -134,7 +134,7 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
 
 	// -- get the dir containing prt core library
 	const auto rootPath = []() {
-		PLD_BOOST_NS::filesystem::path prtCorePath;
+		std::filesystem::path prtCorePath;
 		getLibraryPath(prtCorePath, reinterpret_cast<const void*>(prt::init));
 		return prtCorePath.parent_path();
 	}();
@@ -145,11 +145,11 @@ PRTContext::PRTContext(const std::vector<PLD_BOOST_NS::filesystem::path>& addExt
 #endif
 
 	// -- scan for directories with prt extensions
-	const std::vector<PLD_BOOST_NS::filesystem::path> extDirs = [&rootPath, &addExtDirs]() {
-		std::vector<PLD_BOOST_NS::filesystem::path> ed;
+	const std::vector<std::filesystem::path> extDirs = [&rootPath, &addExtDirs]() {
+		std::vector<std::filesystem::path> ed;
 		ed.emplace_back(rootPath / PRT_LIB_SUBDIR);
 		for (auto d : addExtDirs) { // get a copy
-			if (PLD_BOOST_NS::filesystem::is_regular_file(d))
+			if (std::filesystem::is_regular_file(d))
 				d = d.parent_path();
 			if (!d.is_absolute())
 				d = rootPath / d;
@@ -194,7 +194,7 @@ namespace {
 std::mutex mResolveMapCacheMutex;
 }
 
-ResolveMapSPtr PRTContext::getResolveMap(const PLD_BOOST_NS::filesystem::path& rpk) {
+ResolveMapSPtr PRTContext::getResolveMap(const std::filesystem::path& rpk) {
 	std::lock_guard<std::mutex> lock(mResolveMapCacheMutex);
 
 	auto lookupResult = mResolveMapCache->get(rpk.string());

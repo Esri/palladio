@@ -29,7 +29,7 @@ constexpr const wchar_t* FILE_CGA_PRINT = L"CGAPrint.txt";
 
 } // namespace
 
-void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const PLD_BOOST_NS::filesystem::path& rpkPath,
+void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesystem::path& rpkPath,
               const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
               const std::vector<std::wstring>& startRules) {
 	REQUIRE(initialShapeURIs.size() == startRules.size());

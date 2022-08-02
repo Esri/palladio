@@ -36,11 +36,6 @@
 #include "GEO/GEO_AttributeHandle.h"
 #include "UT/UT_Interrupt.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-// clang-format on
-
 namespace {
 
 constexpr bool DBG = false;
@@ -83,7 +78,7 @@ bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValu
 			return false;
 
 		// check if attributes have the same data type
-		if (it->second.which() != attributeValuePair.second.which())
+		if (it->second.index() != attributeValuePair.second.index())
 			return false;
 	}
 	return true;
@@ -111,10 +106,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
 					// only support booleans, i.e. don't store folders
 					if ((currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
-					    (it->second.which() != 2))
+					    (it->second.index() != 2))
 						continue;
 
-					const int intValue = static_cast<int>(PLD_BOOST_NS::get<bool>(it->second));
+					const int intValue = static_cast<int>(std::get<bool>(it->second));
 
 					node->setInt(attributeName, 0, time, intValue);
 					parm.overwriteDefaults(time);
@@ -122,10 +117,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					if (it->second.which() != 1)
+					if (it->second.index() != 1)
 						continue;
 
-					const double floatValue = PLD_BOOST_NS::get<double>(it->second);
+					const double floatValue = std::get<double>(it->second);
 
 					node->setFloat(attributeName, 0, time, floatValue);
 					parm.overwriteDefaults(time);
@@ -133,12 +128,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					if (it->second.which() != 0)
+					if (it->second.index() != 0)
 						continue;
 
-					const std::wstring wStringValue = PLD_BOOST_NS::get<std::wstring>(it->second);
-
-					const UT_StringHolder stringValue(toOSNarrowFromUTF16(wStringValue));
+					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
 
 					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
 					parm.overwriteDefaults(time);
@@ -350,14 +343,13 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
 					defVal = std::wstring(v);
-					assert(defVal.which() == 0); // std::wstring is type index 0
+					assert(defVal.index() == 0); // std::wstring is type index 0
 					break;
 				}
 				default:
-					break;
+					continue;
 			}
-			if (!defVal.empty())
-				mDefaultCGAAttributes.emplace(key, defVal);
+			mDefaultCGAAttributes.emplace(key, defVal);
 		}
 	}
 }
@@ -484,9 +476,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				const bool isDefaultValBool = (defaultValIt->second.which() == 2);
+				const bool isDefaultValBool = (defaultValIt->second.index() == 2);
 				const bool defaultValue =
-				        (foundDefaultValue && isDefaultValBool) ? PLD_BOOST_NS::get<bool>(defaultValIt->second) : false;
+				        (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
 
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
@@ -506,9 +498,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const bool isDefaultValFloat = (defaultValIt->second.which() == 1);
+				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
-				                                    ? PLD_BOOST_NS::get<double>(defaultValIt->second)
+				                                    ? std::get<double>(defaultValIt->second)
 				                                    : 0.0;
 
 				switch (annotationInfo.mAttributeTrait) {
@@ -549,9 +541,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				const bool isDefaultValString = (defaultValIt->second.which() == 0);
+				const bool isDefaultValString = (defaultValIt->second.index() == 0);
 				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-				                                          ? PLD_BOOST_NS::get<std::wstring>(defaultValIt->second)
+				                                          ? std::get<std::wstring>(defaultValIt->second)
 				                                          : L"";
 
 				switch (annotationInfo.mAttributeTrait) {

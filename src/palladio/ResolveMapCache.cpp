@@ -26,13 +26,13 @@ constexpr bool UNPACK_RULE_PACKAGES = false;
 
 const ResolveMapSPtr RESOLVE_MAP_NONE;
 const ResolveMapCache::LookupResult LOOKUP_FAILURE = {RESOLVE_MAP_NONE, ResolveMapCache::CacheStatus::MISS};
-const std::chrono::system_clock::time_point INVALID_TIMESTAMP;
+const std::filesystem::file_time_type INVALID_TIMESTAMP;
 
 constexpr const char* SCHEMA_OPDEF = "opdef:";
 constexpr const char* SCHEMA_OPLIB = "oplib:";
 const std::vector<std::string> EMBEDDED_SCHEMAS = {SCHEMA_OPDEF, SCHEMA_OPLIB};
 
-bool isEmbedded(const PLD_BOOST_NS::filesystem::path& p) {
+bool isEmbedded(const std::filesystem::path& p) {
 	return startsWithAnyOf(p.string(), EMBEDDED_SCHEMAS);
 }
 
@@ -46,7 +46,7 @@ UT_StringHolder getFSReaderFilename(const FS_Reader& fsr) {
 #endif
 }
 
-std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS::filesystem::path& p) {
+std::filesystem::file_time_type getFileModificationTime(const std::filesystem::path& p) {
 	auto actualPath = p;
 	if (isEmbedded(p)) {
 		FS_Reader fsr(p.string().c_str());
@@ -54,40 +54,40 @@ std::chrono::system_clock::time_point getFileModificationTime(const PLD_BOOST_NS
 			return INVALID_TIMESTAMP;
 		actualPath = getFSReaderFilename(fsr).toStdString();
 	}
-	const bool pathExists = PLD_BOOST_NS::filesystem::exists(actualPath);
-	const bool isRegularFile = PLD_BOOST_NS::filesystem::is_regular_file(actualPath);
+	const bool pathExists = std::filesystem::exists(actualPath);
+	const bool isRegularFile = std::filesystem::is_regular_file(actualPath);
 	if (!actualPath.empty() && pathExists && isRegularFile)
-		return std::chrono::system_clock::from_time_t(PLD_BOOST_NS::filesystem::last_write_time(actualPath));
+		return std::filesystem::last_write_time(actualPath);
 	else
 		return INVALID_TIMESTAMP;
 }
 
-ResolveMapCache::KeyType createCacheKey(const PLD_BOOST_NS::filesystem::path& rpk) {
+ResolveMapCache::KeyType createCacheKey(const std::filesystem::path& rpk) {
 	return rpk.string(); // TODO: try FS_Reader::splitIndexFileSectionPath for embedded resources
 }
 
 struct PathRemover {
-	void operator()(PLD_BOOST_NS::filesystem::path const* p) {
-		if (p && PLD_BOOST_NS::filesystem::exists(*p)) {
-			PLD_BOOST_NS::filesystem::remove(*p);
+	void operator()(std::filesystem::path const* p) {
+		if (p && std::filesystem::exists(*p)) {
+			std::filesystem::remove(*p);
 			LOG_DBG << "Removed file " << *p;
 			delete p;
 		}
 	}
 };
-using ScopedPath = std::unique_ptr<PLD_BOOST_NS::filesystem::path, PathRemover>;
+using ScopedPath = std::unique_ptr<std::filesystem::path, PathRemover>;
 
-ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
+ScopedPath resolveFromHDA(const std::filesystem::path& p) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
 
 	FS_Reader fsr(p.string().c_str()); // is able to resolve opdef/oplib URIs
 	UT_StringHolder container = getFSReaderFilename(fsr);
 	LOG_DBG << "resource container: " << container;
 
-	auto resName = p.leaf().string();
+	auto resName = p.filename().string();
 	std::replace(resName.begin(), resName.end(), '?', '_'); // TODO: generalize
 	ScopedPath extractedResource(
-	        new PLD_BOOST_NS::filesystem::path(PLD_BOOST_NS::filesystem::temp_directory_path() / resName));
+	        new std::filesystem::path(std::filesystem::temp_directory_path() / resName));
 
 	if (fsr.isGood()) {
 		UT_WorkBuffer wb;
@@ -106,11 +106,11 @@ ScopedPath resolveFromHDA(const PLD_BOOST_NS::filesystem::path& p) {
 } // namespace
 
 ResolveMapCache::~ResolveMapCache() {
-	PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath);
+	std::filesystem::remove_all(mRPKUnpackPath);
 	LOG_INF << "Removed RPK unpack directory";
 }
 
-ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesystem::path& rpk) {
+ResolveMapCache::LookupResult ResolveMapCache::get(const std::filesystem::path& rpk) {
 	const auto cacheKey = createCacheKey(rpk);
 
 	const auto timeStamp = getFileModificationTime(rpk);
@@ -130,7 +130,7 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 		        << "ns";
 		if (it->second.mTimeStamp != timeStamp) {
 			mCache.erase(it);
-			const auto cnt = PLD_BOOST_NS::filesystem::remove_all(mRPKUnpackPath / rpk.leaf());
+			const auto cnt = std::filesystem::remove_all(mRPKUnpackPath / rpk.filename());
 			LOG_INF << "RPK change detected, forcing reload and clearing cache for " << rpk << " (removed " << cnt
 			        << " files)";
 			cs = CacheStatus::MISS;
@@ -141,7 +141,7 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const PLD_BOOST_NS::filesyste
 
 	if (cs == CacheStatus::MISS) {
 		ScopedPath extractedPath; // if set, will resolve the extracted RPK from HDA
-		const auto actualRPK = [&extractedPath](const PLD_BOOST_NS::filesystem::path& p) {
+		const auto actualRPK = [&extractedPath](const std::filesystem::path& p) {
 			if (isEmbedded(p)) {
 				extractedPath = resolveFromHDA(p);
 				return *extractedPath;

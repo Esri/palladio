@@ -24,9 +24,6 @@
 #include "PRM/PRM_SpareData.h"
 #include "UT/UT_VarEncode.h"
 
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
-
 namespace {
 std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	std::wstring folderString;

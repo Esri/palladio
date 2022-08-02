@@ -23,12 +23,8 @@
 
 #include "GU/GU_Detail.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-// clang-format on
-
 #include <unordered_map>
+#include <variant>
 #include <string>
 
 namespace std {
@@ -84,7 +80,7 @@ public:
 
 private:
 	using NoHandle = int8_t;
-	using HandleType = PLD_BOOST_NS::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
+	using HandleType = std::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
 	                                         GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
 
 	struct ProtoHandle {
@@ -94,7 +90,7 @@ private:
 		size_t cardinality;
 	};
 
-	class HandleVisitor : public PLD_BOOST_NS::static_visitor<> {
+	class HandleVisitor {
 	public:
 		HandleVisitor(const ProtoHandle& ph, const prt::AttributeMap* m, const GA_IndexMap& pim, GA_Offset rStart,
 		              GA_Size rSize)
