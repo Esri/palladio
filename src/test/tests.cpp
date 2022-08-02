@@ -17,11 +17,9 @@
 #include "TestCallbacks.h"
 #include "TestUtils.h"
 
-#include "../codec/encoder/HoudiniEncoder.h"
-#include "../palladio/AttributeConversion.h"
-#include "../palladio/ModelConverter.h"
-#include "../palladio/PRTContext.h"
-#include "../palladio/Utils.h"
+#include "PRTContext.h"
+#include "Utils.h"
+#include "encoder/HoudiniEncoder.h"
 
 #include "prt/AttributeMap.h"
 #include "prtx/Geometry.h"

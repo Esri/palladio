@@ -1,7 +1,17 @@
 cmake_minimum_required(VERSION 3.13)
 
+get_target_property(TGT_PALLADIO_SOURCE_DIR ${TGT_PALLADIO} SOURCE_DIR)
+get_target_property(TGT_CODEC_SOURCE_DIR ${TGT_CODEC} SOURCE_DIR)
+
 add_executable(${TGT_TEST}
-        tests.cpp TestUtils.cpp TestCallbacks.h)
+        tests.cpp
+        TestUtils.cpp
+        TestCallbacks.h
+        ${TGT_PALLADIO_SOURCE_DIR}/Utils.cpp
+        ${TGT_PALLADIO_SOURCE_DIR}/PRTContext.cpp
+        ${TGT_PALLADIO_SOURCE_DIR}/LogHandler.cpp
+        ${TGT_PALLADIO_SOURCE_DIR}/ResolveMapCache.cpp
+        ${TGT_CODEC_SOURCE_DIR}/encoder/HoudiniEncoder.cpp)
 
 pld_set_common_compiler_flags(${TGT_TEST})
 pld_set_prtx_compiler_flags(${TGT_TEST}) # we directly link to codecs code
@@ -11,17 +21,15 @@ target_compile_definitions(${TGT_TEST} PRIVATE
         -DHOUDINI_CODEC_PATH="$<TARGET_FILE:palladio_codec>"
         -DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
-get_target_property(TGT_CODEC_SOURCE_DIR ${TGT_CODEC} SOURCE_DIR)
 target_include_directories(${TGT_TEST} PRIVATE
+        ${TGT_PALLADIO_SOURCE_DIR}
         ${TGT_CODEC_SOURCE_DIR})
 
 target_link_libraries(${TGT_TEST} PRIVATE
-        palladio
-        palladio_codec)
+        dl)
 
 pld_add_dependency_catch2(${TGT_TEST})
 pld_add_dependency_prt(${TGT_TEST})
-pld_add_dependency_houdini(${TGT_TEST})
 
 # copy libraries next to test executable so they can be found
 add_custom_command(TARGET ${TGT_TEST} POST_BUILD
