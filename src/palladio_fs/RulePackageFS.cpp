@@ -5,6 +5,7 @@
 
 #include "FS/FS_ReaderStream.h"
 
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <mutex>

@@ -35,6 +35,7 @@
 #	include <dlfcn.h>
 #endif
 
+#include <cassert>
 #include <filesystem>
 #include <string_view>
 

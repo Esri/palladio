@@ -22,9 +22,10 @@
 #include "prt/API.h"
 #include "prt/AttributeMap.h"
 
+#include <map>
+#include <string>
 #include <variant>
 #include <vector>
-#include <string>
 
 struct CallbackResult {
 	std::wstring name;
