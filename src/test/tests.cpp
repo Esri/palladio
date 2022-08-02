@@ -27,20 +27,16 @@
 #include "prtx/Geometry.h"
 #include "prtx/Mesh.h"
 
-// clang-format off
-#include "../palladio/BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
-// clang-format on
-
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 
 #include <algorithm>
+#include <filesystem>
 
 namespace {
 
 PRTContextUPtr prtCtx;
-const PLD_BOOST_NS::filesystem::path testDataPath = TEST_DATA_PATH;
+const std::filesystem::path testDataPath = TEST_DATA_PATH;
 
 template <typename T>
 void compareReversed(const std::vector<T>& a, const std::vector<T>& b) {
@@ -54,7 +50,7 @@ void compareReversed(const std::vector<T>& a, const std::vector<T>& b) {
 int main(int argc, char* argv[]) {
 	assert(!prtCtx);
 
-	const std::vector<PLD_BOOST_NS::filesystem::path> addExtDirs = {
+	const std::vector<std::filesystem::path> addExtDirs = {
 	        //"../lib", // adapt to default prt dir layout (core is in bin subdir)
 	        HOUDINI_CODEC_PATH // set to absolute path to houdini encoder lib via cmake
 	};
@@ -67,10 +63,10 @@ int main(int argc, char* argv[]) {
 
 TEST_CASE("create file URI from path", "[utils]") {
 #ifdef PLD_LINUX
-	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("/tmp/foo.txt"));
+	const auto u = toFileURI(std::filesystem::path("/tmp/foo.txt"));
 	CHECK(u.compare(L"file:/tmp/foo.txt") == 0);
 #elif defined(PLD_WINDOWS)
-	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("c:\\tmp\\foo.txt"));
+	const auto u = toFileURI(std::filesystem::path("c:\\tmp\\foo.txt"));
 	INFO(toOSNarrowFromUTF16(u));
 	CHECK(u.compare(L"file:/c:/tmp/foo.txt") == 0);
 #endif
@@ -544,7 +540,7 @@ TEST_CASE("serialize two meshes where one does not have uvs (issue 108)") {
 }
 
 TEST_CASE("generate two cubes with two uv sets") {
-	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj",
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj",
 	                                                                         testDataPath / "quad1.obj"};
 
 	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0]),
@@ -552,7 +548,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 
 	const std::vector<std::wstring> startRules = {L"Default$OneSet", L"Default$TwoSets"};
 
-	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
+	const std::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;
@@ -621,10 +617,10 @@ TEST_CASE("generate two cubes with two uv sets") {
 }
 
 TEST_CASE("generate with generic attributes") {
-	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj"};
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj"};
 	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0])};
 	const std::vector<std::wstring> startRules = {L"Default$Init"};
-	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
+	const std::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;

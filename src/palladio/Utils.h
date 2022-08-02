@@ -31,12 +31,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-namespace PLD_BOOST_NS {
-namespace filesystem {
-class path;
-}
-} // namespace PLD_BOOST_NS
+#include <filesystem>
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
@@ -64,12 +59,15 @@ using RuleFileInfoUPtr = std::unique_ptr<const prt::RuleFileInfo, PRTDestroyer>;
 using EncoderInfoUPtr = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
+PLD_TEST_EXPORTS_API std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedString,
+                                                                      wchar_t delimiter);
+
 PLD_TEST_EXPORTS_API void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs);
 PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID,
                                                                      const prt::AttributeMap* unvalidatedOptions);
 PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);
 
-void getLibraryPath(PLD_BOOST_NS::filesystem::path& path, const void* func);
+void getLibraryPath(std::filesystem::path& path, const void* func);
 std::string getSharedLibraryPrefix();
 std::string getSharedLibrarySuffix();
 
@@ -77,9 +75,15 @@ PLD_TEST_EXPORTS_API std::string toOSNarrowFromUTF16(const std::wstring& osWStri
 std::wstring toUTF16FromOSNarrow(const std::string& osString);
 std::string toUTF8FromOSNarrow(const std::string& osString);
 
-PLD_TEST_EXPORTS_API std::wstring toFileURI(const PLD_BOOST_NS::filesystem::path& p);
+PLD_TEST_EXPORTS_API std::wstring toFileURI(const std::filesystem::path& p);
 std::wstring toFileURI(const std::string& p);
 PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
+
+// hash_combine function from boost library: https://www.boost.org/doc/libs/1_73_0/boost/container_hash/hash.hpp
+template <class SizeT>
+inline void hash_combine(SizeT& seed, SizeT value) {
+	seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
 inline void replace_all_not_of(std::wstring& s, const std::wstring& allowedChars) {
 	std::wstring::size_type pos = 0;
