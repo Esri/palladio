@@ -10,8 +10,9 @@ target_compile_definitions(${TGT_TEST} PRIVATE
         -DHOUDINI_CODEC_PATH="$<TARGET_FILE:palladio_codec>"
         -DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
+get_target_property(TGT_CODEC_SOURCE_DIR ${TGT_CODEC} SOURCE_DIR)
 target_include_directories(${TGT_TEST} PRIVATE
-        ${palladio_codec_SOURCE_DIR})
+        ${TGT_CODEC_SOURCE_DIR})
 
 target_link_libraries(${TGT_TEST} PRIVATE
         palladio
