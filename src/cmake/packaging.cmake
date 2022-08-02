@@ -25,8 +25,8 @@ function(pld_setup_packaging)
     include(CPack)
 
     # not strictly necessary, useful for IDEs like CLion without direct support to run "make package"
-    add_custom_target(palladio_package
+    add_custom_target(${TGT_PACKAGE}
             ${CMAKE_MAKE_PROGRAM} package
-            DEPENDS palladio
+            DEPENDS ${TGT_PALLADIO}
             COMMENT "Packaging Palladio")
 endfunction()

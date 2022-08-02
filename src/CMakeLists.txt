@@ -9,6 +9,7 @@ set(TGT_PALLADIO "palladio")
 set(TGT_FS "palladio_fs")
 set(TGT_CODEC "palladio_codec")
 set(TGT_TEST "palladio_test")
+set(TGT_PACKAGE "palladio_package")
 
 set(PRT_RELATIVE_EXTENSION_PATH "prtlib")
 set(HOUDINI_RELATIVE_DSO_PATH "dso")
