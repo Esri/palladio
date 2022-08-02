@@ -17,8 +17,10 @@
 #include "ResolveMapCache.h"
 #include "LogHandler.h"
 
-#include "FS/FS_Reader.h"
-#include "UT/UT_IStream.h"
+#ifndef PLD_TEST_EXPORTS
+#	include "FS/FS_Reader.h"
+#	include "UT/UT_IStream.h"
+#endif
 
 namespace {
 
@@ -36,23 +38,27 @@ bool isEmbedded(const std::filesystem::path& p) {
 	return startsWithAnyOf(p.string(), EMBEDDED_SCHEMAS);
 }
 
+#ifndef PLD_TEST_EXPORTS
 UT_StringHolder getFSReaderFilename(const FS_Reader& fsr) {
-#if HOUDINI_VERSION_MAJOR > 16
+#	if HOUDINI_VERSION_MAJOR > 16
 	return fsr.getFilename();
-#else
+#	else
 	UT_String fsrFileName;
 	fsr.getFilename(fsrFileName);
 	return UT_StringHolder(fsrFileName);
-#endif
+#	endif
 }
+#endif
 
 std::filesystem::file_time_type getFileModificationTime(const std::filesystem::path& p) {
 	auto actualPath = p;
 	if (isEmbedded(p)) {
+#ifndef PLD_TEST_EXPORTS
 		FS_Reader fsr(p.string().c_str());
 		if (!fsr.isGood())
 			return INVALID_TIMESTAMP;
 		actualPath = getFSReaderFilename(fsr).toStdString();
+#endif
 	}
 	const bool pathExists = std::filesystem::exists(actualPath);
 	const bool isRegularFile = std::filesystem::is_regular_file(actualPath);
@@ -77,6 +83,7 @@ struct PathRemover {
 };
 using ScopedPath = std::unique_ptr<std::filesystem::path, PathRemover>;
 
+#ifndef PLD_TEST_EXPORTS
 ScopedPath resolveFromHDA(const std::filesystem::path& p) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
 
@@ -86,8 +93,7 @@ ScopedPath resolveFromHDA(const std::filesystem::path& p) {
 
 	auto resName = p.filename().string();
 	std::replace(resName.begin(), resName.end(), '?', '_'); // TODO: generalize
-	ScopedPath extractedResource(
-	        new std::filesystem::path(std::filesystem::temp_directory_path() / resName));
+	ScopedPath extractedResource(new std::filesystem::path(std::filesystem::temp_directory_path() / resName));
 
 	if (fsr.isGood()) {
 		UT_WorkBuffer wb;
@@ -99,9 +105,9 @@ ScopedPath resolveFromHDA(const std::filesystem::path& p) {
 
 		LOG_DBG << "Extracted embedded resource into " << *extractedResource;
 	}
-
 	return extractedResource;
 }
+#endif
 
 } // namespace
 
@@ -143,7 +149,9 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const std::filesystem::path& 
 		ScopedPath extractedPath; // if set, will resolve the extracted RPK from HDA
 		const auto actualRPK = [&extractedPath](const std::filesystem::path& p) {
 			if (isEmbedded(p)) {
+#ifndef PLD_TEST_EXPORTS
 				extractedPath = resolveFromHDA(p);
+#endif
 				return *extractedPath;
 			}
 			else
