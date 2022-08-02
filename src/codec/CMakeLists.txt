@@ -2,46 +2,41 @@ cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0015 NEW)
 
 
-### project definition
-
-project(palladio_codec CXX)
-
-
 ### build target
 
-add_library(${PROJECT_NAME} SHARED
-		CodecMain.cpp
-		encoder/HoudiniEncoder.cpp
-		encoder/HoudiniCallbacks.h)
+add_library(${TGT_CODEC} SHARED
+        CodecMain.cpp
+        encoder/HoudiniEncoder.cpp
+        encoder/HoudiniCallbacks.h)
 
-add_toolchain_definition(${PROJECT_NAME})
+pld_set_common_compiler_flags(${TGT_CODEC})
 
-if(PLD_LINUX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
-	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -flto)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
-	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O3 -ggdb -pg)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE -DNDEBUG)
-	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-		target_compile_options(${PROJECT_NAME} PRIVATE -O0 -ggdb -pg)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE -DDEBUG)
-	endif()
+if (PLD_LINUX)
+    target_compile_options(${TGT_CODEC} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        target_compile_options(${TGT_CODEC} PRIVATE -O3 -flto)
+        target_compile_definitions(${TGT_CODEC} PRIVATE -DNDEBUG)
+    elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+        target_compile_options(${TGT_CODEC} PRIVATE -O3 -ggdb -pg)
+        target_compile_definitions(${TGT_CODEC} PRIVATE -DNDEBUG)
+    elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        target_compile_options(${TGT_CODEC} PRIVATE -O0 -ggdb -pg)
+        target_compile_definitions(${TGT_CODEC} PRIVATE -DDEBUG)
+    endif ()
 
-elseif(PLD_WINDOWS)
-	target_compile_options(${PROJECT_NAME} PRIVATE
-			/bigobj /GR /EHsc /MD)
-endif()
+elseif (PLD_WINDOWS)
+    target_compile_options(${TGT_CODEC} PRIVATE
+            /bigobj /GR /EHsc /MD)
+endif ()
 
 
 ### dependencies
 
-pld_add_dependency_prt(${PROJECT_NAME})
+pld_add_dependency_prt(${TGT_CODEC})
 
 
 ### install target
 
-install(TARGETS ${PROJECT_NAME}
-	RUNTIME DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}"
-	LIBRARY DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
+install(TARGETS ${TGT_CODEC}
+        RUNTIME DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}"
+        LIBRARY DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
