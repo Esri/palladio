@@ -160,6 +160,55 @@ TEST_CASE("tokenize string at first token", "[utils]") {
 	}
 }
 
+TEST_CASE("tokenize string at all tokens", "[utils]") {
+	auto testCall = [](const std::wstring& input) {
+		constexpr wchar_t DELIM = L'$';
+		return tokenizeAll(input, DELIM);
+	};
+
+	using Catch::Matchers::Equals;
+
+	SECTION("one token") {
+		auto sections = testCall(L"foo$bar");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar"}));
+	}
+
+	SECTION("two tokens") {
+		auto sections = testCall(L"foo$bar$baz");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
+	}
+
+	SECTION("no token") {
+		auto sections = testCall(L"foo");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("edge case 1") {
+		auto sections = testCall(L"foo$");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("edge case 2") {
+		auto sections = testCall(L"$foo");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("token only") {
+		auto sections = testCall(L"$");
+		CHECK(sections.empty());
+	}
+
+	SECTION("two consecutive tokens") {
+		auto sections = testCall(L"foo$bar$$baz");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
+	}
+
+	SECTION("empty") {
+		auto sections = testCall(L"");
+		CHECK(sections.empty());
+	}
+}
+
 // -- encoder test cases
 
 TEST_CASE("serialize basic mesh") {
@@ -542,7 +591,7 @@ TEST_CASE("serialize two meshes where one does not have uvs (issue 108)") {
 
 TEST_CASE("generate two cubes with two uv sets") {
 	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj",
-	                                                                         testDataPath / "quad1.obj"};
+	                                                                testDataPath / "quad1.obj"};
 
 	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0]),
 	                                                    toFileURI(initialShapeSources[1])};
