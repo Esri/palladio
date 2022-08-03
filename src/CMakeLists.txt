@@ -55,3 +55,4 @@ pld_setup_packaging()
 
 enable_testing()
 add_subdirectory(test EXCLUDE_FROM_ALL)
+add_dependencies(${TGT_TEST} ${TGT_CODEC})

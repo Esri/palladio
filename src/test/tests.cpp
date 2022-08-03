@@ -47,12 +47,7 @@ void compareReversed(const std::vector<T>& a, const std::vector<T>& b) {
 
 int main(int argc, char* argv[]) {
 	assert(!prtCtx);
-
-	const std::vector<std::filesystem::path> addExtDirs = {
-	        //"../lib", // adapt to default prt dir layout (core is in bin subdir)
-	        HOUDINI_CODEC_PATH // set to absolute path to houdini encoder lib via cmake
-	};
-
+	const std::vector<std::filesystem::path> addExtDirs = {TEST_RUN_PRT_EXT_DIR, TEST_RUN_CODEC_EXT_DIR};
 	prtCtx.reset(new PRTContext(addExtDirs));
 	int result = Catch::Session().run(argc, argv);
 	prtCtx.reset();
@@ -608,7 +603,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	// TODO: also check actual coordinates etc
 
 	{
-		const CallbackResult& cr =*tc.results[0];
+		const CallbackResult& cr = *tc.results[0];
 		CHECK(cr.name == L"shape0");
 
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
