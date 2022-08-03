@@ -111,52 +111,50 @@ TEST_CASE("replace chars not in set", "[utils]") {
 	}
 }
 
-TEST_CASE("separate fully qualified name into style and name", "[utils]") {
-	auto testCall = [](const std::wstring& input, std::wstring& style, std::wstring& name) {
+TEST_CASE("tokenize string at first token", "[utils]") {
+	auto testCall = [](const std::wstring& input) {
 		constexpr wchar_t DELIM = L'$';
-		separate(input, style, name, DELIM);
+		return tokenizeFirst(input, DELIM);
 	};
 
-	std::wstring style, name;
-
 	SECTION("default case") {
-		testCall(L"foo$bar", style, name);
+		auto [style, name] = testCall(L"foo$bar");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar");
 	}
 
 	SECTION("no style") {
-		testCall(L"foo", style, name);
+		auto [style, name] = testCall(L"foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("edge case 1") {
-		testCall(L"foo$", style, name);
+		auto [style, name] = testCall(L"foo$");
 		CHECK(style == L"foo");
 		CHECK(name.empty());
 	}
 
 	SECTION("edge case 2") {
-		testCall(L"$foo", style, name);
+		auto [style, name] = testCall(L"$foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("separator only") {
-		testCall(L"$", style, name);
+		auto [style, name] = testCall(L"$");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("empty") {
-		testCall(L"", style, name);
+		auto [style, name] = testCall(L"");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("two separators") {
-		testCall(L"foo$bar$baz", style, name);
+		auto [style, name] = testCall(L"foo$bar$baz");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar$baz");
 	}

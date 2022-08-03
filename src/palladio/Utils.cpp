@@ -94,24 +94,20 @@ std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedStri
 	return out;
 }
 
-void separate(const std::wstring& fullyQualifiedAttrName, std::wstring& style, std::wstring& attrName, wchar_t delimiter) {
-	if (fullyQualifiedAttrName.length() <= 1)
-		return;
-
-	const auto p = fullyQualifiedAttrName.find_first_of(delimiter);
-	if (p == std::wstring::npos) {
-		attrName.assign(fullyQualifiedAttrName);
-	}
-	else if (p > 0 && p < fullyQualifiedAttrName.length() - 1) {
-		style.assign(fullyQualifiedAttrName.substr(0, p));
-		attrName.assign(fullyQualifiedAttrName.substr(p + 1));
+std::pair<std::wstring, std::wstring> tokenizeFirst(const std::wstring& input, wchar_t token) {
+	const auto p = input.find_first_of(token);
+	if (p == std::wstring::npos)
+		return {{}, input};
+	else if (p > 0 && p < input.length() - 1) {
+		return {input.substr(0, p), input.substr(p + 1)};
 	}
 	else if (p == 0) { // empty style
-		attrName = fullyQualifiedAttrName.substr(1);
+		return {{}, input.substr(1)};
 	}
-	else if (p == fullyQualifiedAttrName.length() - 1) { // empty name
-		style = fullyQualifiedAttrName.substr(0, p);
+	else if (p == input.length() - 1) { // empty name
+		return {input.substr(0, p), {}};
 	}
+	return {input, {}};
 }
 
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {

@@ -135,8 +135,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 
 	// -- get style/name from start rule
 	auto getStartRuleComponents = [](const std::wstring& fqRule) -> std::pair<std::wstring, std::wstring> {
-		std::wstring style, name;
-		separate(fqRule, style, name, NameConversion::STYLE_SEPARATOR);
+		auto [style, name] = tokenizeFirst(fqRule, NameConversion::STYLE_SEPARATOR);
 		return {style, name};
 	};
 	const auto startRuleComponents = getStartRuleComponents(fqStartRule);
@@ -248,8 +247,7 @@ void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_
 }
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
-	std::wstring style, name;
-	separate(re->getName(), style, name, NameConversion::STYLE_SEPARATOR);
+	auto [style, name] = tokenizeFirst(re->getName(), NameConversion::STYLE_SEPARATOR);
 	return toOSNarrowFromUTF16(style);
 }
 
