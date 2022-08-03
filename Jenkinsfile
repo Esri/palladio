@@ -22,6 +22,9 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 @Field final String REPO         = 'https://github.com/Esri/palladio.git'
 @Field final String SOURCE       = "palladio.git/src"
 @Field final String BUILD_TARGET = 'package'
+@Field final String SOURCE_STASH = 'palladio-src'
+
+@Field final List CONFIGS_CHECKOUT = [ [ ba: psl.BA_CHECKOUT ] ]
 
 @Field final List CONFIGS_HOUDINI_185 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
@@ -43,8 +46,12 @@ properties([ disableConcurrentBuilds() ])
 
 // -- PIPELINE
 
-stage('palladio') {
-	cepl.runParallel(taskGenPalladio())
+stage('prepare'){
+	cepl.runParallel(taskGenCheckout())
+}
+
+stage('build') {
+	cepl.runParallel(taskGenBuild())
 }
 
 papl.finalizeRun('palladio', env.BRANCH_NAME)
@@ -52,7 +59,13 @@ papl.finalizeRun('palladio', env.BRANCH_NAME)
 
 // -- TASK GENERATORS
 
-Map taskGenPalladio() {
+Map taskGenCheckout(){
+	Map tasks = [:]
+	tasks << cepl.generateTasks('pld-src', this.&taskSourceCheckout, CONFIGS_CHECKOUT)
+	return tasks
+}
+
+Map taskGenBuild() {
     Map tasks = [:]
 	tasks << cepl.generateTasks('pld-hdn18.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_185)
 	tasks << cepl.generateTasks('pld-hdn19.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_190)
@@ -62,16 +75,24 @@ Map taskGenPalladio() {
 
 // -- TASK BUILDERS
 
-def taskBuildPalladio(cfg) {
-	List deps = [] // empty dependencies = by default use conan packages
+def taskSourceCheckout(cfg) {
+	cepl.cleanCurrentDir()
+	papl.checkout(REPO, env.BRANCH_NAME)
+	stash(name: SOURCE_STASH)
+}
 
+def taskBuildPalladio(cfg) {
 	List defs = [
 		[ key: 'HOUDINI_USER_PATH',   val: "${env.WORKSPACE}/install" ],
 		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
 
-	papl.buildConfig(REPO, env.BRANCH_NAME, SOURCE, BUILD_TARGET, cfg, deps, defs)
+	cepl.cleanCurrentDir()
+	unstash(name: SOURCE_STASH)
+	dir(path: 'build') {
+		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+	}
 
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
