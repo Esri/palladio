@@ -45,8 +45,6 @@ add_subdirectory(palladio)
 add_subdirectory(palladio_fs)
 add_dependencies(${TGT_PALLADIO} ${TGT_CODEC} ${TGT_FS})
 
-add_subdirectory(test EXCLUDE_FROM_ALL)
-
 
 ### setup package target
 
@@ -56,4 +54,4 @@ pld_setup_packaging()
 ### setup test target
 
 enable_testing()
-add_test(NAME palladio_test COMMAND palladio_test)
+add_subdirectory(test EXCLUDE_FROM_ALL)

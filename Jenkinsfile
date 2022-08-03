@@ -26,6 +26,11 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
 @Field final List CONFIGS_CHECKOUT = [ [ ba: psl.BA_CHECKOUT ] ]
 
+@Field final List CONFIGS_TEST = [
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93,  cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ],
+]
+
 @Field final List CONFIGS_HOUDINI_185 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
@@ -50,6 +55,10 @@ stage('prepare'){
 	cepl.runParallel(taskGenCheckout())
 }
 
+stage('test') {
+	cepl.runParallel(taskGenTest())
+}
+
 stage('build') {
 	cepl.runParallel(taskGenBuild())
 }
@@ -63,6 +72,12 @@ Map taskGenCheckout(){
 	Map tasks = [:]
 	tasks << cepl.generateTasks('pld-src', this.&taskSourceCheckout, CONFIGS_CHECKOUT)
 	return tasks
+}
+
+Map taskGenTest() {
+    Map tasks = [:]
+	tasks << cepl.generateTasks('pld-test', this.&taskRunTest, CONFIGS_TEST)
+	return tasks;
 }
 
 Map taskGenBuild() {
@@ -79,6 +94,15 @@ def taskSourceCheckout(cfg) {
 	cepl.cleanCurrentDir()
 	papl.checkout(REPO, env.BRANCH_NAME)
 	stash(name: SOURCE_STASH)
+}
+
+def taskRunTest(cfg) {
+	cepl.cleanCurrentDir()
+	unstash(name: SOURCE_STASH)
+	dir(path: 'build') {
+		papl.runCMakeBuild(SOURCE, 'build_and_run_tests', cfg, [])
+	}
+	junit('build/test/palladio_test_report.xml')
 }
 
 def taskBuildPalladio(cfg) {
