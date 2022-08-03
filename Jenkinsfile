@@ -4,37 +4,82 @@
 
 import groovy.transform.Field
 
-
-// -- PIPELINE LIBRARIES
-
 @Library('psl')
-import com.esri.zrh.jenkins.PipelineSupportLibrary 
+import com.esri.zrh.jenkins.PipelineSupportLibrary
+import com.esri.zrh.jenkins.JenkinsTools
+import com.esri.zrh.jenkins.ce.CityEnginePipelineLibrary
+import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
+import com.esri.zrh.jenkins.PslFactory
+import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
-@Field def psl = new PipelineSupportLibrary(this)
+@Field def psl = PslFactory.create(this, UploadTrackingPsl.ID)
+@Field def cepl = new CityEnginePipelineLibrary(this, psl)
+@Field def papl = new PrtAppPipelineLibrary(cepl)
+
+
+// -- GLOBAL DEFINITIONS
+
+@Field final String REPO         = 'https://github.com/Esri/palladio.git'
+@Field final String SOURCE       = "palladio.git/src"
+@Field final String BUILD_TARGET = 'package'
+
+@Field final List CONFIGS_HOUDINI_185 = [
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '18.5' ],
+]
+
+@Field final List CONFIGS_HOUDINI_190 = [
+	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.0' ],
+	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.0' ],
+]
 
 
 // -- SETUP
 
-properties([
-	parameters([
-		string(name: 'PRM_CESDK_BRANCH', defaultValue: '')
-	]),
-	disableConcurrentBuilds()
-])
-
 psl.runsHere('production')
 env.PIPELINE_ARCHIVING_ALLOWED = "true"
+properties([ disableConcurrentBuilds() ])
 
 
-// -- LOAD & RUN PIPELINE
-
-def impl
-
-node {
-	checkout scm
-	impl = load('pipeline.groovy')
-}
+// -- PIPELINE
 
 stage('palladio') {
-	impl.pipeline()
+	cepl.runParallel(taskGenPalladio())
+}
+
+papl.finalizeRun('palladio', env.BRANCH_NAME)
+
+
+// -- TASK GENERATORS
+
+Map taskGenPalladio() {
+    Map tasks = [:]
+	tasks << cepl.generateTasks('pld-hdn18.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_185)
+	tasks << cepl.generateTasks('pld-hdn19.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_190)
+	return tasks;
+}
+
+
+// -- TASK BUILDERS
+
+def taskBuildPalladio(cfg) {
+	List deps = [] // empty dependencies = by default use conan packages
+
+	List defs = [
+		[ key: 'HOUDINI_USER_PATH',   val: "${env.WORKSPACE}/install" ],
+		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
+		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
+	]
+
+	papl.buildConfig(REPO, env.BRANCH_NAME, SOURCE, BUILD_TARGET, cfg, deps, defs)
+
+	def versionExtractor = { p ->
+		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
+		return vers[0][1]
+	}
+	def classifierExtractor = { p ->
+		def cls = (p =~ /.*palladio-.*\.(hdn.*)-(windows|linux)\..*/)
+		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
+	}
+	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
 }
