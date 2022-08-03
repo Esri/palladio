@@ -19,7 +19,7 @@ pld_set_prtx_compiler_flags(${TGT_TEST}) # we directly link to codecs code
 target_compile_definitions(${TGT_TEST} PRIVATE
         -DPLD_TEST_EXPORTS
         -DHOUDINI_CODEC_PATH="$<TARGET_FILE:palladio_codec>"
-        -DTEST_DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
+        -DTEST_DATA_PATH="${CMAKE_CURRENT_LIST_DIR}/data")
 
 target_include_directories(${TGT_TEST} PRIVATE
         ${TGT_PALLADIO_SOURCE_DIR}
