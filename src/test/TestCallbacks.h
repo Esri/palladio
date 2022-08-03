@@ -40,12 +40,17 @@ struct CallbackResult {
 	std::vector<AttributeMapUPtr> materials;
 	std::map<int32_t, AttributeMapUPtr> attrsPerShapeID;
 
+	CallbackResult() = delete;
 	explicit CallbackResult(size_t uvSets) : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) {}
+	CallbackResult(const CallbackResult&) = delete;
+	CallbackResult(CallbackResult&&) = delete;
+	CallbackResult& operator= (const CallbackResult&) = delete;
+	CallbackResult& operator= (CallbackResult&&) = delete;
 };
 
 class TestCallbacks : public HoudiniCallbacks {
 public:
-	std::vector<CallbackResult> results;
+	std::vector<std::unique_ptr<CallbackResult>> results;
 	std::map<int32_t, AttributeMapBuilderUPtr> attrs;
 
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
@@ -54,8 +59,8 @@ public:
 	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
 	         uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize, const prt::AttributeMap** materials,
 	         const prt::AttributeMap** reports, const int32_t* shapeIDs) override {
-		results.emplace_back(CallbackResult(uvSets));
-		auto& cr = results.back();
+		results.emplace_back(std::make_unique<CallbackResult>(uvSets));
+		auto& cr = *results.back();
 
 		cr.name = name;
 		cr.vtx.assign(vtx, vtx + vtxSize);

@@ -25,8 +25,9 @@ target_include_directories(${TGT_TEST} PRIVATE
         ${TGT_PALLADIO_SOURCE_DIR}
         ${TGT_CODEC_SOURCE_DIR})
 
-target_link_libraries(${TGT_TEST} PRIVATE
-        dl)
+if (PLD_LINUX)
+    target_link_libraries(${TGT_TEST} PRIVATE dl)
+endif ()
 
 pld_add_dependency_catch2(${TGT_TEST})
 pld_add_dependency_prt(${TGT_TEST})

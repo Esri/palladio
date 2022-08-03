@@ -608,7 +608,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	// TODO: also check actual coordinates etc
 
 	{
-		const CallbackResult& cr = tc.results[0];
+		const CallbackResult& cr =*tc.results[0];
 		CHECK(cr.name == L"shape0");
 
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
@@ -634,7 +634,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	}
 
 	{
-		const CallbackResult& cr = tc.results[1];
+		const CallbackResult& cr = *tc.results[1];
 		CHECK(cr.name == L"shape1");
 
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
@@ -677,7 +677,7 @@ TEST_CASE("generate with generic attributes") {
 	generate(tc, prtCtx, rpkPath, ruleFile, initialShapeURIs, startRules);
 
 	REQUIRE(tc.results.size() == 1);
-	const CallbackResult& cr = tc.results[0];
+	const CallbackResult& cr = *tc.results[0];
 
 	const std::vector<uint32_t> faceRangesExp = {0, 6, 12};
 	CHECK(cr.faceRanges == faceRangesExp);
