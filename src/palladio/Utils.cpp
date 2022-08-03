@@ -69,14 +69,14 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 
 } // namespace
 
-std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedString, wchar_t delimiter) {
+std::vector<std::wstring> tokenizeAll(const std::wstring& input, wchar_t token) {
 	std::vector<std::wstring> out;
 
-	std::wstring_view delimiterStringView(commaSeparatedString);
+	std::wstring_view delimiterStringView(input);
 	size_t startIdx = 0;
 
 	while (startIdx != std::wstring::npos) {
-		const size_t endIdx = delimiterStringView.find_first_of(delimiter, startIdx);
+		const size_t endIdx = delimiterStringView.find_first_of(token, startIdx);
 		std::wstring_view tokenView;
 
 		if (endIdx == std::wstring::npos) {
@@ -120,7 +120,7 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
-	const std::vector<std::wstring>& cgbVec = tokenizeStringToVector(cgbList, L';');
+	const std::vector<std::wstring>& cgbVec = tokenizeAll(cgbList, L';');
 
 	for (const std::wstring& token : cgbVec) {
 		LOG_DBG << "token: '" << token << "'";
