@@ -12,6 +12,12 @@ endif ()
 
 ### toolchain configuration
 
+set(CMAKE_CXX_FLAGS "")
+set(CMAKE_CXX_FLAGS_RELEASE "")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "")
+set(CMAKE_CXX_FLAGS_DEBUG "")
+
 function(pld_set_common_compiler_flags TGT)
     set_target_properties(${TGT} PROPERTIES CXX_STANDARD 17)
     if (PLD_WINDOWS)
