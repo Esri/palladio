@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "AnnotationParsing.h"
+#include "NodeSpareParameter.h"
 #include "PRTContext.h"
 #include "ShapeConverter.h"
 
@@ -38,10 +40,10 @@ public:
 		return mShapeConverter->mDefaultMainAttributes.mStyle;
 	}
 
-	void updateDefaultCGAAttributes(const ShapeData& shapeData);
+	void updateCGAAttributes(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+	                                const PRTContextUPtr& prtCtx, std::string& errors);
 	void updatePrimitiveAttributes(GU_Detail* detail);
-	void buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-	                        const PRTContextUPtr& prtCtx, std::string& errors);
+	void buildUI();
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 	bool load(UT_IStream& is, const char* extension, const char* path) override;
 
@@ -54,7 +56,5 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using CGAAttributeValueType = std::variant<std::wstring, double, bool>;
-	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
-	CGAAttributeValueMap mDefaultCGAAttributes;
+	NodeSpareParameter::SpareParmVec mSpareParms;
 };
