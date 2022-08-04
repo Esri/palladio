@@ -133,8 +133,6 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 									const std::string currEnumString = choiceNames[choiceIdx].getToken();
 									if (currEnumString == stringValue) {
 										node->setInt(attributeName, 0, time, choiceIdx);
-										parm.overwriteDefaults(time);
-										parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 										break;
 									}
 								}
@@ -148,8 +146,6 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							const int intValue = static_cast<int>(std::get<bool>(it->second));
 
 							node->setInt(attributeName, 0, time, intValue);
-							parm.overwriteDefaults(time);
-							parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 							break;
 						}
 					}
@@ -162,8 +158,6 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					const double floatValue = std::get<double>(it->second);
 
 					node->setFloat(attributeName, 0, time, floatValue);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
@@ -173,13 +167,23 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
 
 					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				default: {
 					// ignore all other types of parameters
-					break;
+					continue;
+				}
+			}
+			parm.overwriteDefaults(time);
+			if (!parm.isFactoryDefaultUI()) {
+				PRM_Template* templatePtr = parm.getTemplatePtr();
+				PRM_Default* factoryDefaults = templatePtr->getFactoryDefaults();
+				
+				for (size_t idx = 0; idx < templatePtr->getVectorSize(); ++idx) {
+					PRM_Default* defaultValue = templatePtr->getDefault(idx);
+					
+					factoryDefaults[idx].set(defaultValue->getFloat(), defaultValue->getString(),
+					                         defaultValue->getStringMeaning());
 				}
 			}
 		}
