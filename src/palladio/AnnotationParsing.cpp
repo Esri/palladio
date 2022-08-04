@@ -255,17 +255,30 @@ AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attribute
 			        (((currAttributeTrait == AttributeTrait::PERCENT) || (currAttributeTrait == AttributeTrait::ANGLE)) &&
 			         attributeTrait == AttributeTrait::RANGE);
 
-			if (currAttributeTrait == AttributeTrait::NONE || skipOverride)
+			if (currAttributeTrait == AttributeTrait::NONE || skipOverride) {
+				if (annotation == nullptr || attributeTrait == AttributeTrait::NONE) {
+					annotation = currAnnotation;
+					attributeTrait = currAttributeTrait;
+				}
 				continue;
-
-			if (currAttributeTrait == AttributeTrait::DESCRIPTION)
+			}
+			
+			if (currAttributeTrait == AttributeTrait::DESCRIPTION) {
 				description = parseDescriptionAnnotation(*currAnnotation);
+				if (annotation == nullptr || attributeTrait == AttributeTrait::DESCRIPTION) {
+					annotation = currAnnotation;
+					attributeTrait = currAttributeTrait;
+				}
+			}	
 			else {
 				annotation = currAnnotation;
 				attributeTrait = currAttributeTrait;
 			}
 		}
 	}
+	if (annotation == nullptr)
+		throw std::invalid_argument("attribute not found in ruleFileInfo");
+
 	return AttributeAnnotationInfo(*annotation, attributeTrait, description);
 }
 } // namespace AnnotationParsing
