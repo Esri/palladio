@@ -104,16 +104,55 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if ((currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
-					    (it->second.index() != 2))
-						continue;
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							std::string stringValue;
 
-					const int intValue = static_cast<int>(std::get<bool>(it->second));
+							switch (it->second.index()) {
+								case 0: {
+									stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
+									break;
+								}
+								case 1: {
+									stringValue = std::to_string(std::get<double>(it->second));
+									break;
+								}
+								case 2: {
+									stringValue = std::to_string(std::get<bool>(it->second));
+									break;
+								}
+								default:
+									continue;
+							}
 
-					node->setInt(attributeName, 0, time, intValue);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices != nullptr) {
+								const PRM_Name* choiceNames;
+								choices->getChoiceNames(choiceNames);
+								for (uint32_t choiceIdx = 0; choiceIdx < choices->getSize(&parm); ++choiceIdx) {
+									const std::string currEnumString = choiceNames[choiceIdx].getToken();
+									if (currEnumString == stringValue) {
+										node->setInt(attributeName, 0, time, choiceIdx);
+										parm.overwriteDefaults(time);
+										parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+						case PRM_Type::PRM_ORD_TOGGLE: {
+							if (it->second.index() != 2)
+								continue;
+
+							const int intValue = static_cast<int>(std::get<bool>(it->second));
+
+							node->setInt(attributeName, 0, time, intValue);
+							parm.overwriteDefaults(time);
+							parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+							break;
+						}
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
@@ -168,12 +207,34 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 						case PRM_Type::PRM_ORD_NONE: {
 							const int intValue = node->evalInt(&parm, 0, time);
 							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
-							if (choices != nullptr) {
-								UT_String result;
-								if (choices->tokenFromIndex(result, intValue)) {
+							if (choices == nullptr)
+								continue;
+							UT_String result;
+							if (!choices->tokenFromIndex(result, intValue))
+								continue;
+
+							auto it = node->mDefaultCGAAttributes.find(ruleAttrName);
+							if (it == node->mDefaultCGAAttributes.end())
+								continue;
+
+							switch (it->second.index()) {
+								case 0: {
 									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
 									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+									break;
 								}
+								case 1: {
+									const double floatValue = result.toFloat();
+									amb->setFloat(ruleAttrName.c_str(), floatValue);
+									break;
+								}
+								case 2: {
+									const bool boolValue = static_cast<bool>(result.toInt());
+									amb->setFloat(ruleAttrName.c_str(), boolValue);
+									break;
+								}
+								default:
+									break;
 							}
 							break;
 						}
