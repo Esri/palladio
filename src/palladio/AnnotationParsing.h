@@ -41,6 +41,11 @@ struct AttributeAnnotationInfo {
 
 	AttributeAnnotationInfo(const prt::Annotation& annotation, AttributeTrait attributeTrait, const std::wstring& description)
 	    : mAnnotation(annotation), mAttributeTrait(attributeTrait), mDescription(description) {}
+	AttributeAnnotationInfo() = delete;
+	AttributeAnnotationInfo(const AttributeAnnotationInfo&) = delete;
+	AttributeAnnotationInfo(AttributeAnnotationInfo&&) = delete;
+	AttributeAnnotationInfo& operator=(const AttributeAnnotationInfo&) = delete;
+	AttributeAnnotationInfo& operator=(AttributeAnnotationInfo&&) = delete;
 };
 
 ColorAnnotation parseColor(const std::wstring colorString);
