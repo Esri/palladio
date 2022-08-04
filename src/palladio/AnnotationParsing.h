@@ -35,22 +35,25 @@ using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
 struct AttributeAnnotationInfo {
-	const prt::Annotation* mAnnotation;
+	const prt::Annotation& mAnnotation;
 	AttributeTrait mAttributeTrait;
 	std::wstring mDescription;
+
+	AttributeAnnotationInfo(const prt::Annotation& annotation, AttributeTrait attributeTrait, const std::wstring& description)
+	    : mAnnotation(annotation), mAttributeTrait(attributeTrait), mDescription(description) {}
 };
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
 std::wstring getColorString(const std::array<float, 3>& rgb);
 
-RangeAnnotation parseRangeAnnotation(const prt::Annotation* mAnnotation);
+RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation);
 
-EnumAnnotation parseEnumAnnotation(const prt::Annotation* mAnnotation);
+EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation);
 
-FileAnnotation parseFileAnnotation(const prt::Annotation* mAnnotation);
+FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
-AttributeTrait detectAttributeTrait(const prt::Annotation* mAnnotation);
+AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
 AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info);
 }
