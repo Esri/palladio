@@ -152,12 +152,29 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					if (it->second.index() != 1)
-						continue;
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							if (it->second.index() != 0)
+								continue;
 
-					const double floatValue = std::get<double>(it->second);
+							const std::wstring colorString = std::get<std::wstring>(it->second);
+							const auto color = AnnotationParsing::parseColor(colorString);
 
-					node->setFloat(attributeName, 0, time, floatValue);
+							node->setFloat(attributeName, 0, time, color[0]);
+							node->setFloat(attributeName, 1, time, color[1]);
+							node->setFloat(attributeName, 2, time, color[2]);
+							break;
+						}
+						default: {
+							if (it->second.index() != 1)
+								continue;
+
+							const double floatValue = std::get<double>(it->second);
+
+							node->setFloat(attributeName, 0, time, floatValue);
+							break;
+						}
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
