@@ -18,7 +18,7 @@
 
 #include "prt/API.h"
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 namespace {
 
@@ -35,6 +35,7 @@ void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesy
 	REQUIRE(initialShapeURIs.size() == startRules.size());
 
 	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
+	REQUIRE(rpkRM);
 
 	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
 	getCGBs(rpkRM, cgbs);

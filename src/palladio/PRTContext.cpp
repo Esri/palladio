@@ -17,18 +17,28 @@
 #include "PRTContext.h"
 #include "LogHandler.h"
 #include "PalladioMain.h"
-#include "SOPAssign.h"
+
+#ifndef PLD_TEST_EXPORTS
+#	include "SOPAssign.h"
+
+#	include "OP/OP_Director.h"
+#	include "OP/OP_Network.h"
+#	include "OP/OP_Node.h"
+#endif
 
 #if PRT_VERSION_MAJOR < 2
 #	include "prt/FlexLicParams.h"
 #endif
 
-#include "OP/OP_Director.h"
-#include "OP/OP_Network.h"
-#include "OP/OP_Node.h"
-
+#include <algorithm>
 #include <mutex>
 #include <thread>
+
+#ifdef PLD_LINUX
+#	include <unistd.h>
+#elif defined(PLD_WINDOWS)
+#	include <process.h>
+#endif
 
 namespace {
 
@@ -93,6 +103,7 @@ uint32_t getNumCores() {
 /**
  * schedule recook of all assign nodes with matching rpk
  */
+#ifndef PLD_TEST_EXPORTS
 void scheduleRecook(const std::filesystem::path& rpk) {
 	auto visit = [](OP_Node& n, void* data) -> bool {
 		if (n.getOperator()->getName().equal(OP_PLD_ASSIGN)) {
@@ -112,6 +123,7 @@ void scheduleRecook(const std::filesystem::path& rpk) {
 		objMgr->traverseChildren(visit, const_cast<void*>(reinterpret_cast<const void*>(&rpk)), true);
 	}
 }
+#endif
 
 std::filesystem::path getProcessTempDir() {
 	std::error_code ec;
@@ -200,7 +212,9 @@ ResolveMapSPtr PRTContext::getResolveMap(const std::filesystem::path& rpk) {
 	auto lookupResult = mResolveMapCache->get(rpk.string());
 	if (lookupResult.second == ResolveMapCache::CacheStatus::MISS) {
 		mPRTCache->flushAll();
+#ifndef PLD_TEST_EXPORTS
 		scheduleRecook(rpk);
+#endif
 	}
 	return lookupResult.first;
 }

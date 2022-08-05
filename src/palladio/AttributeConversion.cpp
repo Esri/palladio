@@ -545,24 +545,4 @@ std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& attrNa
 	return addStyle(toUTF16FromOSNarrow(ruleAttr.toStdString()), style);
 }
 
-void separate(const std::wstring& fullyQualifiedAttrName, std::wstring& style, std::wstring& attrName) {
-	if (fullyQualifiedAttrName.length() <= 1)
-		return;
-
-	const auto p = fullyQualifiedAttrName.find_first_of(STYLE_SEPARATOR);
-	if (p == std::wstring::npos) {
-		attrName.assign(fullyQualifiedAttrName);
-	}
-	else if (p > 0 && p < fullyQualifiedAttrName.length() - 1) {
-		style.assign(fullyQualifiedAttrName.substr(0, p));
-		attrName.assign(fullyQualifiedAttrName.substr(p + 1));
-	}
-	else if (p == 0) { // empty style
-		attrName = fullyQualifiedAttrName.substr(1);
-	}
-	else if (p == fullyQualifiedAttrName.length() - 1) { // empty name
-		style = fullyQualifiedAttrName.substr(0, p);
-	}
-}
-
 } // namespace NameConversion

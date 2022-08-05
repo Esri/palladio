@@ -10,9 +10,9 @@ add_library(${TGT_CODEC} SHARED
         encoder/HoudiniCallbacks.h)
 
 pld_set_common_compiler_flags(${TGT_CODEC})
+pld_set_prtx_compiler_flags(${TGT_CODEC})
 
 if (PLD_LINUX)
-    target_compile_options(${TGT_CODEC} PRIVATE -march=nocona -D_GLIBCXX_USE_CXX11_ABI=0)
     if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
         target_compile_options(${TGT_CODEC} PRIVATE -O3 -flto)
         target_compile_definitions(${TGT_CODEC} PRIVATE -DNDEBUG)
@@ -24,9 +24,6 @@ if (PLD_LINUX)
         target_compile_definitions(${TGT_CODEC} PRIVATE -DDEBUG)
     endif ()
 
-elseif (PLD_WINDOWS)
-    target_compile_options(${TGT_CODEC} PRIVATE
-            /bigobj /GR /EHsc /MD)
 endif ()
 
 

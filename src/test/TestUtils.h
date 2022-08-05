@@ -18,12 +18,14 @@
 
 #include "TestCallbacks.h"
 
-#include "../palladio/PRTContext.h"
-#include "../palladio/Utils.h"
+#include "PRTContext.h"
+#include "Utils.h"
 
+#include <algorithm>
+#include <cassert>
 #include <filesystem>
-#include <vector>
 #include <string>
+#include <vector>
 
 struct GenerateData { // TODO: could use ShapeData from production code
 	InitialShapeBuilderVector mInitialShapeBuilders;

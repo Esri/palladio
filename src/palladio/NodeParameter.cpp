@@ -69,8 +69,7 @@ constexpr const int NOT_CHANGED = 0;
 constexpr const int CHANGED = 1;
 
 std::string extractStyle(const prt::RuleFileInfo::Entry* re) {
-	std::wstring style, name;
-	NameConversion::separate(re->getName(), style, name);
+	auto [style, name] = tokenizeFirst(re->getName(), NameConversion::STYLE_SEPARATOR);
 	return toOSNarrowFromUTF16(style);
 }
 
@@ -141,6 +140,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	LOG_DBG << "cgbKey = " << cgbKey << ", "
 	        << "cgbURI = " << cgbURI;
 
+	// -- get start rule style/name
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	const RuleFileInfoUPtr ruleFileInfo(
 	        prt::createRuleFileInfo(cgbURI.c_str(), prtCtx->mPRTCache.get(), &status)); // TODO: cache
@@ -149,20 +149,13 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 		return NOT_CHANGED;
 	}
 	const std::wstring fqStartRule = findStartRule(ruleFileInfo);
-
-	// -- get style/name from start rule
-	auto getStartRuleComponents = [](const std::wstring& fqRule) -> std::pair<std::wstring, std::wstring> {
-		std::wstring style, name;
-		NameConversion::separate(fqRule, style, name);
-		return {style, name};
-	};
-	const auto startRuleComponents = getStartRuleComponents(fqStartRule);
-	LOG_DBG << "start rule: style = " << startRuleComponents.first << ", name = " << startRuleComponents.second;
+	const auto [startRuleStyle, startRuleName] = tokenizeFirst(fqStartRule, NameConversion::STYLE_SEPARATOR);
+	LOG_DBG << "start rule: style = " << startRuleStyle << ", name = " << startRuleName;
 
 	// -- update the node
 	AssignNodeParams::setRuleFile(node, cgbKey, time);
-	AssignNodeParams::setStyle(node, startRuleComponents.first, time);
-	AssignNodeParams::setStartRule(node, startRuleComponents.second, time);
+	AssignNodeParams::setStyle(node, startRuleStyle, time);
+	AssignNodeParams::setStartRule(node, startRuleName, time);
 
 	// reset was successful, try to optimize the cache
 	prtCtx->mPRTCache->flushAll();

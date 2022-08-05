@@ -49,7 +49,7 @@ elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
 endif()
 
-conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
+conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
 
 
 ### PRT dependency
@@ -86,20 +86,25 @@ endfunction()
 list(APPEND CMAKE_PREFIX_PATH "${CONAN_HOUDINI_ROOT}/toolkit/cmake")
 find_package(Houdini REQUIRED)
 
-function(pld_patch_houdini_dependency_for_mantra TGT)
-	if("${TGT}" STREQUAL "palladio_fs")
-		get_target_property(_PRT_HDN_TGT_LIBS Houdini INTERFACE_LINK_LIBRARIES)
-		list(REMOVE_ITEM _PRT_HDN_TGT_LIBS Houdini::HoudiniAPPS3 Houdini::HoudiniAPPS2
-				Houdini::HoudiniUI Houdini::HoudiniHARD Houdini::HoudiniHAPIL
-				Houdini::HoudiniAPPS1 Houdini::HoudiniDEVICE)
-		set_property(TARGET Houdini PROPERTY INTERFACE_LINK_LIBRARIES  ${_PRT_HDN_TGT_LIBS} )
-		message(STATUS "Removing libraries from Houdini target for Mantra compatibility, final list: ${_PRT_HDN_TGT_LIBS}")
+# create two dependency lists with Houdini libraries: one for the main module and a patched one for the FS module
+get_target_property(PLD_HDN_TGT_LIBS_FS Houdini INTERFACE_LINK_LIBRARIES)
+set(PLD_HDN_TGT_LIBS ${PLD_HDN_TGT_LIBS_FS})
+list(REMOVE_ITEM PLD_HDN_TGT_LIBS_FS Houdini::HoudiniAPPS3 Houdini::HoudiniAPPS2
+		Houdini::HoudiniUI Houdini::HoudiniHARD Houdini::HoudiniHAPIL
+		Houdini::HoudiniAPPS1 Houdini::HoudiniDEVICE)
+
+function(pld_select_houdini_dependency_list TGT)
+	if("${TGT}" STREQUAL "${TGT_FS}")
+		set_property(TARGET Houdini PROPERTY INTERFACE_LINK_LIBRARIES  ${PLD_HDN_TGT_LIBS_FS} )
+		message(STATUS "${TGT}: Using filtered Houdini target list for Mantra compatibility: ${PLD_HDN_TGT_LIBS_FS}")
+	else()
+		set_property(TARGET Houdini PROPERTY INTERFACE_LINK_LIBRARIES  ${PLD_HDN_TGT_LIBS} )
 	endif()
 endfunction()
 
 function(pld_add_dependency_houdini TGT)
 	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
-	pld_patch_houdini_dependency_for_mantra(${TGT})
+	pld_select_houdini_dependency_list(${TGT})
 	target_link_libraries(${TGT} PRIVATE Houdini)
 	houdini_configure_target(${TGT} INSTDIR ${HOUDINI_USER_PATH})
 endfunction()

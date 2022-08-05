@@ -35,6 +35,7 @@
 #	include <dlfcn.h>
 #endif
 
+#include <cassert>
 #include <filesystem>
 #include <string_view>
 
@@ -68,14 +69,14 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 
 } // namespace
 
-std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedString, wchar_t delimiter) {
+std::vector<std::wstring> tokenizeAll(const std::wstring& input, wchar_t token) {
 	std::vector<std::wstring> out;
 
-	std::wstring_view delimiterStringView(commaSeparatedString);
+	std::wstring_view delimiterStringView(input);
 	size_t startIdx = 0;
 
 	while (startIdx != std::wstring::npos) {
-		const size_t endIdx = delimiterStringView.find_first_of(delimiter, startIdx);
+		const size_t endIdx = delimiterStringView.find_first_of(token, startIdx);
 		std::wstring_view tokenView;
 
 		if (endIdx == std::wstring::npos) {
@@ -93,6 +94,22 @@ std::vector<std::wstring> tokenizeStringToVector(std::wstring commaSeparatedStri
 	return out;
 }
 
+std::pair<std::wstring, std::wstring> tokenizeFirst(const std::wstring& input, wchar_t token) {
+	const auto p = input.find_first_of(token);
+	if (p == std::wstring::npos)
+		return {{}, input};
+	else if (p > 0 && p < input.length() - 1) {
+		return {input.substr(0, p), input.substr(p + 1)};
+	}
+	else if (p == 0) { // empty style
+		return {{}, input.substr(1)};
+	}
+	else if (p == input.length() - 1) { // empty name
+		return {input.substr(0, p), {}};
+	}
+	return {input, {}};
+}
+
 void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
 	constexpr const size_t START_SIZE = 16 * 1024;
 	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {
@@ -103,7 +120,7 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	std::wstring cgbList = callAPI<wchar_t>(searchKeyFunc, START_SIZE);
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
-	const std::vector<std::wstring>& cgbVec = tokenizeStringToVector(cgbList, L';');
+	const std::vector<std::wstring>& cgbVec = tokenizeAll(cgbList, L';');
 
 	for (const std::wstring& token : cgbVec) {
 		LOG_DBG << "token: '" << token << "'";
