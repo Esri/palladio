@@ -40,13 +40,7 @@ bool isEmbedded(const std::filesystem::path& p) {
 
 #ifndef PLD_TEST_EXPORTS
 UT_StringHolder getFSReaderFilename(const FS_Reader& fsr) {
-#	if HOUDINI_VERSION_MAJOR > 16
 	return fsr.getFilename();
-#	else
-	UT_String fsrFileName;
-	fsr.getFilename(fsrFileName);
-	return UT_StringHolder(fsrFileName);
-#	endif
 }
 #endif
 
