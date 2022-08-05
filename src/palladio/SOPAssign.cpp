@@ -437,6 +437,44 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					assert(defVal.index() == 0); // std::wstring is type index 0
 					break;
 				}
+				case prt::AttributeMap::PT_FLOAT_ARRAY: {
+					size_t arr_length = 0;
+					const double* doubleArray = defaultRuleAttributes->getFloatArray(key, &arr_length);
+					std::vector<double> doubleVec;
+					doubleVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						doubleVec.emplace_back(doubleArray[enumIndex]);
+
+					defVal = doubleVec;
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL_ARRAY: {
+					size_t arr_length = 0;
+					const bool* boolArray = defaultRuleAttributes->getBoolArray(key, &arr_length);
+					std::vector<bool> boolVec;
+					boolVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						boolVec.emplace_back(boolArray[enumIndex]);
+
+					defVal = boolVec;
+					break;
+				}
+				case prt::AttributeMap::PT_STRING_ARRAY: {
+					size_t arr_length = 0;
+					const wchar_t* const* stringArray = defaultRuleAttributes->getStringArray(key, &arr_length);
+					assert(stringArray != nullptr);
+
+					std::vector<std::wstring> stringVec;
+					stringVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						stringVec.emplace_back(stringArray[enumIndex]);
+
+					defVal = stringVec;
+					break;
+				}
 				default:
 					continue;
 			}
