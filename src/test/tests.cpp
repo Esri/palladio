@@ -113,43 +113,43 @@ TEST_CASE("tokenize string at first token", "[utils]") {
 	};
 
 	SECTION("default case") {
-		auto [style, name] = testCall(L"foo$bar");
+		const auto [style, name] = testCall(L"foo$bar");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar");
 	}
 
 	SECTION("no style") {
-		auto [style, name] = testCall(L"foo");
+		const auto [style, name] = testCall(L"foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("edge case 1") {
-		auto [style, name] = testCall(L"foo$");
+		const auto [style, name] = testCall(L"foo$");
 		CHECK(style == L"foo");
 		CHECK(name.empty());
 	}
 
 	SECTION("edge case 2") {
-		auto [style, name] = testCall(L"$foo");
+		const auto [style, name] = testCall(L"$foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("separator only") {
-		auto [style, name] = testCall(L"$");
+		const auto [style, name] = testCall(L"$");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("empty") {
-		auto [style, name] = testCall(L"");
+		const auto [style, name] = testCall(L"");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("two separators") {
-		auto [style, name] = testCall(L"foo$bar$baz");
+		const auto [style, name] = testCall(L"foo$bar$baz");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar$baz");
 	}
@@ -164,42 +164,42 @@ TEST_CASE("tokenize string at all tokens", "[utils]") {
 	using Catch::Matchers::Equals;
 
 	SECTION("one token") {
-		auto sections = testCall(L"foo$bar");
+		const auto sections = testCall(L"foo$bar");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar"}));
 	}
 
 	SECTION("two tokens") {
-		auto sections = testCall(L"foo$bar$baz");
+		const auto sections = testCall(L"foo$bar$baz");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
 	}
 
 	SECTION("no token") {
-		auto sections = testCall(L"foo");
+		const auto sections = testCall(L"foo");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
 	}
 
 	SECTION("edge case 1") {
-		auto sections = testCall(L"foo$");
+		const auto sections = testCall(L"foo$");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
 	}
 
 	SECTION("edge case 2") {
-		auto sections = testCall(L"$foo");
+		const auto sections = testCall(L"$foo");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
 	}
 
 	SECTION("token only") {
-		auto sections = testCall(L"$");
+		const auto sections = testCall(L"$");
 		CHECK(sections.empty());
 	}
 
 	SECTION("two consecutive tokens") {
-		auto sections = testCall(L"foo$bar$$baz");
+		const auto sections = testCall(L"foo$bar$$baz");
 		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
 	}
 
 	SECTION("empty") {
-		auto sections = testCall(L"");
+		const auto sections = testCall(L"");
 		CHECK(sections.empty());
 	}
 }
