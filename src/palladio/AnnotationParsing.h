@@ -20,6 +20,8 @@
 
 #include "prt/Annotation.h"
 
+#include <array>
+
 namespace AnnotationParsing {
 
 enum class AttributeTrait { ENUM, RANGE, ANGLE, PERCENT, FILE, DIR, COLOR, DESCRIPTION, NONE };

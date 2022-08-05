@@ -17,6 +17,7 @@
 #include "AnnotationParsing.h"
 #include "RuleAttributes.h"
 
+#include <cmath>
 #include <sstream>
 
 namespace {
