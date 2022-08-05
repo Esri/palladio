@@ -528,9 +528,9 @@ UT_String toPrimAttr(const std::wstring& fullyQualifiedAttrName) {
 	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQualifiedAttrName));
 
 	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
+	primAttr = UT_VarEncode::encodeAttrib(primAttr);
 	StringConversionCaches::toPrimAttr.insert(fullyQualifiedAttrName, primAttr);
 
-	primAttr = UT_VarEncode::encodeAttrib(primAttr);
 	return primAttr;
 }
 

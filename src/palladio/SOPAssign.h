@@ -38,9 +38,9 @@ public:
 		return mShapeConverter->mDefaultMainAttributes.mStyle;
 	}
 
-	void updateDefaultAttributes(const ShapeData& shapeData);
-	void updateAttributes(GU_Detail* detail);
-	void refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+	void updateDefaultCGAAttributes(const ShapeData& shapeData);
+	void updatePrimitiveAttributes(GU_Detail* detail);
+	void buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
 	                        const PRTContextUPtr& prtCtx, std::string& errors);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 	bool load(UT_IStream& is, const char* extension, const char* path) override;
@@ -54,7 +54,7 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using AttributeValueType = std::variant<std::wstring, double, bool>;
-	using AttributeValueMap = std::map<std::wstring, AttributeValueType>;
-	AttributeValueMap mDefaultAttributes;
+	using CGAAttributeValueType = std::variant<std::wstring, double, bool>;
+	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
+	CGAAttributeValueMap mDefaultCGAAttributes;
 };

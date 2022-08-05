@@ -15,6 +15,7 @@
  */
 
 #include "SOPAssign.h"
+#include "AnnotationParsing.h"
 #include "AttrEvalCallbacks.h"
 #include "AttributeConversion.h"
 #include "LogHandler.h"
@@ -42,10 +43,6 @@ constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.Attribute
 
 constexpr const wchar_t* RULE_ATTRIBUTES_FOLDER_NAME = L"Rule Attributes";
 
-constexpr const wchar_t* NULL_KEY = L"#NULL#";
-constexpr const wchar_t* MIN_KEY = L"min";
-constexpr const wchar_t* MAX_KEY = L"max";
-
 AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* encOpts = nullptr;
@@ -69,94 +66,8 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 	return rfi;
 }
 
-enum class RangeType { RANGE, ENUM, INVALID };
-RangeType GetRangeType(const prt::Annotation* an) {
-	const size_t numArgs = an->getNumArguments();
-
-	if (numArgs == 0)
-		return RangeType::INVALID;
-
-	prt::AnnotationArgumentType commonType = an->getArgument(0)->getType();
-
-	bool hasMin = false;
-	bool hasMax = false;
-	bool hasKey = false;
-	bool onlyOneTypeInUse = true;
-
-	for (int argIdx = 0; argIdx < numArgs; argIdx++) {
-		const prt::AnnotationArgument* arg = an->getArgument(argIdx);
-		if (arg->getType() != commonType)
-			onlyOneTypeInUse = false;
-
-		const wchar_t* key = arg->getKey();
-		if (std::wcscmp(key, MIN_KEY) == 0)
-			hasMin = true;
-		else if (std::wcscmp(key, MAX_KEY) == 0)
-			hasMax = true;
-		if (std::wcscmp(key, NULL_KEY) != 0)
-			hasKey = true;
-	}
-
-	// old Range
-	if ((numArgs == 2) && (commonType == prt::AnnotationArgumentType::AAT_FLOAT))
-		return RangeType::RANGE;
-
-	// new Range
-	if ((numArgs >= 2) && (hasMin && hasMax))
-		return RangeType::RANGE;
-
-	// legacy Enum
-	if (!hasKey && onlyOneTypeInUse)
-		return RangeType::ENUM;
-
-	return RangeType::INVALID;
-}
-
-std::pair<double, double> getAttributeRange(const std::wstring& attributeName, const RuleFileInfoUPtr& info) {
-	auto minMax = std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
-
-	for (size_t ai = 0, numAttrs = info->getNumAttributes(); ai < numAttrs; ai++) {
-		const auto* attr = info->getAttribute(ai);
-		if (std::wcscmp(attributeName.c_str(), attr->getName()) != 0)
-			continue;
-
-		for (size_t a = 0; a < attr->getNumAnnotations(); a++) {
-			const prt::Annotation* an = attr->getAnnotation(a);
-			const wchar_t* anName = an->getName();
-
-			if (std::wcscmp(anName, ANNOT_RANGE) == 0) {
-				const RangeType annotationRangeType = GetRangeType(an);
-				if (annotationRangeType != RangeType::RANGE)
-					continue;
-
-				const size_t numArgs = an->getNumArguments();
-
-				for (int argIdx = 0; argIdx < numArgs; argIdx++) {
-					const prt::AnnotationArgument* arg = an->getArgument(argIdx);
-					const wchar_t* key = arg->getKey();
-					if (std::wcscmp(key, MIN_KEY) == 0) {
-						minMax.first = arg->getFloat();
-					}
-					else if (std::wcscmp(key, MAX_KEY) == 0) {
-						minMax.second = arg->getFloat();
-					}
-				}
-
-				// parse old style range
-				if ((std::isnan(minMax.first) || std::isnan(minMax.second)) && (numArgs == 2)) {
-					minMax.first = an->getArgument(0)->getFloat();
-					minMax.second = an->getArgument(1)->getFloat();
-				}
-
-				return minMax;
-			}
-		}
-	}
-	return minMax;
-}
-
-bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
-                          const SOPAssign::AttributeValueMap& newDefaultValues) {
+bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValues,
+                           const SOPAssign::CGAAttributeValueMap& newDefaultValues) {
 	if (refDefaultValues.size() != newDefaultValues.size())
 		return false;
 
@@ -173,8 +84,8 @@ bool compareAttributeTypes(const SOPAssign::AttributeValueMap& refDefaultValues,
 	return true;
 }
 
-void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
-                                    const SOPAssign::AttributeValueMap& defaultValues) {
+void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
+                           const SOPAssign::CGAAttributeValueMap& defaultValues) {
 	const fpreal time = CHgetEvalTime();
 
 	const int numParms = node->getNumParms();
@@ -193,36 +104,105 @@ void updateAttributeUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
-						continue;
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							std::string stringValue;
 
-					const int intValue = static_cast<int>(std::get<bool>(it->second));
+							switch (it->second.index()) {
+								case 0: {
+									stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
+									break;
+								}
+								case 1: {
+									stringValue = std::to_string(std::get<double>(it->second));
+									break;
+								}
+								case 2: {
+									stringValue = std::to_string(std::get<bool>(it->second));
+									break;
+								}
+								default:
+									continue;
+							}
 
-					node->setInt(attributeName, 0, time, intValue);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices != nullptr) {
+								const PRM_Name* choiceNames;
+								choices->getChoiceNames(choiceNames);
+								for (uint32_t choiceIdx = 0; choiceIdx < choices->getSize(&parm); ++choiceIdx) {
+									const std::string currEnumString = choiceNames[choiceIdx].getToken();
+									if (currEnumString == stringValue) {
+										node->setInt(attributeName, 0, time, choiceIdx);
+										break;
+									}
+								}
+							}
+							break;
+						}
+						case PRM_Type::PRM_ORD_TOGGLE: {
+							if (it->second.index() != 2)
+								continue;
+
+							const int intValue = static_cast<int>(std::get<bool>(it->second));
+
+							node->setInt(attributeName, 0, time, intValue);
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double floatValue = std::get<double>(it->second);
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							if (it->second.index() != 0)
+								continue;
 
-					node->setFloat(attributeName, 0, time, floatValue);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
+							const std::wstring colorString = std::get<std::wstring>(it->second);
+							const auto color = AnnotationParsing::parseColor(colorString);
+
+							node->setFloat(attributeName, 0, time, color[0]);
+							node->setFloat(attributeName, 1, time, color[1]);
+							node->setFloat(attributeName, 2, time, color[2]);
+							break;
+						}
+						default: {
+							if (it->second.index() != 1)
+								continue;
+
+							const double floatValue = std::get<double>(it->second);
+
+							node->setFloat(attributeName, 0, time, floatValue);
+							break;
+						}
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+					if (it->second.index() != 0)
+						continue;
+
 					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
 
 					node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, attributeName, 0, time);
-					parm.overwriteDefaults(time);
-					parm.getTemplatePtr()->setFactoryDefaults(parm.getTemplatePtr()->getDefault(0));
 					break;
 				}
 				default: {
 					// ignore all other types of parameters
-					break;
+					continue;
+				}
+			}
+			parm.overwriteDefaults(time);
+			if (!parm.isFactoryDefaultUI()) {
+				PRM_Template* templatePtr = parm.getTemplatePtr();
+				PRM_Default* factoryDefaults = templatePtr->getFactoryDefaults();
+				
+				for (size_t idx = 0; idx < templatePtr->getVectorSize(); ++idx) {
+					PRM_Default* defaultValue = templatePtr->getDefault(idx);
+					
+					factoryDefaults[idx].set(defaultValue->getFloat(), defaultValue->getString(),
+					                         defaultValue->getStringMeaning());
 				}
 			}
 		}
@@ -246,19 +226,71 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
-						continue;
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							const int intValue = node->evalInt(&parm, 0, time);
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices == nullptr)
+								continue;
+							UT_String result;
+							if (!choices->tokenFromIndex(result, intValue))
+								continue;
 
-					const int intValue = node->evalInt(&parm, 0, time);
+							auto it = node->mDefaultCGAAttributes.find(ruleAttrName);
+							if (it == node->mDefaultCGAAttributes.end())
+								continue;
 
-					amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
+							switch (it->second.index()) {
+								case 0: {
+									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
+									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+									break;
+								}
+								case 1: {
+									const double floatValue = result.toFloat();
+									amb->setFloat(ruleAttrName.c_str(), floatValue);
+									break;
+								}
+								case 2: {
+									const bool boolValue = static_cast<bool>(result.toInt());
+									amb->setFloat(ruleAttrName.c_str(), boolValue);
+									break;
+								}
+								default:
+									break;
+							}
+							break;
+						}
+						case PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE: {
+							const int intValue = node->evalInt(&parm, 0, time);
+							amb->setBool(ruleAttrName.c_str(), static_cast<bool>(intValue));
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double floatValue = node->evalFloat(&parm, 0, time);
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_NONE: {
+							const double floatValue = node->evalFloat(&parm, 0, time);
 
-					amb->setFloat(ruleAttrName.c_str(), floatValue);
+							amb->setFloat(ruleAttrName.c_str(), floatValue);
+							break;
+						}
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							const float r = node->evalFloat(&parm, 0, time);
+							const float g = node->evalFloat(&parm, 1, time);
+							const float b = node->evalFloat(&parm, 2, time);
+							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+							amb->setString(ruleAttrName.c_str(), colorString.c_str());
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
@@ -371,8 +403,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
     : SOP_Node(net, name, op), mPRTCtx(pCtx), mShapeConverter(new ShapeConverter()) {}
 
-void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
-	mDefaultAttributes.clear();
+void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
+	mDefaultCGAAttributes.clear();
 
 	AttributeMapVector defaultRuleAttributeMaps;
 	for (auto& amb : shapeData.getRuleAttributeMapBuilders()) {
@@ -388,7 +420,7 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 			const wchar_t* const key = cKeys[k];
 			const auto type = defaultRuleAttributes->getType(key);
 
-			AttributeValueType defVal;
+			CGAAttributeValueType defVal;
 			switch (type) {
 				case prt::AttributeMap::PT_FLOAT: {
 					defVal = defaultRuleAttributes->getFloat(key);
@@ -408,12 +440,12 @@ void SOPAssign::updateDefaultAttributes(const ShapeData& shapeData) {
 				default:
 					continue;
 			}
-			mDefaultAttributes.emplace(key, defVal);
+			mDefaultCGAAttributes.emplace(key, defVal);
 		}
 	}
 }
 
-void SOPAssign::updateAttributes(GU_Detail* detail) {
+void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	const fpreal time = CHgetEvalTime();
 
 	const int numParms = getNumParms();
@@ -428,22 +460,54 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
-					// only support booleans, i.e. don't store folders
-					if (currParmType.getOrdinalType() != PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE)
-						continue;
-
-					const int intValue = evalInt(&parm, 0, time);
-
-					GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0), nullptr,
-					                                               nullptr, GA_STORE_INT8));
-					ordinalHandle.set(0, intValue);
+					switch (currParmType.getOrdinalType()) {
+						case PRM_Type::PRM_ORD_NONE: {
+							const int intValue = evalInt(&parm, 0, time);
+							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
+							if (choices != nullptr) {
+								UT_String result;
+								if (choices->tokenFromIndex(result, intValue)) {
+									GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+									stringHandle.set(0, result);
+								}
+							}
+							break;
+						}
+						case PRM_Type::PRM_ORD_TOGGLE: {
+							const int intValue = evalInt(&parm, 0, time);
+							GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0),
+							                                               nullptr, nullptr, GA_STORE_INT8));
+							ordinalHandle.set(0, intValue);
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					const double floatValue = evalFloat(&parm, 0, time);
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_NONE: {
+							const double floatValue = evalFloat(&parm, 0, time);
 
-					GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-					floatHandle.set(0, floatValue);
+							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
+							floatHandle.set(0, floatValue);
+							break;
+						}
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							const float r = evalFloat(&parm, 0, time);
+							const float g = evalFloat(&parm, 1, time);
+							const float b = evalFloat(&parm, 2, time);
+							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+							UT_String stringValue(toOSNarrowFromUTF16(colorString));
+							GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+							stringHandle.set(0, stringValue);
+							break;
+						}
+						default:
+							break;
+					}
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
@@ -463,8 +527,8 @@ void SOPAssign::updateAttributes(GU_Detail* detail) {
 	}
 };
 
-void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-                                   const PRTContextUPtr& prtCtx, std::string& errors) {
+void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
+                        const PRTContextUPtr& prtCtx, std::string& errors) {
 	const auto& pv = shapeData.getPrimitiveMapping(0);
 	const auto& firstPrimitive = pv.front();
 	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
@@ -490,31 +554,81 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 		const std::wstring attrName = ra.niceName;
 		const std::wstring attrId = toUTF16FromOSNarrow(NameConversion::toPrimAttr(ra.fqName).toStdString());
 
+		const auto annotationInfo = AnnotationParsing::getAttributeAnnotationInfo(ra.fqName, ruleFileInfo);
+		const std::wstring description = annotationInfo.mDescription;
+
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
-		const auto defaultValIt = mDefaultAttributes.find(ra.fqName);
-		const bool foundDefaultValue = (defaultValIt != mDefaultAttributes.end());
+		const auto defaultValIt = mDefaultCGAAttributes.find(ra.fqName);
+		const bool foundDefaultValue = (defaultValIt != mDefaultCGAAttributes.end());
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
 				const bool isDefaultValBool = (defaultValIt->second.index() == 2);
 				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
-				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders);
+
+				switch (annotationInfo.mAttributeTrait) {
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
+						                                enumAnnotation.mOptions, parentFolders, description);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                description);
+						break;
+					}
+				}
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const auto minMax = getAttributeRange(ra.fqName, ruleFileInfo);
-
 				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
 				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
 				                                    ? std::get<double>(defaultValIt->second)
 				                                    : 0.0;
-				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first, minMax.second,
-				                                 parentFolders);
+
+				switch (annotationInfo.mAttributeTrait) {
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
+						                                enumAnnotation.mOptions, parentFolders, description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::RANGE: {
+						AnnotationParsing::RangeAnnotation minMax =
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
+						                                 minMax.second, parentFolders, description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::ANGLE: {
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 360, parentFolders,
+						                                 description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::PERCENT: {
+						// diplay % values with a 0-1 range for now (avoid scaling by 100)
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 1, parentFolders,
+						                                 description);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, parentFolders,
+						                                 description);
+						break;
+					}
+				}
+
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
@@ -522,7 +636,42 @@ void SOPAssign::refreshAttributeUI(GU_Detail* detail, ShapeData& shapeData, cons
 				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
 				                                          ? std::get<std::wstring>(defaultValIt->second)
 				                                          : L"";
-				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders);
+
+				switch (annotationInfo.mAttributeTrait) {
+					case AnnotationParsing::AttributeTrait::ENUM: {
+						AnnotationParsing::EnumAnnotation enumAnnotation =
+						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+						                                parentFolders, description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::FILE: {
+						AnnotationParsing::FileAnnotation fileAnnotation =
+						        AnnotationParsing::parseFileAnnotation(annotationInfo.mAnnotation);
+
+						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::DIR: {
+						NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                     description);
+						break;
+					}
+					case AnnotationParsing::AttributeTrait::COLOR: {
+						AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
+
+						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders, description);
+						break;
+					}
+					default: {
+						NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders,
+						                                  description);
+						break;
+					}
+				}
+
 				break;
 			}
 			default:
@@ -561,12 +710,12 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
-		auto oldAttributes = mDefaultAttributes;
-		updateDefaultAttributes(shapeData);
-		if (!compareAttributeTypes(oldAttributes, mDefaultAttributes) && !mWasJustLoaded)
-			refreshAttributeUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
-		updateAttributeUIDefaultValues(this, getStyle(), mDefaultAttributes);
-		updateAttributes(gdp);
+		auto oldAttributes = mDefaultCGAAttributes;
+		updateDefaultCGAAttributes(shapeData);
+		if (!compareAttributeTypes(oldAttributes, mDefaultCGAAttributes) && !mWasJustLoaded)
+			buildUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		updateUIDefaultValues(this, getStyle(), mDefaultCGAAttributes);
+		updatePrimitiveAttributes(gdp);
 
 		mShapeConverter->put(gdp, primCls, shapeData);
 	}
@@ -598,12 +747,13 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 		if (parm.isSpareParm()) {
 			const PRM_Type currParmType = parm.getType();
 
-			const bool isBoolParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
-			                        (currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE);
+			const bool isOrdParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
+			                       ((currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
+			                        (currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_NONE));
 			const bool isFloatParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT);
 			const bool isStringParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_STRING);
 
-			if (isBoolParm || isFloatParm || isStringParm)
+			if (isOrdParm || isFloatParm || isStringParm)
 				forceRecook();
 		}
 	}

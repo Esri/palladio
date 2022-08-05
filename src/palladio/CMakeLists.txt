@@ -20,6 +20,7 @@ add_library(${TGT_PALLADIO} SHARED
         PrimitivePartition.cpp
         AttrEvalCallbacks.cpp
         AttributeConversion.cpp
+		AnnotationParsing.cpp
         MultiWatch.cpp
         PrimitiveClassifier.cpp
         LogHandler.cpp
