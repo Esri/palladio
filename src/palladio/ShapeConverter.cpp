@@ -20,18 +20,14 @@
 #include "MultiWatch.h"
 #include "PrimitiveClassifier.h"
 #include "ShapeData.h"
+#include "Utils.h"
 
 #include "GA/GA_PageHandle.h"
 #include "GEO/GEO_PrimPolySoup.h"
 #include "GU/GU_Detail.h"
 #include "UT/UT_String.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
-// clang-format on
+#include <variant>
 
 namespace {
 
@@ -141,9 +137,9 @@ int32_t getRandomSeed(const GA_Detail* detail, const GA_Offset& primOffset, cons
 	else {
 		const std::array<double, 3> centroid = getCentroid(coords, ch);
 		size_t hash = 0;
-		PLD_BOOST_NS::hash_combine(hash, centroid[0]);
-		PLD_BOOST_NS::hash_combine(hash, centroid[1]);
-		PLD_BOOST_NS::hash_combine(hash, centroid[2]);
+		hash_combine(hash, std::hash<double>{}(centroid[0]));
+		hash_combine(hash, std::hash<double>{}(centroid[1]));
+		hash_combine(hash, std::hash<double>{}(centroid[2]));
 		randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
 	}
 
