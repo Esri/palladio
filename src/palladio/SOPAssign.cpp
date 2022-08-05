@@ -326,7 +326,14 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		AttributeMapUPtr ruleAttr = generateAttributeMapFromParameterValues(node, node->getStyle());
 
 		auto& isb = shapeData.getInitialShapeBuilder(isIdx);
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), shapeData.getInitialShapeRandomSeed(isIdx),
+
+		int32_t randomSeed;
+		if (ma.mOverrideSeed)
+			randomSeed = ma.mSeed;
+		else
+			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
+
+		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed,
 		                   shapeName.c_str(), ruleAttr.get(), resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
