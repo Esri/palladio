@@ -241,7 +241,7 @@ AttributeTrait detectAttributeTrait(const prt::Annotation& annotation) {
 AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info) {
 	const prt::Annotation* annotation = nullptr;
 	AttributeTrait attributeTrait = AttributeTrait::NONE;
-	std::wstring description = L"";
+	std::wstring description;
 
 	for (size_t attributeIdx = 0, numAttrs = info->getNumAttributes(); attributeIdx < numAttrs; attributeIdx++) {
 		const auto* attribute = info->getAttribute(attributeIdx);
