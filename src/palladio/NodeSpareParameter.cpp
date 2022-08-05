@@ -159,6 +159,63 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
 	        parentFolders, description);
 }
 
+void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                    const std::vector<bool>& defaultVals, const FolderVec& parentFolders,
+                    const std::wstring& annotation) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Name templateName(token, label);
+	PRM_Name itemName("boolVecParm#", "#");
+	PRM_Default defaultVal(defaultVals.size());
+
+	PRM_Template itemTemplate[] = {PRM_Template(PRM_TOGGLE, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+
+	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
+	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
+	                                 PRM_Template()};
+
+	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
+}
+
+void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                     const std::vector<double>& defaultVals, const FolderVec& parentFolders,
+                     const std::wstring& annotation) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Name templateName(token, label);
+	PRM_Name itemName("floatVecParm#", "#");
+	PRM_Default defaultVal(defaultVals.size());
+
+	PRM_Template itemTemplate[] = {PRM_Template(PRM_FLT, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+
+	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
+	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
+	                                 PRM_Template()};
+
+	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
+}
+
+void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders,
+                      const std::wstring& annotation) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Name templateName(token, label);
+	PRM_Name itemName("stringVecParm#", "#");
+	PRM_Default defaultVal(defaultVals.size());
+
+	PRM_Template itemTemplate[] = {PRM_Template(PRM_STRING, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+
+	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
+	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
+	                                 PRM_Template()};
+
+	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
+}
+
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultOption,
                  const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
                  const std::wstring& description) {

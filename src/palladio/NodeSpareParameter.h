@@ -42,6 +42,15 @@ void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name
                  const FolderVec& parentFolders = {}, const std::wstring& description = {});
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                    const FolderVec& parentFolders = {}, const std::wstring& description = {});
+void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::vector<bool>& defaultVals, const FolderVec& parentFolders = {},
+                      const std::wstring& annotation = {});
+void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                       const std::vector<double>& defaultVals, const FolderVec& parentFolders = {},
+                       const std::wstring& annotation = {});
+void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                        const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders = {},
+                        const std::wstring& annotation = {});
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultIdx,
                  const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
                  const std::wstring& description = {});
