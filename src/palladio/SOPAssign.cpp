@@ -148,6 +148,8 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							node->setInt(attributeName, 0, time, intValue);
 							break;
 						}
+						default:
+							break;
 					}
 					break;
 				}
