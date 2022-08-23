@@ -40,6 +40,36 @@ std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 
 	return primAttr.toStdString();
 }
+
+const std::string FILE_ANY = "*";
+const std::string FILE_DOT = ".";
+const std::string FILE_EXTENSION_PREFIX = FILE_ANY + FILE_DOT;
+
+std::string cleanExtension(const std::string& extension) {
+	if (extension.empty())
+		return {};
+	if (extension.rfind(FILE_EXTENSION_PREFIX, 0) == 0)
+		return extension;
+	if (extension.rfind(FILE_DOT, 0) == 0)
+		return FILE_ANY + extension;
+	return FILE_EXTENSION_PREFIX + extension;
+}
+
+std::string getExtensionString(const std::vector<std::wstring>& extensions) {
+	std::string extensionString;
+	for (const std::wstring& extension : extensions) {
+		std::string cleanedFileExtension = cleanExtension(toOSNarrowFromUTF16(extension));
+		if (cleanedFileExtension.empty())
+			continue;
+		if (extensionString.empty())
+			extensionString += cleanedFileExtension;
+		else
+			extensionString += " " + cleanedFileExtension;
+	}
+	if (extensionString.empty())
+		return FILE_ANY;
+	return extensionString;
+}
 } // namespace
 
 namespace NodeSpareParameter {
@@ -84,7 +114,8 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 }
 
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range, const FolderVec& parentFolders, const std::wstring& description) {
+             PRM_Range* range, PRM_SpareData* spareData, const FolderVec& parentFolders,
+             const std::wstring& description) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
@@ -98,7 +129,7 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 	                                           nullptr,           // choicelist
 	                                           range,             // rangeptr
 	                                           nullptr,           // callbackfunc
-	                                           nullptr,           // spareData
+	                                           spareData,         // spareData
 	                                           1,                 // parmGroup
 	                                           helpText.c_str()), // helptext
 	                              PRM_Template()};
@@ -111,7 +142,7 @@ void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
-	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, parentFolders, description);
+	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, nullptr, parentFolders, description);
 }
 
 void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal,
@@ -130,7 +161,7 @@ void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	                                           &stringParmName,   // name
 	                                           defaultVals,       // defaults
 	                                           nullptr,           // choicelist
-	                                           nullptr,             // rangeptr
+	                                           nullptr,           // rangeptr
 	                                           nullptr,           // callbackfunc
 	                                           nullptr,           // spareData
 	                                           1,                 // parmGroup
@@ -145,17 +176,17 @@ void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
 
-	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, parentFolders, description);
+	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, nullptr, parentFolders, description);
 }
 
 void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
                  const FolderVec& parentFolders, const std::wstring& description) {
-	addParm(node, PRM_TOGGLE, id, name, PRM_Default(defaultVal), nullptr, parentFolders, description);
+	addParm(node, PRM_TOGGLE, id, name, PRM_Default(defaultVal), nullptr, nullptr, parentFolders, description);
 }
 
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                    const FolderVec& parentFolders, const std::wstring& description) {
-	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
+	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr, nullptr,
 	        parentFolders, description);
 }
 
@@ -184,10 +215,10 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 
 	PRM_Name stringParmName(token, label);
 
-	PRM_Template templateArr[] = {PRM_Template(PRM_ORD,           // parm type
+	PRM_Template templateArr[] = {PRM_Template(PRM_ORD,                      // parm type
 	                                           PRM_Template::PRM_EXPORT_MAX, // number of folders
 	                                           1,
-                                               &stringParmName,   // name
+	                                           &stringParmName,   // name
 	                                           &defaultVal,       // defaults
 	                                           &enumMenu,         // choicelist
 	                                           nullptr,           // rangeptr
@@ -201,18 +232,24 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 }
 
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                 const FolderVec& parentFolders, const std::wstring& description) {
-	addParm(node, PRM_FILE, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr, parentFolders, description);
+                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description) {
+
+	const std::string extensionString = getExtensionString(extensions);
+	PRM_SpareToken sparetoken(PRM_SPARE_FILE_CHOOSER_PATTERN_TOKEN, extensionString.c_str());
+	PRM_SpareData mySpareData(sparetoken);
+
+	addParm(node, PRM_FILE, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr, &mySpareData,
+	        parentFolders, description);
 }
 
 void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                       const FolderVec& parentFolders, const std::wstring& description) {
-	addParm(node, PRM_DIRECTORY, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
+	addParm(node, PRM_DIRECTORY, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr, nullptr,
 	        parentFolders, description);
 }
 
 void addSeparator(OP_Node* node, const FolderVec& parentFolders) {
-	addParm(node, PRM_SEPARATOR, L"separator", L"separator", PRM_Default(), nullptr, parentFolders);
+	addParm(node, PRM_SEPARATOR, L"separator", L"separator", PRM_Default(), nullptr, nullptr, parentFolders);
 }
 
 void addFolder(OP_Node* node, PRM_SpareData* groupType, const std::wstring& name, const FolderVec& parentFolders) {

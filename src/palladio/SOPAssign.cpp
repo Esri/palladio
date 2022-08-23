@@ -650,8 +650,8 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 						AnnotationParsing::FileAnnotation fileAnnotation =
 						        AnnotationParsing::parseFileAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders,
-						                                description);
+						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, fileAnnotation,
+						                                parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::DIR: {
