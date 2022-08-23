@@ -22,6 +22,11 @@ function(pld_set_common_compiler_flags TGT)
     set_target_properties(${TGT} PROPERTIES CXX_STANDARD 17)
     if (PLD_WINDOWS)
         target_compile_definitions(${TGT} PRIVATE -DPLD_WINDOWS=1 -DPLD_TC_VC=1)
+
+        string(FIND ${CMAKE_GENERATOR} "Visual Studio" DETECTED_VISUAL_STUDIO)
+        if(${DETECTED_VISUAL_STUDIO} GREATER -1)
+            target_compile_options(${TGT} PRIVATE -MP) # enable parallel building in Visual Studio generators
+        endif()
     elseif (PLD_LINUX)
         target_compile_definitions(${TGT} PRIVATE -DPLD_LINUX=1 -DPLD_TC_GCC=1)
         target_compile_options(${TGT} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
