@@ -121,7 +121,8 @@ def taskBuildPalladio(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		scanAndPublishBuildIssues(cfg, stdOut)
 	}
 
 	def versionExtractor = { p ->
@@ -133,4 +134,23 @@ def taskBuildPalladio(cfg) {
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
 	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+}
+
+def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
+	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${cfg.houdini.replace('.', '_')}"
+	final String buildLog = "build-${buildSuf}.log"
+	final String idSuf = "${cfg.houdini.replace('.', '_')}-${cepl.getArchiveClassifier(cfg)}"
+
+	// dump build log to file for warnings scanner
+	writeFile(file: buildLog, text: consoleOut)
+
+	// scan for compiler warnings
+	if(cepl.isGCC(cfg)) {
+		def gccReports = scanForIssues(tool: gcc4(pattern: buildLog), blameDisabled: true)
+		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [gccReports])
+	}
+	else if(cepl.isMSVC(cfg)) {
+		def msvcReports = scanForIssues(tool: msBuild(pattern: buildLog), blameDisabled: true)
+		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [msvcReports])
+	}
 }
