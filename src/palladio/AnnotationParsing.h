@@ -32,7 +32,11 @@ struct EnumAnnotation {
 	std::vector<std::wstring> mOptions;
 };
 
-using RangeAnnotation = std::pair<double, double>;
+struct RangeAnnotation {
+	double min;
+	double max;
+	bool restricted;
+};
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
@@ -54,7 +58,9 @@ ColorAnnotation parseColor(const std::wstring colorString);
 
 std::wstring getColorString(const std::array<float, 3>& rgb);
 
-RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation);
+RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation,
+                                     double fallbackMin = std::numeric_limits<double>::quiet_NaN(),
+                                     double fallbackMax = std::numeric_limits<double>::quiet_NaN());
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation);
 

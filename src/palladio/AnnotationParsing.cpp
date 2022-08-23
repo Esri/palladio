@@ -97,38 +97,40 @@ wchar_t toHex(int i) {
 } // namespace
 
 namespace AnnotationParsing {
-RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation) {
-	auto minMax = std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
+RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation, double fallbackMin, double fallbackMax) {
+	double min = fallbackMin;
+	double max = fallbackMax;
+	bool restricted = true;
 
 	const wchar_t* anName = annotation.getName();
 
 	if (std::wcscmp(anName, ANNOT_RANGE) == 0) {
 		const RangeType annotationRangeType = GetRangeType(annotation);
 		if (annotationRangeType != RangeType::RANGE)
-			return minMax;
+			return {min, max, restricted};
 
 		const size_t numArgs = annotation.getNumArguments();
 
 		for (int argIdx = 0; argIdx < numArgs; argIdx++) {
 			const prt::AnnotationArgument* arg = annotation.getArgument(argIdx);
 			const wchar_t* key = arg->getKey();
-			if (std::wcscmp(key, MIN_KEY) == 0) {
-				minMax.first = arg->getFloat();
-			}
-			else if (std::wcscmp(key, MAX_KEY) == 0) {
-				minMax.second = arg->getFloat();
-			}
+			if (std::wcscmp(key, MIN_KEY) == 0) 
+				min = arg->getFloat();
+			else if (std::wcscmp(key, MAX_KEY) == 0)
+				max = arg->getFloat();
+			else if (std::wcscmp(key, RESTRICTED_KEY) == 0) 
+				restricted = arg->getBool();
 		}
 
 		// parse old style range
-		if ((std::isnan(minMax.first) || std::isnan(minMax.second)) && (numArgs == 2)) {
-			minMax.first = annotation.getArgument(0)->getFloat();
-			minMax.second = annotation.getArgument(1)->getFloat();
+		if ((std::isnan(min) || std::isnan(max)) && (numArgs == 2)) {
+			min = annotation.getArgument(0)->getFloat();
+			max = annotation.getArgument(1)->getFloat();
 		}
 
-		return minMax;
+		return {min, max, restricted};
 	}
-	return minMax;
+	return {min, max, restricted};
 }
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation) {
@@ -252,11 +254,7 @@ AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attribute
 			const prt::Annotation* currAnnotation = attribute->getAnnotation(annotationIdx);
 			AttributeTrait currAttributeTrait = detectAttributeTrait(*currAnnotation);
 
-			const bool skipOverride =
-			        (((currAttributeTrait == AttributeTrait::PERCENT) || (currAttributeTrait == AttributeTrait::ANGLE)) &&
-			         attributeTrait == AttributeTrait::RANGE);
-
-			if (currAttributeTrait == AttributeTrait::NONE || skipOverride) {
+			if (currAttributeTrait == AttributeTrait::NONE) {
 				if (annotation == nullptr || attributeTrait == AttributeTrait::NONE) {
 					annotation = currAnnotation;
 					attributeTrait = currAttributeTrait;
@@ -270,10 +268,21 @@ AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attribute
 					annotation = currAnnotation;
 					attributeTrait = currAttributeTrait;
 				}
-			}	
+			}
 			else {
-				annotation = currAnnotation;
-				attributeTrait = currAttributeTrait;
+				//keep annotation of range and trait of percent/angle
+				const bool keepAnnotation = (((currAttributeTrait == AttributeTrait::PERCENT) ||
+				                              (currAttributeTrait == AttributeTrait::ANGLE)) &&
+				                             attributeTrait == AttributeTrait::RANGE);
+				if (!keepAnnotation)
+					annotation = currAnnotation;
+
+				const bool keepTrait =
+				        (((attributeTrait == AttributeTrait::PERCENT) || (attributeTrait == AttributeTrait::ANGLE)) &&
+				         currAttributeTrait == AttributeTrait::RANGE);
+
+				if (!keepTrait)
+					attributeTrait = currAttributeTrait;
 			}
 		}
 	}

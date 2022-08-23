@@ -138,9 +138,10 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 }
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
-                  double max, const FolderVec& parentFolders, const std::wstring& description) {
+                  double max, bool restricted, const FolderVec& parentFolders, const std::wstring& description) {
+	PRM_RangeFlag restrictedFlag = restricted ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI;
 	PRM_Range range =
-	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
+	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(restrictedFlag, min, restrictedFlag, max) : PRM_Range();
 
 	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, nullptr, parentFolders, description);
 }

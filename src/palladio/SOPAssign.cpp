@@ -604,27 +604,31 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::RANGE: {
-						AnnotationParsing::RangeAnnotation minMax =
+						AnnotationParsing::RangeAnnotation rangeAnnotation =
 						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
 
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
-						                                 minMax.second, parentFolders, description);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
+						                                 rangeAnnotation.max, rangeAnnotation.restricted, parentFolders,
+						                                 description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::ANGLE: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 360, parentFolders,
-						                                 description);
+						AnnotationParsing::RangeAnnotation rangeAnnotation =
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 360);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
+						                                 rangeAnnotation.max, false, parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::PERCENT: {
-						// diplay % values with a 0-1 range for now (avoid scaling by 100)
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 1, parentFolders,
-						                                 description);
+						AnnotationParsing::RangeAnnotation rangeAnnotation =
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 1);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
+						                                 rangeAnnotation.max, false, parentFolders, description);
 						break;
 					}
 					default: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, parentFolders,
-						                                 description);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, true,
+						                                 parentFolders, description);
 						break;
 					}
 				}
