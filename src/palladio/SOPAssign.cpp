@@ -43,6 +43,8 @@ constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.Attribute
 
 constexpr const wchar_t* RULE_ATTRIBUTES_FOLDER_NAME = L"Rule Attributes";
 
+const double PERCENT_FACTOR = 100.0;
+
 AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* encOpts = nullptr;
@@ -197,10 +199,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 			if (!parm.isFactoryDefaultUI()) {
 				PRM_Template* templatePtr = parm.getTemplatePtr();
 				PRM_Default* factoryDefaults = templatePtr->getFactoryDefaults();
-				
+
 				for (size_t idx = 0; idx < templatePtr->getVectorSize(); ++idx) {
 					PRM_Default* defaultValue = templatePtr->getDefault(idx);
-					
+
 					factoryDefaults[idx].set(defaultValue->getFloat(), defaultValue->getString(),
 					                         defaultValue->getStringMeaning());
 				}
@@ -365,8 +367,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed,
-		                   shapeName.c_str(), ruleAttr.get(), resolveMap.get());
+		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
+		                   resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
@@ -488,7 +490,15 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					switch (currParmType.getFloatType()) {
 						case PRM_Type::PRM_FLOAT_NONE: {
-							const double floatValue = evalFloat(&parm, 0, time);
+							double floatValue = evalFloat(&parm, 0, time);
+
+							const PRM_SpareData* spareData = parm.getSparePtr();
+							if (spareData != nullptr) {
+								const char* isPercent =
+								        spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
+								if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
+									floatValue /= PERCENT_FACTOR;
+							}
 
 							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
 							floatHandle.set(0, floatValue);
@@ -590,9 +600,8 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
-				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
-				                                    ? std::get<double>(defaultValIt->second)
-				                                    : 0.0;
+				const double defaultValue =
+				        (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
 
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
@@ -608,26 +617,28 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
 
 						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-						                                 rangeAnnotation.max, rangeAnnotation.restricted, parentFolders,
-						                                 description);
+						                                 rangeAnnotation.max, rangeAnnotation.restricted, false,
+						                                 parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::ANGLE: {
 						AnnotationParsing::RangeAnnotation rangeAnnotation =
 						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 360);
 						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-						                                 rangeAnnotation.max, false, parentFolders, description);
+						                                 rangeAnnotation.max, false, false, parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::PERCENT: {
 						AnnotationParsing::RangeAnnotation rangeAnnotation =
 						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 1);
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-						                                 rangeAnnotation.max, false, parentFolders, description);
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue * PERCENT_FACTOR,
+						                                 rangeAnnotation.min * PERCENT_FACTOR,
+						                                 rangeAnnotation.max * PERCENT_FACTOR, false, true,
+						                                 parentFolders, description);
 						break;
 					}
 					default: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, true,
+						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, true, false,
 						                                 parentFolders, description);
 						break;
 					}
@@ -637,9 +648,8 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
 				const bool isDefaultValString = (defaultValIt->second.index() == 0);
-				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-				                                          ? std::get<std::wstring>(defaultValIt->second)
-				                                          : L"";
+				const std::wstring defaultValue =
+				        (foundDefaultValue && isDefaultValString) ? std::get<std::wstring>(defaultValIt->second) : L"";
 
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {

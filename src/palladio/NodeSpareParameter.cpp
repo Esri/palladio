@@ -138,12 +138,16 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 }
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
-                  double max, bool restricted, const FolderVec& parentFolders, const std::wstring& description) {
+                  double max, bool restricted, bool isPercent, const FolderVec& parentFolders, const std::wstring& description) {
 	PRM_RangeFlag restrictedFlag = restricted ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI;
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(restrictedFlag, min, restrictedFlag, max) : PRM_Range();
 
-	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, nullptr, parentFolders, description);
+	const std::string isPercentString = isPercent ? "true" : "false";
+	PRM_SpareToken sparetoken(PRM_SPARE_IS_PERCENT_TOKEN, isPercentString.c_str());
+	PRM_SpareData mySpareData(sparetoken);
+
+	addParm(node, PRM_FLT, id, name, PRM_Default(defaultVal), &range, &mySpareData, parentFolders, description);
 }
 
 void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal,
