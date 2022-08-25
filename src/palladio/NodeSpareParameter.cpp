@@ -76,8 +76,11 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 
 	if (folderIdx > 0) {
 		const int folderEndIdx = nodeParms.getMatchingGroupParm(folderIdx);
-		const int myParmIdx = nodeParms.getNParms() - 1;
-		nodeParms.moveParms(myParmIdx, myParmIdx, folderEndIdx - myParmIdx);
+		const int parmIdxlast = nodeParms.getNParms() - 1;
+		const int matchingParmIdx = nodeParms.getMatchingGroupParm(parmIdxlast);
+		const int parmIdxfirst = (matchingParmIdx != -1) ? matchingParmIdx : parmIdxlast;
+
+		nodeParms.moveParms(parmIdxfirst, parmIdxlast, folderEndIdx - parmIdxfirst);
 	}
 
 	director->changeNodeSpareParms(node, nodeParms, errors);
