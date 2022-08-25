@@ -709,7 +709,38 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 						break;
 					}
 				}
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_BOOL_ARRAY: {
+				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 5);
+				const std::vector<bool> defaultValues =
+				        (foundDefaultValue && isDefaultValBoolArray)
+				                ? std::get<std::vector<bool>>(defaultValIt->second)
+				                : std::vector<bool>();
 
+				NodeSpareParameter::addBoolArrayParm(this, attrId, attrName, defaultValues, parentFolders, description);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_FLOAT_ARRAY: {
+				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 4);
+				const std::vector<double> defaultValues =
+				        (foundDefaultValue && isDefaultValBoolArray)
+				                ? std::get<std::vector<double>>(defaultValIt->second)
+				                : std::vector<double>();
+
+				NodeSpareParameter::addFloatArrayParm(this, attrId, attrName, defaultValues, parentFolders,
+				                                      description);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_STR_ARRAY: {
+				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 3);
+				const std::vector<std::wstring> defaultValues =
+				        (foundDefaultValue && isDefaultValBoolArray)
+				                ? std::get<std::vector<std::wstring>>(defaultValIt->second)
+				                : std::vector<std::wstring>();
+
+				NodeSpareParameter::addStringArrayParm(this, attrId, attrName, defaultValues, parentFolders,
+				                                       description);
 				break;
 			}
 			default:
