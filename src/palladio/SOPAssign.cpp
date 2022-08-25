@@ -780,10 +780,16 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on parameter/attribute change
 	if (reason == OP_PARM_CHANGED) {
 		// parm index is directly stored in the void*, casting to size_t to avoid compiler warnings
-		const PRM_Parm& parm = getParm((size_t)data);
+		const PRM_ParmList* parmList = getParmList();
+		if (parmList == nullptr)
+			return;
+		
+		const PRM_Parm* const parmPtr = parmList->getParmPtr((size_t)data);
+		if (parmPtr == nullptr)
+			return;
 
-		if (parm.isSpareParm()) {
-			const PRM_Type currParmType = parm.getType();
+		if (parmPtr->isSpareParm()) {
+			const PRM_Type currParmType = parmPtr->getType();
 
 			const bool isOrdParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
 			                       ((currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||
