@@ -60,7 +60,8 @@ std::wstring getColorString(const std::array<float, 3>& rgb);
 
 RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation,
                                      double fallbackMin = std::numeric_limits<double>::quiet_NaN(),
-                                     double fallbackMax = std::numeric_limits<double>::quiet_NaN());
+                                     double fallbackMax = std::numeric_limits<double>::quiet_NaN(),
+                                     bool fallbackRestricted = true);
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation);
 

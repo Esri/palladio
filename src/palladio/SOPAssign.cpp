@@ -623,18 +623,21 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 					}
 					case AnnotationParsing::AttributeTrait::ANGLE: {
 						AnnotationParsing::RangeAnnotation rangeAnnotation =
-						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 360);
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 360, false);
+
 						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-						                                 rangeAnnotation.max, false, false, parentFolders, description);
+						                                 rangeAnnotation.max, rangeAnnotation.restricted, false,
+						                                 parentFolders, description);
 						break;
 					}
 					case AnnotationParsing::AttributeTrait::PERCENT: {
 						AnnotationParsing::RangeAnnotation rangeAnnotation =
-						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 1);
+						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation, 0, 1, false);
+
 						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue * PERCENT_FACTOR,
 						                                 rangeAnnotation.min * PERCENT_FACTOR,
-						                                 rangeAnnotation.max * PERCENT_FACTOR, false, true,
-						                                 parentFolders, description);
+						                                 rangeAnnotation.max * PERCENT_FACTOR,
+						                                 rangeAnnotation.restricted, true, parentFolders, description);
 						break;
 					}
 					default: {

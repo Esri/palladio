@@ -97,10 +97,10 @@ wchar_t toHex(int i) {
 } // namespace
 
 namespace AnnotationParsing {
-RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation, double fallbackMin, double fallbackMax) {
+RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation, double fallbackMin, double fallbackMax, bool fallbackRestricted) {
 	double min = fallbackMin;
 	double max = fallbackMax;
-	bool restricted = true;
+	bool restricted = fallbackRestricted;
 
 	const wchar_t* anName = annotation.getName();
 
