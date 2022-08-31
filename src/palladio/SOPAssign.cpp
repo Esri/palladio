@@ -616,7 +616,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 					if (rangeIt != traitAnnotationMap.end())
 						return std::get<AnnotationParsing::RangeAnnotation>(rangeIt->second);
 
-					return AnnotationParsing::RangeAnnotation({min, max, restricted});
+					return AnnotationParsing::RangeAnnotation({std::make_pair(min, max), restricted});
 				};
 
 				if (enumIt != traitAnnotationMap.end()) {
@@ -630,22 +630,22 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 1.0, true);
 
 					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue * PERCENT_FACTOR,
-					                                 rangeAnnotation.min * PERCENT_FACTOR,
-					                                 rangeAnnotation.max * PERCENT_FACTOR, rangeAnnotation.restricted,
-					                                 true, parentFolders, description);
+					                                 rangeAnnotation.minMax.first * PERCENT_FACTOR,
+					                                 rangeAnnotation.minMax.second * PERCENT_FACTOR,
+					                                 rangeAnnotation.restricted, true, parentFolders, description);
 				}
 				else if (angleIt != traitAnnotationMap.end()) {
 					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 360.0, true);
 
-					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-					                                 rangeAnnotation.max, rangeAnnotation.restricted, false,
+					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.minMax.first,
+					                                 rangeAnnotation.minMax.second, rangeAnnotation.restricted, false,
 					                                 parentFolders, description);
 				}
 				else {
 					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 10.0, false);
 
-					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.min,
-					                                 rangeAnnotation.max, rangeAnnotation.restricted, false,
+					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.minMax.first,
+					                                 rangeAnnotation.minMax.second, rangeAnnotation.restricted, false,
 					                                 parentFolders, description);
 				}
 				break;
