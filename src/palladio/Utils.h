@@ -98,3 +98,5 @@ inline bool startsWithAnyOf(const std::string& s, const std::vector<std::string>
 	}
 	return false;
 }
+
+PLD_TEST_EXPORTS_API std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions);

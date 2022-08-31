@@ -17,6 +17,7 @@
 #include "NodeSpareParameter.h"
 #include "AttributeConversion.h"
 #include "SOPAssign.h"
+#include "Utils.h"
 
 #include "OP/OP_Director.h"
 #include "PI/PI_EditScriptedParms.h"
@@ -39,36 +40,6 @@ std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 	primAttr = UT_VarEncode::encodeAttrib(primAttr);
 
 	return primAttr.toStdString();
-}
-
-const std::string FILE_ANY = "*";
-const std::string FILE_DOT = ".";
-const std::string FILE_EXTENSION_PREFIX = FILE_ANY + FILE_DOT;
-
-std::string cleanExtension(const std::string& extension) {
-	if (extension.empty())
-		return {};
-	if (extension.rfind(FILE_EXTENSION_PREFIX, 0) == 0)
-		return extension;
-	if (extension.rfind(FILE_DOT, 0) == 0)
-		return FILE_ANY + extension;
-	return FILE_EXTENSION_PREFIX + extension;
-}
-
-std::string getExtensionString(const std::vector<std::wstring>& extensions) {
-	std::string extensionString;
-	for (const std::wstring& extension : extensions) {
-		std::string cleanedFileExtension = cleanExtension(toOSNarrowFromUTF16(extension));
-		if (cleanedFileExtension.empty())
-			continue;
-		if (extensionString.empty())
-			extensionString += cleanedFileExtension;
-		else
-			extensionString += " " + cleanedFileExtension;
-	}
-	if (extensionString.empty())
-		return FILE_ANY;
-	return extensionString;
 }
 } // namespace
 
@@ -239,7 +210,7 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                  const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description) {
 
-	const std::string extensionString = getExtensionString(extensions);
+	const std::string extensionString = toOSNarrowFromUTF16(getFileExtensionString(extensions));
 	PRM_SpareToken sparetoken(PRM_SPARE_FILE_CHOOSER_PATTERN_TOKEN, extensionString.c_str());
 	PRM_SpareData mySpareData(sparetoken);
 
