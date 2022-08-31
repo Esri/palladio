@@ -188,6 +188,22 @@ std::wstring parseDescriptionAnnotation(const prt::Annotation& annotation) {
 	return annotation.getArgument(0)->getStr();
 }
 
+AnnotationParsing::AnnotationVariant getGenericAnnotation(const prt::Annotation& annotation,
+                                                          AnnotationParsing::AttributeTrait attributeTrait) {
+	switch (attributeTrait) {
+		case AnnotationParsing::AttributeTrait::ENUM:
+			return AnnotationParsing::parseEnumAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::RANGE:
+			return AnnotationParsing::parseRangeAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::FILE:
+			return AnnotationParsing::parseFileAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::DESCRIPTION:
+			return AnnotationParsing::parseDescriptionAnnotation(annotation);
+		default:
+			return AnnotationParsing::AnnotationVariant();
+	}
+}
+
 ColorAnnotation parseColor(const std::wstring colorString) {
 	ColorAnnotation color{0.0, 0.0, 0.0};
 	if (colorString.size() >= 7 && colorString[0] == '#') {
@@ -241,55 +257,31 @@ AttributeTrait detectAttributeTrait(const prt::Annotation& annotation) {
 	return AttributeTrait::NONE;
 }
 
-AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info) {
+std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
+getAttributeAnnotations(const RuleFileInfoUPtr& info) {
+	std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>> annotationMap;
+
 	const prt::Annotation* annotation = nullptr;
 	AttributeTrait attributeTrait = AttributeTrait::NONE;
 	std::wstring description;
 
 	for (size_t attributeIdx = 0, numAttrs = info->getNumAttributes(); attributeIdx < numAttrs; attributeIdx++) {
 		const auto* attribute = info->getAttribute(attributeIdx);
-		if (std::wcscmp(attributeName.c_str(), attribute->getName()) != 0)
-			continue;
+		std::wstring attrName = attribute->getName();
+
+		std::map<AttributeTrait, AnnotationVariant> traitAnnotationMap;
 		for (size_t annotationIdx = 0; annotationIdx < attribute->getNumAnnotations(); annotationIdx++) {
-			const prt::Annotation* currAnnotation = attribute->getAnnotation(annotationIdx);
-			AttributeTrait currAttributeTrait = detectAttributeTrait(*currAnnotation);
-
-			if (currAttributeTrait == AttributeTrait::NONE) {
-				if (annotation == nullptr || attributeTrait == AttributeTrait::NONE) {
-					annotation = currAnnotation;
-					attributeTrait = currAttributeTrait;
-				}
+			const prt::Annotation* prtAnnotationPtr = attribute->getAnnotation(annotationIdx);
+			AttributeTrait attributeTrait = detectAttributeTrait(*prtAnnotationPtr);
+			if (attributeTrait == AttributeTrait::NONE)
 				continue;
-			}
-			
-			if (currAttributeTrait == AttributeTrait::DESCRIPTION) {
-				description = parseDescriptionAnnotation(*currAnnotation);
-				if (annotation == nullptr || attributeTrait == AttributeTrait::DESCRIPTION) {
-					annotation = currAnnotation;
-					attributeTrait = currAttributeTrait;
-				}
-			}
-			else {
-				//keep annotation of range and trait of percent/angle
-				const bool keepAnnotation = (((currAttributeTrait == AttributeTrait::PERCENT) ||
-				                              (currAttributeTrait == AttributeTrait::ANGLE)) &&
-				                             attributeTrait == AttributeTrait::RANGE);
-				if (!keepAnnotation)
-					annotation = currAnnotation;
+			AnnotationVariant annotation = getGenericAnnotation(*prtAnnotationPtr, attributeTrait);
 
-				const bool keepTrait =
-				        (((attributeTrait == AttributeTrait::PERCENT) || (attributeTrait == AttributeTrait::ANGLE)) &&
-				         currAttributeTrait == AttributeTrait::RANGE);
-
-				if (!keepTrait)
-					attributeTrait = currAttributeTrait;
-			}
+			traitAnnotationMap[attributeTrait] = annotation;
 		}
+		annotationMap[attrName] = traitAnnotationMap;
 	}
-	if (annotation == nullptr)
-		throw std::invalid_argument("attribute not found in ruleFileInfo");
 
-	return AttributeAnnotationInfo(*annotation, attributeTrait, description);
+	return annotationMap;
 }
 } // namespace AnnotationParsing
-

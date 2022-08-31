@@ -21,6 +21,9 @@
 #include "prt/Annotation.h"
 
 #include <array>
+#include <map>
+#include <optional>
+#include <variant>
 
 namespace AnnotationParsing {
 
@@ -40,19 +43,7 @@ struct RangeAnnotation {
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
-struct AttributeAnnotationInfo {
-	const prt::Annotation& mAnnotation;
-	AttributeTrait mAttributeTrait;
-	std::wstring mDescription;
-
-	AttributeAnnotationInfo(const prt::Annotation& annotation, AttributeTrait attributeTrait, const std::wstring& description)
-	    : mAnnotation(annotation), mAttributeTrait(attributeTrait), mDescription(description) {}
-	AttributeAnnotationInfo() = delete;
-	AttributeAnnotationInfo(const AttributeAnnotationInfo&) = delete;
-	AttributeAnnotationInfo(AttributeAnnotationInfo&&) = delete;
-	AttributeAnnotationInfo& operator=(const AttributeAnnotationInfo&) = delete;
-	AttributeAnnotationInfo& operator=(AttributeAnnotationInfo&&) = delete;
-};
+using AnnotationVariant = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
@@ -69,5 +60,6 @@ FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
-AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info);
-}
+std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
+getAttributeAnnotations(const RuleFileInfoUPtr& info);
+} // namespace AnnotationParsing
