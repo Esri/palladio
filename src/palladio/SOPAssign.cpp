@@ -107,22 +107,14 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 						case PRM_Type::PRM_ORD_NONE: {
 							std::string stringValue;
 
-							switch (it->second.index()) {
-								case 0: {
-									stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
-									break;
-								}
-								case 1: {
-									stringValue = std::to_string(std::get<double>(it->second));
-									break;
-								}
-								case 2: {
-									stringValue = std::to_string(std::get<bool>(it->second));
-									break;
-								}
-								default:
-									continue;
-							}
+							if (std::holds_alternative<std::wstring>(it->second))
+								stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
+							else if (std::holds_alternative<double>(it->second))
+								stringValue = std::to_string(std::get<double>(it->second));
+							else if (std::holds_alternative<bool>(it->second))
+								stringValue = std::to_string(std::get<bool>(it->second));
+							else
+								continue;
 
 							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
 							if (choices != nullptr) {
@@ -139,7 +131,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							break;
 						}
 						case PRM_Type::PRM_ORD_TOGGLE: {
-							if (it->second.index() != 2)
+							if (!std::holds_alternative<bool>(it->second))
 								continue;
 
 							const int intValue = static_cast<int>(std::get<bool>(it->second));
@@ -169,7 +161,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 							switch (parmInstType.getBasicType()) {
 								case PRM_Type::PRM_BASIC_ORDINAL: {
-									if (it->second.index() != 5)
+									if (!std::holds_alternative<std::vector<bool>>(it->second))
 										continue;
 
 									const std::vector<bool>& boolValues = std::get<std::vector<bool>>(it->second);
@@ -182,7 +174,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 									break;
 								}
 								case PRM_Type::PRM_BASIC_FLOAT: {
-									if (it->second.index() != 4)
+									if (!std::holds_alternative<std::vector<double>>(it->second))
 										continue;
 
 									const std::vector<double>& doubleValues = std::get<std::vector<double>>(it->second);
@@ -195,7 +187,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 									break;
 								}
 								case PRM_Type::PRM_BASIC_STRING: {
-									if (it->second.index() != 3)
+									if (!std::holds_alternative<std::vector<std::wstring>>(it->second))
 										continue;
 
 									const std::vector<std::wstring>& wStringValues =
@@ -216,13 +208,13 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 						}
 						if (parm.isDefault() && areAllChildrenDefault)
 							node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
-						else 
+						else
 							continue; // avoid overriding if not default
 					}
 					else {
 						switch (currParmType.getFloatType()) {
 							case PRM_Type::PRM_FLOAT_RGBA: {
-								if (it->second.index() != 0)
+								if (!std::holds_alternative<std::wstring>(it->second))
 									continue;
 
 								const std::wstring colorString = std::get<std::wstring>(it->second);
@@ -234,7 +226,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 								break;
 							}
 							default: {
-								if (it->second.index() != 1)
+								if (!std::holds_alternative<double>(it->second))
 									continue;
 
 								const double floatValue = std::get<double>(it->second);
@@ -247,7 +239,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					if (it->second.index() != 0)
+					if (!std::holds_alternative<std::wstring>(it->second))
 						continue;
 
 					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
@@ -264,10 +256,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 			if (!parm.isFactoryDefaultUI()) {
 				PRM_Template* templatePtr = parm.getTemplatePtr();
 				PRM_Default* factoryDefaults = templatePtr->getFactoryDefaults();
-				
+
 				for (size_t idx = 0; idx < templatePtr->getVectorSize(); ++idx) {
 					PRM_Default* defaultValue = templatePtr->getDefault(idx);
-					
+
 					factoryDefaults[idx].set(defaultValue->getFloat(), defaultValue->getString(),
 					                         defaultValue->getStringMeaning());
 				}
@@ -307,26 +299,23 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							if (it == node->mDefaultCGAAttributes.end())
 								continue;
 
-							switch (it->second.index()) {
-								case 0: {
-									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
-									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
-									break;
-								}
-								case 1: {
-									const double floatValue = result.toFloat();
-									amb->setFloat(ruleAttrName.c_str(), floatValue);
-									break;
-								}
-								case 2: {
-									const bool boolValue = static_cast<bool>(result.toInt());
-									amb->setFloat(ruleAttrName.c_str(), boolValue);
-									break;
-								}
-								default:
-									break;
+							if (std::holds_alternative<std::wstring>(it->second)) {
+								const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
+								amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+								break;
 							}
-							break;
+							else if (std::holds_alternative<double>(it->second)) {
+								const double floatValue = result.toFloat();
+								amb->setFloat(ruleAttrName.c_str(), floatValue);
+								break;
+							}
+							else if (std::holds_alternative<bool>(it->second)) {
+								const bool boolValue = static_cast<bool>(result.toInt());
+								amb->setFloat(ruleAttrName.c_str(), boolValue);
+								break;
+							}
+							else
+								break;
 						}
 						case PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE: {
 							const int intValue = node->evalInt(&parm, 0, time);
@@ -432,8 +421,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed,
-		                   shapeName.c_str(), ruleAttr.get(), resolveMap.get());
+		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
+		                   resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
@@ -465,8 +454,10 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
-template<typename T>
-std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType, std::function<T(const SOPAssign*, const PRM_Parm*)> eval) {
+template <typename T>
+std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                      PRM_Type::PRM_BasicType expectedType,
+                                                      std::function<T(const SOPAssign*, const PRM_Parm*)> eval) {
 	uint32_t parmCount = parm.getMultiParmCount();
 	bool skipAttr = true;
 
@@ -522,7 +513,7 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
 					defVal = std::wstring(v);
-					assert(defVal.index() == 0); // std::wstring is type index 0
+					assert(std::holds_alternative<std::wstring>(defVal)); // std::wstring is type index 0
 					break;
 				}
 				case prt::AttributeMap::PT_FLOAT_ARRAY: {
@@ -622,45 +613,46 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 						uint32_t defaultArraySize = 0;
 						bool areAllChildrenDefault = true;
 
-						switch (it->second.index()) {
-						case 5: { // bool
-							std::pair<UT_Int8Array, bool> boolArray = getArrayFromMultiParm<int8>(this, parm, PRM_Type::PRM_BASIC_ORDINAL, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-								return node->evalInt(parmInst, 0, time);
-							});
-								
+						if (std::holds_alternative<std::vector<bool>>(it->second)) {
+							std::pair<UT_Int8Array, bool> boolArray = getArrayFromMultiParm<int8>(
+							        this, parm, PRM_Type::PRM_BASIC_ORDINAL,
+							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+								        return node->evalInt(parmInst, 0, time);
+							        });
+
 							if (boolArray.second && parm.isDefault())
 								break;
 
-							GA_RWHandleT<UT_Int8Array> intArrayHandle(detail->addIntArray(
-								    attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
+							GA_RWHandleT<UT_Int8Array> intArrayHandle(
+							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
 							intArrayHandle.set(0, boolArray.first);
-							break;
 						}
-						case 4: { // float
-							std::pair<UT_FprealArray, bool> floatArray = getArrayFromMultiParm<fpreal>(this, parm, PRM_Type::PRM_BASIC_FLOAT, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-									return node->evalFloat(parmInst, 0, time);
-							});
-							
+						else if (std::holds_alternative<std::vector<double>>(it->second)) {
+							std::pair<UT_FprealArray, bool> floatArray = getArrayFromMultiParm<fpreal>(
+							        this, parm, PRM_Type::PRM_BASIC_FLOAT,
+							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+								        return node->evalFloat(parmInst, 0, time);
+							        });
+
 							if (floatArray.second && parm.isDefault())
 								break;
 
 							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
 							floatArrayHandle.set(0, floatArray.first);
-							break;
 						}
-						case 3: { // string
-							std::pair<UT_StringArray, bool> stringArray = getArrayFromMultiParm<UT_StringHolder>(this, parm, PRM_Type::PRM_BASIC_STRING, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-								UT_StringHolder stringValue;
-								node->evalString(stringValue, parmInst, 0, time);
-								return stringValue;
-							});
-							
+						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
+							std::pair<UT_StringArray, bool> stringArray = getArrayFromMultiParm<UT_StringHolder>(
+							        this, parm, PRM_Type::PRM_BASIC_STRING,
+							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+								        UT_StringHolder stringValue;
+								        node->evalString(stringValue, parmInst, 0, time);
+								        return stringValue;
+							        });
+
 							if (stringArray.second && parm.isDefault())
 								break;
 							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
 							stringArrayHandle.set(0, stringArray.first);
-							break;
-						}
 						}
 					}
 					else {
@@ -746,7 +738,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				const bool isDefaultValBool = (defaultValIt->second.index() == 2);
+				const bool isDefaultValBool = std::holds_alternative<bool>(defaultValIt->second);
 				const bool defaultValue =
 				        (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
 
@@ -768,10 +760,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
-				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
-				                                    ? std::get<double>(defaultValIt->second)
-				                                    : 0.0;
+				const bool isDefaultValFloat = std::holds_alternative<double>(defaultValIt->second);
+				const double defaultValue =
+				        (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
 
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
@@ -811,10 +802,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				const bool isDefaultValString = (defaultValIt->second.index() == 0);
-				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-				                                          ? std::get<std::wstring>(defaultValIt->second)
-				                                          : L"";
+				const bool isDefaultValString = std::holds_alternative<std::wstring>(defaultValIt->second);
+				const std::wstring defaultValue =
+				        (foundDefaultValue && isDefaultValString) ? std::get<std::wstring>(defaultValIt->second) : L"";
 
 				switch (annotationInfo.mAttributeTrait) {
 					case AnnotationParsing::AttributeTrait::ENUM: {
@@ -853,30 +843,29 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_BOOL_ARRAY: {
-				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 5);
-				const std::vector<bool> defaultValues =
-				        (foundDefaultValue && isDefaultValBoolArray)
-				                ? std::get<std::vector<bool>>(defaultValIt->second)
-				                : std::vector<bool>();
+				const bool isDefaultValBoolArray = std::holds_alternative<std::vector<bool>>(defaultValIt->second);
+				const std::vector<bool> defaultValues = (foundDefaultValue && isDefaultValBoolArray)
+				                                                ? std::get<std::vector<bool>>(defaultValIt->second)
+				                                                : std::vector<bool>();
 
 				NodeSpareParameter::addBoolArrayParm(this, attrId, attrName, defaultValues, parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT_ARRAY: {
-				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 4);
-				const std::vector<double> defaultValues =
-				        (foundDefaultValue && isDefaultValBoolArray)
-				                ? std::get<std::vector<double>>(defaultValIt->second)
-				                : std::vector<double>();
+				const bool isDefaultValFloatArray = std::holds_alternative<std::vector<bool>>(defaultValIt->second);
+				const std::vector<double> defaultValues = (foundDefaultValue && isDefaultValFloatArray)
+				                                                  ? std::get<std::vector<double>>(defaultValIt->second)
+				                                                  : std::vector<double>();
 
 				NodeSpareParameter::addFloatArrayParm(this, attrId, attrName, defaultValues, parentFolders,
 				                                      description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR_ARRAY: {
-				const bool isDefaultValBoolArray = (defaultValIt->second.index() == 3);
+				const bool isDefaultValStringArray =
+				        std::holds_alternative<std::vector<std::wstring>>(defaultValIt->second);
 				const std::vector<std::wstring> defaultValues =
-				        (foundDefaultValue && isDefaultValBoolArray)
+				        (foundDefaultValue && isDefaultValStringArray)
 				                ? std::get<std::vector<std::wstring>>(defaultValIt->second)
 				                : std::vector<std::wstring>();
 
@@ -955,7 +944,7 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 		const PRM_ParmList* parmList = getParmList();
 		if (parmList == nullptr)
 			return;
-		
+
 		const PRM_Parm* const parmPtr = parmList->getParmPtr((size_t)data);
 		if (parmPtr == nullptr)
 			return;
