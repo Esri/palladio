@@ -29,7 +29,11 @@ public:
 	bool canHandle(const char* source) override;
 	bool hasAccess(const char* source, int mode) override;
 	bool getIsDirectory(const char* source) override;
+#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
+	time_t getModTime(const char* source) override;
+#else
 	int getModTime(const char* source) override;
+#endif
 	int64 getSize(const char* source) override;
 	UT_String getExtension(const char* source) override;
 	bool getContents(const char* source, UT_StringArray& contents, UT_StringArray* dirs) override;
