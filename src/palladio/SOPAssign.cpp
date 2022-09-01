@@ -85,6 +85,72 @@ bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValu
 	return true;
 }
 
+uint32 getVariantArraySize(const SOPAssign::CGAAttributeValueType& valArray) {
+	if (std::holds_alternative<std::vector<bool>>(valArray))
+		return std::get<std::vector<bool>>(valArray).size();
+	else if (std::holds_alternative<std::vector<double>>(valArray))
+		return std::get<std::vector<double>>(valArray).size();
+	else if (std::holds_alternative<std::vector<std::wstring>>(valArray))
+		return std::get<std::vector<std::wstring>>(valArray).size();
+	
+	return 0;
+}
+
+bool isMultiParmDefault(const PRM_Parm& parm, int32 defaultSize) {
+	uint32_t parmCount = parm.getMultiParmCount();
+	if (parmCount != defaultSize)
+		return false;
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr || !parmInst->isDefault())
+			return false;
+	}
+	return true;
+}
+
+void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAssign::CGAAttributeValueType& defArray, fpreal time) {
+	uint32_t parmCount = parm.getMultiParmCount();
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr)
+			continue;
+
+		const PRM_Type& parmInstType = parmInst->getType();
+		const std::string parmInstToken = parmInst->getToken();
+
+		switch (parmInstType.getBasicType()) {
+			case PRM_Type::PRM_BASIC_ORDINAL: {
+				if (!std::holds_alternative<std::vector<bool>>(defArray))
+					continue;
+
+				const std::vector<bool>& boolValues = std::get<std::vector<bool>>(defArray);
+				node->setInt(parmInstToken.c_str(), 0, time, boolValues[i]);
+				break;
+			}
+			case PRM_Type::PRM_BASIC_FLOAT: {
+				if (!std::holds_alternative<std::vector<double>>(defArray))
+					continue;
+
+				const std::vector<double>& doubleValues = std::get<std::vector<double>>(defArray);
+				node->setFloat(parmInstToken.c_str(), 0, time, doubleValues[i]);
+				break;
+			}
+			case PRM_Type::PRM_BASIC_STRING: {
+				if (!std::holds_alternative<std::vector<std::wstring>>(defArray))
+					continue;
+
+				const std::vector<std::wstring>& wStringValues = std::get<std::vector<std::wstring>>(defArray);
+				const UT_StringHolder stringValue(toOSNarrowFromUTF16(wStringValues[i]));
+				node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, parmInstToken.c_str(), 0, time);
+				break;
+			}
+		}
+		parmInst->overwriteDefaults(time);
+	}
+}
+
 void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
                            const SOPAssign::CGAAttributeValueMap& defaultValues) {
 	const fpreal time = CHgetEvalTime();
@@ -146,68 +212,13 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
-						uint32_t parmCount = parm.getMultiParmCount();
-						uint32_t defaultArraySize = 0;
-						bool areAllChildrenDefault = true;
+						uint32_t defaultArraySize = getVariantArraySize(it->second);
 
-						for (int i = 0; i < parmCount; ++i) {
-							PRM_Parm* parmInst = parm.getMultiParm(i);
-							if (parmInst == nullptr)
-								continue;
-
-							const PRM_Type& parmInstType = parmInst->getType();
-							const std::string parmInstToken = parmInst->getToken();
-							areAllChildrenDefault = false;
-
-							switch (parmInstType.getBasicType()) {
-								case PRM_Type::PRM_BASIC_ORDINAL: {
-									if (!std::holds_alternative<std::vector<bool>>(it->second))
-										continue;
-
-									const std::vector<bool>& boolValues = std::get<std::vector<bool>>(it->second);
-									defaultArraySize = boolValues.size();
-
-									if (i < boolValues.size() && parmInst->isDefault())
-										node->setInt(parmInstToken.c_str(), 0, time, boolValues[i]);
-									else
-										continue;
-									break;
-								}
-								case PRM_Type::PRM_BASIC_FLOAT: {
-									if (!std::holds_alternative<std::vector<double>>(it->second))
-										continue;
-
-									const std::vector<double>& doubleValues = std::get<std::vector<double>>(it->second);
-									defaultArraySize = doubleValues.size();
-
-									if (i < doubleValues.size() && parmInst->isDefault())
-										node->setFloat(parmInstToken.c_str(), 0, time, doubleValues[i]);
-									else
-										continue;
-									break;
-								}
-								case PRM_Type::PRM_BASIC_STRING: {
-									if (!std::holds_alternative<std::vector<std::wstring>>(it->second))
-										continue;
-
-									const std::vector<std::wstring>& wStringValues =
-									        std::get<std::vector<std::wstring>>(it->second);
-									defaultArraySize = wStringValues.size();
-
-									if (i >= wStringValues.size() || !parmInst->isDefault())
-										continue;
-
-									const UT_StringHolder stringValue(toOSNarrowFromUTF16(wStringValues[i]));
-
-									node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL,
-									                parmInstToken.c_str(), 0, time);
-									break;
-								}
-							}
-							parmInst->overwriteDefaults(time);
-						}
-						if (parm.isDefault() && areAllChildrenDefault)
+						if (parm.isDefault()) {
 							node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
+							if (isMultiParmDefault(parm, defaultArraySize))
+								overrideMultiParmDefault(node, parm, it->second, time);
+						}
 						else
 							continue; // avoid overriding if not default
 					}
