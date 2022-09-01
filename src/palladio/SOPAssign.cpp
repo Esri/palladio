@@ -620,10 +620,6 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
-						uint32_t parmCount = parm.getMultiParmCount();
-						uint32_t defaultArraySize = 0;
-						bool areAllChildrenDefault = true;
-
 						if (std::holds_alternative<std::vector<bool>>(it->second)) {
 							std::pair<UT_Int32Array, bool> boolArray = getArrayFromMultiParm<int32>(
 							        this, parm, PRM_Type::PRM_BASIC_ORDINAL,
