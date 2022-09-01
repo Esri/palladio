@@ -24,10 +24,7 @@ using FolderVec = std::vector<std::wstring>;
 
 namespace NodeSpareParameter {
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {});
 void clearAllParms(OP_Node* node);
-void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range = nullptr, const FolderVec& parentFolders = {}, const std::wstring& description = {});
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
                   double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {},

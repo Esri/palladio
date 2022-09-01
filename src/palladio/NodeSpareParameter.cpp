@@ -40,9 +40,6 @@ std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 
 	return primAttr.toStdString();
 }
-} // namespace
-
-namespace NodeSpareParameter {
 
 void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 	PI_EditScriptedParms nodeParms(node, 1, 0);
@@ -55,12 +52,12 @@ void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 			                                           : FolderVec();
 			addMissingFolders(node, newParentFolders);
 
-			addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
+			NodeSpareParameter::addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
 		}
 	}
 }
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders) {
+void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {}) {
 	UT_String errors;
 	OP_Director* director = OPgetDirector();
 
@@ -87,7 +84,7 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 }
 
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range, const FolderVec& parentFolders, const std::wstring& description) {
+             PRM_Range* range = nullptr, const FolderVec& parentFolders = {}, const std::wstring& description = {}) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
@@ -108,6 +105,30 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 
 	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
+
+template <typename T>
+void addArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::vector<T>& defaultVals,
+                  const FolderVec& parentFolders, const std::wstring& annotation, const char* itemNameToken,
+                  PRM_Type itemType) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Name templateName(token, label);
+	PRM_Name itemName(itemNameToken, "#");
+	PRM_Default defaultVal(defaultVals.size());
+
+	PRM_Template itemTemplate[] = {PRM_Template(PRM_TOGGLE, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+
+	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
+	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
+	                                 PRM_Template()};
+
+	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
+}
+
+} // namespace
+
+namespace NodeSpareParameter {
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
                   double max, const FolderVec& parentFolders, const std::wstring& description) {
@@ -160,26 +181,6 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
                    const FolderVec& parentFolders, const std::wstring& description) {
 	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr,
 	        parentFolders, description);
-}
-
-template <typename T>
-void addArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-	const std::vector<T>& defaultVals, const FolderVec& parentFolders,
-	const std::wstring& annotation, const char* itemNameToken, PRM_Type itemType) {
-	UT_StringHolder token(toOSNarrowFromUTF16(id));
-	UT_StringHolder label(toOSNarrowFromUTF16(name));
-
-	PRM_Name templateName(token, label);
-	PRM_Name itemName(itemNameToken, "#");
-	PRM_Default defaultVal(defaultVals.size());
-
-	PRM_Template itemTemplate[] = {PRM_Template(PRM_TOGGLE, 1, &itemName, PRMzeroDefaults), PRM_Template()};
-
-	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
-	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
-	                                 PRM_Template()};
-
-	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
 }
 
 void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
