@@ -465,10 +465,9 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
-template <typename T>
+template <typename T, typename F>
 std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm,
-                                                      PRM_Type::PRM_BasicType expectedType,
-                                                      std::function<T(const SOPAssign*, const PRM_Parm*)> eval) {
+                                                      PRM_Type::PRM_BasicType expectedType, F eval) {
 	uint32_t parmCount = parm.getMultiParmCount();
 	bool skipAttr = true;
 
