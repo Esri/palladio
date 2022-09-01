@@ -30,6 +30,7 @@
 
 #include "prt/API.h"
 
+#include <functional>
 #include <numeric>
 
 #include "CH/CH_Manager.h"
@@ -218,27 +219,29 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 						else 
 							continue; // avoid overriding if not default
 					}
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							if (it->second.index() != 0)
-								continue;
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								if (it->second.index() != 0)
+									continue;
 
-							const std::wstring colorString = std::get<std::wstring>(it->second);
-							const auto color = AnnotationParsing::parseColor(colorString);
+								const std::wstring colorString = std::get<std::wstring>(it->second);
+								const auto color = AnnotationParsing::parseColor(colorString);
 
-							node->setFloat(attributeName, 0, time, color[0]);
-							node->setFloat(attributeName, 1, time, color[1]);
-							node->setFloat(attributeName, 2, time, color[2]);
-							break;
-						}
-						default: {
-							if (it->second.index() != 1)
-								continue;
+								node->setFloat(attributeName, 0, time, color[0]);
+								node->setFloat(attributeName, 1, time, color[1]);
+								node->setFloat(attributeName, 2, time, color[2]);
+								break;
+							}
+							default: {
+								if (it->second.index() != 1)
+									continue;
 
-							const double floatValue = std::get<double>(it->second);
+								const double floatValue = std::get<double>(it->second);
 
-							node->setFloat(attributeName, 0, time, floatValue);
-							break;
+								node->setFloat(attributeName, 0, time, floatValue);
+								break;
+							}
 						}
 					}
 					break;
@@ -462,6 +465,27 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
+template<typename T>
+std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType, std::function<T(const SOPAssign*, const PRM_Parm*)> eval) {
+	uint32_t parmCount = parm.getMultiParmCount();
+	bool skipAttr = true;
+
+	UT_ValArray<T> valArray(parmCount);
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr || parmInst->getType().getBasicType() != expectedType)
+			break;
+		if (!parmInst->isDefault())
+			skipAttr = false;
+
+		T value;
+		if (parmInst)
+			value = eval(node, parmInst);
+		valArray.emplace_back(value);
+	}
+	return std::make_pair(valArray, skipAttr);
+}
+
 } // namespace
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
@@ -555,8 +579,13 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
-		if (parm.isSpareParm() && !parm.isDefault()) {
+		if (parm.isSpareParm() && (!parm.isDefault() || parm.isMultiParm())) {
 			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring style = getStyle();
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+			auto it = mDefaultCGAAttributes.find(ruleAttrName);
+			if (it == mDefaultCGAAttributes.end())
+				continue;
 			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
 
@@ -588,27 +617,75 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_NONE: {
-							const double floatValue = evalFloat(&parm, 0, time);
+					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+						uint32_t parmCount = parm.getMultiParmCount();
+						uint32_t defaultArraySize = 0;
+						bool areAllChildrenDefault = true;
 
-							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-							floatHandle.set(0, floatValue);
+						switch (it->second.index()) {
+						case 5: { // bool
+							std::pair<UT_Int8Array, bool> boolArray = getArrayFromMultiParm<int8>(this, parm, PRM_Type::PRM_BASIC_ORDINAL, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+								return node->evalInt(parmInst, 0, time);
+							});
+								
+							if (boolArray.second && parm.isDefault())
+								break;
+
+							GA_RWHandleT<UT_Int8Array> intArrayHandle(detail->addIntArray(
+								    attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
+							intArrayHandle.set(0, boolArray.first);
 							break;
 						}
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							const float r = evalFloat(&parm, 0, time);
-							const float g = evalFloat(&parm, 1, time);
-							const float b = evalFloat(&parm, 2, time);
-							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+						case 4: { // float
+							std::pair<UT_FprealArray, bool> floatArray = getArrayFromMultiParm<fpreal>(this, parm, PRM_Type::PRM_BASIC_FLOAT, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+									return node->evalFloat(parmInst, 0, time);
+							});
+							
+							if (floatArray.second && parm.isDefault())
+								break;
 
-							UT_String stringValue(toOSNarrowFromUTF16(colorString));
-							GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-							stringHandle.set(0, stringValue);
+							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
+							floatArrayHandle.set(0, floatArray.first);
 							break;
 						}
-						default:
+						case 3: { // string
+							std::pair<UT_StringArray, bool> stringArray = getArrayFromMultiParm<UT_StringHolder>(this, parm, PRM_Type::PRM_BASIC_STRING, [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+								UT_StringHolder stringValue;
+								node->evalString(stringValue, parmInst, 0, time);
+								return stringValue;
+							});
+							
+							if (stringArray.second && parm.isDefault())
+								break;
+							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
+							stringArrayHandle.set(0, stringArray.first);
 							break;
+						}
+						}
+					}
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_NONE: {
+								const double floatValue = evalFloat(&parm, 0, time);
+
+								GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
+								floatHandle.set(0, floatValue);
+								break;
+							}
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								const float r = evalFloat(&parm, 0, time);
+								const float g = evalFloat(&parm, 1, time);
+								const float b = evalFloat(&parm, 2, time);
+								const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+								UT_String stringValue(toOSNarrowFromUTF16(colorString));
+								GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+								stringHandle.set(0, stringValue);
+								break;
+							}
+							default:
+								break;
+						}
 					}
 					break;
 				}
