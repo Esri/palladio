@@ -614,7 +614,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 						bool areAllChildrenDefault = true;
 
 						if (std::holds_alternative<std::vector<bool>>(it->second)) {
-							std::pair<UT_Int8Array, bool> boolArray = getArrayFromMultiParm<int8>(
+							std::pair<UT_Int32Array, bool> boolArray = getArrayFromMultiParm<int32>(
 							        this, parm, PRM_Type::PRM_BASIC_ORDINAL,
 							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
 								        return node->evalInt(parmInst, 0, time);
@@ -623,7 +623,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							if (boolArray.second && parm.isDefault())
 								break;
 
-							GA_RWHandleT<UT_Int8Array> intArrayHandle(
+							GA_RWHandleT<UT_Int32Array> intArrayHandle(
 							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
 							intArrayHandle.set(0, boolArray.first);
 						}
