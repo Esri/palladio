@@ -569,7 +569,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 		const auto& annotationsIt = attributeAnnotations.find(ra.fqName);
 		if (annotationsIt == attributeAnnotations.end())
 			continue;
-		auto& traitAnnotationMap = annotationsIt->second;
+		const auto& traitAnnotationMap = annotationsIt->second;
 
 		const auto& enumIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::ENUM);
 		const auto& descriptionIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
