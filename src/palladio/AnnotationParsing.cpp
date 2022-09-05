@@ -183,7 +183,7 @@ std::wstring parseDescriptionAnnotation(const prt::Annotation& annotation) {
 	return annotation.getArgument(0)->getStr();
 }
 
-AnnotationParsing::AnnotationVariant getGenericAnnotation(const prt::Annotation& annotation,
+AnnotationParsing::AnnotationParameter getGenericAnnotation(const prt::Annotation& annotation,
                                                           AnnotationParsing::AttributeTrait attributeTrait) {
 	switch (attributeTrait) {
 		case AnnotationParsing::AttributeTrait::ENUM:
@@ -195,7 +195,7 @@ AnnotationParsing::AnnotationVariant getGenericAnnotation(const prt::Annotation&
 		case AnnotationParsing::AttributeTrait::DESCRIPTION:
 			return AnnotationParsing::parseDescriptionAnnotation(annotation);
 		default:
-			return AnnotationParsing::AnnotationVariant();
+			return AnnotationParsing::AnnotationParameter();
 	}
 }
 
@@ -252,9 +252,8 @@ AttributeTrait detectAttributeTrait(const prt::Annotation& annotation) {
 	return AttributeTrait::NONE;
 }
 
-std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
-getAttributeAnnotations(const RuleFileInfoUPtr& info) {
-	std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>> annotationMap;
+AttributeAnnotations getAttributeAnnotations(const RuleFileInfoUPtr& info) {
+	AttributeAnnotations annotationMap;
 
 	const prt::Annotation* annotation = nullptr;
 	AttributeTrait attributeTrait = AttributeTrait::NONE;
@@ -264,13 +263,13 @@ getAttributeAnnotations(const RuleFileInfoUPtr& info) {
 		const auto* attribute = info->getAttribute(attributeIdx);
 		std::wstring attrName = attribute->getName();
 
-		std::map<AttributeTrait, AnnotationVariant> traitAnnotationMap;
+		std::map<AttributeTrait, AnnotationParameter> traitAnnotationMap;
 		for (size_t annotationIdx = 0; annotationIdx < attribute->getNumAnnotations(); annotationIdx++) {
 			const prt::Annotation* prtAnnotationPtr = attribute->getAnnotation(annotationIdx);
 			AttributeTrait attributeTrait = detectAttributeTrait(*prtAnnotationPtr);
 			if (attributeTrait == AttributeTrait::NONE)
 				continue;
-			AnnotationVariant annotation = getGenericAnnotation(*prtAnnotationPtr, attributeTrait);
+			AnnotationParameter annotation = getGenericAnnotation(*prtAnnotationPtr, attributeTrait);
 
 			traitAnnotationMap[attributeTrait] = annotation;
 		}

@@ -56,6 +56,9 @@ FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 enum class AttributeTrait { ENUM, RANGE, ANGLE, PERCENT, FILE, DIR, COLOR, DESCRIPTION, NONE };
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
-std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
-getAttributeAnnotations(const RuleFileInfoUPtr& info);
+using AnnotationParameter = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
+using AttributeTraits = std::map<AttributeTrait, AnnotationParameter>;
+using AttributeAnnotations = std::map<std::wstring, AttributeTraits>;
+AttributeAnnotations getAttributeAnnotations(const RuleFileInfoUPtr& info);
+
 } // namespace AnnotationParsing
