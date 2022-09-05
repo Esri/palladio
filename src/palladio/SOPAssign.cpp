@@ -479,9 +479,7 @@ std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const nod
 		if (!parmInst->isDefault())
 			skipAttr = false;
 
-		T value;
-		if (parmInst)
-			value = eval(node, parmInst);
+		const T value = eval(node, parmInst);
 		valArray.emplace_back(value);
 	}
 	return std::make_pair(valArray, skipAttr);
