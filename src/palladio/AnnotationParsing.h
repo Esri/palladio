@@ -36,7 +36,8 @@ struct EnumAnnotation {
 };
 
 struct RangeAnnotation {
-	std::pair<double, double> minMax;
+	std::pair<double, double> minMax =
+	        std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
 	bool restricted;
 };
 using FileAnnotation = std::vector<std::wstring>;

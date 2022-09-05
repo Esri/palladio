@@ -98,17 +98,14 @@ wchar_t toHex(int i) {
 
 namespace AnnotationParsing {
 RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation) {
-	double min = std::numeric_limits<double>::quiet_NaN();
-	double max = std::numeric_limits<double>::quiet_NaN();
-	std::pair<double, double> minMax;
-	bool restricted = false;
+	RangeAnnotation rangeAnnotation;
 
 	const wchar_t* anName = annotation.getName();
 
 	if (std::wcscmp(anName, ANNOT_RANGE) == 0) {
 		const RangeType annotationRangeType = GetRangeType(annotation);
 		if (annotationRangeType != RangeType::RANGE)
-			return {std::make_pair(min, max), restricted};
+			return rangeAnnotation;
 
 		const size_t numArgs = annotation.getNumArguments();
 
@@ -116,22 +113,19 @@ RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation) {
 			const prt::AnnotationArgument* arg = annotation.getArgument(argIdx);
 			const wchar_t* key = arg->getKey();
 			if (std::wcscmp(key, MIN_KEY) == 0)
-				min = arg->getFloat();
+				rangeAnnotation.minMax.first = arg->getFloat();
 			else if (std::wcscmp(key, MAX_KEY) == 0)
-				max = arg->getFloat();
+				rangeAnnotation.minMax.second = arg->getFloat();
 			else if (std::wcscmp(key, RESTRICTED_KEY) == 0)
-				restricted = arg->getBool();
+				rangeAnnotation.restricted = arg->getBool();
 		}
 
 		// parse old style range
-		if ((std::isnan(min) || std::isnan(max)) && (numArgs == 2))
-			minMax = std::make_pair(annotation.getArgument(0)->getFloat(), annotation.getArgument(1)->getFloat());
-		else
-			minMax = std::make_pair(min, max);
-
-		return {minMax, restricted};
+		if ((std::isnan(rangeAnnotation.minMax.first) || std::isnan(rangeAnnotation.minMax.second)) && (numArgs == 2))
+			rangeAnnotation.minMax =
+			        std::make_pair(annotation.getArgument(0)->getFloat(), annotation.getArgument(1)->getFloat());
 	}
-	return {minMax, restricted};
+	return rangeAnnotation;
 }
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation) {
