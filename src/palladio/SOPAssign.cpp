@@ -92,7 +92,7 @@ uint32 getVariantArraySize(const SOPAssign::CGAAttributeValueType& valArray) {
 		return std::get<std::vector<double>>(valArray).size();
 	else if (std::holds_alternative<std::vector<std::wstring>>(valArray))
 		return std::get<std::vector<std::wstring>>(valArray).size();
-	
+
 	return 0;
 }
 
@@ -109,10 +109,11 @@ bool isMultiParmDefault(const PRM_Parm& parm) {
 	return true;
 }
 
-void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAssign::CGAAttributeValueType& defArray, fpreal time) {
+void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAssign::CGAAttributeValueType& defArray,
+                              fpreal time) {
 	uint32_t defaultArraySize = getVariantArraySize(defArray);
 	node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
-	
+
 	uint32_t parmCount = parm.getMultiParmCount();
 
 	for (int i = 0; i < parmCount; ++i) {
@@ -356,7 +357,7 @@ std::optional<std::vector<double>> getStdFloatVecFromParm(const SOPAssign* const
 }
 
 std::optional<std::vector<std::wstring>> getStdStringVecFromParm(const SOPAssign* const node, const PRM_Parm& parm,
-                                                              fpreal time) {
+                                                                 fpreal time) {
 	return getStdVectorFromMultiParm<std::wstring>(parm, PRM_Type::PRM_BASIC_STRING,
 	                                               [node, time](const PRM_Parm* parmInst) {
 		                                               UT_StringHolder stringValue;
@@ -442,7 +443,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 								continue;
 
 							amb->setFloatArray(ruleAttrName.c_str(), doubleVec.value().data(),
-								                doubleVec.value().size());
+							                   doubleVec.value().size());
 						}
 						else if (std::holds_alternative<bool>(it->second)) {
 							const std::optional<std::vector<bool>>& boolVec = getStdBoolVecFromParm(node, parm, time);
