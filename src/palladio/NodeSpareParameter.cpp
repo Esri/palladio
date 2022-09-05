@@ -147,14 +147,6 @@ void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
 
-void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal, double min, double max,
-                const FolderVec& parentFolders, const std::wstring& description) {
-	PRM_Range range =
-	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(PRM_RANGE_UI, min, PRM_RANGE_UI, max) : PRM_Range();
-
-	addParm(node, PRM_INT, id, name, PRM_Default(defaultVal), &range, nullptr, parentFolders, description);
-}
-
 void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
                  const FolderVec& parentFolders, const std::wstring& description) {
 	addParm(node, PRM_TOGGLE, id, name, PRM_Default(defaultVal), nullptr, nullptr, parentFolders, description);
