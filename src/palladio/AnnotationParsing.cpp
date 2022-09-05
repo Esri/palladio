@@ -184,7 +184,7 @@ std::wstring parseDescriptionAnnotation(const prt::Annotation& annotation) {
 }
 
 AnnotationParsing::AnnotationTraitParameter getGenericAnnotation(const prt::Annotation& annotation,
-                                                          AnnotationParsing::AttributeTrait attributeTrait) {
+                                                                 AnnotationParsing::AttributeTrait attributeTrait) {
 	switch (attributeTrait) {
 		case AnnotationParsing::AttributeTrait::ENUM:
 			return AnnotationParsing::parseEnumAnnotation(annotation);

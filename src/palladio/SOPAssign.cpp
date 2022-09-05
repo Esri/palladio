@@ -608,7 +608,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
 				const double defaultValue =
 				        (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
-				
+
 				const auto& rangeIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::RANGE);
 				const auto& angleIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::ANGLE);
 				const auto& percentIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::PERCENT);

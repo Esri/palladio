@@ -43,7 +43,8 @@ struct RangeAnnotation {
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
-using AnnotationTraitParameter = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
+using AnnotationTraitParameter =
+        std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
