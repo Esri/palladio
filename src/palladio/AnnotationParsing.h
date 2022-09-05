@@ -57,6 +57,7 @@ FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
-std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>>
-getAttributeAnnotations(const RuleFileInfoUPtr& info);
+using TraitParameterMap = std::map<AttributeTrait, AnnotationTraitParameter>;
+using AttributeTraitMap = std::map<std::wstring, TraitParameterMap>;
+AttributeTraitMap getAttributeAnnotations(const RuleFileInfoUPtr& info);
 } // namespace AnnotationParsing

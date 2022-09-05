@@ -252,9 +252,8 @@ AttributeTrait detectAttributeTrait(const prt::Annotation& annotation) {
 	return AttributeTrait::NONE;
 }
 
-std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>>
-getAttributeAnnotations(const RuleFileInfoUPtr& info) {
-	std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>> annotationMap;
+AttributeTraitMap getAttributeAnnotations(const RuleFileInfoUPtr& info) {
+	AttributeTraitMap annotationMap;
 
 	std::wstring description;
 
@@ -262,7 +261,7 @@ getAttributeAnnotations(const RuleFileInfoUPtr& info) {
 		const auto* attribute = info->getAttribute(attributeIdx);
 		std::wstring attrName = attribute->getName();
 
-		std::map<AttributeTrait, AnnotationTraitParameter> traitAnnotationMap;
+		TraitParameterMap traitAnnotationMap;
 		for (size_t annotationIdx = 0; annotationIdx < attribute->getNumAnnotations(); annotationIdx++) {
 			const prt::Annotation* prtAnnotationPtr = attribute->getAnnotation(annotationIdx);
 			AttributeTrait attributeTrait = detectAttributeTrait(*prtAnnotationPtr);

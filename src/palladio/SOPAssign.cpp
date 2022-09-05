@@ -556,7 +556,8 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
 	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
 
-	const auto& attributeAnnotations = AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
+	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
+	        AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
 
 	NodeSpareParameter::clearAllParms(this);
 	NodeSpareParameter::addSeparator(this);
@@ -569,7 +570,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 		const auto& annotationsIt = attributeAnnotations.find(ra.fqName);
 		if (annotationsIt == attributeAnnotations.end())
 			continue;
-		const auto& traitAnnotationMap = annotationsIt->second;
+		const AnnotationParsing::TraitParameterMap& traitAnnotationMap = annotationsIt->second;
 
 		const auto& enumIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::ENUM);
 		const auto& descriptionIt = traitAnnotationMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
