@@ -43,7 +43,7 @@ struct RangeAnnotation {
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
-using AnnotationVariant = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
+using AnnotationTraitParameter = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
@@ -57,6 +57,6 @@ FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
-std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
+std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>>
 getAttributeAnnotations(const RuleFileInfoUPtr& info);
 } // namespace AnnotationParsing
