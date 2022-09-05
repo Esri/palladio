@@ -21,6 +21,7 @@
 #include "prt/Annotation.h"
 
 #include <array>
+#include <cmath>
 #include <map>
 #include <optional>
 #include <variant>
@@ -36,8 +37,13 @@ struct EnumAnnotation {
 };
 
 struct RangeAnnotation {
-	std::pair<double, double> minMax;
-	bool restricted;
+	std::pair<double, double> minMax = {std::numeric_limits<double>::quiet_NaN(),
+	                                    std::numeric_limits<double>::quiet_NaN()};
+	bool restricted = false;
+
+	bool rangeIsValid() const {
+		return (std::isnan(minMax.first) || std::isnan(minMax.second)) && (minMax.first < minMax.second);
+	}
 };
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
