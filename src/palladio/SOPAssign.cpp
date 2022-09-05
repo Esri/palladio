@@ -96,9 +96,9 @@ uint32 getVariantArraySize(const SOPAssign::CGAAttributeValueType& valArray) {
 	return 0;
 }
 
-bool isMultiParmDefault(const PRM_Parm& parm, int32 defaultSize) {
+bool isMultiParmDefault(const PRM_Parm& parm) {
 	uint32_t parmCount = parm.getMultiParmCount();
-	if (parmCount != defaultSize)
+	if (!parm.isDefault())
 		return false;
 
 	for (int i = 0; i < parmCount; ++i) {
@@ -216,7 +216,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 
 						if (parm.isDefault()) {
 							node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
-							if (isMultiParmDefault(parm, defaultArraySize))
+							if (isMultiParmDefault(parm))
 								overrideMultiParmDefault(node, parm, it->second, time);
 						}
 						else
