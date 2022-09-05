@@ -951,7 +951,8 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 		if (parmList == nullptr)
 			return;
 
-		const PRM_Parm* const parmPtr = parmList->getParmPtr((size_t)data);
+		const std::uintptr_t parmIdx = reinterpret_cast<std::uintptr_t>(data);
+		const PRM_Parm* const parmPtr = parmList->getParmPtr(parmIdx);
 		if (parmPtr == nullptr)
 			return;
 
