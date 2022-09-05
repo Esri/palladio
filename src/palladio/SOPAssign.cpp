@@ -464,23 +464,19 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 }
 
 template <typename T, typename F>
-std::pair<UT_ValArray<T>, bool> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm,
-                                                      PRM_Type::PRM_BasicType expectedType, F eval) {
+std::optional<UT_ValArray<T>> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                    PRM_Type::PRM_BasicType expectedType, F eval) {
 	uint32_t parmCount = parm.getMultiParmCount();
-	bool skipAttr = true;
 
 	UT_ValArray<T> valArray(parmCount);
 	for (int i = 0; i < parmCount; ++i) {
 		PRM_Parm* parmInst = parm.getMultiParm(i);
 		if (parmInst == nullptr || parmInst->getType().getBasicType() != expectedType)
-			break;
-		if (!parmInst->isDefault())
-			skipAttr = false;
+			return {}; // invalid data
 
-		const T value = eval(node, parmInst);
-		valArray.emplace_back(value);
+		valArray.emplace_back(eval(node, parmInst));
 	}
-	return std::make_pair(valArray, skipAttr);
+	return valArray;
 }
 
 } // namespace
@@ -576,7 +572,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
-		if (parm.isSpareParm() && (!parm.isDefault() || parm.isMultiParm())) {
+		if (parm.isSpareParm() && (!parm.isDefault() || (parm.isMultiParm() && !isMultiParmDefault(parm)))) {
 			const UT_StringHolder attributeName(parm.getToken());
 			const std::wstring style = getStyle();
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
@@ -616,34 +612,34 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
 						if (std::holds_alternative<std::vector<bool>>(it->second)) {
-							std::pair<UT_Int32Array, bool> boolArray = getArrayFromMultiParm<int32>(
+							const std::optional<UT_Int32Array>& boolArray = getArrayFromMultiParm<int32>(
 							        this, parm, PRM_Type::PRM_BASIC_ORDINAL,
 							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
 								        return node->evalInt(parmInst, 0, time);
 							        });
 
-							if (boolArray.second && parm.isDefault())
+							if (!boolArray.has_value())
 								break;
 
 							GA_RWHandleT<UT_Int32Array> intArrayHandle(
 							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
-							intArrayHandle.set(0, boolArray.first);
+							intArrayHandle.set(0, boolArray.value());
 						}
 						else if (std::holds_alternative<std::vector<double>>(it->second)) {
-							std::pair<UT_FprealArray, bool> floatArray = getArrayFromMultiParm<fpreal>(
+							const std::optional<UT_FprealArray>& floatArray = getArrayFromMultiParm<fpreal>(
 							        this, parm, PRM_Type::PRM_BASIC_FLOAT,
 							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
 								        return node->evalFloat(parmInst, 0, time);
 							        });
 
-							if (floatArray.second && parm.isDefault())
+							if (!floatArray.has_value())
 								break;
 
 							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
-							floatArrayHandle.set(0, floatArray.first);
+							floatArrayHandle.set(0, floatArray.value());
 						}
 						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
-							std::pair<UT_StringArray, bool> stringArray = getArrayFromMultiParm<UT_StringHolder>(
+							const std::optional<UT_StringArray>& stringArray = getArrayFromMultiParm<UT_StringHolder>(
 							        this, parm, PRM_Type::PRM_BASIC_STRING,
 							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
 								        UT_StringHolder stringValue;
@@ -651,10 +647,11 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								        return stringValue;
 							        });
 
-							if (stringArray.second && parm.isDefault())
+							if (!stringArray.has_value())
 								break;
+
 							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
-							stringArrayHandle.set(0, stringArray.first);
+							stringArrayHandle.set(0, stringArray.value());
 						}
 					}
 					else {
