@@ -256,8 +256,6 @@ std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>>
 getAttributeAnnotations(const RuleFileInfoUPtr& info) {
 	std::map<std::wstring, std::map<AttributeTrait, AnnotationTraitParameter>> annotationMap;
 
-	const prt::Annotation* annotation = nullptr;
-	AttributeTrait attributeTrait = AttributeTrait::NONE;
 	std::wstring description;
 
 	for (size_t attributeIdx = 0, numAttrs = info->getNumAttributes(); attributeIdx < numAttrs; attributeIdx++) {
