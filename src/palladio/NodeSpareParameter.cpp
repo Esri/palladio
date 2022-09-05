@@ -117,7 +117,7 @@ void addArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	PRM_Name itemName(itemNameToken, "#");
 	PRM_Default defaultVal(defaultVals.size());
 
-	PRM_Template itemTemplate[] = {PRM_Template(PRM_TOGGLE, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+	PRM_Template itemTemplate[] = {PRM_Template(itemType, 1, &itemName, PRMzeroDefaults), PRM_Template()};
 
 	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
 	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
