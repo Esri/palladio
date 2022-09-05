@@ -110,6 +110,9 @@ bool isMultiParmDefault(const PRM_Parm& parm) {
 }
 
 void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAssign::CGAAttributeValueType& defArray, fpreal time) {
+	uint32_t defaultArraySize = getVariantArraySize(defArray);
+	node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
+	
 	uint32_t parmCount = parm.getMultiParmCount();
 
 	for (int i = 0; i < parmCount; ++i) {
@@ -212,13 +215,8 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
-						uint32_t defaultArraySize = getVariantArraySize(it->second);
-
-						if (parm.isDefault()) {
-							node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
-							if (isMultiParmDefault(parm))
-								overrideMultiParmDefault(node, parm, it->second, time);
-						}
+						if (isMultiParmDefault(parm))
+							overrideMultiParmDefault(node, parm, it->second, time);
 						else
 							continue; // avoid overriding if not default
 					}
