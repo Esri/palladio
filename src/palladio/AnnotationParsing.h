@@ -28,13 +28,9 @@
 
 namespace AnnotationParsing {
 
-enum class AttributeTrait { ENUM, RANGE, ANGLE, PERCENT, FILE, DIR, COLOR, DESCRIPTION, NONE };
-
-struct EnumAnnotation {
-	bool mRestricted;
-	std::wstring mValuesAttr;
-	std::vector<std::wstring> mOptions;
-};
+using ColorAnnotation = std::array<double, 3>;
+ColorAnnotation parseColor(const std::wstring colorString);
+std::wstring getColorString(const std::array<float, 3>& rgb);
 
 struct RangeAnnotation {
 	std::pair<double, double> minMax = {std::numeric_limits<double>::quiet_NaN(),
@@ -45,21 +41,19 @@ struct RangeAnnotation {
 		return (std::isnan(minMax.first) || std::isnan(minMax.second)) && (minMax.first < minMax.second);
 	}
 };
-using FileAnnotation = std::vector<std::wstring>;
-using ColorAnnotation = std::array<double, 3>;
-
-using AnnotationVariant = std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
-
-ColorAnnotation parseColor(const std::wstring colorString);
-
-std::wstring getColorString(const std::array<float, 3>& rgb);
-
 RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation);
 
+struct EnumAnnotation {
+	bool mRestricted;
+	std::wstring mValuesAttr;
+	std::vector<std::wstring> mOptions;
+};
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation);
 
+using FileAnnotation = std::vector<std::wstring>;
 FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
+enum class AttributeTrait { ENUM, RANGE, ANGLE, PERCENT, FILE, DIR, COLOR, DESCRIPTION, NONE };
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
 std::map<std::wstring, std::map<AttributeTrait, AnnotationVariant>>
