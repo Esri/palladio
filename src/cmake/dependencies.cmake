@@ -8,15 +8,20 @@ conan_check(VERSION 1.20 REQUIRED)
 ### select Houdini version and required toolchain
 
 if (NOT PLD_HOUDINI_VERSION)
-	set(PLD_HOUDINI_VERSION "19.0") # use Houdini 19.0 by default
+	set(PLD_HOUDINI_VERSION "19.5") # use Houdini 19.5 by default
 endif()
 
 string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
 list(GET PLD_HDN_VER 0 PLD_HDN_VER_MAJ)
 list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 
+# Houdini 19.5
+if (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+	message(STATUS "Asking Conan for Houdini 19.5...")
+	set(PLD_CONANFILE "conanfile-h195.py")
+
 # Houdini 19.0
-if (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 19.0...")
 	set(PLD_CONANFILE "conanfile-h190.py")
 

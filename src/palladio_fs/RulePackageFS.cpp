@@ -95,7 +95,11 @@ bool RulePackageInfoHelper::getIsDirectory(const char* source) {
 	return info.getIsDirectory();
 }
 
+#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
+time_t RulePackageInfoHelper::getModTime(const char* source) {
+#else
 int RulePackageInfoHelper::getModTime(const char* source) {
+#endif
 	std::string src(source);
 	if (isRulePackageURI(source))
 		src = getBaseURIPath(source);
