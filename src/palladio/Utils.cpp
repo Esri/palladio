@@ -69,6 +69,13 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 
 } // namespace
 
+std::vector<const wchar_t*> toPtrVec(const std::vector<std::wstring>& wsv) {
+	std::vector<const wchar_t*> pw(wsv.size());
+	for (size_t i = 0; i < wsv.size(); i++)
+		pw[i] = wsv[i].c_str();
+	return pw;
+}
+
 std::vector<std::wstring> tokenizeAll(const std::wstring& input, wchar_t token) {
 	std::vector<std::wstring> out;
 
