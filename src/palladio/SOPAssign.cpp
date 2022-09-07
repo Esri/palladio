@@ -311,20 +311,16 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							if (std::holds_alternative<std::wstring>(it->second)) {
 								const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
 								amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
-								break;
 							}
 							else if (std::holds_alternative<double>(it->second)) {
 								const double floatValue = result.toFloat();
 								amb->setFloat(ruleAttrName.c_str(), floatValue);
-								break;
 							}
 							else if (std::holds_alternative<bool>(it->second)) {
 								const bool boolValue = static_cast<bool>(result.toInt());
 								amb->setFloat(ruleAttrName.c_str(), boolValue);
-								break;
 							}
-							else
-								break;
+							break;
 						}
 						case PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE: {
 							const int intValue = node->evalInt(&parm, 0, time);
