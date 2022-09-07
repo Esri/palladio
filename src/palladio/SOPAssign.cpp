@@ -479,6 +479,29 @@ std::optional<UT_ValArray<T>> getArrayFromMultiParm(const SOPAssign* const node,
 	return valArray;
 }
 
+std::optional<UT_Int32Array> getBoolArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<int32>(
+	        node, parm, PRM_Type::PRM_BASIC_ORDINAL,
+	        [time](const SOPAssign* node, const PRM_Parm* parmInst) { return node->evalInt(parmInst, 0, time); });
+}
+
+
+std::optional<UT_FprealArray> getFloatArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<fpreal>(
+	        node, parm, PRM_Type::PRM_BASIC_FLOAT,
+	        [time](const SOPAssign* node, const PRM_Parm* parmInst) { return node->evalFloat(parmInst, 0, time); });
+}
+
+
+std::optional<UT_StringArray> getStringArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<UT_StringHolder>(node, parm, PRM_Type::PRM_BASIC_STRING,
+	                                              [time](const SOPAssign* node, const PRM_Parm* parmInst) {
+		                                              UT_StringHolder stringValue;
+		                                              node->evalString(stringValue, parmInst, 0, time);
+		                                              return stringValue;
+	                                              });
+}
+
 } // namespace
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
@@ -612,11 +635,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
 						if (std::holds_alternative<std::vector<bool>>(it->second)) {
-							const std::optional<UT_Int32Array>& boolArray = getArrayFromMultiParm<int32>(
-							        this, parm, PRM_Type::PRM_BASIC_ORDINAL,
-							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-								        return node->evalInt(parmInst, 0, time);
-							        });
+							const std::optional<UT_Int32Array>& boolArray = getBoolArrayFromParm(this, parm, time);
 
 							if (!boolArray.has_value())
 								break;
@@ -626,11 +645,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							intArrayHandle.set(0, boolArray.value());
 						}
 						else if (std::holds_alternative<std::vector<double>>(it->second)) {
-							const std::optional<UT_FprealArray>& floatArray = getArrayFromMultiParm<fpreal>(
-							        this, parm, PRM_Type::PRM_BASIC_FLOAT,
-							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-								        return node->evalFloat(parmInst, 0, time);
-							        });
+							const std::optional<UT_FprealArray>& floatArray = getFloatArrayFromParm(this, parm, time);
 
 							if (!floatArray.has_value())
 								break;
@@ -639,13 +654,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							floatArrayHandle.set(0, floatArray.value());
 						}
 						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
-							const std::optional<UT_StringArray>& stringArray = getArrayFromMultiParm<UT_StringHolder>(
-							        this, parm, PRM_Type::PRM_BASIC_STRING,
-							        [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-								        UT_StringHolder stringValue;
-								        node->evalString(stringValue, parmInst, 0, time);
-								        return stringValue;
-							        });
+							const std::optional<UT_StringArray>& stringArray = getStringArrayFromParm(this, parm, time);
 
 							if (!stringArray.has_value())
 								break;
