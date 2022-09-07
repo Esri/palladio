@@ -568,7 +568,7 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 				case prt::AttributeMap::PT_STRING_ARRAY: {
 					size_t arr_length = 0;
 					const wchar_t* const* stringArray = defaultRuleAttributes->getStringArray(key, &arr_length);
-					assert(stringArray != nullptr);
+					assert((stringArray != nullptr) || (arr_length == 0));
 
 					std::vector<std::wstring> stringVec;
 					stringVec.reserve(arr_length);
