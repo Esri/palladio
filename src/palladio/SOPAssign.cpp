@@ -400,6 +400,119 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
+bool getDefaultBool(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<bool>(defaultValue))
+		return std::get<bool>(defaultValue);
+	return false;
+}
+
+double getDefaultFloat(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<double>(defaultValue))
+		return std::get<double>(defaultValue);
+	return 0;
+}
+
+std::wstring getDefaultString(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<std::wstring>(defaultValue))
+		return std::get<std::wstring>(defaultValue);
+	return {};
+}
+
+std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
+	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
+	if (descriptionIt != traitParmMap.end())
+		return std::get<std::wstring>(descriptionIt->second);
+
+	return {};
+}
+
+AnnotationParsing::RangeAnnotation getRange(const AnnotationParsing::TraitParameterMap& traitParmMap,
+                                            std::pair<double, double> minMax, bool restricted) {
+	const auto& rangeIt = traitParmMap.find(AnnotationParsing::AttributeTrait::RANGE);
+	if (rangeIt != traitParmMap.end())
+		return std::get<AnnotationParsing::RangeAnnotation>(rangeIt->second);
+
+	return AnnotationParsing::RangeAnnotation({minMax, restricted});
+};
+
+bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                   std::vector<std::wstring> parentFolders) {
+	const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
+	if (enumIt == traitParmMap.end())
+		return false;
+
+	AnnotationParsing::EnumAnnotation enumAnnotation = std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
+
+	NodeSpareParameter::addEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions, parentFolders,
+	                                description);
+	return true;
+}
+
+bool tryHandleRange(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, double defaultValue,
+                    const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                    std::vector<std::wstring> parentFolders) {
+	const bool isAngle = (traitParmMap.find(AnnotationParsing::AttributeTrait::ANGLE) != traitParmMap.end());
+	const bool isPercent = (traitParmMap.find(AnnotationParsing::AttributeTrait::PERCENT) != traitParmMap.end());
+	const bool isRange = (traitParmMap.find(AnnotationParsing::AttributeTrait::RANGE) != traitParmMap.end());
+	if (!isAngle && !isPercent && !isRange)
+		return false;
+
+	double scalingFactor = 1.0;
+	std::pair<double, double> minMax = std::make_pair(0.0, 10.0);
+
+	if (isPercent) {
+		minMax = std::make_pair(0.0, 1.0);
+		scalingFactor = 100.0;
+	}
+	else if (isAngle) {
+		minMax = std::make_pair(0.0, 360.0);
+	}
+
+	AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(traitParmMap, minMax, false);
+
+	NodeSpareParameter::addFloatParm(node, attrId, attrName, defaultValue, scalingFactor * rangeAnnotation.minMax.first,
+	                                 scalingFactor * rangeAnnotation.minMax.second, rangeAnnotation.restricted,
+	                                 isPercent, parentFolders, description);
+	return true;
+}
+
+bool tryHandleFile(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                   std::vector<std::wstring> parentFolders) {
+	const auto& fileIt = traitParmMap.find(AnnotationParsing::AttributeTrait::FILE);
+	if (fileIt == traitParmMap.end())
+		return false;
+
+	AnnotationParsing::FileAnnotation fileAnnotation = std::get<AnnotationParsing::FileAnnotation>(fileIt->second);
+
+	NodeSpareParameter::addFileParm(node, attrId, attrName, defaultValue, fileAnnotation, parentFolders, description);
+	return true;
+}
+
+bool tryHandleDir(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                  const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                  std::vector<std::wstring> parentFolders) {
+	const auto& dirIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DIR);
+	if (dirIt == traitParmMap.end())
+		return false;
+
+	NodeSpareParameter::addDirectoryParm(node, attrId, attrName, defaultValue, parentFolders, description);
+	return true;
+}
+
+bool tryHandleColor(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                    const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                    std::vector<std::wstring> parentFolders) {
+	const auto& colorIt = traitParmMap.find(AnnotationParsing::AttributeTrait::COLOR);
+	if (colorIt == traitParmMap.end())
+		return false;
+
+	const AnnotationParsing::ColorAnnotation& color = AnnotationParsing::parseColor(defaultValue);
+	NodeSpareParameter::addColorParm(node, attrId, attrName, color, parentFolders, description);
+	return true;
+}
+
 } // namespace
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
@@ -572,11 +685,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			continue;
 		const AnnotationParsing::TraitParameterMap& traitParmMap = annotationsIt->second;
 
-		const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
-		const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
-		std::wstring description;
-		if (descriptionIt != traitParmMap.end())
-			description = std::get<std::wstring>(descriptionIt->second);
+		const std::wstring& description = getDescription(traitParmMap);
 
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
@@ -588,104 +697,52 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				const bool isDefaultValBool = (defaultValIt->second.index() == 2);
-				const bool defaultValue =
-				        (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
+				const bool defaultValue = getDefaultBool(defaultValIt->second);
 
-				if (enumIt != traitParmMap.end()) {
-					AnnotationParsing::EnumAnnotation enumAnnotation =
-					        std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
+				                  parentFolders)) {
+					continue;
+				}
 
-					NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
-					                                enumAnnotation.mOptions, parentFolders, description);
-				}
-				else {
-					NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders, description);
-				}
+				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
-				const double defaultValue =
-				        (foundDefaultValue && isDefaultValFloat) ? std::get<double>(defaultValIt->second) : 0.0;
+				const double defaultValue = getDefaultFloat(defaultValIt->second);
 
-				const auto& rangeIt = traitParmMap.find(AnnotationParsing::AttributeTrait::RANGE);
-				const auto& angleIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ANGLE);
-				const auto& percentIt = traitParmMap.find(AnnotationParsing::AttributeTrait::PERCENT);
-
-				auto getRange = [&rangeIt, &traitParmMap](double min, double max, bool restricted) {
-					if (rangeIt != traitParmMap.end())
-						return std::get<AnnotationParsing::RangeAnnotation>(rangeIt->second);
-
-					return AnnotationParsing::RangeAnnotation({std::make_pair(min, max), restricted});
-				};
-
-				if (enumIt != traitParmMap.end()) {
-					AnnotationParsing::EnumAnnotation enumAnnotation =
-					        std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
-
-					NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
-					                                enumAnnotation.mOptions, parentFolders, description);
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
+				                  parentFolders)) {
+					continue;
 				}
-				else if (percentIt != traitParmMap.end()) {
-					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 1.0, true);
 
-					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue * PERCENT_FACTOR,
-					                                 rangeAnnotation.minMax.first * PERCENT_FACTOR,
-					                                 rangeAnnotation.minMax.second * PERCENT_FACTOR,
-					                                 rangeAnnotation.restricted, true, parentFolders, description);
+				if (tryHandleRange(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
 				}
-				else if (angleIt != traitParmMap.end()) {
-					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 360.0, true);
 
-					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.minMax.first,
-					                                 rangeAnnotation.minMax.second, rangeAnnotation.restricted, false,
-					                                 parentFolders, description);
-				}
-				else {
-					AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(0.0, 10.0, false);
-
-					NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, rangeAnnotation.minMax.first,
-					                                 rangeAnnotation.minMax.second, rangeAnnotation.restricted, false,
-					                                 parentFolders, description);
-				}
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0.0, 10.0, true, false,
+				                                 parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				const bool isDefaultValString = (defaultValIt->second.index() == 0);
-				const std::wstring defaultValue =
-				        (foundDefaultValue && isDefaultValString) ? std::get<std::wstring>(defaultValIt->second) : L"";
+				const std::wstring defaultValue = getDefaultString(defaultValIt->second);
 
-				const auto& fileIt = traitParmMap.find(AnnotationParsing::AttributeTrait::FILE);
-				const auto& dirIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DIR);
-				const auto& colorIt = traitParmMap.find(AnnotationParsing::AttributeTrait::COLOR);
+				if (tryHandleEnum(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
 
-				if (enumIt != traitParmMap.end()) {
-					AnnotationParsing::EnumAnnotation enumAnnotation =
-					        std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
+				if (tryHandleFile(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
 
-					NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue, enumAnnotation.mOptions,
-					                                parentFolders, description);
+				if (tryHandleDir(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
 				}
-				else if (fileIt != traitParmMap.end()) {
-					AnnotationParsing::FileAnnotation fileAnnotation =
-					        std::get<AnnotationParsing::FileAnnotation>(fileIt->second);
 
-					NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, fileAnnotation, parentFolders,
-					                                description);
+				if (tryHandleColor(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
 				}
-				else if (dirIt != traitParmMap.end()) {
-					NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders,
-					                                     description);
-				}
-				else if (colorIt != traitParmMap.end()) {
-					AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
 
-					NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders, description);
-				}
-				else {
-					NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders, description);
-				}
+				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
 			default:
