@@ -277,6 +277,92 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 	}
 }
 
+template <typename F>
+bool visitMultiParmChildren(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType, F fun) {
+	const int parmCount = parm.getMultiParmCount();
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr || parmInst->getType().getBasicType() != expectedType)
+			return false; // invalid data
+
+		fun(parmInst);
+	}
+	return true; // success
+}
+
+template <typename T, typename F>
+std::optional<UT_ValArray<T>> getArrayFromMultiParm(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType,
+                                                    F eval) {
+	const int parmCount = parm.getMultiParmCount();
+	UT_ValArray<T> valArray(parmCount);
+	bool success = visitMultiParmChildren(
+	        parm, expectedType, [&valArray, eval](PRM_Parm* parmInst) { valArray.emplace_back(eval(parmInst)); });
+	if (success)
+		return valArray;
+	else
+		return {};
+}
+
+// identical to above function
+template <typename T, typename F>
+std::optional<std::vector<T>> getStdVectorFromMultiParm(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType,
+                                                        F eval) {
+	const int parmCount = parm.getMultiParmCount();
+	std::vector<T> vec;
+	vec.reserve(parmCount);
+	bool success = visitMultiParmChildren(parm, expectedType,
+	                                      [&vec, eval](PRM_Parm* parmInst) { vec.emplace_back(eval(parmInst)); });
+	if (success)
+		return vec;
+	else
+		return {};
+}
+
+std::optional<UT_Int32Array> getBoolArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<int32>(parm, PRM_Type::PRM_BASIC_ORDINAL, [node, time](const PRM_Parm* parmInst) {
+		return node->evalInt(parmInst, 0, time);
+	});
+}
+
+std::optional<UT_FprealArray> getFloatArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<fpreal>(parm, PRM_Type::PRM_BASIC_FLOAT, [node, time](const PRM_Parm* parmInst) {
+		return node->evalFloat(parmInst, 0, time);
+	});
+}
+
+std::optional<UT_StringArray> getStringArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<UT_StringHolder>(parm, PRM_Type::PRM_BASIC_STRING,
+	                                              [node, time](const PRM_Parm* parmInst) {
+		                                              UT_StringHolder stringValue;
+		                                              node->evalString(stringValue, parmInst, 0, time);
+		                                              return stringValue;
+	                                              });
+}
+
+std::optional<std::vector<bool>> getStdBoolVecFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getStdVectorFromMultiParm<bool>(parm, PRM_Type::PRM_BASIC_ORDINAL, [node, time](const PRM_Parm* parmInst) {
+		return static_cast<bool>(node->evalInt(parmInst, 0, time));
+	});
+}
+
+std::optional<std::vector<double>> getStdFloatVecFromParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                          fpreal time) {
+	return getStdVectorFromMultiParm<double>(parm, PRM_Type::PRM_BASIC_FLOAT, [node, time](const PRM_Parm* parmInst) {
+		return static_cast<double>(node->evalFloat(parmInst, 0, time));
+	});
+}
+
+std::optional<std::vector<std::wstring>> getStdStringVecFromParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                              fpreal time) {
+	return getStdVectorFromMultiParm<std::wstring>(parm, PRM_Type::PRM_BASIC_STRING,
+	                                               [node, time](const PRM_Parm* parmInst) {
+		                                               UT_StringHolder stringValue;
+		                                               node->evalString(stringValue, parmInst, 0, time);
+		                                               return toUTF16FromOSNarrow(stringValue.c_str());
+	                                               });
+}
+
 AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const std::wstring& style) {
 	const fpreal time = CHgetEvalTime();
 
@@ -457,45 +543,6 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	assert(shapeData.isValid());
 
 	return true;
-}
-
-template <typename T, typename F>
-std::optional<UT_ValArray<T>> getArrayFromMultiParm(const SOPAssign* const node, const PRM_Parm& parm,
-                                                    PRM_Type::PRM_BasicType expectedType, F eval) {
-	uint32_t parmCount = parm.getMultiParmCount();
-
-	UT_ValArray<T> valArray(parmCount);
-	for (int i = 0; i < parmCount; ++i) {
-		PRM_Parm* parmInst = parm.getMultiParm(i);
-		if (parmInst == nullptr || parmInst->getType().getBasicType() != expectedType)
-			return {}; // invalid data
-
-		valArray.emplace_back(eval(node, parmInst));
-	}
-	return valArray;
-}
-
-std::optional<UT_Int32Array> getBoolArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
-	return getArrayFromMultiParm<int32>(
-	        node, parm, PRM_Type::PRM_BASIC_ORDINAL,
-	        [time](const SOPAssign* node, const PRM_Parm* parmInst) { return node->evalInt(parmInst, 0, time); });
-}
-
-
-std::optional<UT_FprealArray> getFloatArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
-	return getArrayFromMultiParm<fpreal>(
-	        node, parm, PRM_Type::PRM_BASIC_FLOAT,
-	        [time](const SOPAssign* node, const PRM_Parm* parmInst) { return node->evalFloat(parmInst, 0, time); });
-}
-
-
-std::optional<UT_StringArray> getStringArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
-	return getArrayFromMultiParm<UT_StringHolder>(node, parm, PRM_Type::PRM_BASIC_STRING,
-	                                              [time](const SOPAssign* node, const PRM_Parm* parmInst) {
-		                                              UT_StringHolder stringValue;
-		                                              node->evalString(stringValue, parmInst, 0, time);
-		                                              return stringValue;
-	                                              });
 }
 
 } // namespace
