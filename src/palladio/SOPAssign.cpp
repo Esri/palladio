@@ -372,7 +372,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = node->getParm(parmIndex);
 
-		if (parm.isSpareParm() && !parm.isDefault()) {
+		if (parm.isSpareParm() && (!parm.isDefault() || (parm.isMultiParm() && !isMultiParmDefault(parm)))) {
 			const UT_StringHolder attributeName(parm.getToken());
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
 
@@ -419,24 +419,62 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_NONE: {
-							const double floatValue = node->evalFloat(&parm, 0, time);
+					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+						auto it = node->mDefaultCGAAttributes.find(ruleAttrName);
+						if (it == node->mDefaultCGAAttributes.end())
+							continue;
 
-							amb->setFloat(ruleAttrName.c_str(), floatValue);
-							break;
-						}
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							const float r = node->evalFloat(&parm, 0, time);
-							const float g = node->evalFloat(&parm, 1, time);
-							const float b = node->evalFloat(&parm, 2, time);
-							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+						if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
+							const std::optional<std::vector<std::wstring>>& wstringVec =
+							        getStdStringVecFromParm(node, parm, time);
+							if (!wstringVec.has_value())
+								continue;
 
-							amb->setString(ruleAttrName.c_str(), colorString.c_str());
-							break;
+							std::vector<const wchar_t*> ptrWstringVec = toPtrVec(wstringVec.value());
+							amb->setStringArray(ruleAttrName.c_str(), ptrWstringVec.data(), ptrWstringVec.size());
 						}
-						default:
-							break;
+						else if (std::holds_alternative<double>(it->second)) {
+							const std::optional<std::vector<double>>& doubleVec =
+							        getStdFloatVecFromParm(node, parm, time);
+							if (!doubleVec.has_value())
+								continue;
+
+							amb->setFloatArray(ruleAttrName.c_str(), doubleVec.value().data(),
+								                doubleVec.value().size());
+						}
+						else if (std::holds_alternative<bool>(it->second)) {
+							const std::optional<std::vector<bool>>& boolVec = getStdBoolVecFromParm(node, parm, time);
+							if (!boolVec.has_value())
+								continue;
+
+							const std::vector<bool>& boolVecVal = boolVec.value();
+							// convert compressed bool vec to native array
+							auto boolArray = std::unique_ptr<bool[]>(new bool[boolVecVal.size()]);
+							for (size_t i = 0; i < boolVecVal.size(); i++)
+								boolArray[i] = boolVecVal[i];
+							amb->setBoolArray(ruleAttrName.c_str(), boolArray.get(), boolVecVal.size());
+						}
+					}
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_NONE: {
+								const double floatValue = node->evalFloat(&parm, 0, time);
+
+								amb->setFloat(ruleAttrName.c_str(), floatValue);
+								break;
+							}
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								const float r = node->evalFloat(&parm, 0, time);
+								const float g = node->evalFloat(&parm, 1, time);
+								const float b = node->evalFloat(&parm, 2, time);
+								const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+								amb->setString(ruleAttrName.c_str(), colorString.c_str());
+								break;
+							}
+							default:
+								break;
+						}
 					}
 					break;
 				}
