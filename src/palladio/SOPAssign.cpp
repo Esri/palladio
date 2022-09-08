@@ -149,6 +149,8 @@ void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAs
 				node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, parmInstToken.c_str(), 0, time);
 				break;
 			}
+			default:
+				break;
 		}
 		parmInst->overwriteDefaults(time);
 	}
