@@ -54,7 +54,7 @@ private:
 	bool mWasJustLoaded = false;
 
 public:
-	using CGAAttributeValueType = std::variant<std::wstring, double, bool, std::vector<std::wstring>, std::vector<double>, std::vector<bool>>;
+	using CGAAttributeValueType = std::variant<std::monostate, std::wstring, double, bool, std::vector<std::wstring>, std::vector<double>, std::vector<bool>>;
 	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
 	CGAAttributeValueMap mDefaultCGAAttributes;
 };

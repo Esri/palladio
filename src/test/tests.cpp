@@ -204,6 +204,43 @@ TEST_CASE("tokenize string at all tokens", "[utils]") {
 	}
 }
 
+TEST_CASE("create file extension string", "[utils]") {
+	SECTION("empty list"){
+		const std::vector<std::wstring> empty = {};
+		const std::wstring gen = getFileExtensionString(empty);
+		const std::wstring ref = L"*";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single *.extension"){
+		const std::vector<std::wstring> extensions = {L"*.png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single .extension"){
+		const std::vector<std::wstring> extensions = {L".png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single bare extension"){
+		const std::vector<std::wstring> extensions = {L"png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("multiple extensions"){
+		const std::vector<std::wstring> extensions = {L"png", L".jpg", L"*.tif"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png *.jpg *.tif";
+		CHECK(gen == ref);
+	}
+}
+
 // -- encoder test cases
 
 TEST_CASE("serialize basic mesh") {

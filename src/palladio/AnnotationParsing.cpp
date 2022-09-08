@@ -98,37 +98,34 @@ wchar_t toHex(int i) {
 
 namespace AnnotationParsing {
 RangeAnnotation parseRangeAnnotation(const prt::Annotation& annotation) {
-	auto minMax = std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
+	RangeAnnotation rangeAnnotation;
 
 	const wchar_t* anName = annotation.getName();
 
 	if (std::wcscmp(anName, ANNOT_RANGE) == 0) {
 		const RangeType annotationRangeType = GetRangeType(annotation);
 		if (annotationRangeType != RangeType::RANGE)
-			return minMax;
+			return rangeAnnotation;
 
 		const size_t numArgs = annotation.getNumArguments();
 
 		for (int argIdx = 0; argIdx < numArgs; argIdx++) {
 			const prt::AnnotationArgument* arg = annotation.getArgument(argIdx);
 			const wchar_t* key = arg->getKey();
-			if (std::wcscmp(key, MIN_KEY) == 0) {
-				minMax.first = arg->getFloat();
-			}
-			else if (std::wcscmp(key, MAX_KEY) == 0) {
-				minMax.second = arg->getFloat();
-			}
+			if (std::wcscmp(key, MIN_KEY) == 0)
+				rangeAnnotation.minMax.first = arg->getFloat();
+			else if (std::wcscmp(key, MAX_KEY) == 0)
+				rangeAnnotation.minMax.second = arg->getFloat();
+			else if (std::wcscmp(key, RESTRICTED_KEY) == 0)
+				rangeAnnotation.restricted = arg->getBool();
 		}
 
 		// parse old style range
-		if ((std::isnan(minMax.first) || std::isnan(minMax.second)) && (numArgs == 2)) {
-			minMax.first = annotation.getArgument(0)->getFloat();
-			minMax.second = annotation.getArgument(1)->getFloat();
-		}
-
-		return minMax;
+		if ((std::isnan(rangeAnnotation.minMax.first) || std::isnan(rangeAnnotation.minMax.second)) && (numArgs == 2))
+			rangeAnnotation.minMax =
+			        std::make_pair(annotation.getArgument(0)->getFloat(), annotation.getArgument(1)->getFloat());
 	}
-	return minMax;
+	return rangeAnnotation;
 }
 
 EnumAnnotation parseEnumAnnotation(const prt::Annotation& annotation) {
@@ -186,6 +183,22 @@ std::wstring parseDescriptionAnnotation(const prt::Annotation& annotation) {
 	return annotation.getArgument(0)->getStr();
 }
 
+AnnotationParsing::AnnotationTraitParameter getGenericAnnotation(const prt::Annotation& annotation,
+                                                                 AnnotationParsing::AttributeTrait attributeTrait) {
+	switch (attributeTrait) {
+		case AnnotationParsing::AttributeTrait::ENUM:
+			return AnnotationParsing::parseEnumAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::RANGE:
+			return AnnotationParsing::parseRangeAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::FILE:
+			return AnnotationParsing::parseFileAnnotation(annotation);
+		case AnnotationParsing::AttributeTrait::DESCRIPTION:
+			return AnnotationParsing::parseDescriptionAnnotation(annotation);
+		default:
+			return AnnotationParsing::AnnotationTraitParameter();
+	}
+}
+
 ColorAnnotation parseColor(const std::wstring colorString) {
 	ColorAnnotation color{0.0, 0.0, 0.0};
 	if (colorString.size() >= 7 && colorString[0] == '#') {
@@ -239,48 +252,28 @@ AttributeTrait detectAttributeTrait(const prt::Annotation& annotation) {
 	return AttributeTrait::NONE;
 }
 
-AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info) {
-	const prt::Annotation* annotation = nullptr;
-	AttributeTrait attributeTrait = AttributeTrait::NONE;
+AttributeTraitMap getAttributeAnnotations(const RuleFileInfoUPtr& info) {
+	AttributeTraitMap annotationMap;
+
 	std::wstring description;
 
 	for (size_t attributeIdx = 0, numAttrs = info->getNumAttributes(); attributeIdx < numAttrs; attributeIdx++) {
 		const auto* attribute = info->getAttribute(attributeIdx);
-		if (std::wcscmp(attributeName.c_str(), attribute->getName()) != 0)
-			continue;
+		std::wstring attrName = attribute->getName();
+
+		TraitParameterMap traitAnnotationMap;
 		for (size_t annotationIdx = 0; annotationIdx < attribute->getNumAnnotations(); annotationIdx++) {
-			const prt::Annotation* currAnnotation = attribute->getAnnotation(annotationIdx);
-			AttributeTrait currAttributeTrait = detectAttributeTrait(*currAnnotation);
-
-			const bool skipOverride =
-			        (((currAttributeTrait == AttributeTrait::PERCENT) || (currAttributeTrait == AttributeTrait::ANGLE)) &&
-			         attributeTrait == AttributeTrait::RANGE);
-
-			if (currAttributeTrait == AttributeTrait::NONE || skipOverride) {
-				if (annotation == nullptr || attributeTrait == AttributeTrait::NONE) {
-					annotation = currAnnotation;
-					attributeTrait = currAttributeTrait;
-				}
+			const prt::Annotation* prtAnnotationPtr = attribute->getAnnotation(annotationIdx);
+			AttributeTrait attributeTrait = detectAttributeTrait(*prtAnnotationPtr);
+			if (attributeTrait == AttributeTrait::NONE)
 				continue;
-			}
-			
-			if (currAttributeTrait == AttributeTrait::DESCRIPTION) {
-				description = parseDescriptionAnnotation(*currAnnotation);
-				if (annotation == nullptr || attributeTrait == AttributeTrait::DESCRIPTION) {
-					annotation = currAnnotation;
-					attributeTrait = currAttributeTrait;
-				}
-			}	
-			else {
-				annotation = currAnnotation;
-				attributeTrait = currAttributeTrait;
-			}
-		}
-	}
-	if (annotation == nullptr)
-		throw std::invalid_argument("attribute not found in ruleFileInfo");
+			AnnotationTraitParameter annotation = getGenericAnnotation(*prtAnnotationPtr, attributeTrait);
 
-	return AttributeAnnotationInfo(*annotation, attributeTrait, description);
+			traitAnnotationMap[attributeTrait] = annotation;
+		}
+		annotationMap[attrName] = traitAnnotationMap;
+	}
+
+	return annotationMap;
 }
 } // namespace AnnotationParsing
-

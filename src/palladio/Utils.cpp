@@ -67,6 +67,19 @@ std::basic_string<C> callAPI(FUNC f, size_t initialSize) {
 	return std::basic_string<C>{buffer.data()};
 }
 
+const std::wstring FILE_ANY = L"*";
+const std::wstring FILE_DOT = L".";
+const std::wstring FILE_EXTENSION_PREFIX = FILE_ANY + FILE_DOT;
+
+std::wstring cleanFileExtension(const std::wstring& extension) {
+	if (extension.empty())
+		return {};
+	if (extension.rfind(FILE_EXTENSION_PREFIX, 0) == 0)
+		return extension;
+	if (extension.rfind(FILE_DOT, 0) == 0)
+		return FILE_ANY + extension;
+	return FILE_EXTENSION_PREFIX + extension;
+}
 } // namespace
 
 std::vector<const wchar_t*> toPtrVec(const std::vector<std::wstring>& wsv) {
@@ -248,4 +261,20 @@ std::wstring toFileURI(const std::filesystem::path& p) {
 
 std::wstring percentEncode(const std::string& utf8String) {
 	return toUTF16FromUTF8(callAPI<char, char>(prt::StringUtils::percentEncode, utf8String));
+}
+
+std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions) {
+	std::wstring extensionString;
+	for (const std::wstring& extension : extensions) {
+		std::wstring cleanedFileExtension = cleanFileExtension(extension);
+		if (cleanedFileExtension.empty())
+			continue;
+		if (extensionString.empty())
+			extensionString += cleanedFileExtension;
+		else
+			extensionString += L" " + cleanedFileExtension;
+	}
+	if (extensionString.empty())
+		return FILE_ANY;
+	return extensionString;
 }
