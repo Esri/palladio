@@ -23,21 +23,19 @@
 using FolderVec = std::vector<std::wstring>;
 
 namespace NodeSpareParameter {
+constexpr const char* PRM_SPARE_IS_PERCENT_TOKEN = "palladio::is_percent";
 
 void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {});
 void clearAllParms(OP_Node* node);
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range = nullptr, const FolderVec& parentFolders = {}, const std::wstring& description = {});
+             PRM_Range* range = nullptr, PRM_SpareData* spareData = nullptr, const FolderVec& parentFolders = {},
+             const std::wstring& description = {});
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
-                  double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {},
-                  const std::wstring& description = {});
+                  double max = std::numeric_limits<double>::quiet_NaN(), bool restricted = true, bool isPercent = false,
+                  const FolderVec& parentFolders = {}, const std::wstring& description = {});
 void addColorParm(OP_Node* node, const std::wstring& id, const std::wstring& name, std::array<double, 3> defaultVal,
                   const FolderVec& parentFolders, const std::wstring& description = {});
-void addIntParm(OP_Node* node, const std::wstring& id, const std::wstring& name, int defaultVal,
-                double min = std::numeric_limits<double>::quiet_NaN(),
-                double max = std::numeric_limits<double>::quiet_NaN(), const FolderVec& parentFolders = {},
-                const std::wstring& description = {});
 void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name, bool defaultVal,
                  const FolderVec& parentFolders = {}, const std::wstring& description = {});
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
@@ -46,7 +44,7 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
                  const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
                  const std::wstring& description = {});
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                 const FolderVec& parentFolders, const std::wstring& description = {});
+                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description = {});
 void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                       const FolderVec& parentFolders, const std::wstring& description = {});
 void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});

@@ -43,6 +43,8 @@ constexpr const wchar_t* ENCODER_ID_CGA_EVALATTR = L"com.esri.prt.core.Attribute
 
 constexpr const wchar_t* RULE_ATTRIBUTES_FOLDER_NAME = L"Rule Attributes";
 
+const double PERCENT_FACTOR = 100.0;
+
 AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* encOpts = nullptr;
@@ -108,22 +110,14 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 						case PRM_Type::PRM_ORD_NONE: {
 							std::string stringValue;
 
-							switch (it->second.index()) {
-								case 0: {
-									stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
-									break;
-								}
-								case 1: {
-									stringValue = std::to_string(std::get<double>(it->second));
-									break;
-								}
-								case 2: {
-									stringValue = std::to_string(std::get<bool>(it->second));
-									break;
-								}
-								default:
-									continue;
-							}
+							if (std::holds_alternative<std::wstring>(it->second))
+								stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
+							else if (std::holds_alternative<double>(it->second))
+								stringValue = std::to_string(std::get<double>(it->second));
+							else if (std::holds_alternative<bool>(it->second))
+								stringValue = std::to_string(std::get<bool>(it->second));
+							else
+								continue;
 
 							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
 							if (choices != nullptr) {
@@ -140,7 +134,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							break;
 						}
 						case PRM_Type::PRM_ORD_TOGGLE: {
-							if (it->second.index() != 2)
+							if (!std::holds_alternative<bool>(it->second))
 								continue;
 
 							const int intValue = static_cast<int>(std::get<bool>(it->second));
@@ -156,7 +150,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					switch (currParmType.getFloatType()) {
 						case PRM_Type::PRM_FLOAT_RGBA: {
-							if (it->second.index() != 0)
+							if (!std::holds_alternative<std::wstring>(it->second))
 								continue;
 
 							const std::wstring colorString = std::get<std::wstring>(it->second);
@@ -168,7 +162,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							break;
 						}
 						default: {
-							if (it->second.index() != 1)
+							if (!std::holds_alternative<double>(it->second))
 								continue;
 
 							const double floatValue = std::get<double>(it->second);
@@ -180,7 +174,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					if (it->second.index() != 0)
+					if (!std::holds_alternative<std::wstring>(it->second))
 						continue;
 
 					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
@@ -197,10 +191,10 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 			if (!parm.isFactoryDefaultUI()) {
 				PRM_Template* templatePtr = parm.getTemplatePtr();
 				PRM_Default* factoryDefaults = templatePtr->getFactoryDefaults();
-				
+
 				for (size_t idx = 0; idx < templatePtr->getVectorSize(); ++idx) {
 					PRM_Default* defaultValue = templatePtr->getDefault(idx);
-					
+
 					factoryDefaults[idx].set(defaultValue->getFloat(), defaultValue->getString(),
 					                         defaultValue->getStringMeaning());
 				}
@@ -240,24 +234,17 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							if (it == node->mDefaultCGAAttributes.end())
 								continue;
 
-							switch (it->second.index()) {
-								case 0: {
-									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
-									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
-									break;
-								}
-								case 1: {
-									const double floatValue = result.toFloat();
-									amb->setFloat(ruleAttrName.c_str(), floatValue);
-									break;
-								}
-								case 2: {
-									const bool boolValue = static_cast<bool>(result.toInt());
-									amb->setFloat(ruleAttrName.c_str(), boolValue);
-									break;
-								}
-								default:
-									break;
+							if (std::holds_alternative<std::wstring>(it->second)) {
+								const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
+								amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+							}
+							else if (std::holds_alternative<std::wstring>(it->second)) {
+								const double floatValue = result.toFloat();
+								amb->setFloat(ruleAttrName.c_str(), floatValue);
+							}
+							else if (std::holds_alternative<std::wstring>(it->second)) {
+								const bool boolValue = static_cast<bool>(result.toInt());
+								amb->setFloat(ruleAttrName.c_str(), boolValue);
 							}
 							break;
 						}
@@ -365,8 +352,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed,
-		                   shapeName.c_str(), ruleAttr.get(), resolveMap.get());
+		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
+		                   resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 		const prt::InitialShape* initialShape = isb->createInitialShapeAndReset(&status);
@@ -395,6 +382,126 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 
 	assert(shapeData.isValid());
 
+	return true;
+}
+
+SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap, const std::wstring& key) {
+	const auto& defaultValIt = cgaAttrMap.find(key);
+	if (defaultValIt != cgaAttrMap.end())
+		return defaultValIt->second;
+	return {};
+}
+
+bool getDefaultBool(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<bool>(defaultValue))
+		return std::get<bool>(defaultValue);
+	return false;
+}
+
+double getDefaultFloat(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<double>(defaultValue))
+		return std::get<double>(defaultValue);
+	return 0.0;
+}
+
+std::wstring getDefaultString(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<std::wstring>(defaultValue))
+		return std::get<std::wstring>(defaultValue);
+	return {};
+}
+
+std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
+	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
+	if (descriptionIt != traitParmMap.end() && std::holds_alternative<std::wstring>(descriptionIt->second))
+		return std::get<std::wstring>(descriptionIt->second);
+
+	return {};
+}
+
+AnnotationParsing::RangeAnnotation getRange(const AnnotationParsing::TraitParameterMap& traitParmMap,
+                                            std::pair<double, double> minMax, bool restricted) {
+	const auto& rangeIt = traitParmMap.find(AnnotationParsing::AttributeTrait::RANGE);
+	if (rangeIt != traitParmMap.end())
+		return std::get<AnnotationParsing::RangeAnnotation>(rangeIt->second);
+
+	return AnnotationParsing::RangeAnnotation({minMax, restricted});
+};
+
+bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                   std::vector<std::wstring> parentFolders) {
+	const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
+	if (enumIt == traitParmMap.end())
+		return false;
+
+	AnnotationParsing::EnumAnnotation enumAnnotation = std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
+
+	NodeSpareParameter::addEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions, parentFolders,
+	                                description);
+	return true;
+}
+
+bool tryHandleRange(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, double defaultValue,
+                    const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                    std::vector<std::wstring> parentFolders) {
+	const bool isAngle = (traitParmMap.find(AnnotationParsing::AttributeTrait::ANGLE) != traitParmMap.end());
+	const bool isPercent = (traitParmMap.find(AnnotationParsing::AttributeTrait::PERCENT) != traitParmMap.end());
+	const bool isRange = (traitParmMap.find(AnnotationParsing::AttributeTrait::RANGE) != traitParmMap.end());
+	if (!isAngle && !isPercent && !isRange)
+		return false;
+
+	double scalingFactor = 1.0;
+	std::pair<double, double> minMax = std::make_pair(0.0, 10.0);
+
+	if (isPercent) {
+		minMax = std::make_pair(0.0, 1.0);
+		scalingFactor = 100.0;
+	}
+	else if (isAngle) {
+		minMax = std::make_pair(0.0, 360.0);
+	}
+
+	AnnotationParsing::RangeAnnotation rangeAnnotation = getRange(traitParmMap, minMax, false);
+
+	NodeSpareParameter::addFloatParm(node, attrId, attrName, defaultValue, scalingFactor * rangeAnnotation.minMax.first,
+	                                 scalingFactor * rangeAnnotation.minMax.second, rangeAnnotation.restricted,
+	                                 isPercent, parentFolders, description);
+	return true;
+}
+
+bool tryHandleFile(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                   std::vector<std::wstring> parentFolders) {
+	const auto& fileIt = traitParmMap.find(AnnotationParsing::AttributeTrait::FILE);
+	if (fileIt == traitParmMap.end())
+		return false;
+
+	AnnotationParsing::FileAnnotation fileAnnotation = std::get<AnnotationParsing::FileAnnotation>(fileIt->second);
+
+	NodeSpareParameter::addFileParm(node, attrId, attrName, defaultValue, fileAnnotation, parentFolders, description);
+	return true;
+}
+
+bool tryHandleDir(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                  const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                  std::vector<std::wstring> parentFolders) {
+	const auto& dirIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DIR);
+	if (dirIt == traitParmMap.end())
+		return false;
+
+	NodeSpareParameter::addDirectoryParm(node, attrId, attrName, defaultValue, parentFolders, description);
+	return true;
+}
+
+bool tryHandleColor(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
+                    const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
+                    std::vector<std::wstring> parentFolders) {
+	const auto& colorIt = traitParmMap.find(AnnotationParsing::AttributeTrait::COLOR);
+	if (colorIt == traitParmMap.end())
+		return false;
+
+	const AnnotationParsing::ColorAnnotation& color = AnnotationParsing::parseColor(defaultValue);
+	NodeSpareParameter::addColorParm(node, attrId, attrName, color, parentFolders, description);
 	return true;
 }
 
@@ -434,7 +541,6 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
 					defVal = std::wstring(v);
-					assert(defVal.index() == 0); // std::wstring is type index 0
 					break;
 				}
 				default:
@@ -488,7 +594,15 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					switch (currParmType.getFloatType()) {
 						case PRM_Type::PRM_FLOAT_NONE: {
-							const double floatValue = evalFloat(&parm, 0, time);
+							double floatValue = evalFloat(&parm, 0, time);
+
+							const PRM_SpareData* spareData = parm.getSparePtr();
+							if (spareData != nullptr) {
+								const char* isPercent =
+								        spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
+								if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
+									floatValue /= PERCENT_FACTOR;
+							}
 
 							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
 							floatHandle.set(0, floatValue);
@@ -546,6 +660,9 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
 	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
 
+	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
+	        AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
+
 	NodeSpareParameter::clearAllParms(this);
 	NodeSpareParameter::addSeparator(this);
 	NodeSpareParameter::addSimpleFolder(this, RULE_ATTRIBUTES_FOLDER_NAME);
@@ -554,124 +671,68 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 		const std::wstring attrName = ra.niceName;
 		const std::wstring attrId = toUTF16FromOSNarrow(NameConversion::toPrimAttr(ra.fqName).toStdString());
 
-		const auto annotationInfo = AnnotationParsing::getAttributeAnnotationInfo(ra.fqName, ruleFileInfo);
-		const std::wstring description = annotationInfo.mDescription;
+		const auto& annotationsIt = attributeAnnotations.find(ra.fqName);
+		if (annotationsIt == attributeAnnotations.end())
+			continue;
+		const AnnotationParsing::TraitParameterMap& traitParmMap = annotationsIt->second;
+
+		const std::wstring& description = getDescription(traitParmMap);
 
 		FolderVec parentFolders;
 		parentFolders.push_back(RULE_ATTRIBUTES_FOLDER_NAME);
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
-		const auto defaultValIt = mDefaultCGAAttributes.find(ra.fqName);
-		const bool foundDefaultValue = (defaultValIt != mDefaultCGAAttributes.end());
+		const CGAAttributeValueType& defaultCGAAttrValue = getDefaultCGAAttrValue(mDefaultCGAAttributes, ra.fqName);
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				const bool isDefaultValBool = (defaultValIt->second.index() == 2);
-				const bool defaultValue =
-				        (foundDefaultValue && isDefaultValBool) ? std::get<bool>(defaultValIt->second) : false;
+				const bool defaultValue = getDefaultBool(defaultCGAAttrValue);
 
-				switch (annotationInfo.mAttributeTrait) {
-					case AnnotationParsing::AttributeTrait::ENUM: {
-						AnnotationParsing::EnumAnnotation enumAnnotation =
-						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
-
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
-						                                enumAnnotation.mOptions, parentFolders, description);
-						break;
-					}
-					default: {
-						NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders,
-						                                description);
-						break;
-					}
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
+				                  parentFolders)) {
+					continue;
 				}
+
+				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const bool isDefaultValFloat = (defaultValIt->second.index() == 1);
-				const double defaultValue = (foundDefaultValue && isDefaultValFloat)
-				                                    ? std::get<double>(defaultValIt->second)
-				                                    : 0.0;
+				const double defaultValue = getDefaultFloat(defaultCGAAttrValue);
 
-				switch (annotationInfo.mAttributeTrait) {
-					case AnnotationParsing::AttributeTrait::ENUM: {
-						AnnotationParsing::EnumAnnotation enumAnnotation =
-						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
-
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, std::to_wstring(defaultValue),
-						                                enumAnnotation.mOptions, parentFolders, description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::RANGE: {
-						AnnotationParsing::RangeAnnotation minMax =
-						        AnnotationParsing::parseRangeAnnotation(annotationInfo.mAnnotation);
-
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, minMax.first,
-						                                 minMax.second, parentFolders, description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::ANGLE: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 360, parentFolders,
-						                                 description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::PERCENT: {
-						// diplay % values with a 0-1 range for now (avoid scaling by 100)
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 1, parentFolders,
-						                                 description);
-						break;
-					}
-					default: {
-						NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0, 10, parentFolders,
-						                                 description);
-						break;
-					}
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
+				                  parentFolders)) {
+					continue;
 				}
 
+				if (tryHandleRange(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
+
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0.0, 10.0, true, false,
+				                                 parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				const bool isDefaultValString = (defaultValIt->second.index() == 0);
-				const std::wstring defaultValue = (foundDefaultValue && isDefaultValString)
-				                                          ? std::get<std::wstring>(defaultValIt->second)
-				                                          : L"";
+				const std::wstring defaultValue = getDefaultString(defaultCGAAttrValue);
 
-				switch (annotationInfo.mAttributeTrait) {
-					case AnnotationParsing::AttributeTrait::ENUM: {
-						AnnotationParsing::EnumAnnotation enumAnnotation =
-						        AnnotationParsing::parseEnumAnnotation(annotationInfo.mAnnotation);
-
-						NodeSpareParameter::addEnumParm(this, attrId, attrName, defaultValue, enumAnnotation.mOptions,
-						                                parentFolders, description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::FILE: {
-						AnnotationParsing::FileAnnotation fileAnnotation =
-						        AnnotationParsing::parseFileAnnotation(annotationInfo.mAnnotation);
-
-						NodeSpareParameter::addFileParm(this, attrId, attrName, defaultValue, parentFolders,
-						                                description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::DIR: {
-						NodeSpareParameter::addDirectoryParm(this, attrId, attrName, defaultValue, parentFolders,
-						                                     description);
-						break;
-					}
-					case AnnotationParsing::AttributeTrait::COLOR: {
-						AnnotationParsing::ColorAnnotation color = AnnotationParsing::parseColor(defaultValue);
-
-						NodeSpareParameter::addColorParm(this, attrId, attrName, color, parentFolders, description);
-						break;
-					}
-					default: {
-						NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders,
-						                                  description);
-						break;
-					}
+				if (tryHandleEnum(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
 				}
 
+				if (tryHandleFile(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
+
+				if (tryHandleDir(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
+
+				if (tryHandleColor(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+					continue;
+				}
+
+				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
 			default:

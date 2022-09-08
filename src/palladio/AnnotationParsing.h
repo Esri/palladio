@@ -21,6 +21,9 @@
 #include "prt/Annotation.h"
 
 #include <array>
+#include <map>
+#include <optional>
+#include <variant>
 
 namespace AnnotationParsing {
 
@@ -32,23 +35,16 @@ struct EnumAnnotation {
 	std::vector<std::wstring> mOptions;
 };
 
-using RangeAnnotation = std::pair<double, double>;
+struct RangeAnnotation {
+	std::pair<double, double> minMax =
+	        std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
+	bool restricted;
+};
 using FileAnnotation = std::vector<std::wstring>;
 using ColorAnnotation = std::array<double, 3>;
 
-struct AttributeAnnotationInfo {
-	const prt::Annotation& mAnnotation;
-	AttributeTrait mAttributeTrait;
-	std::wstring mDescription;
-
-	AttributeAnnotationInfo(const prt::Annotation& annotation, AttributeTrait attributeTrait, const std::wstring& description)
-	    : mAnnotation(annotation), mAttributeTrait(attributeTrait), mDescription(description) {}
-	AttributeAnnotationInfo() = delete;
-	AttributeAnnotationInfo(const AttributeAnnotationInfo&) = delete;
-	AttributeAnnotationInfo(AttributeAnnotationInfo&&) = delete;
-	AttributeAnnotationInfo& operator=(const AttributeAnnotationInfo&) = delete;
-	AttributeAnnotationInfo& operator=(AttributeAnnotationInfo&&) = delete;
-};
+using AnnotationTraitParameter =
+        std::variant<std::monostate, EnumAnnotation, RangeAnnotation, FileAnnotation, std::wstring>;
 
 ColorAnnotation parseColor(const std::wstring colorString);
 
@@ -62,5 +58,7 @@ FileAnnotation parseFileAnnotation(const prt::Annotation& annotation);
 
 AttributeTrait detectAttributeTrait(const prt::Annotation& annotation);
 
-AttributeAnnotationInfo getAttributeAnnotationInfo(const std::wstring& attributeName, const RuleFileInfoUPtr& info);
-}
+using TraitParameterMap = std::map<AttributeTrait, AnnotationTraitParameter>;
+using AttributeTraitMap = std::map<std::wstring, TraitParameterMap>;
+AttributeTraitMap getAttributeAnnotations(const RuleFileInfoUPtr& info);
+} // namespace AnnotationParsing
