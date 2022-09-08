@@ -409,7 +409,7 @@ bool getDefaultBool(const SOPAssign::CGAAttributeValueType& defaultValue) {
 double getDefaultFloat(const SOPAssign::CGAAttributeValueType& defaultValue) {
 	if (std::holds_alternative<double>(defaultValue))
 		return std::get<double>(defaultValue);
-	return 0;
+	return 0.0;
 }
 
 std::wstring getDefaultString(const SOPAssign::CGAAttributeValueType& defaultValue) {
