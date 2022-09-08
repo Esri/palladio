@@ -238,11 +238,11 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 								const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
 								amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
 							}
-							else if (std::holds_alternative<std::wstring>(it->second)) {
+							else if (std::holds_alternative<double>(it->second)) {
 								const double floatValue = result.toFloat();
 								amb->setFloat(ruleAttrName.c_str(), floatValue);
 							}
-							else if (std::holds_alternative<std::wstring>(it->second)) {
+							else if (std::holds_alternative<bool>(it->second)) {
 								const bool boolValue = static_cast<bool>(result.toInt());
 								amb->setFloat(ruleAttrName.c_str(), boolValue);
 							}
