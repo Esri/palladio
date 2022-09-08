@@ -693,7 +693,6 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
 		const auto& defaultValIt = mDefaultCGAAttributes.find(ra.fqName);
-		const bool foundDefaultValue = (defaultValIt != mDefaultCGAAttributes.end());
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
