@@ -385,6 +385,13 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
+SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap, const std::wstring& key) {
+	const auto& defaultValIt = cgaAttrMap.find(key);
+	if (defaultValIt != cgaAttrMap.end())
+		return defaultValIt->second;
+	return {};
+}
+
 bool getDefaultBool(const SOPAssign::CGAAttributeValueType& defaultValue) {
 	if (std::holds_alternative<bool>(defaultValue))
 		return std::get<bool>(defaultValue);
@@ -405,7 +412,7 @@ std::wstring getDefaultString(const SOPAssign::CGAAttributeValueType& defaultVal
 
 std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
 	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
-	if (descriptionIt != traitParmMap.end())
+	if (descriptionIt != traitParmMap.end() && std::holds_alternative<std::wstring>(descriptionIt->second))
 		return std::get<std::wstring>(descriptionIt->second);
 
 	return {};
@@ -534,7 +541,6 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					const wchar_t* v = defaultRuleAttributes->getString(key);
 					assert(v != nullptr);
 					defVal = std::wstring(v);
-					assert(defVal.index() == 0); // std::wstring is type index 0
 					break;
 				}
 				default:
@@ -677,11 +683,11 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 		parentFolders.push_back(ra.ruleFile);
 		parentFolders.insert(parentFolders.end(), ra.groups.begin(), ra.groups.end());
 
-		const auto& defaultValIt = mDefaultCGAAttributes.find(ra.fqName);
+		const CGAAttributeValueType& defaultCGAAttrValue = getDefaultCGAAttrValue(mDefaultCGAAttributes, ra.fqName);
 
 		switch (ra.mType) {
 			case prt::AnnotationArgumentType::AAT_BOOL: {
-				const bool defaultValue = getDefaultBool(defaultValIt->second);
+				const bool defaultValue = getDefaultBool(defaultCGAAttrValue);
 
 				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
 				                  parentFolders)) {
@@ -692,7 +698,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
-				const double defaultValue = getDefaultFloat(defaultValIt->second);
+				const double defaultValue = getDefaultFloat(defaultCGAAttrValue);
 
 				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
 				                  parentFolders)) {
@@ -708,7 +714,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR: {
-				const std::wstring defaultValue = getDefaultString(defaultValIt->second);
+				const std::wstring defaultValue = getDefaultString(defaultCGAAttrValue);
 
 				if (tryHandleEnum(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
 					continue;
