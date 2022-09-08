@@ -110,22 +110,14 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 						case PRM_Type::PRM_ORD_NONE: {
 							std::string stringValue;
 
-							switch (it->second.index()) {
-								case 0: {
-									stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
-									break;
-								}
-								case 1: {
-									stringValue = std::to_string(std::get<double>(it->second));
-									break;
-								}
-								case 2: {
-									stringValue = std::to_string(std::get<bool>(it->second));
-									break;
-								}
-								default:
-									continue;
-							}
+							if (std::holds_alternative<std::wstring>(it->second))
+								stringValue = toOSNarrowFromUTF16(std::get<std::wstring>(it->second));
+							else if (std::holds_alternative<double>(it->second))
+								stringValue = std::to_string(std::get<double>(it->second));
+							else if (std::holds_alternative<bool>(it->second))
+								stringValue = std::to_string(std::get<bool>(it->second));
+							else
+								continue;
 
 							const PRM_ChoiceList* choices = parm.getTemplatePtr()->getChoiceListPtr();
 							if (choices != nullptr) {
@@ -142,7 +134,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							break;
 						}
 						case PRM_Type::PRM_ORD_TOGGLE: {
-							if (it->second.index() != 2)
+							if (!std::holds_alternative<bool>(it->second))
 								continue;
 
 							const int intValue = static_cast<int>(std::get<bool>(it->second));
@@ -158,7 +150,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					switch (currParmType.getFloatType()) {
 						case PRM_Type::PRM_FLOAT_RGBA: {
-							if (it->second.index() != 0)
+							if (!std::holds_alternative<std::wstring>(it->second))
 								continue;
 
 							const std::wstring colorString = std::get<std::wstring>(it->second);
@@ -170,7 +162,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 							break;
 						}
 						default: {
-							if (it->second.index() != 1)
+							if (!std::holds_alternative<double>(it->second))
 								continue;
 
 							const double floatValue = std::get<double>(it->second);
@@ -182,7 +174,7 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-					if (it->second.index() != 0)
+					if (!std::holds_alternative<std::wstring>(it->second))
 						continue;
 
 					const UT_StringHolder stringValue(toOSNarrowFromUTF16(std::get<std::wstring>(it->second)));
@@ -242,24 +234,17 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							if (it == node->mDefaultCGAAttributes.end())
 								continue;
 
-							switch (it->second.index()) {
-								case 0: {
-									const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
-									amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
-									break;
-								}
-								case 1: {
-									const double floatValue = result.toFloat();
-									amb->setFloat(ruleAttrName.c_str(), floatValue);
-									break;
-								}
-								case 2: {
-									const bool boolValue = static_cast<bool>(result.toInt());
-									amb->setFloat(ruleAttrName.c_str(), boolValue);
-									break;
-								}
-								default:
-									break;
+							if (std::holds_alternative<std::wstring>(it->second)) {
+								const std::wstring wstringValue = toUTF16FromOSNarrow(result.toStdString());
+								amb->setString(ruleAttrName.c_str(), wstringValue.c_str());
+							}
+							else if (std::holds_alternative<std::wstring>(it->second)) {
+								const double floatValue = result.toFloat();
+								amb->setFloat(ruleAttrName.c_str(), floatValue);
+							}
+							else if (std::holds_alternative<std::wstring>(it->second)) {
+								const bool boolValue = static_cast<bool>(result.toInt());
+								amb->setFloat(ruleAttrName.c_str(), boolValue);
 							}
 							break;
 						}
