@@ -84,8 +84,7 @@ std::wstring cleanFileExtension(const std::wstring& extension) {
 
 std::vector<const wchar_t*> toPtrVec(const std::vector<std::wstring>& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
-	for (size_t i = 0; i < wsv.size(); i++)
-		pw[i] = wsv[i].c_str();
+	std::transform(wsv.begin(), wsv.end(), pw.begin(), [](const auto& s) { return s.c_str(); });
 	return pw;
 }
 
