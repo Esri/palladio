@@ -429,7 +429,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							continue;
 
 						if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
-							const std::optional<std::vector<std::wstring>>& wstringVec =
+							const std::optional<std::vector<std::wstring>> wstringVec =
 							        getStdStringVecFromParm(node, parm, time);
 							if (!wstringVec.has_value())
 								continue;
@@ -438,7 +438,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							amb->setStringArray(ruleAttrName.c_str(), ptrWstringVec.data(), ptrWstringVec.size());
 						}
 						else if (std::holds_alternative<double>(it->second)) {
-							const std::optional<std::vector<double>>& doubleVec =
+							const std::optional<std::vector<double>> doubleVec =
 							        getStdFloatVecFromParm(node, parm, time);
 							if (!doubleVec.has_value())
 								continue;
@@ -447,7 +447,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 							                   doubleVec.value().size());
 						}
 						else if (std::holds_alternative<bool>(it->second)) {
-							const std::optional<std::vector<bool>>& boolVec = getStdBoolVecFromParm(node, parm, time);
+							const std::optional<std::vector<bool>> boolVec = getStdBoolVecFromParm(node, parm, time);
 							if (!boolVec.has_value())
 								continue;
 
@@ -859,7 +859,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
 					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
 						if (std::holds_alternative<std::vector<bool>>(it->second)) {
-							const std::optional<UT_Int32Array>& boolArray = getBoolArrayFromParm(this, parm, time);
+							const std::optional<UT_Int32Array> boolArray = getBoolArrayFromParm(this, parm, time);
 
 							if (!boolArray.has_value())
 								break;
@@ -869,7 +869,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							intArrayHandle.set(0, boolArray.value());
 						}
 						else if (std::holds_alternative<std::vector<double>>(it->second)) {
-							const std::optional<UT_FprealArray>& floatArray = getFloatArrayFromParm(this, parm, time);
+							const std::optional<UT_FprealArray> floatArray = getFloatArrayFromParm(this, parm, time);
 
 							if (!floatArray.has_value())
 								break;
@@ -878,7 +878,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							floatArrayHandle.set(0, floatArray.value());
 						}
 						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
-							const std::optional<UT_StringArray>& stringArray = getStringArrayFromParm(this, parm, time);
+							const std::optional<UT_StringArray> stringArray = getStringArrayFromParm(this, parm, time);
 
 							if (!stringArray.has_value())
 								break;
