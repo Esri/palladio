@@ -86,16 +86,86 @@ bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValu
 	return true;
 }
 
+uint32 getVariantArraySize(const SOPAssign::CGAAttributeValueType& valArray) {
+	if (std::holds_alternative<std::vector<bool>>(valArray))
+		return std::get<std::vector<bool>>(valArray).size();
+	else if (std::holds_alternative<std::vector<double>>(valArray))
+		return std::get<std::vector<double>>(valArray).size();
+	else if (std::holds_alternative<std::vector<std::wstring>>(valArray))
+		return std::get<std::vector<std::wstring>>(valArray).size();
+
+	return 0;
+}
+
+bool isMultiParmDefault(const PRM_Parm& parm) {
+	uint32_t parmCount = parm.getMultiParmCount();
+	if (!parm.isDefault())
+		return false;
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr || !parmInst->isDefault())
+			return false;
+	}
+	return true;
+}
+
+void overrideMultiParmDefault(SOPAssign* node, const PRM_Parm& parm, const SOPAssign::CGAAttributeValueType& defArray,
+                              fpreal time) {
+	uint32_t defaultArraySize = getVariantArraySize(defArray);
+	node->setFloat(parm.getToken(), 0, time, static_cast<double>(defaultArraySize));
+
+	uint32_t parmCount = parm.getMultiParmCount();
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr)
+			continue;
+
+		const PRM_Type& parmInstType = parmInst->getType();
+		const std::string parmInstToken = parmInst->getToken();
+
+		switch (parmInstType.getBasicType()) {
+			case PRM_Type::PRM_BASIC_ORDINAL: {
+				if (!std::holds_alternative<std::vector<bool>>(defArray))
+					continue;
+
+				const std::vector<bool>& boolValues = std::get<std::vector<bool>>(defArray);
+				node->setInt(parmInstToken.c_str(), 0, time, boolValues[i]);
+				break;
+			}
+			case PRM_Type::PRM_BASIC_FLOAT: {
+				if (!std::holds_alternative<std::vector<double>>(defArray))
+					continue;
+
+				const std::vector<double>& doubleValues = std::get<std::vector<double>>(defArray);
+				node->setFloat(parmInstToken.c_str(), 0, time, doubleValues[i]);
+				break;
+			}
+			case PRM_Type::PRM_BASIC_STRING: {
+				if (!std::holds_alternative<std::vector<std::wstring>>(defArray))
+					continue;
+
+				const std::vector<std::wstring>& wStringValues = std::get<std::vector<std::wstring>>(defArray);
+				const UT_StringHolder stringValue(toOSNarrowFromUTF16(wStringValues[i]));
+				node->setString(stringValue, CH_StringMeaning::CH_STRING_LITERAL, parmInstToken.c_str(), 0, time);
+				break;
+			}
+			default:
+				break;
+		}
+		parmInst->overwriteDefaults(time);
+	}
+}
+
 void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
                            const SOPAssign::CGAAttributeValueMap& defaultValues) {
 	const fpreal time = CHgetEvalTime();
 
-	const int numParms = node->getNumParms();
-
-	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
+	for (int parmIndex = 0; parmIndex < node->getNumParms(); ++parmIndex) {
 		PRM_Parm& parm = node->getParm(parmIndex);
 
-		if (parm.isSpareParm() && parm.isDefault()) {
+		if (parm.isSpareParm() && (parm.isDefault() || parm.isMultiParm())) {
 			const UT_StringHolder attributeName(parm.getToken());
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
 			auto it = defaultValues.find(ruleAttrName);
@@ -148,27 +218,35 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							if (!std::holds_alternative<std::wstring>(it->second))
-								continue;
+					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+						if (isMultiParmDefault(parm))
+							overrideMultiParmDefault(node, parm, it->second, time);
+						else
+							continue; // avoid overriding if not default
+					}
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								if (!std::holds_alternative<std::wstring>(it->second))
+									continue;
 
-							const std::wstring colorString = std::get<std::wstring>(it->second);
-							const auto color = AnnotationParsing::parseColor(colorString);
+								const std::wstring colorString = std::get<std::wstring>(it->second);
+								const auto color = AnnotationParsing::parseColor(colorString);
 
-							node->setFloat(attributeName, 0, time, color[0]);
-							node->setFloat(attributeName, 1, time, color[1]);
-							node->setFloat(attributeName, 2, time, color[2]);
-							break;
-						}
-						default: {
-							if (!std::holds_alternative<double>(it->second))
-								continue;
+								node->setFloat(attributeName, 0, time, color[0]);
+								node->setFloat(attributeName, 1, time, color[1]);
+								node->setFloat(attributeName, 2, time, color[2]);
+								break;
+							}
+							default: {
+								if (!std::holds_alternative<double>(it->second))
+									continue;
 
-							const double floatValue = std::get<double>(it->second);
+								const double floatValue = std::get<double>(it->second);
 
-							node->setFloat(attributeName, 0, time, floatValue);
-							break;
+								node->setFloat(attributeName, 0, time, floatValue);
+								break;
+							}
 						}
 					}
 					break;
@@ -203,6 +281,92 @@ void updateUIDefaultValues(SOPAssign* node, const std::wstring& style,
 	}
 }
 
+template <typename F>
+bool visitMultiParmChildren(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType, F fun) {
+	const int parmCount = parm.getMultiParmCount();
+
+	for (int i = 0; i < parmCount; ++i) {
+		PRM_Parm* parmInst = parm.getMultiParm(i);
+		if (parmInst == nullptr || parmInst->getType().getBasicType() != expectedType)
+			return false; // invalid data
+
+		fun(parmInst);
+	}
+	return true; // success
+}
+
+template <typename T, typename F>
+std::optional<UT_ValArray<T>> getArrayFromMultiParm(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType,
+                                                    F eval) {
+	const int parmCount = parm.getMultiParmCount();
+	UT_ValArray<T> valArray(parmCount);
+	bool success = visitMultiParmChildren(
+	        parm, expectedType, [&valArray, eval](PRM_Parm* parmInst) { valArray.emplace_back(eval(parmInst)); });
+	if (success)
+		return valArray;
+	else
+		return {};
+}
+
+// identical to above function
+template <typename T, typename F>
+std::optional<std::vector<T>> getStdVectorFromMultiParm(const PRM_Parm& parm, PRM_Type::PRM_BasicType expectedType,
+                                                        F eval) {
+	const int parmCount = parm.getMultiParmCount();
+	std::vector<T> vec;
+	vec.reserve(parmCount);
+	bool success = visitMultiParmChildren(parm, expectedType,
+	                                      [&vec, eval](PRM_Parm* parmInst) { vec.emplace_back(eval(parmInst)); });
+	if (success)
+		return vec;
+	else
+		return {};
+}
+
+std::optional<UT_Int32Array> getBoolArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<int32>(parm, PRM_Type::PRM_BASIC_ORDINAL, [node, time](const PRM_Parm* parmInst) {
+		return node->evalInt(parmInst, 0, time);
+	});
+}
+
+std::optional<UT_FprealArray> getFloatArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<fpreal>(parm, PRM_Type::PRM_BASIC_FLOAT, [node, time](const PRM_Parm* parmInst) {
+		return node->evalFloat(parmInst, 0, time);
+	});
+}
+
+std::optional<UT_StringArray> getStringArrayFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getArrayFromMultiParm<UT_StringHolder>(parm, PRM_Type::PRM_BASIC_STRING,
+	                                              [node, time](const PRM_Parm* parmInst) {
+		                                              UT_StringHolder stringValue;
+		                                              node->evalString(stringValue, parmInst, 0, time);
+		                                              return stringValue;
+	                                              });
+}
+
+std::optional<std::vector<bool>> getStdBoolVecFromParm(const SOPAssign* const node, const PRM_Parm& parm, fpreal time) {
+	return getStdVectorFromMultiParm<bool>(parm, PRM_Type::PRM_BASIC_ORDINAL, [node, time](const PRM_Parm* parmInst) {
+		return static_cast<bool>(node->evalInt(parmInst, 0, time));
+	});
+}
+
+std::optional<std::vector<double>> getStdFloatVecFromParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                          fpreal time) {
+	return getStdVectorFromMultiParm<double>(parm, PRM_Type::PRM_BASIC_FLOAT, [node, time](const PRM_Parm* parmInst) {
+		return static_cast<double>(node->evalFloat(parmInst, 0, time));
+	});
+}
+
+std::optional<std::vector<std::wstring>> getStdStringVecFromParm(const SOPAssign* const node, const PRM_Parm& parm,
+                                                                 fpreal time) {
+	return getStdVectorFromMultiParm<std::wstring>(parm, PRM_Type::PRM_BASIC_STRING,
+	                                               [node, time](const PRM_Parm* parmInst) {
+		                                               UT_StringHolder stringValue;
+		                                               node->evalString(stringValue, parmInst, 0, time);
+		                                               return toUTF16FromOSNarrow(stringValue.c_str());
+	                                               });
+}
+
 AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const std::wstring& style) {
 	const fpreal time = CHgetEvalTime();
 
@@ -212,7 +376,7 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = node->getParm(parmIndex);
 
-		if (parm.isSpareParm() && !parm.isDefault()) {
+		if (parm.isSpareParm() && (!parm.isDefault() || (parm.isMultiParm() && !isMultiParmDefault(parm)))) {
 			const UT_StringHolder attributeName(parm.getToken());
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
 
@@ -259,24 +423,62 @@ AttributeMapUPtr generateAttributeMapFromParameterValues(SOPAssign* node, const 
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_NONE: {
-							const double floatValue = node->evalFloat(&parm, 0, time);
+					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+						auto it = node->mDefaultCGAAttributes.find(ruleAttrName);
+						if (it == node->mDefaultCGAAttributes.end())
+							continue;
 
-							amb->setFloat(ruleAttrName.c_str(), floatValue);
-							break;
-						}
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							const float r = node->evalFloat(&parm, 0, time);
-							const float g = node->evalFloat(&parm, 1, time);
-							const float b = node->evalFloat(&parm, 2, time);
-							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+						if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
+							const std::optional<std::vector<std::wstring>> wstringVec =
+							        getStdStringVecFromParm(node, parm, time);
+							if (!wstringVec.has_value())
+								continue;
 
-							amb->setString(ruleAttrName.c_str(), colorString.c_str());
-							break;
+							std::vector<const wchar_t*> ptrWstringVec = toPtrVec(wstringVec.value());
+							amb->setStringArray(ruleAttrName.c_str(), ptrWstringVec.data(), ptrWstringVec.size());
 						}
-						default:
-							break;
+						else if (std::holds_alternative<double>(it->second)) {
+							const std::optional<std::vector<double>> doubleVec =
+							        getStdFloatVecFromParm(node, parm, time);
+							if (!doubleVec.has_value())
+								continue;
+
+							amb->setFloatArray(ruleAttrName.c_str(), doubleVec.value().data(),
+							                   doubleVec.value().size());
+						}
+						else if (std::holds_alternative<bool>(it->second)) {
+							const std::optional<std::vector<bool>> boolVec = getStdBoolVecFromParm(node, parm, time);
+							if (!boolVec.has_value())
+								continue;
+
+							const std::vector<bool>& boolVecVal = boolVec.value();
+							// convert compressed bool vec to native array
+							auto boolArray = std::unique_ptr<bool[]>(new bool[boolVecVal.size()]);
+							for (size_t i = 0; i < boolVecVal.size(); i++)
+								boolArray[i] = boolVecVal[i];
+							amb->setBoolArray(ruleAttrName.c_str(), boolArray.get(), boolVecVal.size());
+						}
+					}
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_NONE: {
+								const double floatValue = node->evalFloat(&parm, 0, time);
+
+								amb->setFloat(ruleAttrName.c_str(), floatValue);
+								break;
+							}
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								const float r = node->evalFloat(&parm, 0, time);
+								const float g = node->evalFloat(&parm, 1, time);
+								const float b = node->evalFloat(&parm, 2, time);
+								const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
+
+								amb->setString(ruleAttrName.c_str(), colorString.c_str());
+								break;
+							}
+							default:
+								break;
+						}
 					}
 					break;
 				}
@@ -409,6 +611,26 @@ std::wstring getDefaultString(const SOPAssign::CGAAttributeValueType& defaultVal
 		return std::get<std::wstring>(defaultValue);
 	return {};
 }
+
+std::vector<bool> getDefaultBoolVec(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<std::vector<double>>(defaultValue))
+		return std::get<std::vector<bool>>(defaultValue);
+	return {};
+}
+
+std::vector<double> getDefaultFloatVec(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<std::vector<double>>(defaultValue))
+		return std::get<std::vector<double>>(defaultValue);
+	return {};
+}
+
+std::vector<std::wstring> getDefaultStringVec(const SOPAssign::CGAAttributeValueType& defaultValue) {
+	if (std::holds_alternative<std::vector<std::wstring>>(defaultValue))
+		return std::get<std::vector<std::wstring>>(defaultValue);
+	return {};
+}
+
+
 
 std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
 	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
@@ -543,6 +765,44 @@ void SOPAssign::updateDefaultCGAAttributes(const ShapeData& shapeData) {
 					defVal = std::wstring(v);
 					break;
 				}
+				case prt::AttributeMap::PT_FLOAT_ARRAY: {
+					size_t arr_length = 0;
+					const double* doubleArray = defaultRuleAttributes->getFloatArray(key, &arr_length);
+					std::vector<double> doubleVec;
+					doubleVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						doubleVec.emplace_back(doubleArray[enumIndex]);
+
+					defVal = doubleVec;
+					break;
+				}
+				case prt::AttributeMap::PT_BOOL_ARRAY: {
+					size_t arr_length = 0;
+					const bool* boolArray = defaultRuleAttributes->getBoolArray(key, &arr_length);
+					std::vector<bool> boolVec;
+					boolVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						boolVec.emplace_back(boolArray[enumIndex]);
+
+					defVal = boolVec;
+					break;
+				}
+				case prt::AttributeMap::PT_STRING_ARRAY: {
+					size_t arr_length = 0;
+					const wchar_t* const* stringArray = defaultRuleAttributes->getStringArray(key, &arr_length);
+					assert((stringArray != nullptr) || (arr_length == 0));
+
+					std::vector<std::wstring> stringVec;
+					stringVec.reserve(arr_length);
+
+					for (short enumIndex = 0; enumIndex < arr_length; enumIndex++)
+						stringVec.emplace_back(stringArray[enumIndex]);
+
+					defVal = stringVec;
+					break;
+				}
 				default:
 					continue;
 			}
@@ -559,8 +819,13 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	for (int parmIndex = 0; parmIndex < numParms; ++parmIndex) {
 		const PRM_Parm& parm = getParm(parmIndex);
 
-		if (parm.isSpareParm() && !parm.isDefault()) {
+		if (parm.isSpareParm() && (!parm.isDefault() || (parm.isMultiParm() && !isMultiParmDefault(parm)))) {
 			const UT_StringHolder attributeName(parm.getToken());
+			const std::wstring style = getStyle();
+			const std::wstring ruleAttrName = NameConversion::toRuleAttr(style, attributeName);
+			auto it = mDefaultCGAAttributes.find(ruleAttrName);
+			if (it == mDefaultCGAAttributes.end())
+				continue;
 			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
 
@@ -592,35 +857,67 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 					break;
 				}
 				case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
-					switch (currParmType.getFloatType()) {
-						case PRM_Type::PRM_FLOAT_NONE: {
-							double floatValue = evalFloat(&parm, 0, time);
+					if (parm.getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+						if (std::holds_alternative<std::vector<bool>>(it->second)) {
+							const std::optional<UT_Int32Array> boolArray = getBoolArrayFromParm(this, parm, time);
 
-							const PRM_SpareData* spareData = parm.getSparePtr();
-							if (spareData != nullptr) {
-								const char* isPercent =
-								        spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
-								if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
-									floatValue /= PERCENT_FACTOR;
+							if (!boolArray.has_value())
+								break;
+
+							GA_RWHandleT<UT_Int32Array> intArrayHandle(
+							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
+							intArrayHandle.set(0, boolArray.value());
+						}
+						else if (std::holds_alternative<std::vector<double>>(it->second)) {
+							const std::optional<UT_FprealArray> floatArray = getFloatArrayFromParm(this, parm, time);
+
+							if (!floatArray.has_value())
+								break;
+
+							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
+							floatArrayHandle.set(0, floatArray.value());
+						}
+						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
+							const std::optional<UT_StringArray> stringArray = getStringArrayFromParm(this, parm, time);
+
+							if (!stringArray.has_value())
+								break;
+
+							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
+							stringArrayHandle.set(0, stringArray.value());
+						}
+					}
+					else {
+						switch (currParmType.getFloatType()) {
+							case PRM_Type::PRM_FLOAT_NONE: {
+								double floatValue = evalFloat(&parm, 0, time);
+
+								const PRM_SpareData* spareData = parm.getSparePtr();
+								if (spareData != nullptr) {
+									const char* isPercent =
+										spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
+									if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
+										floatValue /= PERCENT_FACTOR;
+								}
+
+								GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
+								floatHandle.set(0, floatValue);
+								break;
 							}
+							case PRM_Type::PRM_FLOAT_RGBA: {
+								const float r = evalFloat(&parm, 0, time);
+								const float g = evalFloat(&parm, 1, time);
+								const float b = evalFloat(&parm, 2, time);
+								const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
 
-							GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-							floatHandle.set(0, floatValue);
-							break;
+								UT_String stringValue(toOSNarrowFromUTF16(colorString));
+								GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
+								stringHandle.set(0, stringValue);
+								break;
+							}
+							default:
+								break;
 						}
-						case PRM_Type::PRM_FLOAT_RGBA: {
-							const float r = evalFloat(&parm, 0, time);
-							const float g = evalFloat(&parm, 1, time);
-							const float b = evalFloat(&parm, 2, time);
-							const std::wstring colorString = AnnotationParsing::getColorString({r, g, b});
-
-							UT_String stringValue(toOSNarrowFromUTF16(colorString));
-							GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-							stringHandle.set(0, stringValue);
-							break;
-						}
-						default:
-							break;
 					}
 					break;
 				}
@@ -735,6 +1032,23 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 				NodeSpareParameter::addStringParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
+			case prt::AnnotationArgumentType::AAT_BOOL_ARRAY: {
+				const std::vector<bool> defaultValues = getDefaultBoolVec(defaultCGAAttrValue);
+				NodeSpareParameter::addBoolArrayParm(this, attrId, attrName, defaultValues, parentFolders, description);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_FLOAT_ARRAY: {
+				const std::vector<double> defaultValues = getDefaultFloatVec(defaultCGAAttrValue);
+				NodeSpareParameter::addFloatArrayParm(this, attrId, attrName, defaultValues, parentFolders,
+					description);
+				break;
+			}
+			case prt::AnnotationArgumentType::AAT_STR_ARRAY: {
+				const std::vector<std::wstring> defaultValues = getDefaultStringVec(defaultCGAAttrValue);
+				NodeSpareParameter::addStringArrayParm(this, attrId, attrName, defaultValues, parentFolders,
+					description);
+				break;
+			}
 			default:
 				break;
 		}
@@ -803,10 +1117,17 @@ void SOPAssign::opChanged(OP_EventType reason, void* data) {
 	// trigger recook on parameter/attribute change
 	if (reason == OP_PARM_CHANGED) {
 		// parm index is directly stored in the void*, casting to size_t to avoid compiler warnings
-		const PRM_Parm& parm = getParm((size_t)data);
+		const PRM_ParmList* parmList = getParmList();
+		if (parmList == nullptr)
+			return;
 
-		if (parm.isSpareParm()) {
-			const PRM_Type currParmType = parm.getType();
+		const std::uintptr_t parmIdx = reinterpret_cast<std::uintptr_t>(data);
+		const PRM_Parm* const parmPtr = parmList->getParmPtr(parmIdx);
+		if (parmPtr == nullptr)
+			return;
+
+		if (parmPtr->isSpareParm()) {
+			const PRM_Type currParmType = parmPtr->getType();
 
 			const bool isOrdParm = (currParmType.getBasicType() == PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL) &&
 			                       ((currParmType.getOrdinalType() == PRM_Type::PRM_OrdinalType::PRM_ORD_TOGGLE) ||

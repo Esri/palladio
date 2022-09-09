@@ -82,6 +82,12 @@ std::wstring cleanFileExtension(const std::wstring& extension) {
 }
 } // namespace
 
+std::vector<const wchar_t*> toPtrVec(const std::vector<std::wstring>& wsv) {
+	std::vector<const wchar_t*> pw(wsv.size());
+	std::transform(wsv.begin(), wsv.end(), pw.begin(), [](const auto& s) { return s.c_str(); });
+	return pw;
+}
+
 std::vector<std::wstring> tokenizeAll(const std::wstring& input, wchar_t token) {
 	std::vector<std::wstring> out;
 

@@ -41,9 +41,6 @@ std::string getUniqueIdFromFolderVec(const FolderVec& parentFolders) {
 
 	return primAttr.toStdString();
 }
-} // namespace
-
-namespace NodeSpareParameter {
 
 void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 	PI_EditScriptedParms nodeParms(node, 1, 0);
@@ -56,12 +53,12 @@ void addMissingFolders(OP_Node* node, const FolderVec& parentFolders) {
 			                                           : FolderVec();
 			addMissingFolders(node, newParentFolders);
 
-			addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
+			NodeSpareParameter::addCollapsibleFolder(node, parentFolders.back(), newParentFolders);
 		}
 	}
 }
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders) {
+void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {}) {
 	UT_String errors;
 	OP_Director* director = OPgetDirector();
 
@@ -77,16 +74,18 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 
 	if (folderIdx > 0) {
 		const int folderEndIdx = nodeParms.getMatchingGroupParm(folderIdx);
-		const int myParmIdx = nodeParms.getNParms() - 1;
-		nodeParms.moveParms(myParmIdx, myParmIdx, folderEndIdx - myParmIdx);
+		const int parmIdxlast = nodeParms.getNParms() - 1;
+		const int matchingParmIdx = nodeParms.getMatchingGroupParm(parmIdxlast);
+		const int parmIdxfirst = (matchingParmIdx != -1) ? matchingParmIdx : parmIdxlast;
+
+		nodeParms.moveParms(parmIdxfirst, parmIdxlast, folderEndIdx - parmIdxfirst);
 	}
 
 	director->changeNodeSpareParms(node, nodeParms, errors);
 }
 
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range, PRM_SpareData* spareData, const FolderVec& parentFolders,
-             const std::wstring& description) {
+	PRM_Range* range = nullptr, PRM_SpareData* spareData = nullptr, const FolderVec& parentFolders = {}, const std::wstring& description = {}) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
@@ -107,6 +106,30 @@ void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std
 
 	addParmsFromTemplateArray(node, templateArr, parentFolders);
 }
+
+template <typename T>
+void addArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::vector<T>& defaultVals,
+                  const FolderVec& parentFolders, const std::wstring& annotation, const char* itemNameToken,
+                  PRM_Type itemType) {
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	PRM_Name templateName(token, label);
+	PRM_Name itemName(itemNameToken, "#");
+	PRM_Default defaultVal(defaultVals.size());
+
+	PRM_Template itemTemplate[] = {PRM_Template(itemType, 1, &itemName, PRMzeroDefaults), PRM_Template()};
+
+	PRM_Template myTemplateList[] = {PRM_Template(PRM_MULTITYPE_LIST, itemTemplate, 0, &templateName, &defaultVal,
+	                                              nullptr, &PRM_SpareData::multiStartOffsetZero),
+	                                 PRM_Template()};
+
+	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
+}
+
+} // namespace
+
+namespace NodeSpareParameter {
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
                   double max, bool restricted, bool isPercent, const FolderVec& parentFolders, const std::wstring& description) {
@@ -156,6 +179,24 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
                    const FolderVec& parentFolders, const std::wstring& description) {
 	addParm(node, PRM_STRING, id, name, PRM_Default(0, toOSNarrowFromUTF16(defaultVal).c_str()), nullptr, nullptr,
 	        parentFolders, description);
+}
+
+void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                    const std::vector<bool>& defaultVals, const FolderVec& parentFolders,
+                    const std::wstring& annotation) {
+	addArrayParm<bool>(node, id, name, defaultVals, parentFolders, annotation, "boolVecParm#", PRM_TOGGLE);
+}
+
+void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                     const std::vector<double>& defaultVals, const FolderVec& parentFolders,
+                     const std::wstring& annotation) {
+	addArrayParm<double>(node, id, name, defaultVals, parentFolders, annotation, "floatVecParm#", PRM_FLT);
+}
+
+void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders,
+                      const std::wstring& annotation) {
+	addArrayParm<std::wstring>(node, id, name, defaultVals, parentFolders, annotation, "stringVecParm#", PRM_STRING);
 }
 
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultOption,

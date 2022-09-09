@@ -25,11 +25,7 @@ using FolderVec = std::vector<std::wstring>;
 namespace NodeSpareParameter {
 constexpr const char* PRM_SPARE_IS_PERCENT_TOKEN = "palladio::is_percent";
 
-void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, const FolderVec& parentFolders = {});
 void clearAllParms(OP_Node* node);
-void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-             PRM_Range* range = nullptr, PRM_SpareData* spareData = nullptr, const FolderVec& parentFolders = {},
-             const std::wstring& description = {});
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
                   double max = std::numeric_limits<double>::quiet_NaN(), bool restricted = true, bool isPercent = false,
@@ -40,6 +36,15 @@ void addBoolParm(OP_Node* node, const std::wstring& id, const std::wstring& name
                  const FolderVec& parentFolders = {}, const std::wstring& description = {});
 void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                    const FolderVec& parentFolders = {}, const std::wstring& description = {});
+void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::vector<bool>& defaultVals, const FolderVec& parentFolders = {},
+                      const std::wstring& annotation = {});
+void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                       const std::vector<double>& defaultVals, const FolderVec& parentFolders = {},
+                       const std::wstring& annotation = {});
+void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                        const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders = {},
+                        const std::wstring& annotation = {});
 void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultIdx,
                  const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
                  const std::wstring& description = {});
