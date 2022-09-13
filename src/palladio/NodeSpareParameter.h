@@ -25,6 +25,10 @@ using FolderVec = std::vector<std::wstring>;
 namespace NodeSpareParameter {
 constexpr const char* PRM_SPARE_IS_PERCENT_TOKEN = "palladio::is_percent";
 
+constexpr const char* PRM_ENUM_TYPE_TOKEN = "palladio::enum_type";
+constexpr const char* PRM_ENUM_TYPE_STRING = "string";
+constexpr const char* PRM_ENUM_TYPE_FLOAT = "float";
+
 void clearAllParms(OP_Node* node);
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal,
                   double min = std::numeric_limits<double>::quiet_NaN(),
@@ -45,9 +49,12 @@ void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring
 void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
                         const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders = {},
                         const std::wstring& annotation = {});
-void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultIdx,
-                 const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
-                 const std::wstring& description = {});
+void addStringEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                       const std::wstring& defaultOption, const std::vector<std::wstring>& mOptions,
+                       const FolderVec& parentFolders, const std::wstring& description = {});
+void addFloatEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::wstring& defaultOption, const std::vector<std::wstring>& mOptions,
+                      const FolderVec& parentFolders, const std::wstring& description = {});
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                  const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description = {});
 void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,

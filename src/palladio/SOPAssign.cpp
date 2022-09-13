@@ -650,16 +650,20 @@ AnnotationParsing::RangeAnnotation getRange(const AnnotationParsing::TraitParame
 };
 
 bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
-                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
-                   std::vector<std::wstring> parentFolders) {
+                   bool isFloatEnum, const AnnotationParsing::TraitParameterMap& traitParmMap,
+                   const std::wstring& description, std::vector<std::wstring> parentFolders) {
 	const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
 	if (enumIt == traitParmMap.end())
 		return false;
 
 	AnnotationParsing::EnumAnnotation enumAnnotation = std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
 
-	NodeSpareParameter::addEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions, parentFolders,
-	                                description);
+	if (isFloatEnum)
+		NodeSpareParameter::addFloatEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+		                                     parentFolders, description);
+	else
+		NodeSpareParameter::addStringEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+		                                     parentFolders, description);
 	return true;
 }
 
@@ -992,7 +996,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				const double defaultValue = getDefaultFloat(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), true, traitParmMap, description,
 				                  parentFolders)) {
 					continue;
 				}
@@ -1008,7 +1012,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_STR: {
 				const std::wstring defaultValue = getDefaultString(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+				if (tryHandleEnum(this, attrId, attrName, defaultValue, false, traitParmMap, description, parentFolders)) {
 					continue;
 				}
 

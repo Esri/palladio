@@ -127,6 +127,49 @@ void addArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& nam
 	addParmsFromTemplateArray(node, myTemplateList, parentFolders);
 }
 
+void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultOption,
+                 const std::vector<std::wstring>& mOptions, const char* enumType, const FolderVec& parentFolders,
+                 const std::wstring& description) {
+	const size_t optionCount = mOptions.size();
+
+	std::unique_ptr<PRM_Name[]> optionNames = std::make_unique<PRM_Name[]>(optionCount + 1);
+
+	PRM_Default defaultVal(0);
+	for (int i = 0; i < optionCount; ++i) {
+		UT_StringHolder option(toOSNarrowFromUTF16(mOptions[i]));
+		optionNames[i].setTokenAndLabel(option, option);
+		if (mOptions[i] == defaultOption)
+			defaultVal.setOrdinal(i);
+	}
+	optionNames[optionCount].setAsSentinel();
+
+	PRM_ChoiceList enumMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), optionNames.get());
+
+	UT_StringHolder token(toOSNarrowFromUTF16(id));
+	UT_StringHolder label(toOSNarrowFromUTF16(name));
+
+	std::string helpText(toOSNarrowFromUTF16(description));
+
+	PRM_Name stringParmName(token, label);
+
+	PRM_SpareToken sparetoken(NodeSpareParameter::PRM_ENUM_TYPE_TOKEN, enumType);
+	PRM_SpareData mySpareData(sparetoken);
+
+	PRM_Template templateArr[] = {PRM_Template(PRM_ORD,                      // parm type
+	                                           PRM_Template::PRM_EXPORT_MAX, // number of folders
+	                                           1,
+	                                           &stringParmName,   // name
+	                                           &defaultVal,       // defaults
+	                                           &enumMenu,         // choicelist
+	                                           nullptr,           // rangeptr
+	                                           nullptr,           // callbackfunc
+	                                           &mySpareData,       // spareData
+	                                           1,                 // parmGroup
+	                                           helpText.c_str()), // helptext
+	                              PRM_Template()};
+
+	addParmsFromTemplateArray(node, templateArr, parentFolders);
+}
 } // namespace
 
 namespace NodeSpareParameter {
@@ -199,45 +242,18 @@ void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstrin
 	addArrayParm<std::wstring>(node, id, name, defaultVals, parentFolders, annotation, "stringVecParm#", PRM_STRING);
 }
 
-void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultOption,
-                 const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
-                 const std::wstring& description) {
-	const size_t optionCount = mOptions.size();
+void addStringEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                       const std::wstring& defaultOption,
+                       const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
+                       const std::wstring& description) {
+	addEnumParm(node, id, name, defaultOption, mOptions, PRM_ENUM_TYPE_STRING, parentFolders, description);
+}
 
-	std::unique_ptr<PRM_Name[]> optionNames = std::make_unique<PRM_Name[]>(optionCount + 1);
-
-	PRM_Default defaultVal(0);
-	for (int i = 0; i < optionCount; ++i) {
-		UT_StringHolder option(toOSNarrowFromUTF16(mOptions[i]));
-		optionNames[i].setTokenAndLabel(option, option);
-		if (mOptions[i] == defaultOption)
-			defaultVal.setOrdinal(i);
-	}
-	optionNames[optionCount].setAsSentinel();
-
-	PRM_ChoiceList enumMenu((PRM_ChoiceListType)(PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE), optionNames.get());
-
-	UT_StringHolder token(toOSNarrowFromUTF16(id));
-	UT_StringHolder label(toOSNarrowFromUTF16(name));
-
-	std::string helpText(toOSNarrowFromUTF16(description));
-
-	PRM_Name stringParmName(token, label);
-
-	PRM_Template templateArr[] = {PRM_Template(PRM_ORD,                      // parm type
-	                                           PRM_Template::PRM_EXPORT_MAX, // number of folders
-	                                           1,
-	                                           &stringParmName,   // name
-	                                           &defaultVal,       // defaults
-	                                           &enumMenu,         // choicelist
-	                                           nullptr,           // rangeptr
-	                                           nullptr,           // callbackfunc
-	                                           nullptr,           // spareData
-	                                           1,                 // parmGroup
-	                                           helpText.c_str()), // helptext
-	                              PRM_Template()};
-
-	addParmsFromTemplateArray(node, templateArr, parentFolders);
+void addFloatEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
+                      const std::wstring& defaultOption,
+                      const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
+                      const std::wstring& description) {
+	addEnumParm(node, id, name, defaultOption, mOptions, PRM_ENUM_TYPE_FLOAT, parentFolders, description);
 }
 
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
