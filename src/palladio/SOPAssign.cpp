@@ -986,11 +986,6 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_BOOL: {
 				const bool defaultValue = getDefaultBool(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
-				                  parentFolders)) {
-					continue;
-				}
-
 				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
