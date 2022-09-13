@@ -68,6 +68,103 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 	return rfi;
 }
 
+enum class SpareParmType { FLT, BOOL, STR, FLT_ARRAY, BOOL_ARRAY, STR_ARRAY, FLT_ENUM, STR_ENUM, COLOR };
+using SpareParmTypeMap = std::map<std::wstring, SpareParmType>;
+
+SpareParmTypeMap getSpareParms(SOPAssign* node) {
+	SpareParmTypeMap spareParmVec;
+
+	PRM_ParmList* parmList = node->getParmList();
+	if (parmList == nullptr)
+		return {};
+
+	for (int parmIndex = 0; parmIndex < node->getNumParms(); ++parmIndex) {
+		PRM_Parm* parmPtr = parmList->getParmPtr(parmIndex);
+
+		if ((parmPtr == nullptr) || !parmPtr->isSpareParm())
+			continue;
+
+		const UT_StringHolder attributeName(parmPtr->getToken());
+		const std::wstring ruleAttrName = NameConversion::toRuleAttr(node->getStyle(), attributeName);
+		const PRM_Type currParmType = parmPtr->getType();
+
+		switch (currParmType.getBasicType()) {
+			case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+				switch (currParmType.getOrdinalType()) {
+					case PRM_Type::PRM_ORD_NONE: {
+
+						const PRM_SpareData* spareData = parmPtr->getSparePtr();
+						if (spareData == nullptr)
+							continue;
+
+						const char* enumType = spareData->getValue(NodeSpareParameter::PRM_ENUM_TYPE_TOKEN);
+						if (enumType == nullptr)
+							continue;
+
+						if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_FLOAT))
+							spareParmVec[ruleAttrName] = SpareParmType::FLT_ENUM;
+						else if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_STRING))
+							spareParmVec[ruleAttrName] = SpareParmType::STR_ENUM;
+						break;
+					}
+					case PRM_Type::PRM_ORD_TOGGLE: {
+						spareParmVec[ruleAttrName] = SpareParmType::BOOL;
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+				if (parmPtr->getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+					const PRM_Template* templatePtr = parmPtr->getMultiParmTemplate(0);
+
+					if (templatePtr == nullptr)
+						continue;
+
+					const PRM_Type multiType = templatePtr->getType();
+					switch (multiType.getBasicType()) {
+						case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL:
+							spareParmVec[ruleAttrName] = SpareParmType::BOOL_ARRAY;
+							break;
+						case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT:
+							spareParmVec[ruleAttrName] = SpareParmType::FLT_ARRAY;
+							break;
+						case PRM_Type::PRM_BasicType::PRM_BASIC_STRING:
+							spareParmVec[ruleAttrName] = SpareParmType::STR_ARRAY;
+							break;
+						default:
+							break;
+					}
+				}
+				else {
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							spareParmVec[ruleAttrName] = SpareParmType::COLOR;
+							break;
+						}
+						default: {
+							spareParmVec[ruleAttrName] = SpareParmType::FLT;
+							break;
+						}
+					}
+				}
+				break;
+			}
+			case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+				spareParmVec[ruleAttrName] = SpareParmType::STR;
+				break;
+			}
+			default: {
+				// ignore all other types of parameters
+				continue;
+			}
+		}
+	}
+	return spareParmVec;
+}
+
 bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValues,
                            const SOPAssign::CGAAttributeValueMap& newDefaultValues) {
 	if (refDefaultValues.size() != newDefaultValues.size())
