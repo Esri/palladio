@@ -955,10 +955,12 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 	}
 
 	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
+	const RuleAttributeSet& ruleAttributes =
+	        ruleFileInfo ? getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get()) : RuleAttributeSet();
 
 	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
-	        AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
+	        ruleFileInfo ? AnnotationParsing::getAttributeAnnotations(ruleFileInfo)
+	                     : AnnotationParsing::AttributeTraitMap();
 
 	NodeSpareParameter::clearAllParms(this);
 	NodeSpareParameter::addSeparator(this);
