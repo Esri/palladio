@@ -130,12 +130,11 @@ static PRM_Template PARAM_TEMPLATES[] = {
         PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &CommonNodeParams::LOG_LEVEL,
                      &CommonNodeParams::DEFAULT_LOG_LEVEL, &CommonNodeParams::logLevelMenu),
         PRM_Template(PRM_INT | PRM_TYPE_JOIN_NEXT | PRM_TYPE_PLAIN, 1, &SEED, PRMzeroDefaults, nullptr, &SEED_RANGE,
-                     PRM_Callback(), nullptr,
-                     1, SEED_HELP.c_str()),
+                     PRM_Callback(), nullptr, 1, SEED_HELP.c_str()),
         PRM_Template(PRM_TOGGLE, 1, &OVERRIDE_SEED, PRMzeroDefaults, nullptr, nullptr, PRM_Callback(), nullptr, 1,
                      OVERRIDE_SEED_HELP.c_str()),
         PRM_Template(PRM_CALLBACK, 1, &GENERATE_NEW_SEED, PRMoneDefaults, nullptr, nullptr, generateNewSeedCallback),
-		PRM_Template()};
+        PRM_Template()};
 
 } // namespace AssignNodeParams
 

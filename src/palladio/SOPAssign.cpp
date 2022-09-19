@@ -598,7 +598,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
-SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap, const std::wstring& key) {
+SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap,
+                                                        const std::wstring& key) {
 	const auto& defaultValIt = cgaAttrMap.find(key);
 	if (defaultValIt != cgaAttrMap.end())
 		return defaultValIt->second;
@@ -640,8 +641,6 @@ std::vector<std::wstring> getDefaultStringVec(const SOPAssign::CGAAttributeValue
 		return std::get<std::vector<std::wstring>>(defaultValue);
 	return {};
 }
-
-
 
 std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
 	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
@@ -906,7 +905,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								const PRM_SpareData* spareData = parm.getSparePtr();
 								if (spareData != nullptr) {
 									const char* isPercent =
-										spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
+									        spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
 									if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
 										floatValue /= PERCENT_FACTOR;
 								}
@@ -1053,13 +1052,13 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_FLOAT_ARRAY: {
 				const std::vector<double> defaultValues = getDefaultFloatVec(defaultCGAAttrValue);
 				NodeSpareParameter::addFloatArrayParm(this, attrId, attrName, defaultValues, parentFolders,
-					description);
+				                                      description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR_ARRAY: {
 				const std::vector<std::wstring> defaultValues = getDefaultStringVec(defaultCGAAttrValue);
 				NodeSpareParameter::addStringArrayParm(this, attrId, attrName, defaultValues, parentFolders,
-					description);
+				                                       description);
 				break;
 			}
 			default:
