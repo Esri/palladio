@@ -1006,7 +1006,7 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 					continue;
 				}
 
-				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0.0, 10.0, true, false,
+				NodeSpareParameter::addFloatParm(this, attrId, attrName, defaultValue, 0.0, 10.0, false, false,
 				                                 parentFolders, description);
 				break;
 			}
