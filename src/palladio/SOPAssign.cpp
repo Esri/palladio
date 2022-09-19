@@ -53,15 +53,18 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 }
 
 RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) {
-	if (!resolveMap->hasKey(ma.mRuleFile.c_str())) // workaround for bug in getString
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
+	getCGBs(resolveMap, cgbs);
+	if (cgbs.empty())
 		return {};
 
-	const auto cgbURI = resolveMap->getString(ma.mRuleFile.c_str());
-	if (cgbURI == nullptr)
+	const std::wstring cgbURI = cgbs.front().second;
+
+	if (cgbURI.empty())
 		return {};
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI.c_str(), prtCache, &status));
 	if (status != prt::STATUS_OK)
 		return {};
 
@@ -554,7 +557,15 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
+		std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
+		getCGBs(resolveMap, cgbs);
+		if (cgbs.empty()) {
+			LOG_ERR << "no rule files found in rule package";
+			return false;
+		}
+		const std::wstring ruleFile = cgbs.front().first;
+
+		isb->setAttributes(ruleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
 		                   resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
