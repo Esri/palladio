@@ -22,7 +22,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <filesystem>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -82,10 +81,10 @@ void setGlobalGroupOrder(RuleAttributeVec& ruleAttributes) {
 	}
 }
 
-RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::RuleFileInfo* ruleFileInfo) {
+RuleAttributeSet getRuleAttributes(const std::filesystem::path& ruleFile, const prt::RuleFileInfo* ruleFileInfo) {
 	RuleAttributeVec ra;
 
-	std::wstring mainCgaRuleName = std::filesystem::path(ruleFile).stem().wstring();
+	std::wstring mainCgaRuleName = ruleFile.stem().wstring();
 
 	const ImportOrderMap importOrderMap = getImportOrderMap(ruleFileInfo);
 
