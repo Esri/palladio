@@ -165,20 +165,70 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 	return spareParmVec;
 }
 
-bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValues,
-                           const SOPAssign::CGAAttributeValueMap& newDefaultValues) {
-	if (refDefaultValues.size() != newDefaultValues.size())
+bool compareAttributeTypes(SOPAssign* node, GU_Detail* detail, ShapeData& shapeData,
+                           const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
+                           std::string& errors) {
+
+	const auto& pv = shapeData.getPrimitiveMapping(0);
+	const auto& firstPrimitive = pv.front();
+	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
+
+	// try to get a resolve map
+	const ResolveMapSPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
+	if (!resolveMap) {
+		errors.append("Could not read Rule Package '")
+		        .append(ma.mRPK.string())
+		        .append("', aborting default rule attribute evaluation");
+		LOG_ERR << errors;
+		return false;
+	}
+
+	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
+
+	SpareParmTypeMap spareParmTypeMap = getSpareParms(node);
+
+	if (spareParmTypeMap.size() < ruleAttributes.size())
 		return false;
 
-	for (const auto& attributeValuePair : refDefaultValues) {
-		const auto& it = newDefaultValues.find(attributeValuePair.first);
+	for (const auto& ra : ruleAttributes) {
 
-		if (it == newDefaultValues.end())
+		const auto& spareParmTypeIt = spareParmTypeMap.find(ra.fqName);
+		if (spareParmTypeIt == spareParmTypeMap.end())
 			return false;
 
-		// check if attributes have the same data type
-		if (it->second.index() != attributeValuePair.second.index())
-			return false;
+		// check if data types match
+		switch (spareParmTypeIt->second) {
+			case SpareParmType::BOOL:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL)
+					return false;
+				break;
+			case SpareParmType::FLT:
+			case SpareParmType::FLT_ENUM:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT)
+					return false;
+				break;
+			case SpareParmType::STR:
+			case SpareParmType::STR_ENUM:
+			case SpareParmType::COLOR:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_STR)
+					return false;
+				break;
+			case SpareParmType::FLT_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT_ARRAY)
+					return false;
+				break;
+			case SpareParmType::BOOL_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL_ARRAY)
+					return false;
+				break;
+			case SpareParmType::STR_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_STR_ARRAY)
+					return false;
+				break;
+			default:
+				return false;
+		}
 	}
 	return true;
 }
@@ -1181,9 +1231,8 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
-		auto oldAttributes = mDefaultCGAAttributes;
 		updateDefaultCGAAttributes(shapeData);
-		if (!compareAttributeTypes(oldAttributes, mDefaultCGAAttributes) && !mWasJustLoaded)
+		if (!compareAttributeTypes(this, gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage))
 			buildUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		updateUIDefaultValues(this, getStyle(), mDefaultCGAAttributes);
 		updatePrimitiveAttributes(gdp);
@@ -1193,14 +1242,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 	unlockInputs();
 
-	mWasJustLoaded = false;
 	return error();
-}
-
-bool SOPAssign::load(UT_IStream& is, const char* extension, const char* path) {
-	SOP_Node::load(is, extension, path);
-	mWasJustLoaded = true;
-	return false;
 }
 
 void SOPAssign::opChanged(OP_EventType reason, void* data) {

@@ -43,7 +43,6 @@ public:
 	void buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
 	                        const PRTContextUPtr& prtCtx, std::string& errors);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
-	bool load(UT_IStream& is, const char* extension, const char* path) override;
 
 protected:
 	OP_ERROR cookMySop(OP_Context& context) override;
@@ -51,7 +50,6 @@ protected:
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
-	bool mWasJustLoaded = false;
 
 public:
 	using CGAAttributeValueType = std::variant<std::monostate, std::wstring, double, bool, std::vector<std::wstring>, std::vector<double>, std::vector<bool>>;
