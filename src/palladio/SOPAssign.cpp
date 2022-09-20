@@ -24,7 +24,6 @@
 #include "NodeParameter.h"
 #include "NodeSpareParameter.h"
 #include "PrimitiveClassifier.h"
-#include "RuleAttributes.h"
 #include "ShapeData.h"
 #include "ShapeGenerator.h"
 
@@ -66,6 +65,27 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 		return {};
 
 	return rfi;
+}
+
+RuleFileInfoUPtr getRuleFileInfoFromShapeData(const GU_Detail* detail, ShapeData& shapeData, size_t initialShapeIdx,
+                                                   const ShapeConverterUPtr& shapeConverter,
+                                                   const PRTContextUPtr& prtCtx, std::string& errors) {
+	const auto& pv = shapeData.getPrimitiveMapping(initialShapeIdx);
+	const auto& firstPrimitive = pv.front();
+
+	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
+
+	// try to get a resolve map
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
+	if (!resolveMap) {
+		errors.append("Could not read Rule Package '")
+		        .append(ma.mRPK.string())
+		        .append("', aborting default rule attribute evaluation");
+		LOG_ERR << errors;
+		return {};
+	}
+
+	return getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
 }
 
 enum class SpareParmType { FLT, BOOL, STR, FLT_ARRAY, BOOL_ARRAY, STR_ARRAY, FLT_ENUM, STR_ENUM, COLOR };
@@ -165,27 +185,7 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 	return spareParmVec;
 }
 
-bool compareAttributeTypes(SOPAssign* node, GU_Detail* detail, ShapeData& shapeData,
-                           const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
-                           std::string& errors) {
-
-	const auto& pv = shapeData.getPrimitiveMapping(0);
-	const auto& firstPrimitive = pv.front();
-	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
-
-	// try to get a resolve map
-	const ResolveMapSPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
-	if (!resolveMap) {
-		errors.append("Could not read Rule Package '")
-		        .append(ma.mRPK.string())
-		        .append("', aborting default rule attribute evaluation");
-		LOG_ERR << errors;
-		return false;
-	}
-
-	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
-
+bool compareAttributeTypes(SOPAssign* node, const RuleAttributeSet& ruleAttributes) {
 	SpareParmTypeMap spareParmTypeMap = getSpareParms(node);
 
 	if (spareParmTypeMap.size() < ruleAttributes.size())
@@ -683,7 +683,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 			return false;
 		}
 
-		ruleFileInfos[isIdx] = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+		ruleFileInfos[isIdx] =
+		        getRuleFileInfoFromShapeData(detail, shapeData, isIdx, shapeConverter, prtCtx, errors);
 
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 		if (DBG)
@@ -1089,25 +1090,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	}
 };
 
-void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-                        const PRTContextUPtr& prtCtx, std::string& errors) {
-	const auto& pv = shapeData.getPrimitiveMapping(0);
-	const auto& firstPrimitive = pv.front();
-	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
-
-	// try to get a resolve map
-	const ResolveMapSPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
-	if (!resolveMap) {
-		errors.append("Could not read Rule Package '")
-		        .append(ma.mRPK.string())
-		        .append("', aborting default rule attribute evaluation");
-		LOG_ERR << errors;
-		return;
-	}
-
-	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
-
+void SOPAssign::buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileInfoUPtr& ruleFileInfo) {
 	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
 	        AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
 
@@ -1231,9 +1214,20 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
+
 		updateDefaultCGAAttributes(shapeData);
-		if (!compareAttributeTypes(this, gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage))
-			buildUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+
+		const RuleFileInfoUPtr& ruleFileInfo =
+		        getRuleFileInfoFromShapeData(gdp, shapeData, 0, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		if (!ruleFileInfo)
+			return UT_ERROR_ABORT;
+
+		const fpreal time = CHgetEvalTime();
+		const std::filesystem::path rpk = AssignNodeParams::getRPK(this, time);
+		const RuleAttributeSet& ruleAttributes = getRuleAttributes(rpk, ruleFileInfo.get());
+
+		if (!compareAttributeTypes(this, ruleAttributes))
+			buildUI(ruleAttributes, ruleFileInfo);
 		updateUIDefaultValues(this, getStyle(), mDefaultCGAAttributes);
 		updatePrimitiveAttributes(gdp);
 

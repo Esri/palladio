@@ -18,6 +18,7 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
+#include "RuleAttributes.h"
 
 #include "SOP/SOP_Node.h"
 
@@ -40,8 +41,7 @@ public:
 
 	void updateDefaultCGAAttributes(const ShapeData& shapeData);
 	void updatePrimitiveAttributes(GU_Detail* detail);
-	void buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-	                        const PRTContextUPtr& prtCtx, std::string& errors);
+	void buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileInfoUPtr& ruleFileInfo);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 
 protected:
