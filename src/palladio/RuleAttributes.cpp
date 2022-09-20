@@ -158,11 +158,6 @@ RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::Rule
 }
 
 bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute& rhs) const {
-	auto lowerCaseOrdering = [](std::wstring a, std::wstring b) {
-		std::transform(a.begin(), a.end(), a.begin(), ::tolower);
-		std::transform(b.begin(), b.end(), b.begin(), ::tolower);
-		return a < b;
-	};
 
 	auto compareRuleFile = [&](const RuleAttribute& a, const RuleAttribute& b) {
 		// sort main rule attributes before the rest
@@ -174,7 +169,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		if (a.ruleOrder != b.ruleOrder)
 			return a.ruleOrder < b.ruleOrder;
 
-		return lowerCaseOrdering(a.ruleFile, b.ruleFile);
+		return a.ruleFile < b.ruleFile;
 	};
 
 	auto isChildOf = [](const RuleAttribute& child, const RuleAttribute& parent) {
@@ -219,12 +214,12 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		if (a.groups.size() != b.groups.size())
 			return (a.groups.size() < b.groups.size());
 
-		return lowerCaseOrdering(firstDifferentGroupInA(a, b), firstDifferentGroupInA(b, a));
+		return firstDifferentGroupInA(a, b) < firstDifferentGroupInA(b, a);
 	};
 
 	auto compareAttributeOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
 		if (a.order == b.order)
-			return lowerCaseOrdering(a.fqName, b.fqName);
+			return a.fqName < b.fqName;
 
 		return a.order < b.order;
 	};
