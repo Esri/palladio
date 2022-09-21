@@ -144,10 +144,6 @@ RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::Rule
 		if (hidden)
 			continue;
 
-		// no group? put to front
-		if (p.groups.empty())
-			p.groupOrder = ORDER_FIRST;
-
 		ra.push_back(p);
 	}
 
