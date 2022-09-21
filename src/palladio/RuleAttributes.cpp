@@ -185,13 +185,24 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		return true;
 	};
 
-	auto firstDifferentGroupInA = [](const RuleAttribute& a, const RuleAttribute& b) {
-		assert(a.groups.size() == b.groups.size());
-		size_t i = 0;
-		while ((i < a.groups.size()) && (a.groups[i] == b.groups[i])) {
-			i++;
+	auto compareGroups = [](const RuleAttribute& a, const RuleAttribute& b) {
+		const size_t groupSizeA = a.groups.size();
+		const size_t groupSizeB = b.groups.size();
+
+		for (size_t i = 0; i < std::max(groupSizeA, groupSizeB); ++i) {
+			// a descendant of b
+			if (i >= groupSizeA)
+				return false;
+
+			// b descendant of a
+			if (i >= groupSizeB)
+				return true;
+
+			// difference in groups
+			if (a.groups[i] != b.groups[i])
+				return a.groups[i] < b.groups[i];
 		}
-		return a.groups[i];
+		return false;
 	};
 
 	auto compareOrderToGroupOrder = [&](const RuleAttribute& ruleAttrWithGroups,
@@ -224,11 +235,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		if (globalOrderA != globalOrderB)
 			return (globalOrderA < globalOrderB);
 
-		// sort higher level before lower level
-		if (a.groups.size() != b.groups.size())
-			return (a.groups.size() < b.groups.size());
-
-		return firstDifferentGroupInA(a, b) < firstDifferentGroupInA(b, a);
+		return compareGroups(a, b);
 	};
 
 	auto compareAttributeOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
