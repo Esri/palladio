@@ -194,7 +194,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		return a.groups[i];
 	};
 
-	auto compareGroups = [&](const RuleAttribute& a, const RuleAttribute& b) {
+	auto compareGroupOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
 		if (isChildOf(a, b))
 			return false; // child a should be sorted after parent b
 
@@ -225,7 +225,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 			return compareRuleFile(a, b);
 
 		if (a.groups != b.groups)
-			return compareGroups(a, b);
+			return compareGroupOrder(a, b);
 
 		return compareAttributeOrder(a, b);
 	};
