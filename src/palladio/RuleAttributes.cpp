@@ -194,7 +194,25 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		return a.groups[i];
 	};
 
+	auto compareOrderToGroupOrder = [&](const RuleAttribute& ruleAttrWithGroups,
+	                                    const RuleAttribute& ruleAttrWithoutGroups) {
+		if ((ruleAttrWithGroups.groups.size() > 0) &&
+		    (ruleAttrWithGroups.globalGroupOrder == ruleAttrWithoutGroups.order))
+			return ruleAttrWithGroups.groups[0] <= ruleAttrWithoutGroups.niceName;
+
+		return ruleAttrWithGroups.globalGroupOrder < ruleAttrWithoutGroups.order;
+	};
+
 	auto compareGroupOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
+		const bool hasGroupsA = !a.groups.empty();
+		const bool hasGroupsB = !b.groups.empty();
+
+		if (!hasGroupsB)
+			return compareOrderToGroupOrder(a, b);
+
+		if (!hasGroupsA)
+			return !compareOrderToGroupOrder(b, a);
+
 		if (isChildOf(a, b))
 			return false; // child a should be sorted after parent b
 
