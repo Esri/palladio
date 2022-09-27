@@ -189,18 +189,18 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		const size_t groupSizeA = a.groups.size();
 		const size_t groupSizeB = b.groups.size();
 
-		for (size_t i = 0; i < std::max(groupSizeA, groupSizeB); ++i) {
+		for (size_t groupIdx = 0; groupIdx < std::max(groupSizeA, groupSizeB); ++groupIdx) {
 			// a descendant of b
-			if (i >= groupSizeA)
+			if (groupIdx >= groupSizeA)
 				return false;
 
 			// b descendant of a
-			if (i >= groupSizeB)
+			if (groupIdx >= groupSizeB)
 				return true;
 
 			// difference in groups
-			if (a.groups[i] != b.groups[i])
-				return a.groups[i] < b.groups[i];
+			if (a.groups[groupIdx] != b.groups[groupIdx])
+				return a.groups[groupIdx] < b.groups[groupIdx];
 		}
 		return false;
 	};
