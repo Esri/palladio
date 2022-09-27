@@ -215,13 +215,10 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 	};
 
 	auto compareGroupOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
-		const bool hasGroupsA = !a.groups.empty();
-		const bool hasGroupsB = !b.groups.empty();
-
-		if (!hasGroupsB)
+		if (b.groups.empty())
 			return compareOrderToGroupOrder(a, b);
 
-		if (!hasGroupsA)
+		if (a.groups.empty())
 			return !compareOrderToGroupOrder(b, a);
 
 		if (isChildOf(a, b))
