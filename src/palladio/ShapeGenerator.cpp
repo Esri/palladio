@@ -118,8 +118,7 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		const auto& shapeName = shapeData.getInitialShapeName(isIdx);
 		const auto fqStartRule = getFullyQualifiedStartRule(ma);
 
-		std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-		getCGBs(assetsMap, cgbs);
+		std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(assetsMap); // key -> uri
 		if (cgbs.empty())
 			continue;
 

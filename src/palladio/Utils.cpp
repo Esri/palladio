@@ -130,7 +130,7 @@ std::pair<std::wstring, std::wstring> tokenizeFirst(const std::wstring& input, w
 	return {input, {}};
 }
 
-void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::wstring>>& cgbs) {
+std::vector<std::pair<std::wstring, std::wstring>> getCGBs(const ResolveMapSPtr& rm) {
 	constexpr const size_t START_SIZE = 16 * 1024;
 	auto searchKeyFunc = [&rm](wchar_t* result, size_t* resultSize, prt::Status* status) {
 		constexpr const wchar_t* PROJECT = L"";
@@ -141,6 +141,7 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 	LOG_DBG << "   cgbList = '" << cgbList << "'";
 
 	const std::vector<std::wstring>& cgbVec = tokenizeAll(cgbList, L';');
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs;
 
 	for (const std::wstring& token : cgbVec) {
 		LOG_DBG << "token: '" << token << "'";
@@ -151,6 +152,7 @@ void getCGBs(const ResolveMapSPtr& rm, std::vector<std::pair<std::wstring, std::
 			LOG_DBG << L"got cgb: " << cgbs.back().first << L" => " << cgbs.back().second;
 		}
 	}
+	return cgbs;
 }
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {

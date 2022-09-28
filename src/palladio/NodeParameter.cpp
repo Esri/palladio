@@ -129,8 +129,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	}
 
 	// -- try get first rule file
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 	if (cgbs.empty()) {
 		LOG_ERR << "no rule files found in rule package";
 		return NOT_CHANGED;
@@ -181,8 +180,7 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 		return;
 	}
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 	if (cgbs.empty()) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
@@ -242,8 +240,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 	if (cgbs.empty()) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;

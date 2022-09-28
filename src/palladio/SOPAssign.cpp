@@ -53,8 +53,7 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 }
 
 RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) {
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 	if (cgbs.empty())
 		return {};
 
@@ -557,8 +556,7 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-		getCGBs(resolveMap, cgbs);
+		std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 		if (cgbs.empty()) {
 			LOG_ERR << "no rule files found in rule package";
 			return false;
