@@ -132,7 +132,7 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
                  const std::wstring& description) {
 	const size_t optionCount = mOptions.size();
 
-	std::unique_ptr<PRM_Name[]> optionNames = std::make_unique<PRM_Name[]>(optionCount + 1);
+	auto optionNames = std::make_unique<PRM_Name[]>(optionCount + 1);
 
 	PRM_Default defaultVal(0);
 	for (int i = 0; i < optionCount; ++i) {
