@@ -129,8 +129,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	}
 
 	// -- try get first rule file
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
 	if (cgbs.empty()) {
 		LOG_ERR << "no rule files found in rule package";
 		return NOT_CHANGED;
@@ -153,7 +152,6 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	LOG_DBG << "start rule: style = " << startRuleStyle << ", name = " << startRuleName;
 
 	// -- update the node
-	AssignNodeParams::setRuleFile(node, cgbKey, time);
 	AssignNodeParams::setStyle(node, startRuleStyle, time);
 	AssignNodeParams::setStartRule(node, startRuleName, time);
 
@@ -169,48 +167,12 @@ std::filesystem::path getRPK(const OP_Node* node, fpreal t) {
 	return s.toStdString();
 }
 
-void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm* parm) {
-	const auto* node = static_cast<SOPAssign*>(data);
-	const auto& prtCtx = node->getPRTCtx();
-
-	const fpreal now = CHgetEvalTime();
-	const std::filesystem::path rpk = getRPK(node, now);
-
-	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
-	if (!resolveMap) {
-		theMenu[0].setToken(nullptr);
-		return;
-	}
-
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(resolveMap, cgbs);
-
-	const size_t limit = std::min<size_t>(cgbs.size(), static_cast<size_t>(theMaxSize));
-	for (size_t ri = 0; ri < limit; ri++) {
-		std::string tok = toOSNarrowFromUTF16(cgbs[ri].first);
-		theMenu[ri].setTokenAndLabel(tok.c_str(), tok.c_str());
-	}
-	theMenu[limit].setTokenAndLabel(nullptr, nullptr); // need a null terminator
-}
-
-std::wstring getRuleFile(const OP_Node* node, fpreal t) {
-	UT_String s;
-	node->evalString(s, RULE_FILE.getToken(), 0, t);
-	return toUTF16FromOSNarrow(s.toStdString());
-}
-
-void setRuleFile(OP_Node* node, const std::wstring& ruleFile, fpreal t) {
-	const UT_String val(toOSNarrowFromUTF16(ruleFile));
-	node->setString(val, CH_STRING_LITERAL, RULE_FILE.getToken(), 0, t);
-}
-
 void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*) {
 	const auto* node = static_cast<SOPAssign*>(data);
 	const PRTContextUPtr& prtCtx = node->getPRTCtx();
 
 	const fpreal now = CHgetEvalTime();
 	const std::filesystem::path rpk = getRPK(node, now);
-	const std::wstring ruleFile = getRuleFile(node, now);
 
 	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(rpk);
 	if (!resolveMap) {
@@ -218,14 +180,15 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 		return;
 	}
 
-	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
-	if (cgbURI == nullptr) {
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
+	if (cgbs.empty()) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
+	const std::wstring cgbURI = cgbs.front().second;
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI.c_str(), nullptr, &status));
 	if (rfi && (status == prt::STATUS_OK)) {
 		std::set<std::string> styles;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {
@@ -265,15 +228,8 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 
 	const fpreal now = CHgetEvalTime();
 	const std::filesystem::path rpk = getRPK(node, now);
-	const std::wstring ruleFile = getRuleFile(node, now);
 
-	if (DBG) {
-		LOG_DBG << "buildStartRuleMenu";
-		LOG_DBG << "   mRPK = " << rpk;
-		LOG_DBG << "   mRuleFile = " << ruleFile;
-	}
-
-	if (rpk.empty() || ruleFile.empty()) {
+	if (rpk.empty()) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
@@ -284,15 +240,22 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	const wchar_t* cgbURI = resolveMap->getString(ruleFile.c_str());
-	if (cgbURI == nullptr) {
-		LOG_ERR << L"failed to resolve rule file '" << ruleFile << "', aborting.";
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
+	if (cgbs.empty()) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
+	const std::wstring ruleFile = cgbs.front().first;
+	const std::wstring cgbURI = cgbs.front().second;
+
+	if (DBG) {
+		LOG_DBG << "buildStartRuleMenu";
+		LOG_DBG << "   mRPK = " << rpk;
+		LOG_DBG << "   mRuleFile = " << ruleFile;
+	}
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, nullptr, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI.c_str(), nullptr, &status));
 	if (status == prt::STATUS_OK) {
 		StringPairVector startRules, rules;
 		for (size_t ri = 0; ri < rfi->getNumRules(); ri++) {

@@ -53,15 +53,17 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 }
 
 RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) {
-	if (!resolveMap->hasKey(ma.mRuleFile.c_str())) // workaround for bug in getString
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
+	if (cgbs.empty())
 		return {};
 
-	const auto cgbURI = resolveMap->getString(ma.mRuleFile.c_str());
-	if (cgbURI == nullptr)
+	const std::wstring cgbURI = cgbs.front().second;
+
+	if (cgbURI.empty())
 		return {};
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
-	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI, prtCache, &status));
+	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI.c_str(), prtCache, &status));
 	if (status != prt::STATUS_OK)
 		return {};
 
@@ -554,7 +556,14 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		isb->setAttributes(ma.mRuleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
+		std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
+		if (cgbs.empty()) {
+			LOG_ERR << "no rule files found in rule package";
+			return false;
+		}
+		const std::wstring ruleFile = cgbs.front().first;
+
+		isb->setAttributes(ruleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
 		                   resolveMap.get());
 
 		prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
@@ -587,7 +596,8 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 	return true;
 }
 
-SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap, const std::wstring& key) {
+SOPAssign::CGAAttributeValueType getDefaultCGAAttrValue(const SOPAssign::CGAAttributeValueMap& cgaAttrMap,
+                                                        const std::wstring& key) {
 	const auto& defaultValIt = cgaAttrMap.find(key);
 	if (defaultValIt != cgaAttrMap.end())
 		return defaultValIt->second;
@@ -629,8 +639,6 @@ std::vector<std::wstring> getDefaultStringVec(const SOPAssign::CGAAttributeValue
 		return std::get<std::vector<std::wstring>>(defaultValue);
 	return {};
 }
-
-
 
 std::wstring getDescription(const AnnotationParsing::TraitParameterMap& traitParmMap) {
 	const auto& descriptionIt = traitParmMap.find(AnnotationParsing::AttributeTrait::DESCRIPTION);
@@ -895,7 +903,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								const PRM_SpareData* spareData = parm.getSparePtr();
 								if (spareData != nullptr) {
 									const char* isPercent =
-										spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
+									        spareData->getValue(NodeSpareParameter::PRM_SPARE_IS_PERCENT_TOKEN);
 									if ((isPercent != nullptr) && (strcmp(isPercent, "true") == 0))
 										floatValue /= PERCENT_FACTOR;
 								}
@@ -955,10 +963,12 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 	}
 
 	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	const RuleAttributeSet& ruleAttributes = getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get());
+	const RuleAttributeSet& ruleAttributes =
+	        ruleFileInfo ? getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get()) : RuleAttributeSet();
 
 	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
-	        AnnotationParsing::getAttributeAnnotations(ruleFileInfo);
+	        ruleFileInfo ? AnnotationParsing::getAttributeAnnotations(ruleFileInfo)
+	                     : AnnotationParsing::AttributeTraitMap();
 
 	NodeSpareParameter::clearAllParms(this);
 	NodeSpareParameter::addSeparator(this);
@@ -1040,13 +1050,13 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_FLOAT_ARRAY: {
 				const std::vector<double> defaultValues = getDefaultFloatVec(defaultCGAAttrValue);
 				NodeSpareParameter::addFloatArrayParm(this, attrId, attrName, defaultValues, parentFolders,
-					description);
+				                                      description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_STR_ARRAY: {
 				const std::vector<std::wstring> defaultValues = getDefaultStringVec(defaultCGAAttrValue);
 				NodeSpareParameter::addStringArrayParm(this, attrId, attrName, defaultValues, parentFolders,
-					description);
+				                                       description);
 				break;
 			}
 			default:
