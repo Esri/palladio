@@ -24,7 +24,6 @@
 #include "NodeParameter.h"
 #include "NodeSpareParameter.h"
 #include "PrimitiveClassifier.h"
-#include "RuleAttributes.h"
 #include "ShapeData.h"
 #include "ShapeGenerator.h"
 
@@ -70,20 +69,168 @@ RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr&
 	return rfi;
 }
 
-bool compareAttributeTypes(const SOPAssign::CGAAttributeValueMap& refDefaultValues,
-                           const SOPAssign::CGAAttributeValueMap& newDefaultValues) {
-	if (refDefaultValues.size() != newDefaultValues.size())
+RuleFileInfoUPtr getRuleFileInfoFromShapeData(const GU_Detail* detail, ShapeData& shapeData, size_t initialShapeIdx,
+                                              const ShapeConverterUPtr& shapeConverter, const PRTContextUPtr& prtCtx,
+                                              std::string& errors) {
+	const auto& pv = shapeData.getPrimitiveMapping(initialShapeIdx);
+	const auto& firstPrimitive = pv.front();
+
+	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
+
+	// try to get a resolve map
+	ResolveMapSPtr resolveMap = prtCtx->getResolveMap(ma.mRPK);
+	if (!resolveMap) {
+		errors.append("Could not read Rule Package '")
+		        .append(ma.mRPK.string())
+		        .append("', aborting default rule attribute evaluation");
+		LOG_ERR << errors;
+		return {};
+	}
+
+	return getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+}
+
+enum class CGAAttributeType { FLT, BOOL, STR, FLT_ARRAY, BOOL_ARRAY, STR_ARRAY, FLT_ENUM, STR_ENUM, COLOR };
+using CGAAttributeTypeMap = std::map<std::wstring, CGAAttributeType>;
+
+CGAAttributeTypeMap getCGAAttributeTypes(SOPAssign* node) {
+	CGAAttributeTypeMap spareParmVec;
+
+	PRM_ParmList* parmList = node->getParmList();
+	if (parmList == nullptr)
+		return {};
+
+	for (int parmIndex = 0; parmIndex < node->getNumParms(); ++parmIndex) {
+		PRM_Parm* parmPtr = parmList->getParmPtr(parmIndex);
+
+		if ((parmPtr == nullptr) || !parmPtr->isSpareParm())
+			continue;
+
+		const UT_StringHolder attributeName(parmPtr->getToken());
+		const std::wstring ruleAttrName = NameConversion::toRuleAttr(node->getStyle(), attributeName);
+		const PRM_Type currParmType = parmPtr->getType();
+
+		switch (currParmType.getBasicType()) {
+			case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
+				switch (currParmType.getOrdinalType()) {
+					case PRM_Type::PRM_ORD_NONE: {
+
+						const PRM_SpareData* spareData = parmPtr->getSparePtr();
+						if (spareData == nullptr)
+							continue;
+
+						const char* enumType = spareData->getValue(NodeSpareParameter::PRM_ENUM_TYPE_TOKEN);
+						if (enumType == nullptr)
+							continue;
+
+						if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_FLOAT))
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT_ENUM;
+						else if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_STRING))
+							spareParmVec[ruleAttrName] = CGAAttributeType::STR_ENUM;
+						break;
+					}
+					case PRM_Type::PRM_ORD_TOGGLE: {
+						spareParmVec[ruleAttrName] = CGAAttributeType::BOOL;
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT: {
+				if (parmPtr->getMultiType() == PRM_MultiType::PRM_MULTITYPE_LIST) {
+					const PRM_Template* templatePtr = parmPtr->getMultiParmTemplate(0);
+
+					if (templatePtr == nullptr)
+						continue;
+
+					const PRM_Type multiType = templatePtr->getType();
+					switch (multiType.getBasicType()) {
+						case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL:
+							spareParmVec[ruleAttrName] = CGAAttributeType::BOOL_ARRAY;
+							break;
+						case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT:
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT_ARRAY;
+							break;
+						case PRM_Type::PRM_BasicType::PRM_BASIC_STRING:
+							spareParmVec[ruleAttrName] = CGAAttributeType::STR_ARRAY;
+							break;
+						default:
+							break;
+					}
+				}
+				else {
+					switch (currParmType.getFloatType()) {
+						case PRM_Type::PRM_FLOAT_RGBA: {
+							spareParmVec[ruleAttrName] = CGAAttributeType::COLOR;
+							break;
+						}
+						default: {
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT;
+							break;
+						}
+					}
+				}
+				break;
+			}
+			case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
+				spareParmVec[ruleAttrName] = CGAAttributeType::STR;
+				break;
+			}
+			default: {
+				// ignore all other types of parameters
+				continue;
+			}
+		}
+	}
+	return spareParmVec;
+}
+
+bool compareAttributeTypes(SOPAssign* node, const RuleAttributeSet& ruleAttributes) {
+	CGAAttributeTypeMap CGAAttributeTypeMap = getCGAAttributeTypes(node);
+
+	if (CGAAttributeTypeMap.size() < ruleAttributes.size())
 		return false;
 
-	for (const auto& attributeValuePair : refDefaultValues) {
-		const auto& it = newDefaultValues.find(attributeValuePair.first);
+	for (const auto& ra : ruleAttributes) {
 
-		if (it == newDefaultValues.end())
+		const auto& CGAAttributeTypeIt = CGAAttributeTypeMap.find(ra.fqName);
+		if (CGAAttributeTypeIt == CGAAttributeTypeMap.end())
 			return false;
 
-		// check if attributes have the same data type
-		if (it->second.index() != attributeValuePair.second.index())
-			return false;
+		// check if data types match
+		switch (CGAAttributeTypeIt->second) {
+			case CGAAttributeType::BOOL:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL)
+					return false;
+				break;
+			case CGAAttributeType::FLT:
+			case CGAAttributeType::FLT_ENUM:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT)
+					return false;
+				break;
+			case CGAAttributeType::STR:
+			case CGAAttributeType::STR_ENUM:
+			case CGAAttributeType::COLOR:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_STR)
+					return false;
+				break;
+			case CGAAttributeType::FLT_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT_ARRAY)
+					return false;
+				break;
+			case CGAAttributeType::BOOL_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL_ARRAY)
+					return false;
+				break;
+			case CGAAttributeType::STR_ARRAY:
+				if (ra.mType != prt::AnnotationArgumentType::AAT_STR_ARRAY)
+					return false;
+				break;
+			default:
+				return false;
+		}
 	}
 	return true;
 }
@@ -538,7 +685,7 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 			return false;
 		}
 
-		ruleFileInfos[isIdx] = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
+		ruleFileInfos[isIdx] = getRuleFileInfoFromShapeData(detail, shapeData, isIdx, shapeConverter, prtCtx, errors);
 
 		const std::wstring shapeName = L"shape_" + std::to_wstring(isIdx);
 		if (DBG)
@@ -658,16 +805,25 @@ AnnotationParsing::RangeAnnotation getRange(const AnnotationParsing::TraitParame
 };
 
 bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
-                   const AnnotationParsing::TraitParameterMap& traitParmMap, const std::wstring& description,
-                   std::vector<std::wstring> parentFolders) {
+                   prt::AnnotationArgumentType enumType, const AnnotationParsing::TraitParameterMap& traitParmMap,
+                   const std::wstring& description, std::vector<std::wstring> parentFolders) {
 	const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
 	if (enumIt == traitParmMap.end())
 		return false;
 
 	AnnotationParsing::EnumAnnotation enumAnnotation = std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
 
-	NodeSpareParameter::addEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions, parentFolders,
-	                                description);
+	switch (enumType) {
+		case prt::AnnotationArgumentType::AAT_FLOAT:
+			NodeSpareParameter::addFloatEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+			                                     parentFolders, description);
+		case prt::AnnotationArgumentType::AAT_STR:
+			NodeSpareParameter::addStringEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+			                                      parentFolders, description);
+		default:
+			return false;
+	}
+
 	return true;
 }
 
@@ -946,26 +1102,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 	}
 };
 
-void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConverterUPtr& shapeConverter,
-                        const PRTContextUPtr& prtCtx, std::string& errors) {
-	const auto& pv = shapeData.getPrimitiveMapping(0);
-	const auto& firstPrimitive = pv.front();
-	const MainAttributes& ma = shapeConverter->getMainAttributesFromPrimitive(detail, firstPrimitive);
-
-	// try to get a resolve map
-	const ResolveMapSPtr& resolveMap = prtCtx->getResolveMap(ma.mRPK);
-	if (!resolveMap) {
-		errors.append("Could not read Rule Package '")
-		        .append(ma.mRPK.string())
-		        .append("', aborting default rule attribute evaluation");
-		LOG_ERR << errors;
-		return;
-	}
-
-	const RuleFileInfoUPtr& ruleFileInfo = getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
-	const RuleAttributeSet& ruleAttributes =
-	        ruleFileInfo ? getRuleAttributes(ma.mRPK.generic_wstring(), ruleFileInfo.get()) : RuleAttributeSet();
-
+void SOPAssign::buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileInfoUPtr& ruleFileInfo) {
 	const AnnotationParsing::AttributeTraitMap& attributeAnnotations =
 	        ruleFileInfo ? AnnotationParsing::getAttributeAnnotations(ruleFileInfo)
 	                     : AnnotationParsing::AttributeTraitMap();
@@ -996,19 +1133,14 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_BOOL: {
 				const bool defaultValue = getDefaultBool(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
-				                  parentFolders)) {
-					continue;
-				}
-
 				NodeSpareParameter::addBoolParm(this, attrId, attrName, defaultValue, parentFolders, description);
 				break;
 			}
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				const double defaultValue = getDefaultFloat(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), traitParmMap, description,
-				                  parentFolders)) {
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), ra.mType, traitParmMap,
+				                  description, parentFolders)) {
 					continue;
 				}
 
@@ -1023,7 +1155,8 @@ void SOPAssign::buildUI(GU_Detail* detail, ShapeData& shapeData, const ShapeConv
 			case prt::AnnotationArgumentType::AAT_STR: {
 				const std::wstring defaultValue = getDefaultString(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, defaultValue, traitParmMap, description, parentFolders)) {
+				if (tryHandleEnum(this, attrId, attrName, defaultValue, ra.mType, traitParmMap, description,
+				                  parentFolders)) {
 					continue;
 				}
 
@@ -1095,10 +1228,20 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 			addError(SOP_MESSAGE, errMsg.c_str());
 			return UT_ERROR_ABORT;
 		}
-		auto oldAttributes = mDefaultCGAAttributes;
+
 		updateDefaultCGAAttributes(shapeData);
-		if (!compareAttributeTypes(oldAttributes, mDefaultCGAAttributes) && !mWasJustLoaded)
-			buildUI(gdp, shapeData, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+
+		const RuleFileInfoUPtr& ruleFileInfo =
+		        getRuleFileInfoFromShapeData(gdp, shapeData, 0, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
+		if (!ruleFileInfo)
+			return UT_ERROR_ABORT;
+
+		const fpreal time = CHgetEvalTime();
+		const std::filesystem::path rpk = AssignNodeParams::getRPK(this, time);
+		const RuleAttributeSet& ruleAttributes = getRuleAttributes(rpk, ruleFileInfo.get());
+
+		if (!compareAttributeTypes(this, ruleAttributes))
+			buildUI(ruleAttributes, ruleFileInfo);
 		updateUIDefaultValues(this, getStyle(), mDefaultCGAAttributes);
 		updatePrimitiveAttributes(gdp);
 
@@ -1107,14 +1250,7 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 	unlockInputs();
 
-	mWasJustLoaded = false;
 	return error();
-}
-
-bool SOPAssign::load(UT_IStream& is, const char* extension, const char* path) {
-	SOP_Node::load(is, extension, path);
-	mWasJustLoaded = true;
-	return false;
 }
 
 void SOPAssign::opChanged(OP_EventType reason, void* data) {

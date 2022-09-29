@@ -18,6 +18,7 @@
 
 #include "prt/Annotation.h"
 
+#include <filesystem>
 #include <limits>
 #include <map>
 #include <set>
@@ -72,5 +73,5 @@ using RuleAttributeVec = std::vector<RuleAttribute>;
 using RuleAttributeSet = std::set<RuleAttribute, RuleAttributeCmp>;
 using RuleAttributeMap = std::map<std::wstring, RuleAttribute>;
 
-RuleAttributeSet getRuleAttributes(const std::wstring& ruleFile, const prt::RuleFileInfo* ruleFileInfo);
+RuleAttributeSet getRuleAttributes(const std::filesystem::path& ruleFile, const prt::RuleFileInfo* ruleFileInfo);
 void setGlobalGroupOrder(RuleAttributeVec& ruleAttributes);
