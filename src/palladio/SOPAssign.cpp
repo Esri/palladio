@@ -798,7 +798,7 @@ AnnotationParsing::RangeAnnotation getRange(const AnnotationParsing::TraitParame
 };
 
 bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstring attrName, std::wstring defaultValue,
-                   bool isFloatEnum, const AnnotationParsing::TraitParameterMap& traitParmMap,
+                   prt::AnnotationArgumentType enumType, const AnnotationParsing::TraitParameterMap& traitParmMap,
                    const std::wstring& description, std::vector<std::wstring> parentFolders) {
 	const auto& enumIt = traitParmMap.find(AnnotationParsing::AttributeTrait::ENUM);
 	if (enumIt == traitParmMap.end())
@@ -806,12 +806,17 @@ bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstrin
 
 	AnnotationParsing::EnumAnnotation enumAnnotation = std::get<AnnotationParsing::EnumAnnotation>(enumIt->second);
 
-	if (isFloatEnum)
-		NodeSpareParameter::addFloatEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
-		                                     parentFolders, description);
-	else
-		NodeSpareParameter::addStringEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
-		                                     parentFolders, description);
+	switch (enumType) {
+		case prt::AnnotationArgumentType::AAT_FLOAT:
+			NodeSpareParameter::addFloatEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+			                                     parentFolders, description);
+		case prt::AnnotationArgumentType::AAT_STR:
+			NodeSpareParameter::addStringEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
+			                                      parentFolders, description);
+		default:
+			return false;
+	}
+
 	return true;
 }
 
@@ -1126,8 +1131,8 @@ void SOPAssign::buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileIn
 			case prt::AnnotationArgumentType::AAT_FLOAT: {
 				const double defaultValue = getDefaultFloat(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), true, traitParmMap, description,
-				                  parentFolders)) {
+				if (tryHandleEnum(this, attrId, attrName, std::to_wstring(defaultValue), ra.mType, traitParmMap,
+				                  description, parentFolders)) {
 					continue;
 				}
 
@@ -1142,7 +1147,8 @@ void SOPAssign::buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileIn
 			case prt::AnnotationArgumentType::AAT_STR: {
 				const std::wstring defaultValue = getDefaultString(defaultCGAAttrValue);
 
-				if (tryHandleEnum(this, attrId, attrName, defaultValue, false, traitParmMap, description, parentFolders)) {
+				if (tryHandleEnum(this, attrId, attrName, defaultValue, ra.mType, traitParmMap, description,
+				                  parentFolders)) {
 					continue;
 				}
 
