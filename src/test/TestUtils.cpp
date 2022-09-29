@@ -37,8 +37,7 @@ void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesy
 	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
 	REQUIRE(rpkRM);
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(rpkRM, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(rpkRM); // key -> uri
 
 	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 	const RuleFileInfoUPtr ruleFileInfo(prt::createRuleFileInfo(cgbs[0].second.c_str(), prtCtx->mPRTCache.get()));

@@ -42,7 +42,6 @@ enum class GroupCreation { NONE, PRIMCLS };
 
 struct MainAttributes {
 	std::filesystem::path mRPK;
-	std::wstring mRuleFile;
 	std::wstring mStyle;
 	std::wstring mStartRule;
 	int32_t mSeed;

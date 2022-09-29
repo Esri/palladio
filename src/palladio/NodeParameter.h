@@ -74,17 +74,6 @@ std::filesystem::path getRPK(const OP_Node* node, fpreal t);
 // -- RPK RELOADER
 static PRM_Name RPK_RELOAD("rpkReload", "Reload Rule Package");
 
-// -- RULE FILE (cgb)
-static PRM_Name RULE_FILE("ruleFile", "Rule File");
-const std::string RULE_FILE_HELP = "Sets value for primitive attribute '" + PLD_RULE_FILE.toStdString() + "'";
-
-void buildRuleFileMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_SpareData*, const PRM_Parm*);
-
-static PRM_ChoiceList ruleFileMenu(static_cast<PRM_ChoiceListType>(PRM_CHOICELIST_REPLACE), &buildRuleFileMenu);
-
-std::wstring getRuleFile(const OP_Node* node, fpreal t);
-void setRuleFile(OP_Node* node, const std::wstring& ruleFile, fpreal t);
-
 // -- STYLE
 static PRM_Name STYLE("style", "Style");
 const std::string STYLE_HELP = "Sets value for primitive attribute '" + PLD_STYLE.toStdString() + "'";
@@ -134,8 +123,6 @@ static PRM_Template PARAM_TEMPLATES[] = {
         PRM_Template(PRM_FILE, 1, &RPK, &RPK_DEFAULT, nullptr, nullptr, rpkCallback,
                      &PRM_SpareData::fileChooserModeRead, 1, RPK_HELP.c_str()),
         PRM_Template(PRM_CALLBACK, 1, &RPK_RELOAD, PRMoneDefaults, nullptr, nullptr, rpkCallback),
-        PRM_Template(PRM_STRING, 1, &RULE_FILE, PRMoneDefaults, &ruleFileMenu, nullptr, PRM_Callback(), nullptr, 1,
-                     RULE_FILE_HELP.c_str()),
         PRM_Template(PRM_STRING, 1, &STYLE, PRMoneDefaults, &styleMenu, nullptr, PRM_Callback(), nullptr, 1,
                      STYLE_HELP.c_str()),
         PRM_Template(PRM_STRING, 1, &START_RULE, PRMoneDefaults, &startRuleMenu, nullptr, PRM_Callback(), nullptr, 1,
@@ -143,12 +130,11 @@ static PRM_Template PARAM_TEMPLATES[] = {
         PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &CommonNodeParams::LOG_LEVEL,
                      &CommonNodeParams::DEFAULT_LOG_LEVEL, &CommonNodeParams::logLevelMenu),
         PRM_Template(PRM_INT | PRM_TYPE_JOIN_NEXT | PRM_TYPE_PLAIN, 1, &SEED, PRMzeroDefaults, nullptr, &SEED_RANGE,
-                     PRM_Callback(), nullptr,
-                     1, SEED_HELP.c_str()),
+                     PRM_Callback(), nullptr, 1, SEED_HELP.c_str()),
         PRM_Template(PRM_TOGGLE, 1, &OVERRIDE_SEED, PRMzeroDefaults, nullptr, nullptr, PRM_Callback(), nullptr, 1,
                      OVERRIDE_SEED_HELP.c_str()),
         PRM_Template(PRM_CALLBACK, 1, &GENERATE_NEW_SEED, PRMoneDefaults, nullptr, nullptr, generateNewSeedCallback),
-		PRM_Template()};
+        PRM_Template()};
 
 } // namespace AssignNodeParams
 

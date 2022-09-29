@@ -143,10 +143,6 @@ RuleAttributeSet getRuleAttributes(const std::filesystem::path& ruleFile, const 
 		if (hidden)
 			continue;
 
-		// no group? put to front
-		if (p.groups.empty())
-			p.groupOrder = ORDER_FIRST;
-
 		ra.push_back(p);
 	}
 
@@ -157,13 +153,8 @@ RuleAttributeSet getRuleAttributes(const std::filesystem::path& ruleFile, const 
 }
 
 bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute& rhs) const {
-	auto lowerCaseOrdering = [](std::wstring a, std::wstring b) {
-		std::transform(a.begin(), a.end(), a.begin(), ::tolower);
-		std::transform(b.begin(), b.end(), b.begin(), ::tolower);
-		return a < b;
-	};
 
-	auto compareRuleFile = [&](const RuleAttribute& a, const RuleAttribute& b) {
+	auto compareRuleFile = [](const RuleAttribute& a, const RuleAttribute& b) {
 		// sort main rule attributes before the rest
 		if (a.memberOfStartRuleFile && !b.memberOfStartRuleFile)
 			return true;
@@ -173,7 +164,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		if (a.ruleOrder != b.ruleOrder)
 			return a.ruleOrder < b.ruleOrder;
 
-		return lowerCaseOrdering(a.ruleFile, b.ruleFile);
+		return a.ruleFile < b.ruleFile;
 	};
 
 	auto isChildOf = [](const RuleAttribute& child, const RuleAttribute& parent) {
@@ -193,16 +184,42 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		return true;
 	};
 
-	auto firstDifferentGroupInA = [](const RuleAttribute& a, const RuleAttribute& b) {
-		assert(a.groups.size() == b.groups.size());
-		size_t i = 0;
-		while ((i < a.groups.size()) && (a.groups[i] == b.groups[i])) {
-			i++;
+	auto compareGroups = [](const RuleAttribute& a, const RuleAttribute& b) {
+		const size_t groupSizeA = a.groups.size();
+		const size_t groupSizeB = b.groups.size();
+
+		for (size_t groupIdx = 0; groupIdx < std::max(groupSizeA, groupSizeB); ++groupIdx) {
+			// a descendant of b
+			if (groupIdx >= groupSizeA)
+				return false;
+
+			// b descendant of a
+			if (groupIdx >= groupSizeB)
+				return true;
+
+			// difference in groups
+			if (a.groups[groupIdx] != b.groups[groupIdx])
+				return a.groups[groupIdx] < b.groups[groupIdx];
 		}
-		return a.groups[i];
+		return false;
 	};
 
-	auto compareGroups = [&](const RuleAttribute& a, const RuleAttribute& b) {
+	auto compareOrderToGroupOrder = [](const RuleAttribute& ruleAttrWithGroups,
+	                                    const RuleAttribute& ruleAttrWithoutGroups) {
+		if ((ruleAttrWithGroups.groups.size() > 0) &&
+		    (ruleAttrWithGroups.globalGroupOrder == ruleAttrWithoutGroups.order))
+			return ruleAttrWithGroups.groups[0] <= ruleAttrWithoutGroups.niceName;
+
+		return ruleAttrWithGroups.globalGroupOrder < ruleAttrWithoutGroups.order;
+	};
+
+	auto compareGroupOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
+		if (b.groups.empty())
+			return compareOrderToGroupOrder(a, b);
+
+		if (a.groups.empty())
+			return !compareOrderToGroupOrder(b, a);
+
 		if (isChildOf(a, b))
 			return false; // child a should be sorted after parent b
 
@@ -214,16 +231,12 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 		if (globalOrderA != globalOrderB)
 			return (globalOrderA < globalOrderB);
 
-		// sort higher level before lower level
-		if (a.groups.size() != b.groups.size())
-			return (a.groups.size() < b.groups.size());
-
-		return lowerCaseOrdering(firstDifferentGroupInA(a, b), firstDifferentGroupInA(b, a));
+		return compareGroups(a, b);
 	};
 
-	auto compareAttributeOrder = [&](const RuleAttribute& a, const RuleAttribute& b) {
+	auto compareAttributeOrder = [](const RuleAttribute& a, const RuleAttribute& b) {
 		if (a.order == b.order)
-			return lowerCaseOrdering(a.fqName, b.fqName);
+			return a.niceName < b.niceName;
 
 		return a.order < b.order;
 	};
@@ -233,7 +246,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 			return compareRuleFile(a, b);
 
 		if (a.groups != b.groups)
-			return compareGroups(a, b);
+			return compareGroupOrder(a, b);
 
 		return compareAttributeOrder(a, b);
 	};

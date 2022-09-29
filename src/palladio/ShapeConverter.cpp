@@ -274,7 +274,6 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
 	mDefaultMainAttributes.mRPK = AssignNodeParams::getRPK(node, now);
-	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
 	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
 	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
 	mDefaultMainAttributes.mSeed = AssignNodeParams::getSeed(node, now);
@@ -315,9 +314,6 @@ MainAttributes ShapeConverter::getMainAttributesFromPrimitive(const GU_Detail* d
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(PLD_RPK));
 	tryAssign(ma.mRPK, rpkRef, firstOffset);
 
-	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(PLD_RULE_FILE));
-	tryAssign(ma.mRuleFile, ruleFileRef, firstOffset);
-
 	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(PLD_START_RULE));
 	tryAssign(ma.mStartRule, startRuleRef, firstOffset);
 
@@ -333,7 +329,6 @@ void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHan
 
 	const GA_Offset& off = primitive->getMapOffset();
 	mah.rpk.set(off, ma.mRPK.string().c_str());
-	mah.ruleFile.set(off, toOSNarrowFromUTF16(ma.mRuleFile).c_str());
 	mah.startRule.set(off, toOSNarrowFromUTF16(ma.mStartRule).c_str());
 	mah.style.set(off, toOSNarrowFromUTF16(ma.mStyle).c_str());
 	if (ma.mOverrideSeed)
