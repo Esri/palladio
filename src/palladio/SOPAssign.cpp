@@ -88,11 +88,11 @@ RuleFileInfoUPtr getRuleFileInfoFromShapeData(const GU_Detail* detail, ShapeData
 	return getRuleFileInfo(ma, resolveMap, prtCtx->mPRTCache.get());
 }
 
-enum class SpareParmType { FLT, BOOL, STR, FLT_ARRAY, BOOL_ARRAY, STR_ARRAY, FLT_ENUM, STR_ENUM, COLOR };
-using SpareParmTypeMap = std::map<std::wstring, SpareParmType>;
+enum class CGAAttributeType { FLT, BOOL, STR, FLT_ARRAY, BOOL_ARRAY, STR_ARRAY, FLT_ENUM, STR_ENUM, COLOR };
+using CGAAttributeTypeMap = std::map<std::wstring, CGAAttributeType>;
 
-SpareParmTypeMap getSpareParms(SOPAssign* node) {
-	SpareParmTypeMap spareParmVec;
+CGAAttributeTypeMap getCGAAttributeTypes(SOPAssign* node) {
+	CGAAttributeTypeMap spareParmVec;
 
 	PRM_ParmList* parmList = node->getParmList();
 	if (parmList == nullptr)
@@ -122,13 +122,13 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 							continue;
 
 						if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_FLOAT))
-							spareParmVec[ruleAttrName] = SpareParmType::FLT_ENUM;
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT_ENUM;
 						else if (!strcmp(enumType, NodeSpareParameter::PRM_ENUM_TYPE_STRING))
-							spareParmVec[ruleAttrName] = SpareParmType::STR_ENUM;
+							spareParmVec[ruleAttrName] = CGAAttributeType::STR_ENUM;
 						break;
 					}
 					case PRM_Type::PRM_ORD_TOGGLE: {
-						spareParmVec[ruleAttrName] = SpareParmType::BOOL;
+						spareParmVec[ruleAttrName] = CGAAttributeType::BOOL;
 						break;
 					}
 					default:
@@ -146,13 +146,13 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 					const PRM_Type multiType = templatePtr->getType();
 					switch (multiType.getBasicType()) {
 						case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL:
-							spareParmVec[ruleAttrName] = SpareParmType::BOOL_ARRAY;
+							spareParmVec[ruleAttrName] = CGAAttributeType::BOOL_ARRAY;
 							break;
 						case PRM_Type::PRM_BasicType::PRM_BASIC_FLOAT:
-							spareParmVec[ruleAttrName] = SpareParmType::FLT_ARRAY;
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT_ARRAY;
 							break;
 						case PRM_Type::PRM_BasicType::PRM_BASIC_STRING:
-							spareParmVec[ruleAttrName] = SpareParmType::STR_ARRAY;
+							spareParmVec[ruleAttrName] = CGAAttributeType::STR_ARRAY;
 							break;
 						default:
 							break;
@@ -161,11 +161,11 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 				else {
 					switch (currParmType.getFloatType()) {
 						case PRM_Type::PRM_FLOAT_RGBA: {
-							spareParmVec[ruleAttrName] = SpareParmType::COLOR;
+							spareParmVec[ruleAttrName] = CGAAttributeType::COLOR;
 							break;
 						}
 						default: {
-							spareParmVec[ruleAttrName] = SpareParmType::FLT;
+							spareParmVec[ruleAttrName] = CGAAttributeType::FLT;
 							break;
 						}
 					}
@@ -173,7 +173,7 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 				break;
 			}
 			case PRM_Type::PRM_BasicType::PRM_BASIC_STRING: {
-				spareParmVec[ruleAttrName] = SpareParmType::STR;
+				spareParmVec[ruleAttrName] = CGAAttributeType::STR;
 				break;
 			}
 			default: {
@@ -186,43 +186,43 @@ SpareParmTypeMap getSpareParms(SOPAssign* node) {
 }
 
 bool compareAttributeTypes(SOPAssign* node, const RuleAttributeSet& ruleAttributes) {
-	SpareParmTypeMap spareParmTypeMap = getSpareParms(node);
+	CGAAttributeTypeMap CGAAttributeTypeMap = getCGAAttributeTypes(node);
 
-	if (spareParmTypeMap.size() < ruleAttributes.size())
+	if (CGAAttributeTypeMap.size() < ruleAttributes.size())
 		return false;
 
 	for (const auto& ra : ruleAttributes) {
 
-		const auto& spareParmTypeIt = spareParmTypeMap.find(ra.fqName);
-		if (spareParmTypeIt == spareParmTypeMap.end())
+		const auto& CGAAttributeTypeIt = CGAAttributeTypeMap.find(ra.fqName);
+		if (CGAAttributeTypeIt == CGAAttributeTypeMap.end())
 			return false;
 
 		// check if data types match
-		switch (spareParmTypeIt->second) {
-			case SpareParmType::BOOL:
+		switch (CGAAttributeTypeIt->second) {
+			case CGAAttributeType::BOOL:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL)
 					return false;
 				break;
-			case SpareParmType::FLT:
-			case SpareParmType::FLT_ENUM:
+			case CGAAttributeType::FLT:
+			case CGAAttributeType::FLT_ENUM:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT)
 					return false;
 				break;
-			case SpareParmType::STR:
-			case SpareParmType::STR_ENUM:
-			case SpareParmType::COLOR:
+			case CGAAttributeType::STR:
+			case CGAAttributeType::STR_ENUM:
+			case CGAAttributeType::COLOR:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_STR)
 					return false;
 				break;
-			case SpareParmType::FLT_ARRAY:
+			case CGAAttributeType::FLT_ARRAY:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_FLOAT_ARRAY)
 					return false;
 				break;
-			case SpareParmType::BOOL_ARRAY:
+			case CGAAttributeType::BOOL_ARRAY:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_BOOL_ARRAY)
 					return false;
 				break;
-			case SpareParmType::STR_ARRAY:
+			case CGAAttributeType::STR_ARRAY:
 				if (ra.mType != prt::AnnotationArgumentType::AAT_STR_ARRAY)
 					return false;
 				break;
