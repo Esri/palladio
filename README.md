@@ -49,7 +49,7 @@ External documentation:
 
 ### From Pre-Built Binaries
 
-1. [Download](https://esri.github.io/palladio/#downloads) Palladio 
+1. [Download](https://github.com/esri/palladio/releases) Palladio 
 1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the `config`, `dso` and `packages` sub-directories.
 1. Start Houdini and Palladio will be loaded automatically.
 
