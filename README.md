@@ -7,14 +7,12 @@ Palladio requires so-called rule packages (RPK) as input, which are authored in 
 Palladio is well suited for managing the procedural generation of architectural 3D content in digital sets. However, Palladio is restricted to the procedural generation of single buildings / objects. Palladio does not include the city layouting and street network editing tools of CityEngine i.e. the rich CityEngine toolset to design a city from scratch (or based on geographic data) is still needed.
 
 
-## Documentation
+## Table of Contents
 
-Palladio Documentation
-* [Home Page with Examples](https://esri.github.io/cityengine/palladio)
-* [Downloads](https://github.com/esri/palladio/releases)
-* [Quick Start](doc/usage.md)
-* [Build Palladio](doc/build.md)
-* [ChangeLog](doc/changelog.md)
+* [User Manual](doc/usage.md)
+* [Examples](https://esri.github.io/cityengine/palladio)
+* [Developer Manual](doc/build.md)
+* [Release Notes](doc/changelog.md)
 * [Licensing Information](#licensing-information)
 
 External documentation:
