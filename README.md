@@ -38,14 +38,15 @@ External documentation:
 
 ## User Manual
 
-## Prerequisites
-* RedHat Enterprise Linux 7 (and compatible) or Windows 10
-* Houdini 18.5 or later
-* To create CityEngine rule packages, an installation of CityEngine (2019.0 or later)
-* For commercial work, a [license](https://esri.com/cityengine) for CityEngine (2019.0 or later)
-
-
+Please refer to the [release notes](#release-notes) for the supported CityEngine version.
 ## Installation
+
+### Software Requirements (Latest Release)
+* Windows 10 or 11 (64bit)
+* RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
+* Houdini 18.5, 19.0 or 19.5
+* CityEngine 2022.0 or older for creating rule packages.
+* For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
 
 ### From Pre-Built Binaries
 
@@ -176,8 +177,8 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 ## Developer Manual
 
 ### Supported Operating Systems
-* RedHat Enterprise Linux 7 (and compatible)
-* Windows 10
+* Windows 10 or 11 (64bit)
+* RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
  
 ### Required Toolchain & Compiler
 * [cmake 3.13 or later](https://cmake.org/download)
@@ -185,8 +186,8 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 * Linux: GCC 9.3
 * Windows: Visual Studio 2019 (MSVC 14.2)
 
-### Required Build Dependencies
-* Installation of Houdini 18.0 or later (see https://sidefx.com/download)
+### Required Build Dependencies (Latest Release)
+* Installation of Houdini 18.5, 19.0 or 19.5 (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below: 
 * [CityEngine SDK](https://github.com/esri/cityengine-sdk)
@@ -217,7 +218,7 @@ The below steps will populate your local Conan repository with dependencies for 
 Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDINI_VERSION=X.Y`.
 
 #### Linux
-1. Ensure GCC 6.3 is active.
+1. Ensure GCC 9.3 is active.
 1. `cd` into your Palladio git repository
 1. `mkdir -p build/release && cd build/release`
 1. `cmake -DCMAKE_BUILD_TYPE=Release ../../src`
