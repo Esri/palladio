@@ -6,6 +6,20 @@ Palladio requires so-called rule packages (RPK) as input, which are authored in 
 
 Palladio is well suited for managing the procedural generation of architectural 3D content in digital sets. However, Palladio is restricted to the procedural generation of single buildings / objects. Palladio does not include the city layouting and street network editing tools of CityEngine i.e. the rich CityEngine toolset to design a city from scratch (or based on geographic data) is still needed.
 
+## Quick Start
+
+1. Download the latest palladio binary from the [release page](https://github.com/esri/palladio/releases).
+1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the corresponding `config`, `dso` and `packages` sub-directories.
+1. Start Houdini and Palladio will be loaded automatically. 
+1. In Houdini create an initial shape (i.e. a `grid` node with 2 cols/rows).
+1. Open the geometry node in the network editor and connect the mesh output to a new `pldAssign` node.
+1. Create a new `pldGenerate` node and connect the input to the ouput of the previous `pldAssign` node.
+1. Make the `pldGenerate` node the active render node.
+1. In CityEngine, download e.g. [Tutorial 9](https://doc.arcgis.com/en/cityengine/latest/tutorials/tutorial-9-advanced-shape-grammar.htm) and export the "Parthenon" CGA rule to a RPK (see [Creating a Rule Package](https://doc.arcgis.com/en/cityengine/latest/help/help-rule-package.htm)).
+1. Select the `pldAssign` node and set the `Rule Package` parameter in the prameter editor to the path of the previously exported RPK.
+1. The model should generate and rule attributes should now be editable inside the parameter editor.
+
+![](doc/img/parthenon01.png) 
 
 ## Table of Contents
 
