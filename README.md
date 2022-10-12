@@ -50,7 +50,7 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 
 #### From Pre-Built Binaries
 
-1. [Download](https://github.com/esri/palladio/releases) Palladio 
+1. Download the latest Palladio binary from the [release page](https://github.com/esri/palladio/releases).
 1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the `config`, `dso` and `packages` sub-directories.
 1. Start Houdini and Palladio will be loaded automatically.
 
