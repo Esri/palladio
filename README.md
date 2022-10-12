@@ -99,6 +99,14 @@ In the parameter editor we have the options to:
 
 In the previous section we've used the default value for the `height` attribute. Let's use Houdini tools to modify the rule attribute prior to execution.
 
+#### Using Parameter Editor
+
+1. Make sure the `pldAssign` is evaluated by making the connected `pldGenerate` the active render node
+1. Edit the rule attribute in the parameter editor by changing the value in the generated handle (a rule can be reset by calling `revert to Defaults` or pressing `ctrl + MMB` on the rule name)
+
+![](doc/img/attribute03.png)
+#### Manual Override
+
 1. Add an `AttributeCreate` node between `pldAssign` and `pldGenerate`.
 1. Set the attribute name to `height` and the `Class` to `Primitive`. The extrusion vanishes because the default value is 0.
 1. Increase the value for `height` to see an actual extrusion: ![](doc/img/attribute02.png)
