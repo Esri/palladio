@@ -58,7 +58,7 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 
 #### From Source
 
-1. [Build](build.md) Palladio
+1. [Build](#developer-manual) Palladio
 1. The `install` step should automatically copy all required files into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory and Palladio is ready to run.
 
 
