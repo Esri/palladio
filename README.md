@@ -39,16 +39,16 @@ External documentation:
 ## User Manual
 
 Please refer to the [release notes](#release-notes) for the supported CityEngine version.
-## Installation
+### Installation
 
-### Software Requirements (Latest Release)
+#### Software Requirements (Latest Release)
 * Windows 10 or 11 (64bit)
 * RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 * Houdini 18.5, 19.0 or 19.5
 * CityEngine 2022.0 or older for creating rule packages.
 * For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
 
-### From Pre-Built Binaries
+#### From Pre-Built Binaries
 
 1. [Download](https://github.com/esri/palladio/releases) Palladio 
 1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the `config`, `dso` and `packages` sub-directories.
@@ -56,13 +56,13 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 
 Note: it is NOT necessary to modify the system `PATH` environment variable.
 
-### From Source
+#### From Source
 
 1. [Build](build.md) Palladio
 1. The `install` step should automatically copy all required files into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory and Palladio is ready to run.
 
 
-## Execute a simple CityEngine Rule
+### Execute a simple CityEngine Rule
     
 1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere (or download one of the provided examples):
    ```
@@ -77,7 +77,7 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 1. In the `pldAssign` node, set the `Rule Package` parameter to the path of the previously exported RPK.
 1. Make the `pldGenerate` node the active render node, this will trigger a "cooking" of the assign and generate nodes and execute the CityEngine Rule. You should now see an extruded grid: ![](doc/img/extrude02.png)
 
-## Overriding Rule Attributes
+### Overriding Rule Attributes
 
 In the previous section we've used the default value for the `height` attribute. Let's use Houdini tools to modify the rule attribute prior to execution.
 
@@ -91,7 +91,7 @@ Please note the steps for the general case:
 1. Set `class` to `Primitive`.
 1. Set `type` to `Float` for CGA number attributes, `String` for CGA strings and `Integer` with 8 bit precision for CGA booleans.
 
-## Working with Material Attributes
+### Working with Material Attributes
 
 Note: we provide a ready-made Houdini Digital Asset with a [CityEngine Material for Mantra](https://github.com/Esri/palladio/releases/download/v1.6.1/PalladioCityEngineMaterial-v2.hdanc).
 
