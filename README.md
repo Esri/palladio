@@ -61,6 +61,24 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 1. [Build](#developer-manual) Palladio
 1. The `install` step should automatically copy all required files into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory and Palladio is ready to run.
 
+### Using Palladio
+
+Palladio adds the two new geometry (SOP) nodes `pldAssign` and `pldGenerate` to houdini. These can be created inside of any geometry object in the `Network Editor`.
+
+#### pldAssign Node
+
+The `pldAssign` node is used for easily attaching the required metadata to the input geometry such that the `pldGenerate` function can then correctly generate a 3D Model.
+When selected, a RPK (rule package), seed and corresponding CGA attributes can directly be set in the parameter editor. 
+When evaluated, the `pldAssign` node attaches the required metadata to the geometry (in the form of primitive attributes) and updates the CGA attributes in the parameter editor accordingly.
+The primitive attributes can also be overwritten before the geometry is passed to a `pldGenerate` node (i.e using an `Attribute Create` node).
+
+#### pldGenerate Node
+The `pldGenerate` node is used to generate the final geometry. 
+It takes an initial shape geometry with metadata (i.e. previously attached using a `pldAssign` node) and generates a 3D model from the assigned rule package and attribute values.
+In the parameter editor we have the options to:
+* re-emit modified CGA attributes
+* emit material attributes
+* emit CGA reports
 
 ### Execute a simple CityEngine Rule
     
