@@ -110,11 +110,13 @@ In the previous section we've used the default value for the `height` attribute.
 
 1. Add an `AttributeCreate` node between `pldAssign` and `pldGenerate`.
 1. Set the attribute name to `height` and the `Class` to `Primitive`. The extrusion vanishes because the default value is 0.
-1. Increase the value for `height` to see an actual extrusion: ![](doc/img/attribute02.png)
+1. Increase the value for `height` to see an actual extrusion: 
+
+![](doc/img/attribute02.png)
 
 Please note the steps for the general case:
 1. See the CGA file (or CityEngine) for the available attributes and their data types (number, string, boolean). 
-1. In the `AttributeCreate` node, set `name` to the name of the CGA attribute (replace dots `.` with double underscores `__`).
+1. In the `AttributeCreate` node, set `name` to the name of the CGA attribute (make sure to check `Encode Invalid Attribute Names`).
 1. Set `class` to `Primitive`.
 1. Set `type` to `Float` for CGA number attributes, `String` for CGA strings and `Integer` with 8 bit precision for CGA booleans.
 
