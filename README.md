@@ -287,7 +287,7 @@ Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDIN
 1. `nmake install` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini19.5/dso` directory)
 
 ### Running Palladio
-See [Quick Start](usage.md) how to launch Houdini with Palladio.
+See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ### Building and Running Unit Tests
 
