@@ -117,6 +117,22 @@ Please note the steps for the general case:
 1. Set `class` to `Primitive`.
 1. Set `type` to `Float` for CGA number attributes, `String` for CGA strings and `Integer` with 8 bit precision for CGA booleans.
 
+### Working with multiple Assign Nodes
+
+In this section, we are going to showcase how we can use multiple `pldAssign` nodes with a single `pldGenerate` node.
+
+1. Duplicate the `grid` and `pldAssign` nodes.
+1. Set the Center of the second `grid` node to (15, 0, 0).
+1. Add a new `Attribute Create` node between the new `grid` and `pldAssign` nodes.
+1. Set the attribute name to "primCls", change the Class to primitive and change its value to 1. This value needs to be set such that the `pldGenerate` node later knows which initial faces should be generated together or separately.
+
+![](doc/img/multiple01.png)
+1. Merge the output of both assign nodes with a `merge` node and feed the output to the previous generate node like this:
+
+![](doc/img/multiple02.png)
+1. You can now change the rule files and attributes of both `pldAssign` nodes and it should generate them correctly
+
+![](doc/img/multiple03.png)
 
 ### Working with Material Attributes
 
