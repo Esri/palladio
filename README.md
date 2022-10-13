@@ -74,7 +74,7 @@ The primitive attributes can also be overwritten before the geometry is passed t
 
 #### pldGenerate Node
 The `pldGenerate` node is used to generate the final geometry. 
-It takes an initial shape geometry with metadata (i.e. previously attached using a `pldAssign` node) and generates a 3D model from the assigned rule package and attribute values.
+It takes an initial shape geometry with metadata as input (i.e. the output of a `pldAssign` node) and executes the CityEngine rule to generate a 3D model.
 In the parameter editor we have the options to:
 * re-emit modified CGA attributes
 * emit material attributes
@@ -91,8 +91,8 @@ In the parameter editor we have the options to:
       extrude(height)
    ```
 1. In Houdini, in a new scene, add a `grid` node.
-1. Enter the `grid` node and add the two Palladio nodes `pldAssign` and `pldGenerate`. Connect them like this: ![](doc/img/extrude01.png)
-1. In the `pldAssign` node, set the `Rule Package` parameter to the path of the previously exported RPK.
+1. Enter the `grid` node, set the `Rows` and `Columns` parameters to two and add the two Palladio nodes `pldAssign` and `pldGenerate`. Connect them like this: ![](doc/img/extrude01.png)
+1. Select the `pldAssign` node and set the `Rule Package` parameter to the path of the previously exported RPK in the parameter editor.
 1. Make the `pldGenerate` node the active render node, this will trigger a "cooking" of the assign and generate nodes and execute the CityEngine Rule. You should now see an extruded grid: ![](doc/img/extrude02.png)
 
 ### Overriding Rule Attributes
@@ -102,7 +102,7 @@ In the previous section we've used the default value for the `height` attribute.
 #### Using Parameter Editor
 
 1. Make sure the `pldAssign` is evaluated by making the connected `pldGenerate` the active render node
-1. Edit the rule attribute in the parameter editor by changing the value in the generated handle (a rule can be reset by calling `revert to Defaults` or pressing `ctrl + MMB` on the rule name)
+1. Edit the rule attribute in the parameter editor by changing the value in the generated handle (a rule attribute can be reset by calling `revert to Defaults` or pressing `ctrl + MMB` on the rule name)
 
 ![](doc/img/attribute03.png)
 #### Manual Override
