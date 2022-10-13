@@ -24,7 +24,7 @@ Palladio is well suited for managing the procedural generation of architectural 
 ## Table of Contents
 
 * [User Manual](#user-manual)
-* [Examples](https://esri.github.io/cityengine/palladio)
+* [Examples](https://esri.github.io/cityengine/palladio#examples)
 * [Developer Manual](#developer-manual)
 * [Release Notes](#release-notes)
 * [Licensing Information](#licensing-information)
@@ -82,7 +82,7 @@ In the parameter editor we have the options to:
 
 ### Execute a simple CityEngine Rule
     
-1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere (or download one of the provided examples):
+1. In CityEngine, create the following rule file and share it as a rule package (RPK) to disk somewhere (or download one of the provided examples and share it as a RPK (see [Creating a Rule Package](https://doc.arcgis.com/en/cityengine/latest/help/help-rule-package.htm))):
    ```
    attr height = 1
    
