@@ -78,7 +78,7 @@ struct PathRemover {
 using ScopedPath = std::unique_ptr<std::filesystem::path, PathRemover>;
 
 #ifndef PLD_TEST_EXPORTS
-ScopedPath resolveFromHDA(const std::filesystem::path& p) {
+std::filesystem::path resolveFromHDA(const std::filesystem::path& p, const std::filesystem::path& unpackPath) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
 
 	FS_Reader fsr(p.string().c_str()); // is able to resolve opdef/oplib URIs
@@ -87,17 +87,17 @@ ScopedPath resolveFromHDA(const std::filesystem::path& p) {
 
 	auto resName = p.filename().string();
 	std::replace(resName.begin(), resName.end(), '?', '_'); // TODO: generalize
-	ScopedPath extractedResource(new std::filesystem::path(std::filesystem::temp_directory_path() / resName));
+	std::filesystem::path extractedResource = unpackPath / resName;
 
 	if (fsr.isGood()) {
 		UT_WorkBuffer wb;
 		fsr.getStream()->getAll(wb);
 
-		std::ofstream out(extractedResource->string(), std::ofstream::binary);
+		std::ofstream out(extractedResource.string(), std::ofstream::binary);
 		out.write(wb.buffer(), wb.length());
 		out.close();
 
-		LOG_DBG << "Extracted embedded resource into " << *extractedResource;
+		LOG_DBG << "Extracted embedded resource into " << extractedResource;
 	}
 	return extractedResource;
 }
@@ -140,17 +140,18 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const std::filesystem::path& 
 		cs = CacheStatus::MISS;
 
 	if (cs == CacheStatus::MISS) {
-		ScopedPath extractedPath; // if set, will resolve the extracted RPK from HDA
-		const auto actualRPK = [&extractedPath](const std::filesystem::path& p) {
+		std::filesystem::path extractedPath; // if set, will resolve the extracted RPK from HDA
+		const auto actualRPK = [&extractedPath](const std::filesystem::path& p,
+		                                        const std::filesystem::path& mRPKUnpackPath) {
 			if (isEmbedded(p)) {
 #ifndef PLD_TEST_EXPORTS
-				extractedPath = resolveFromHDA(p);
+				extractedPath = resolveFromHDA(p, mRPKUnpackPath);
 #endif
-				return *extractedPath;
+				return extractedPath;
 			}
 			else
 				return p;
-		}(rpk);
+		}(rpk, mRPKUnpackPath);
 
 		const auto rpkURI = toFileURI(actualRPK);
 
