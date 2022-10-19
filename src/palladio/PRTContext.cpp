@@ -128,10 +128,10 @@ void scheduleRecook(const std::filesystem::path& rpk) {
 std::filesystem::path getProcessTempDir() {
 	std::error_code ec;
 	auto tp = std::filesystem::temp_directory_path(ec);
-	if (!ec)
+	if (ec)
 		tp = "/tmp/"; // TODO: other OSes
 	std::string n = std::string(PLD_TMP_PREFIX) + std::to_string(::getpid());
-	return {"/tmp/" + n};
+	return {tp / n};
 }
 
 } // namespace
