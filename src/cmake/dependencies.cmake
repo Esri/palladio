@@ -74,10 +74,13 @@ set(PLD_PRT_LIBRARIES ${PRT_LIBRARIES})
 list(FILTER PLD_PRT_LIBRARIES EXCLUDE REGEX "\\.lib")
 install(FILES ${PLD_PRT_LIBRARIES} DESTINATION ${HOUDINI_RELATIVE_PALLADIO_PATH})
 
-# whitelist required PRT extension libraries
+# allow-list required PRT extension libraries
 set(PLD_PRT_EXT_LIBRARIES ${PRT_EXT_LIBRARIES})
-list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.codecs|com\\.esri\\.prt\\.adaptors|VueExport")
+list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.codecs|com\\.esri\\.prt\\.oda|com\\.esri\\.prt\\.usd|libcrypto|tbb|usd_ms|com\\.esri\\.prt\\.adaptors|VueExport")
 install(FILES ${PLD_PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
+
+# the USD codecs need resource files
+install(DIRECTORY ${PRT_EXTENSION_PATH}/usd DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
 
 function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
