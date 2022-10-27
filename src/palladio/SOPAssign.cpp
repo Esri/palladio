@@ -817,9 +817,11 @@ bool tryHandleEnum(SOPAssign* node, const std::wstring attrId, const std::wstrin
 		case prt::AnnotationArgumentType::AAT_FLOAT:
 			NodeSpareParameter::addFloatEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
 			                                     parentFolders, description);
+			break;
 		case prt::AnnotationArgumentType::AAT_STR:
 			NodeSpareParameter::addStringEnumParm(node, attrId, attrName, defaultValue, enumAnnotation.mOptions,
 			                                      parentFolders, description);
+			break;
 		default:
 			return false;
 	}
