@@ -121,7 +121,6 @@ function(pld_add_dependency_houdini TGT)
 	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
 	pld_select_houdini_dependency_list(${TGT})
 	target_link_libraries(${TGT} PRIVATE Houdini)
-	houdini_configure_target(${TGT} INSTDIR ${HOUDINI_USER_PATH})
 endfunction()
 
 
