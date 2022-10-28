@@ -10,13 +10,13 @@ Palladio is well suited for managing the procedural generation of architectural 
 
 1. Download the latest palladio binary from the [release page](https://github.com/esri/palladio/releases).
 1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the corresponding `config`, `dso` and `packages` sub-directories.
-1. Start Houdini and Palladio will be loaded automatically. 
-1. In Houdini create an initial shape (i.e. a `grid` node with 2 cols/rows).
+1. Start Houdini and you will find the new `pldAssign` and `pldGenerate` nodes in the OBJ operator menu under `custom`.
+1. In Houdini, create a quad as initial shape by setting up a `grid` node with 2 cols/rows.
 1. Open the geometry node in the network editor and connect the mesh output to a new `pldAssign` node.
 1. Create a new `pldGenerate` node and connect the input to the ouput of the previous `pldAssign` node.
 1. Make the `pldGenerate` node the active render node.
 1. In CityEngine, download e.g. [Tutorial 9](https://doc.arcgis.com/en/cityengine/latest/tutorials/tutorial-9-advanced-shape-grammar.htm) and export the "Parthenon" CGA rule to a RPK (see [Creating a Rule Package](https://doc.arcgis.com/en/cityengine/latest/help/help-rule-package.htm)).
-1. Select the `pldAssign` node and set the `Rule Package` parameter in the prameter editor to the path of the previously exported RPK.
+1. Select the `pldAssign` node and set the `Rule Package` parameter in the parameter editor to the path of the previously exported RPK.
 1. The model should generate and rule attributes should now be editable inside the parameter editor.
 
     ![](doc/img/parthenon01.png) 
@@ -46,14 +46,14 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 * Windows 10 or 11 (64bit)
 * RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 * Houdini 18.5, 19.0 or 19.5
-* CityEngine 2022.0 or older for creating rule packages.
+* The latest release requires CityEngine 2022.0 or older for creating rule packages.
 * For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
 
 #### From Pre-Built Binaries
 
 1. Download the latest Palladio binary from the [release page](https://github.com/esri/palladio/releases).
 1. Extract the archive into your `<home>\Documents\houdiniX.Y` (Windows) or `<home>/houdiniX.Y` (Linux) directory, so that the files end up in the `config`, `dso` and `packages` sub-directories.
-1. Start Houdini and Palladio will be loaded automatically.
+1. Start Houdini and you will find the new `pldAssign` and `pldGenerate` nodes in the OBJ operator menu under `custom`.
 
 Note: it is NOT necessary to modify the system `PATH` environment variable.
 
@@ -64,11 +64,11 @@ Note: it is NOT necessary to modify the system `PATH` environment variable.
 
 ### Using Palladio
 
-Palladio adds the two new geometry (SOP) nodes `pldAssign` and `pldGenerate` to houdini. These can be created inside of any geometry object in the `Network Editor`.
+Palladio adds the two new geometry (SOP) nodes `pldAssign` and `pldGenerate` to Houdini in the 'Custom' category. These can be created inside of any geometry object in the `Network Editor`.
 
 #### pldAssign Node
 
-The `pldAssign` node is used for easily attaching the required metadata to the input geometry such that the `pldGenerate` function can then correctly generate a 3D Model.
+The `pldAssign` node is designed to create the required metadata to the input geometry (as primitive attributes) such that the `pldGenerate` operator can procedurally generate the geometry.
 When selected, a RPK (rule package), seed and corresponding CGA attributes can directly be set in the parameter editor. 
 When evaluated, the `pldAssign` node attaches the required metadata to the geometry (in the form of primitive attributes) and updates the CGA attributes in the parameter editor accordingly.
 The primitive attributes can also be overwritten before the geometry is passed to a `pldGenerate` node (i.e using an `Attribute Create` node).
