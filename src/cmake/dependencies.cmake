@@ -76,7 +76,7 @@ install(FILES ${PLD_PRT_LIBRARIES} DESTINATION ${HOUDINI_RELATIVE_PALLADIO_PATH}
 
 # allow-list required PRT extension libraries
 set(PLD_PRT_EXT_LIBRARIES ${PRT_EXT_LIBRARIES})
-list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.codecs|com\\.esri\\.prt\\.oda|com\\.esri\\.prt\\.usd|libcrypto|tbb|usd_ms|com\\.esri\\.prt\\.adaptors|VueExport")
+list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.(codecs|oda|usd|adaptors)|libcrypto|tbb|usd_ms|VueExport")
 install(FILES ${PLD_PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
 
 # the USD codecs need resource files
