@@ -24,6 +24,7 @@ Palladio is well suited for managing the procedural generation of architectural 
 ## Table of Contents
 
 * [User Manual](#user-manual)
+* [Downloads](https://github.com/Esri/palladio/releases)
 * [Examples](https://esri.github.io/cityengine/palladio#examples)
 * [Developer Manual](#developer-manual)
 * [Release Notes](#release-notes)
