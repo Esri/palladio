@@ -74,10 +74,13 @@ set(PLD_PRT_LIBRARIES ${PRT_LIBRARIES})
 list(FILTER PLD_PRT_LIBRARIES EXCLUDE REGEX "\\.lib")
 install(FILES ${PLD_PRT_LIBRARIES} DESTINATION ${HOUDINI_RELATIVE_PALLADIO_PATH})
 
-# whitelist required PRT extension libraries
+# allow-list required PRT extension libraries
 set(PLD_PRT_EXT_LIBRARIES ${PRT_EXT_LIBRARIES})
-list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.codecs|com\\.esri\\.prt\\.adaptors|VueExport")
+list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.(codecs|oda|usd|adaptors)|libcrypto|tbb|usd_ms|VueExport")
 install(FILES ${PLD_PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
+
+# the USD codecs need resource files
+install(DIRECTORY ${PRT_EXTENSION_PATH}/usd DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
 
 function(pld_add_dependency_prt TGT)
 	target_compile_definitions(${TGT} PRIVATE -DPRT_VERSION_MAJOR=${PRT_VERSION_MAJOR} -DPRT_VERSION_MINOR=${PRT_VERSION_MINOR})
@@ -121,7 +124,6 @@ function(pld_add_dependency_houdini TGT)
 	target_compile_definitions(${TGT} PRIVATE -DHOUDINI_VERSION_MAJOR=${PLD_HDN_VER_MAJ} -DHOUDINI_VERSION_MINOR=${PLD_HDN_VER_MIN})
 	pld_select_houdini_dependency_list(${TGT})
 	target_link_libraries(${TGT} PRIVATE Houdini)
-	houdini_configure_target(${TGT} INSTDIR ${HOUDINI_USER_PATH})
 endfunction()
 
 
