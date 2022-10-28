@@ -19,7 +19,7 @@ Palladio is well suited for managing the procedural generation of architectural 
 1. Select the `pldAssign` node and set the `Rule Package` parameter in the prameter editor to the path of the previously exported RPK.
 1. The model should generate and rule attributes should now be editable inside the parameter editor.
 
-![](doc/img/parthenon01.png) 
+    ![](doc/img/parthenon01.png) 
 
 ## Table of Contents
 
@@ -92,9 +92,13 @@ In the parameter editor we have the options to:
    ```
    (Instead you can also directly use [this](doc/data/heightExtrude.rpk) RPK)
 1. In Houdini, in a new scene, add a `grid` node.
-1. Enter the `grid` node, set the `Rows` and `Columns` parameters to two and add the two Palladio nodes `pldAssign` and `pldGenerate`. Connect them like this: ![](doc/img/extrude01.png)
+1. Enter the `grid` node, set the `Rows` and `Columns` parameters to two and add the two Palladio nodes `pldAssign` and `pldGenerate`. Connect them like this:
+
+    ![](doc/img/extrude01.png)
 1. Select the `pldAssign` node and set the `Rule Package` parameter to the path of the previously exported RPK in the parameter editor.
-1. Make the `pldGenerate` node the active render node, this will trigger a "cooking" of the assign and generate nodes and execute the CityEngine Rule. You should now see an extruded grid: ![](doc/img/extrude02.png)
+1. Make the `pldGenerate` node the active render node, this will trigger a "cooking" of the assign and generate nodes and execute the CityEngine Rule. You should now see an extruded grid: !
+
+     [](doc/img/extrude02.png)
 
 ### Overriding Rule Attributes
 
@@ -105,14 +109,14 @@ In the previous section we've used the default value for the `height` attribute.
 1. Make sure the `pldAssign` is evaluated by making the connected `pldGenerate` the active render node
 1. Edit the rule attribute in the parameter editor by changing the value in the generated handle (a rule attribute can be reset by calling `revert to Defaults` or pressing `ctrl + MMB` on the rule name)
 
-![](doc/img/attribute03.png)
+    ![](doc/img/attribute03.png)
 #### Manual Override
 
 1. Add an `AttributeCreate` node between `pldAssign` and `pldGenerate`.
 1. Set the attribute name to `height` and the `Class` to `Primitive`. The extrusion vanishes because the default value is 0.
 1. Increase the value for `height` to see an actual extrusion: 
 
-![](doc/img/attribute02.png)
+    ![](doc/img/attribute02.png)
 
 Please note the steps for the general case:
 1. See the CGA file (or CityEngine) for the available attributes and their data types (number, string, boolean). 
@@ -129,13 +133,13 @@ In this section, we are going to showcase how we can use multiple `pldAssign` no
 1. Add a new `Attribute Create` node between the new `grid` and `pldAssign` nodes.
 1. Set the attribute name to "primCls", change the Class to primitive and change its value to 1. This value needs to be set such that the `pldGenerate` node later knows which initial faces should be generated together or separately.
 
-![](doc/img/multiple01.png)
+    ![](doc/img/multiple01.png)
 1. Merge the output of both assign nodes with a `merge` node and feed the output to the previous generate node like this:
 
-![](doc/img/multiple02.png)
+    ![](doc/img/multiple02.png)
 1. You can now change the rule files and attributes of both `pldAssign` nodes and it should generate them correctly
 
-![](doc/img/multiple03.png)
+    ![](doc/img/multiple03.png)
 
 ### Working with Material Attributes
 
