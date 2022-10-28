@@ -241,7 +241,7 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 * [cmake 3.13 or later](https://cmake.org/download)
 * [conan 1.20 or later](https://www.conan.io/downloads)
 * Linux: GCC 9.3
-* Windows: Visual Studio 2019 (MSVC 14.2)
+* Windows: Visual Studio 2019 (MSVC 14.27)
 
 ### Required Build Dependencies (Latest Release)
 * Installation of Houdini 18.5, 19.0 or 19.5 (see https://sidefx.com/download)
@@ -282,7 +282,7 @@ Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDIN
 1. `make install` (the plugin will be installed into your `~/houdini19.5/dso` directory)
 
 #### Windows
-1. Open a MSVC 14.2 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
+1. Open a MSVC 14.27 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
 1. `mkdir build/release`
 1. `cd build/release`
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src`
@@ -294,7 +294,7 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 ### Building and Running Unit Tests
 
 #### Linux
-1. Ensure GCC 6.3 is active.
+1. Ensure GCC 9.3 is active.
 1. `cd` into your Palladio git repository
 1. `mkdir -p build/relTest && cd build/relTest`
 1. `cmake -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
@@ -302,7 +302,7 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. run `bin/palladio_test`
 
 #### Windows
-1. Open a MSVC 14.2 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
+1. Open a MSVC 14.27 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
 1. `mkdir build/relTest`
 1. `cd build/relTest`
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
