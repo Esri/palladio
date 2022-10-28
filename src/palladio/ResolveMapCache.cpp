@@ -66,17 +66,6 @@ ResolveMapCache::KeyType createCacheKey(const std::filesystem::path& rpk) {
 	return rpk.string(); // TODO: try FS_Reader::splitIndexFileSectionPath for embedded resources
 }
 
-struct PathRemover {
-	void operator()(std::filesystem::path const* p) {
-		if (p && std::filesystem::exists(*p)) {
-			std::filesystem::remove(*p);
-			LOG_DBG << "Removed file " << *p;
-			delete p;
-		}
-	}
-};
-using ScopedPath = std::unique_ptr<std::filesystem::path, PathRemover>;
-
 #ifndef PLD_TEST_EXPORTS
 std::filesystem::path resolveFromHDA(const std::filesystem::path& p, const std::filesystem::path& unpackPath) {
 	LOG_DBG << "detected embedded resource in HDA: " << p;
