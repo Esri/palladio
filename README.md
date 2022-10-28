@@ -311,7 +311,6 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. `cd build/relTest`
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
 1. `nmake palladio_test`
-1. ensure that the `bin` subdirectory of your Houdini installation is in the `PATH`
 1. run `bin\palladio_test`
 
 ## Release Notes
