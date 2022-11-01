@@ -316,6 +316,34 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ## Release Notes
 
+### v2.0.0 Beta 1 (Okt 13, 2022)
+
+Required CityEngine version: 2022.0 or older.
+
+#### Added:
+- Support for Houdini 19 and 19.5
+- Rule attribute parameters to directly edit them in the parameter editor of the `pldAssign` node
+  - Rule attribute handles dynamically update when the `pldAssign` node is evaluated
+  - Rule attribute values can be reset to the default value
+  - CGA annotations will create different UI widgets, for example a color picker or file browser
+- Seed parameter to change the seed value in the `pldAssign` node
+- Icon to palladio nodes
+
+#### Changed:
+- Updated Procedural Runtime (PRT) to 2.6.8300 (corresponds to CityEngine 2022.0)
+- Rule attribute names can now be encoded using Houdini's string encoding
+- Fixed issues with rule package paths containing white spaces
+- Updated and restructured user manual
+
+#### Development:
+- Updated compilers (now using C++ 17)
+- Linux version is now compiled with GCC 9.3 by default
+- Updated test framework and build system
+- Cleaned up CMake files
+
+#### Removed
+- Support for Houdini 18.0 and older
+
 ### v1.9.0 (Dec 7, 2020)
 * No functional changes compared to Beta 2.
 
