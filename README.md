@@ -327,7 +327,7 @@ Required CityEngine version: 2022.0 or older.
 
 #### Changed:
 - Updated Procedural Runtime (PRT) to 2.6.8300 (corresponds to CityEngine 2022.0)
-- Rule attribute names can now be encoded using Houdinis string encoding
+- Rule attribute names can now be encoded using Houdini's string encoding
 - Fixed issues with rule package paths containing white spaces
 - Updated and restructured user manual
 
