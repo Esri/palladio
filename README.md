@@ -233,7 +233,7 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 
 #### Environment Variables
 
-* `CITYENGINE_LOG_LEVEL`: controls the global (minimal) log level for all assign and generate nodes. Valid values are "debug", "info", "warning", "error", "fatal"
+* `CITYENGINE_LOG_LEVEL`: controls the global (minimal) log level for all assign and generate nodes. Valid values are "debug", "info", "warning", "error", "fatal". The default is "error". Additionally, the log level can be controlled for each `pldAssign` and `pldGenerate` instance.
 * `HOUDINI_DSO_ERROR`: useful to debug loading issues, see https://www.sidefx.com/docs/houdini/ref/env
 
 ## Developer Manual
