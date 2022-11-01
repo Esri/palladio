@@ -15,7 +15,7 @@ Palladio is well suited for managing the procedural generation of architectural 
 1. Open the geometry node in the network editor and connect the mesh output to a new `pldAssign` node.
 1. Create a new `pldGenerate` node and connect the input to the ouput of the previous `pldAssign` node.
 1. Make the `pldGenerate` node the active render node.
-1. Download [this parthenon rule file](/doc/data/parthenon.rpk).In CityEngine, download e.g. [Tutorial 9](https://doc.arcgis.com/en/cityengine/latest/tutorials/tutorial-9-advanced-shape-grammar.htm) and export the "Parthenon" CGA rule to a RPK (see [Creating a Rule Package](https://doc.arcgis.com/en/cityengine/latest/help/help-rule-package.htm)).
+1. Download [the Parthenon rule package](/doc/data/parthenon.rpk). Or alternatively, in CityEngine, download [Tutorial 9](https://doc.arcgis.com/en/cityengine/latest/tutorials/tutorial-9-advanced-shape-grammar.htm) and export the "Parthenon" CGA rule to a RPK (see [Creating a Rule Package](https://doc.arcgis.com/en/cityengine/latest/help/help-rule-package.htm)).
 1. Select the `pldAssign` node and set the `Rule Package` parameter in the parameter editor to the path of the previously exported RPK.
 1. The model should generate and rule attributes should now be editable inside the parameter editor.
 
