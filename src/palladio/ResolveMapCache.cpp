@@ -79,6 +79,8 @@ std::filesystem::path resolveFromHDA(const std::filesystem::path& p, const std::
 	std::filesystem::path extractedResource = unpackPath / resName;
 
 	if (fsr.isGood()) {
+		std::filesystem::create_directories(unpackPath);
+
 		UT_WorkBuffer wb;
 		fsr.getStream()->getAll(wb);
 
