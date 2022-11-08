@@ -1,0 +1,3 @@
+		<Property Id="HOUDINI${HOU_MAJOR}${HOU_MINOR}INSTALLDIR">
+			<RegistrySearch Id="Houdini${HOU_MAJOR}${HOU_MINOR}InstallSearch" Root="HKLM" Key="SOFTWARE\Side Effects Software\Houdini" Name="${HOU_MAJOR}.${HOU_MINOR}.0.${HOU_PATCH}" Type="raw" />
+		</Property>

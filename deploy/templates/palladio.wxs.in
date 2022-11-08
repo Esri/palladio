@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Name="${PROJECT_NAME}" Manufacturer="${PACKAGE_VENDOR_ESCAPED}" Version="${PLD_VERSION_MMP}"
+		Id="*" UpgradeCode="D5336B62-F851-4D34-B6CA-0A9A3B685910" Language="1033" Codepage='1252'>
+
+		<Package Platform='x64' Id='*' Keywords='Installer' Description="${PROJECT_NAME}"
+			Manufacturer='${PACKAGE_VENDOR_ESCAPED}' InstallerVersion='200'
+			Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+
+		<Media Id='1' Cabinet='Sample.cab' EmbedCab='yes' DiskPrompt="CD-ROM #1" />
+		<Property Id='DiskPrompt' Value="${PROJECT_NAME} Installation [1]" />
+
+${HOUDINI_REGISTRY_SEARCH}
+
+		<MajorUpgrade Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
+			DowngradeErrorMessage="A later version of [ProductName] is already installed.&#xA;
+				Please uninstall [ProductName] first if you want to downgrade to version [ProductVersion].&#xA;
+				Setup will now exit."/>
+
+		<Property Id="ARPPRODUCTICON">ProductIcon.ico</Property>
+		<Icon Id="ProductIcon.ico" SourceFile="${RESOURCE_FOLDER}\palladio.ico"/>
+		<WixVariable Id="WixUIBannerBmp" Value="${RESOURCE_FOLDER}\banner.png"/>
+		<WixVariable Id="WixUIDialogBmp" Value="${RESOURCE_FOLDER}\dialog.png"/>
+		<PropertyRef Id="WIX_DIR_PERSONAL"/>
+
+		<Directory Id='TARGETDIR' Name='SourceDir' ComponentGuidGenerationSeed="D676EF3E-B710-444A-BCCC-F11F888CD928">
+			<Directory Id='WIX_DIR_PERSONAL'>
+${HOUDINI_DIRECTORY}
+			</Directory>
+		</Directory>
+
+${PALLADIO_FOR_HOUDINI_FEATURE}
+
+		<Property Id="WIXUI_INSTALLDIR" Value="WIX_DIR_PERSONAL" />
+		<UIRef Id="WixUI_FeatureTree" />
+	</Product>
+</Wix>
