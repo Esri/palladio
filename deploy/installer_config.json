@@ -1,0 +1,19 @@
+{
+	"houdini_versions":{
+		"houdini18.5": {
+			"major": "18",
+			"minor": "5",
+			"patch": "759"
+		},
+		"houdini19.0": {
+			"major": "19",
+			"minor": "0",
+			"patch": "720"
+		},
+		"houdini19.5": {
+			"major": "19",
+			"minor": "5",
+			"patch": "303"
+		}
+	}
+}
