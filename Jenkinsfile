@@ -11,6 +11,7 @@ import com.esri.zrh.jenkins.ce.CityEnginePipelineLibrary
 import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
 import com.esri.zrh.jenkins.PslFactory
 import com.esri.zrh.jenkins.psl.UploadTrackingPsl
+import com.esri.zrh.jenkins.ToolInfo
 
 @Field def psl = PslFactory.create(this, UploadTrackingPsl.ID)
 @Field def cepl = new CityEnginePipelineLibrary(this, psl)
@@ -46,6 +47,8 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5' ],
 ]
 
+@Field final List INSTALLER_CONFIG = [ [ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ] ]
+@Field final List INSTALLER_HOUDINI_VERS = [ '18.5', '19.0', '19.5' ]
 
 // -- SETUP
 
@@ -66,6 +69,10 @@ stage('test') {
 
 stage('build') {
 	cepl.runParallel(taskGenBuild())
+}
+
+stage('installer') {
+	cepl.runParallel(taskGenInstaller())
 }
 
 papl.finalizeRun('palladio', env.BRANCH_NAME)
@@ -90,6 +97,12 @@ Map taskGenBuild() {
 	tasks << cepl.generateTasks('pld-hdn18.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_185)
 	tasks << cepl.generateTasks('pld-hdn19.0', this.&taskBuildPalladio, CONFIGS_HOUDINI_190)
 	tasks << cepl.generateTasks('pld-hdn19.5', this.&taskBuildPalladio, CONFIGS_HOUDINI_195)
+	return tasks;
+}
+
+Map taskGenInstaller() {
+    Map tasks = [:]
+	tasks << cepl.generateTasks('pld-msi', this.&taskCreateInstaller, INSTALLER_CONFIG)
 	return tasks;
 }
 
@@ -123,6 +136,17 @@ def taskBuildPalladio(cfg) {
 	dir(path: 'build') {
 		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
 	}
+	final String artifactPattern = "palladio-*"
+
+	if(cfg.os == cepl.CFG_OS_WIN10){
+		dir(path: 'build'){
+			stashFile = cepl.findOneFile(artifactPattern)
+			echo("stashFile: '${stashFile}'")
+			stash(includes: artifactPattern, name: "houdini${cfg.houdini.replaceAll('\\.', '_')}")
+			stashPath = "${stashFile.path}"
+			echo("file path to stash: '${stashPath}'")
+		}
+	}
 
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
@@ -132,5 +156,51 @@ def taskBuildPalladio(cfg) {
 		def cls = (p =~ /.*palladio-.*\.(hdn.*)-(windows|linux)\..*/)
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
-	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+	papl.publish('palladio', env.BRANCH_NAME, artifactPattern, versionExtractor, cfg, classifierExtractor)
+}
+
+def taskCreateInstaller(cfg) {
+	final String appName = 'palladio-installer'
+	cepl.cleanCurrentDir()
+	unstash(name: SOURCE_STASH)
+
+	String pyArgs = ""
+
+	// fetch outputs from builds
+	dir(path: 'build'){
+		dir(path: 'tmp'){
+			INSTALLER_HOUDINI_VERS.each { mv ->
+				unstash(name: "houdini${mv.replaceAll('\\.', '_')}")
+				def zipFile = cepl.findOneFile("*hdn${mv.replaceAll('\\.', '-')}*.zip")
+				final String zipFileName = zipFile.name
+				unzip(zipFile:zipFileName)
+				pyArgs += "-h${mv.replaceAll('\\.', '')} \"build\\tmp\\${zipFileName.take(zipFileName.lastIndexOf('.'))}\" "
+			}
+		}
+	}
+	pyArgs += "-bv ${env.BUILD_NUMBER} "
+	pyArgs += "-bd \"build\\build_msi\" "
+
+	// Toolchain definition for building MSI installers.
+	final JenkinsTools compiler = cepl.getToolchainTool(cfg)
+	final def toolchain = [
+		new ToolInfo(JenkinsTools.WIX, cfg),
+		new ToolInfo(compiler, cfg)
+	]
+
+	// Setup environment according to above toolchain definition.
+	withTool(toolchain) {
+		psl.runCmd('python "palladio.git\\deploy\\build.py" ' + pyArgs)
+
+		def buildProps = papl.jpe.readProperties(file: 'build/build_msi/deployment.properties')
+
+		final String artifactPattern = "build_msi/${buildProps.package_file}"
+		final def artifactVersion = { p -> buildProps.package_version }
+
+		def classifierExtractor = { p ->
+			return cepl.getArchiveClassifier(cfg)
+		}
+
+		papl.publish(appName, env.BRANCH_NAME, artifactPattern, artifactVersion, cfg, classifierExtractor)
+	}
 }
