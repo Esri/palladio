@@ -314,6 +314,16 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. `nmake palladio_test`
 1. Run `bin\palladio_test`
 
+### Building Windows MSI installer
+1. Open a MSVC 14.27 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
+1. for each houdini version build the binary files to a local install folder:
+   1. `mkdir build/installer_XXY` (i.e. `installer_195`)
+   1. `cd build/installer_XXY`
+   1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="../../install/houdiniXX.Y" ../../src`
+   1. `nmake install` (the plugin will be installed to `install/houdiniXX.Y`)
+1. From a terminal run `deploy\build.py` and provide the binary folders via `-hXXY "install/houdiniXX.Y"`
+1. The MSI installer should now be located in `build/build_msi/`
+
 ## Release Notes
 
 ### v2.0.0 Beta 1 (Okt 13, 2022)
