@@ -12,7 +12,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 CFG_PATH = SCRIPT_DIR / 'installer_config.json'
 RESOURCE_DIR = SCRIPT_DIR / 'resources'
 
-VERSION_PATH = SCRIPT_DIR / '../version.txt'
+VERSION_JSON_PATH = SCRIPT_DIR / '../version.json'
 PACKAGE_JSON_PATH = SCRIPT_DIR / 'palladio.json'
 
 DEFAULT_BUILD_DIR = SCRIPT_DIR / '../build/build_msi'
@@ -32,13 +32,8 @@ PACKAGE_VENDOR_ESCAPED = 'Esri R&amp;amp;D Center Zurich'
 def get_palladio_version_string(includePre=False, build_version=''):
 	version_map = {}
 	delimiter = '.'
-	with open(VERSION_PATH, 'r') as version_file:
-		version_text = version_file.read()
-		lines = version_text.splitlines()
-		for line in lines:
-			key_value = line.split(' ')
-			if len(key_value) == 2:
-				version_map[key_value[0]] = key_value[1]
+	with open(VERSION_JSON_PATH, 'r') as version_file:
+		version_map = json.load(version_file)
 	version_string = version_map['PLD_VERSION_MAJOR'] + delimiter + \
             version_map['PLD_VERSION_MINOR'] + \
             delimiter + version_map['PLD_VERSION_PATCH']
