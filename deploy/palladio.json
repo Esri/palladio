@@ -1,0 +1,14 @@
+{
+  "enable": true,
+  "env": [
+    {
+      "PLD_PATH": [
+        {"houdini_version == '18.5'": "C:/ProgramData/ESRI/Palladio/houdini18.5"},
+        {"houdini_version == '19.0'": "C:/ProgramData/ESRI/Palladio/houdini19.0"},
+        {"houdini_version == '19.5'": "C:/ProgramData/ESRI/Palladio/houdini19.5"}
+      ],
+      "PATH": "$PLD_PATH"
+    }
+  ],
+  "path": "$PLD_PATH"
+}

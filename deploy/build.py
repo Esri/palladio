@@ -13,6 +13,7 @@ CFG_PATH = SCRIPT_DIR / 'installer_config.json'
 RESOURCE_DIR = SCRIPT_DIR / 'resources'
 
 VERSION_PATH = SCRIPT_DIR / '../version.txt'
+PACKAGE_JSON_PATH = SCRIPT_DIR / 'palladio.json'
 
 DEFAULT_BUILD_DIR = SCRIPT_DIR / '../build/build_msi'
 
@@ -131,8 +132,11 @@ def copy_binaries(binary_folders, build_dir):
 		os_src_path = rel_to_os_dir(src_path)
 		if os_src_path.exists():
 			binary_path = build_dir / 'install' / Path(binary_folder)
-			print("copy ", os_src_path, " to ", binary_path)
-			shutil.copytree(os_src_path, binary_path)
+			print("copy files from ", os_src_path, " to ", binary_path)
+			shutil.copytree(os_src_path / 'packages' / 'palladio', binary_path)
+			shutil.copytree(os_src_path / 'dso', binary_path / 'dso')
+			shutil.copytree(os_src_path / 'config', binary_path / 'config')
+			shutil.copy(PACKAGE_JSON_PATH, build_dir)
 			valid_binaries[binary_folder] = binary_path
 	return valid_binaries
 

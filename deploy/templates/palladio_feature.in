@@ -1,4 +1,3 @@
-		<Feature Id='PalladioForHoudini${HOU_MAJOR}${HOU_MINOR}' Level='0' Title="Palladio for Houdini ${HOU_MAJOR}.${HOU_MINOR}.${HOU_PATCH}" Description="Installs the Palladio Plugin for Houdini ${HOU_MAJOR}.${HOU_MINOR}.${HOU_PATCH}">
+		<Feature Id='PalladioForHoudini${HOU_MAJOR}${HOU_MINOR}' Level='1' Title="Palladio for Houdini ${HOU_MAJOR}.${HOU_MINOR}.${HOU_PATCH}" Description="Installs the Palladio Plugin for Houdini ${HOU_MAJOR}.${HOU_MINOR}.${HOU_PATCH}">
 			<ComponentGroupRef Id='PalladioInstallComponent${HOU_MAJOR}${HOU_MINOR}' />
-			<Condition Level="1">HOUDINI${HOU_MAJOR}${HOU_MINOR}INSTALLDIR</Condition>
 		</Feature>
