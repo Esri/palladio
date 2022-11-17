@@ -21,7 +21,6 @@ TEMPLATE_DIR = SCRIPT_DIR / 'templates'
 DEPLOYMENT_PROPERTIES_TEMPLATE_PATH = TEMPLATE_DIR / 'deployment.properties.in'
 
 WIX_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio.wxs.in'
-WIX_REG_SEARCH_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_registry_search.in'
 WIX_DIRECTORY_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_directory.in'
 WIX_FEATURE_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_feature.in'
 
@@ -156,7 +155,6 @@ def fill_template_to_file(src_path, dest_path, token_value_dict):
 
 
 def fill_wix_template(houdini_versions, copied_binaries, build_dir):
-	wix_reg_search = ''
 	wix_directories = ''
 	wix_features = ''
 
@@ -167,10 +165,8 @@ def fill_wix_template(houdini_versions, copied_binaries, build_dir):
 			'HOU_PATCH': houdini_versions[version]['patch']
 		}
 		newline = ''
-		if len(wix_reg_search) > 0:
+		if len(wix_directories) > 0:
 			newline = '\n'
-		wix_reg_search += newline + \
-			fill_template(WIX_REG_SEARCH_TEMPLATE_PATH, version_dict)
 		wix_directories += newline + \
 			fill_template(WIX_DIRECTORY_TEMPLATE_PATH, version_dict)
 		wix_features += newline + \
@@ -181,7 +177,6 @@ def fill_wix_template(houdini_versions, copied_binaries, build_dir):
 		'PLD_VERSION_MMP': get_palladio_version_string(),
 		'PACKAGE_VENDOR_ESCAPED': PACKAGE_VENDOR_ESCAPED,
 		'RESOURCE_FOLDER': RESOURCE_DIR,
-		'HOUDINI_REGISTRY_SEARCH': wix_reg_search,
 		'HOUDINI_DIRECTORY': wix_directories,
 		'PALLADIO_FOR_HOUDINI_FEATURE': wix_features
 	}
