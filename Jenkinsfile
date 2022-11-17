@@ -52,7 +52,7 @@ import com.esri.zrh.jenkins.ToolInfo
 
 // -- SETUP
 
-psl.runsHere('production')
+psl.runsHere('testing')
 env.PIPELINE_ARCHIVING_ALLOWED = "true"
 properties([ disableConcurrentBuilds() ])
 
@@ -119,7 +119,7 @@ def taskRunTest(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, 'build_and_run_tests', cfg, [])
+		papl.runCMakeBuild(SOURCE, 'build_and_run_tests', cfg, [], JenkinsTools.CMAKE319)
 	}
 	junit('build/test/palladio_test_report.xml')
 }
@@ -134,7 +134,7 @@ def taskBuildPalladio(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs, JenkinsTools.CMAKE319)
 	}
 	final String artifactPattern = "palladio-*"
 
