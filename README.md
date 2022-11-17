@@ -243,10 +243,12 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 * RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
  
 ### Required Toolchain & Compiler
-* [cmake 3.13 or later](https://cmake.org/download)
+* [cmake 3.19 or later](https://cmake.org/download)
 * [conan 1.20 or later](https://www.conan.io/downloads)
 * Linux: GCC 9.3
 * Windows: Visual Studio 2019 (MSVC 14.27)
+* [WiX Toolset 3.11.1 or later](https://wixtoolset.org/docs/wix3/): Optional, required for building .msi installers
+* Python 3.6 or later: Optional, required for building .msi installers
 
 ### Required Build Dependencies (Latest Release)
 * Installation of Houdini 18.5, 19.0 or 19.5 (see https://sidefx.com/download)
@@ -338,6 +340,7 @@ Required CityEngine version: 2022.0 or older.
   - CGA annotations will create different UI widgets, for example a color picker or file browser
 - Seed parameter to change the seed value in the `pldAssign` node
 - Icon to Palladio nodes
+- MSI windows installer
 
 #### Changed:
 - Updated Procedural Runtime (PRT) to 2.6.8300 (corresponds to CityEngine 2022.0)
@@ -347,6 +350,7 @@ Required CityEngine version: 2022.0 or older.
 
 #### Development:
 - Updated compilers (now using C++ 17)
+- Updated required cmake version to 3.19
 - Linux version is now compiled with GCC 9.3 by default
 - Updated test framework and build system
 - Cleaned up CMake files
