@@ -9,20 +9,20 @@ from string import Template
 
 # Dirs and Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
-CFG_PATH = SCRIPT_DIR / f'installer_config.json'
-RESOURCE_DIR = SCRIPT_DIR / f'resources'
+CFG_PATH = SCRIPT_DIR / 'installer_config.json'
+RESOURCE_DIR = SCRIPT_DIR / 'resources'
 
-VERSION_PATH = SCRIPT_DIR / f'../version.txt'
+VERSION_PATH = SCRIPT_DIR / '../version.txt'
 
-DEFAULT_BUILD_DIR = SCRIPT_DIR / f'../build/build_msi'
+DEFAULT_BUILD_DIR = SCRIPT_DIR / '../build/build_msi'
 
-TEMPLATE_DIR = SCRIPT_DIR / f'templates'
+TEMPLATE_DIR = SCRIPT_DIR / 'templates'
 DEPLOYMENT_PROPERTIES_TEMPLATE_PATH = TEMPLATE_DIR / 'deployment.properties.in'
 
-WIX_TEMPLATE_PATH = TEMPLATE_DIR / f'palladio.wxs.in'
-WIX_REG_SEARCH_TEMPLATE_PATH = TEMPLATE_DIR / f'palladio_registry_search.in'
-WIX_DIRECTORY_TEMPLATE_PATH = TEMPLATE_DIR / f'palladio_directory.in'
-WIX_FEATURE_TEMPLATE_PATH = TEMPLATE_DIR / f'palladio_feature.in'
+WIX_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio.wxs.in'
+WIX_REG_SEARCH_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_registry_search.in'
+WIX_DIRECTORY_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_directory.in'
+WIX_FEATURE_TEMPLATE_PATH = TEMPLATE_DIR / 'palladio_feature.in'
 
 PROJECT_NAME = 'Palladio'
 PLATFORM = 'win64'
@@ -93,7 +93,7 @@ def wix_compile(sources, vars, build_dir):
 
 
 def wix_link(objects, vars, build_dir, installer_filename):
-	light_cmd = ['light', f'-dWixUILicenseRtf={SCRIPT_DIR}\\resources\\license.rtf', f'-dInstallDir=', '-ext', 'WixUIExtension',
+	light_cmd = ['light', f'-dWixUILicenseRtf={SCRIPT_DIR}\\resources\\license.rtf', '-dInstallDir=', '-ext', 'WixUIExtension',
               '-cultures:en-us', '-ext', 'WixUtilExtension', '-o', f'{build_dir}\\' + installer_filename]
 	light_cmd.extend(objects)
 	light_cmd.extend(vars)
@@ -130,7 +130,7 @@ def copy_binaries(binary_folders, build_dir):
 			continue
 		os_src_path = rel_to_os_dir(src_path)
 		if os_src_path.exists():
-			binary_path = build_dir / f'install' / Path(binary_folder)
+			binary_path = build_dir / 'install' / Path(binary_folder)
 			print("copy ", os_src_path, " to ", binary_path)
 			shutil.copytree(os_src_path, binary_path)
 			valid_binaries[binary_folder] = binary_path
@@ -182,7 +182,7 @@ def fill_wix_template(houdini_versions, copied_binaries, build_dir):
 		'PALLADIO_FOR_HOUDINI_FEATURE': wix_features
 	}
 	fill_template_to_file(WIX_TEMPLATE_PATH, build_dir /
-	                      f'palladio.wxs', wix_properties)
+	                      'palladio.wxs', wix_properties)
 
 
 def fill_deployment_properties_templates(installer_filename, build_dir, build_version):
@@ -194,7 +194,7 @@ def fill_deployment_properties_templates(installer_filename, build_dir, build_ve
 		'PLD_PKG_OS': PLATFORM
 	}
 	fill_template_to_file(DEPLOYMENT_PROPERTIES_TEMPLATE_PATH, build_dir /
-                       f'deployment.properties', deployment_properties)
+                       'deployment.properties', deployment_properties)
 
 
 def parse_arguments(houdini_versions):
