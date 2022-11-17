@@ -47,7 +47,12 @@ import com.esri.zrh.jenkins.ToolInfo
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5' ],
 ]
 
-@Field final List INSTALLER_CONFIG = [ [ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ] ]
+@Field final String DOCKER_AGENT_WINDOWS = 'win19-64-d'
+@Field final String DOCKER_WS_WINDOWS = "c:/temp/ws"
+
+@Field final Map WINDOWS_INSTALLER_DOCKER_CONFIG = [ ba: DOCKER_AGENT_WINDOWS, ws: DOCKER_WS_WINDOWS ]
+@Field final Map WINDOWS_INSTALLER_NATIVE_CONFIG = [ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64 ]
+@Field final List INSTALLER_CONFIG = [ WINDOWS_INSTALLER_NATIVE_CONFIG + WINDOWS_INSTALLER_DOCKER_CONFIG ]
 @Field final List INSTALLER_HOUDINI_VERS = [ '18.5', '19.0', '19.5' ]
 
 // -- SETUP
@@ -181,26 +186,46 @@ def taskCreateInstaller(cfg) {
 	pyArgs += "-bv ${env.BUILD_NUMBER} "
 	pyArgs += "-bd \"build\\build_msi\" "
 
-	// Toolchain definition for building MSI installers.
-	final JenkinsTools compiler = cepl.getToolchainTool(cfg)
-	final def toolchain = [
-		new ToolInfo(JenkinsTools.WIX, cfg),
-		new ToolInfo(compiler, cfg)
-	]
+	final String tag = "latest"
+	final String image = "zrh-dreg-sp-1.esri.com/build_tools/python-wix:${tag}"
+	final String containerName = "palladio-installer-${env.BRANCH_NAME.replaceAll('/', '_')}-b${BUILD_ID}"
 
-	// Setup environment according to above toolchain definition.
-	withTool(toolchain) {
-		psl.runCmd('python "palladio.git\\deploy\\build.py" ' + pyArgs)
+	String workDir = "${cfg.ws}/${SOURCE}"
+	Map dirMap = [ (env.WORKSPACE) : cfg.ws ]
+	Map envMap = [:]
 
-		def buildProps = papl.jpe.readProperties(file: 'build/build_msi/deployment.properties')
+	final String buildCmd = 'python "deploy\\build.py" ' + pyArgs
+	runDockerCmd(cfg, image, containerName, dirMap, envMap, workDir, buildCmd)
 
-		final String artifactPattern = "build_msi/${buildProps.package_file}"
-		final def artifactVersion = { p -> buildProps.package_version }
+	def buildProps = papl.jpe.readProperties(file: 'build/build_msi/deployment.properties')
 
-		def classifierExtractor = { p ->
-			return cepl.getArchiveClassifier(cfg)
-		}
+	final String artifactPattern = "build_msi/${buildProps.package_file}"
+	final def artifactVersion = { p -> buildProps.package_version }
 
-		papl.publish(appName, env.BRANCH_NAME, artifactPattern, artifactVersion, cfg, classifierExtractor)
+	def classifierExtractor = { p ->
+		return cepl.getArchiveClassifier(cfg)
 	}
+
+	papl.publish(appName, env.BRANCH_NAME, artifactPattern, artifactVersion, cfg, classifierExtractor)
+}
+
+
+// -- HELPERS
+
+def runDockerCmd(Map cfg, String image, String containerName, Map dirMap, Map envMap, String workDir, String cmd) {
+	String dirMapStrArgs = ""
+	dirMap.each { k,v -> dirMapStrArgs += " -v \"${k}:${v}\"" }
+
+	String envMapStrArgs = ''
+	envMap.each { k, v -> envMapStrArgs += " --env ${k}=${v}" }
+
+	String runArgs = '--pull always --rm'
+	runArgs += " --name ${containerName}"
+	runArgs += dirMapStrArgs
+	runArgs += " -w ${workDir}"
+	runArgs += envMapStrArgs
+	runArgs += " ${image}"
+	runArgs += isUnix() ? " bash -c '${cmd}'" : " cmd /c \"${cmd}\""
+
+	psl.runCmd("docker run ${runArgs}")
 }
