@@ -42,7 +42,7 @@
 
 ${PALLADIO_FOR_HOUDINI_FEATURE}
 
-		<Feature Id='PalladioPackageJSON' Level='1'>
+		<Feature Id='PalladioPackageJSON' Display='hidden' Level='1'>
 			<ComponentRef Id='PalladioPackageJSONComponent' />
 		</Feature>
 
