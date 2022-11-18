@@ -142,7 +142,7 @@ def taskBuildPalladio(cfg) {
 		dir(path: 'build'){
 			stashFile = cepl.findOneFile(artifactPattern)
 			echo("stashFile: '${stashFile}'")
-			stash(includes: artifactPattern, name: "houdini${cfg.houdini.replaceAll('\\.', '_')}")
+			stash(includes: artifactPattern, name: "houdini${cfg.houdini.replace('.', '_')}")
 			stashPath = "${stashFile.path}"
 			echo("file path to stash: '${stashPath}'")
 		}
@@ -170,11 +170,11 @@ def taskCreateInstaller(cfg) {
 	dir(path: 'build'){
 		dir(path: 'tmp'){
 			INSTALLER_HOUDINI_VERS.each { mv ->
-				unstash(name: "houdini${mv.replaceAll('\\.', '_')}")
-				def zipFile = cepl.findOneFile("*hdn${mv.replaceAll('\\.', '-')}*.zip")
+				unstash(name: "houdini${mv.replace('.', '_')}")
+				def zipFile = cepl.findOneFile("*hdn${mv.replace('.', '-')}*.zip")
 				final String zipFileName = zipFile.name
 				unzip(zipFile:zipFileName)
-				pyArgs += "-h${mv.replaceAll('\\.', '')} \"build\\tmp\\${zipFileName.take(zipFileName.lastIndexOf('.'))}\" "
+				pyArgs += "-h${mv.replace('.', '')} \"build\\tmp\\${zipFileName.take(zipFileName.lastIndexOf('.'))}\" "
 			}
 		}
 	}
