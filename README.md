@@ -316,7 +316,7 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ## Release Notes
 
-### v2.0.0 Beta 1 (Okt 13, 2022)
+### v2.0.0 Beta 1 (Nov 22, 2022)
 
 Required CityEngine version: 2022.0 or older.
 
@@ -333,6 +333,7 @@ Required CityEngine version: 2022.0 or older.
 - Updated Procedural Runtime (PRT) to 2.6.8300 (corresponds to CityEngine 2022.0)
 - Rule attribute names can now be encoded using Houdini's string encoding
 - Fixed issues with rule package paths containing white spaces
+- Fixed loading of rule packages embedded in HDAs (Houdini Digital Assets)
 - Updated and restructured user manual
 
 #### Development:
