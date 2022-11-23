@@ -17,30 +17,24 @@
 #include "TestCallbacks.h"
 #include "TestUtils.h"
 
-#include "../codec/encoder/HoudiniEncoder.h"
-#include "../palladio/AttributeConversion.h"
-#include "../palladio/ModelConverter.h"
-#include "../palladio/PRTContext.h"
-#include "../palladio/Utils.h"
+#include "PRTContext.h"
+#include "Utils.h"
+#include "encoder/HoudiniEncoder.h"
 
 #include "prt/AttributeMap.h"
 #include "prtx/Geometry.h"
 #include "prtx/Mesh.h"
 
-// clang-format off
-#include "../palladio/BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/filesystem/path.hpp)
-// clang-format on
-
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <algorithm>
+#include <filesystem>
 
 namespace {
 
 PRTContextUPtr prtCtx;
-const PLD_BOOST_NS::filesystem::path testDataPath = TEST_DATA_PATH;
+const std::filesystem::path testDataPath = TEST_DATA_PATH;
 
 template <typename T>
 void compareReversed(const std::vector<T>& a, const std::vector<T>& b) {
@@ -53,12 +47,7 @@ void compareReversed(const std::vector<T>& a, const std::vector<T>& b) {
 
 int main(int argc, char* argv[]) {
 	assert(!prtCtx);
-
-	const std::vector<PLD_BOOST_NS::filesystem::path> addExtDirs = {
-	        //"../lib", // adapt to default prt dir layout (core is in bin subdir)
-	        HOUDINI_CODEC_PATH // set to absolute path to houdini encoder lib via cmake
-	};
-
+	const std::vector<std::filesystem::path> addExtDirs = {TEST_RUN_PRT_EXT_DIR, TEST_RUN_CODEC_EXT_DIR};
 	prtCtx.reset(new PRTContext(addExtDirs));
 	int result = Catch::Session().run(argc, argv);
 	prtCtx.reset();
@@ -67,10 +56,10 @@ int main(int argc, char* argv[]) {
 
 TEST_CASE("create file URI from path", "[utils]") {
 #ifdef PLD_LINUX
-	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("/tmp/foo.txt"));
+	const auto u = toFileURI(std::filesystem::path("/tmp/foo.txt"));
 	CHECK(u.compare(L"file:/tmp/foo.txt") == 0);
 #elif defined(PLD_WINDOWS)
-	const auto u = toFileURI(PLD_BOOST_NS::filesystem::path("c:\\tmp\\foo.txt"));
+	const auto u = toFileURI(std::filesystem::path("c:\\tmp\\foo.txt"));
 	INFO(toOSNarrowFromUTF16(u));
 	CHECK(u.compare(L"file:/c:/tmp/foo.txt") == 0);
 #endif
@@ -117,49 +106,138 @@ TEST_CASE("replace chars not in set", "[utils]") {
 	}
 }
 
-TEST_CASE("separate fully qualified name into style and name", "[NameConversion]") {
-	std::wstring style, name;
+TEST_CASE("tokenize string at first token", "[utils]") {
+	auto testCall = [](const std::wstring& input) {
+		constexpr wchar_t DELIM = L'$';
+		return tokenizeFirst(input, DELIM);
+	};
 
 	SECTION("default case") {
-		NameConversion::separate(L"foo$bar", style, name);
+		const auto [style, name] = testCall(L"foo$bar");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar");
 	}
 
 	SECTION("no style") {
-		NameConversion::separate(L"foo", style, name);
+		const auto [style, name] = testCall(L"foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("edge case 1") {
-		NameConversion::separate(L"foo$", style, name);
+		const auto [style, name] = testCall(L"foo$");
 		CHECK(style == L"foo");
 		CHECK(name.empty());
 	}
 
 	SECTION("edge case 2") {
-		NameConversion::separate(L"$foo", style, name);
+		const auto [style, name] = testCall(L"$foo");
 		CHECK(style.empty());
 		CHECK(name == L"foo");
 	}
 
 	SECTION("separator only") {
-		NameConversion::separate(L"$", style, name);
+		const auto [style, name] = testCall(L"$");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("empty") {
-		NameConversion::separate(L"", style, name);
+		const auto [style, name] = testCall(L"");
 		CHECK(style.empty());
 		CHECK(name.empty());
 	}
 
 	SECTION("two separators") {
-		NameConversion::separate(L"foo$bar$baz", style, name);
+		const auto [style, name] = testCall(L"foo$bar$baz");
 		CHECK(style == L"foo");
 		CHECK(name == L"bar$baz");
+	}
+}
+
+TEST_CASE("tokenize string at all tokens", "[utils]") {
+	auto testCall = [](const std::wstring& input) {
+		constexpr wchar_t DELIM = L'$';
+		return tokenizeAll(input, DELIM);
+	};
+
+	using Catch::Matchers::Equals;
+
+	SECTION("one token") {
+		const auto sections = testCall(L"foo$bar");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar"}));
+	}
+
+	SECTION("two tokens") {
+		const auto sections = testCall(L"foo$bar$baz");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
+	}
+
+	SECTION("no token") {
+		const auto sections = testCall(L"foo");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("edge case 1") {
+		const auto sections = testCall(L"foo$");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("edge case 2") {
+		const auto sections = testCall(L"$foo");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo"}));
+	}
+
+	SECTION("token only") {
+		const auto sections = testCall(L"$");
+		CHECK(sections.empty());
+	}
+
+	SECTION("two consecutive tokens") {
+		const auto sections = testCall(L"foo$bar$$baz");
+		REQUIRE_THAT(sections, Equals(std::vector<std::wstring>{L"foo", L"bar", L"baz"}));
+	}
+
+	SECTION("empty") {
+		const auto sections = testCall(L"");
+		CHECK(sections.empty());
+	}
+}
+
+TEST_CASE("create file extension string", "[utils]") {
+	SECTION("empty list"){
+		const std::vector<std::wstring> empty = {};
+		const std::wstring gen = getFileExtensionString(empty);
+		const std::wstring ref = L"*";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single *.extension"){
+		const std::vector<std::wstring> extensions = {L"*.png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single .extension"){
+		const std::vector<std::wstring> extensions = {L".png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("single bare extension"){
+		const std::vector<std::wstring> extensions = {L"png"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png";
+		CHECK(gen == ref);
+	}
+
+	SECTION("multiple extensions"){
+		const std::vector<std::wstring> extensions = {L"png", L".jpg", L"*.tif"};
+		const std::wstring gen = getFileExtensionString(extensions);
+		const std::wstring ref = L"*.png *.jpg *.tif";
+		CHECK(gen == ref);
 	}
 }
 
@@ -544,15 +622,15 @@ TEST_CASE("serialize two meshes where one does not have uvs (issue 108)") {
 }
 
 TEST_CASE("generate two cubes with two uv sets") {
-	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj",
-	                                                                         testDataPath / "quad1.obj"};
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj",
+	                                                                testDataPath / "quad1.obj"};
 
 	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0]),
 	                                                    toFileURI(initialShapeSources[1])};
 
 	const std::vector<std::wstring> startRules = {L"Default$OneSet", L"Default$TwoSets"};
 
-	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
+	const std::filesystem::path rpkPath = testDataPath / "uvsets.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;
@@ -562,7 +640,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	// TODO: also check actual coordinates etc
 
 	{
-		const CallbackResult& cr = tc.results[0];
+		const CallbackResult& cr = *tc.results[0];
 		CHECK(cr.name == L"shape0");
 
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
@@ -588,7 +666,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 	}
 
 	{
-		const CallbackResult& cr = tc.results[1];
+		const CallbackResult& cr = *tc.results[1];
 		CHECK(cr.name == L"shape1");
 
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
@@ -621,17 +699,17 @@ TEST_CASE("generate two cubes with two uv sets") {
 }
 
 TEST_CASE("generate with generic attributes") {
-	const std::vector<PLD_BOOST_NS::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj"};
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "quad0.obj"};
 	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0])};
 	const std::vector<std::wstring> startRules = {L"Default$Init"};
-	const PLD_BOOST_NS::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
+	const std::filesystem::path rpkPath = testDataPath / "GenAttrs1.rpk";
 	const std::wstring ruleFile = L"bin/r1.cgb";
 
 	TestCallbacks tc;
 	generate(tc, prtCtx, rpkPath, ruleFile, initialShapeURIs, startRules);
 
 	REQUIRE(tc.results.size() == 1);
-	const CallbackResult& cr = tc.results[0];
+	const CallbackResult& cr = *tc.results[0];
 
 	const std::vector<uint32_t> faceRangesExp = {0, 6, 12};
 	CHECK(cr.faceRanges == faceRangesExp);

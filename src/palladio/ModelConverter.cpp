@@ -22,12 +22,8 @@
 
 #include "GU/GU_HoleInfo.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-// clang-format on
-
 #include <mutex>
+#include <variant>
 
 namespace {
 

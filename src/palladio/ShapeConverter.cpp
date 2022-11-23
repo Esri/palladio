@@ -20,18 +20,14 @@
 #include "MultiWatch.h"
 #include "PrimitiveClassifier.h"
 #include "ShapeData.h"
+#include "Utils.h"
 
 #include "GA/GA_PageHandle.h"
 #include "GEO/GEO_PrimPolySoup.h"
 #include "GU/GU_Detail.h"
 #include "UT/UT_String.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-#include PLD_BOOST_INCLUDE(/functional/hash.hpp)
-// clang-format on
+#include <variant>
 
 namespace {
 
@@ -141,9 +137,9 @@ int32_t getRandomSeed(const GA_Detail* detail, const GA_Offset& primOffset, cons
 	else {
 		const std::array<double, 3> centroid = getCentroid(coords, ch);
 		size_t hash = 0;
-		PLD_BOOST_NS::hash_combine(hash, centroid[0]);
-		PLD_BOOST_NS::hash_combine(hash, centroid[1]);
-		PLD_BOOST_NS::hash_combine(hash, centroid[2]);
+		hash_combine(hash, std::hash<double>{}(centroid[0]));
+		hash_combine(hash, std::hash<double>{}(centroid[1]));
+		hash_combine(hash, std::hash<double>{}(centroid[2]));
 		randomSeed = static_cast<int32_t>(hash); // TODO: do we still get a good hash with this truncation?
 	}
 
@@ -265,7 +261,12 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 			primCls.put(prim);
 			putMainAttributes(detail, mah, prim);
 			const GA_Offset& off = prim->getMapOffset();
-			mah.seed.set(off, randomSeed);
+			if (mDefaultMainAttributes.mOverrideSeed) {
+				mah.seed.set(off, mDefaultMainAttributes.mSeed);
+			}
+			else {
+				mah.seed.set(off, randomSeed);
+			}
 		} // for all primitives in initial shape
 	}     // for all initial shapes
 }
@@ -273,9 +274,10 @@ void ShapeConverter::put(GU_Detail* detail, PrimitiveClassifier& primCls, const 
 void ShapeConverter::getMainAttributes(SOP_Node* node, const OP_Context& context) {
 	const fpreal now = context.getTime();
 	mDefaultMainAttributes.mRPK = AssignNodeParams::getRPK(node, now);
-	mDefaultMainAttributes.mRuleFile = AssignNodeParams::getRuleFile(node, now);
 	mDefaultMainAttributes.mStyle = AssignNodeParams::getStyle(node, now);
 	mDefaultMainAttributes.mStartRule = AssignNodeParams::getStartRule(node, now);
+	mDefaultMainAttributes.mSeed = AssignNodeParams::getSeed(node, now);
+	mDefaultMainAttributes.mOverrideSeed = AssignNodeParams::getOverrideSeed(node, now);
 }
 
 namespace {
@@ -312,9 +314,6 @@ MainAttributes ShapeConverter::getMainAttributesFromPrimitive(const GU_Detail* d
 	GA_ROAttributeRef rpkRef(detail->findPrimitiveAttribute(PLD_RPK));
 	tryAssign(ma.mRPK, rpkRef, firstOffset);
 
-	GA_ROAttributeRef ruleFileRef(detail->findPrimitiveAttribute(PLD_RULE_FILE));
-	tryAssign(ma.mRuleFile, ruleFileRef, firstOffset);
-
 	GA_ROAttributeRef startRuleRef(detail->findPrimitiveAttribute(PLD_START_RULE));
 	tryAssign(ma.mStartRule, startRuleRef, firstOffset);
 
@@ -330,7 +329,8 @@ void ShapeConverter::putMainAttributes(const GU_Detail* detail, MainAttributeHan
 
 	const GA_Offset& off = primitive->getMapOffset();
 	mah.rpk.set(off, ma.mRPK.string().c_str());
-	mah.ruleFile.set(off, toOSNarrowFromUTF16(ma.mRuleFile).c_str());
 	mah.startRule.set(off, toOSNarrowFromUTF16(ma.mStartRule).c_str());
 	mah.style.set(off, toOSNarrowFromUTF16(ma.mStyle).c_str());
+	if (ma.mOverrideSeed)
+		mah.seed.set(off, ma.mSeed);
 }

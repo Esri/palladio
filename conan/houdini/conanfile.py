@@ -27,10 +27,13 @@ class HoudiniConan(ConanFile):
         self.copy("toolkit/*", ".", self.local_houdini_installation)
         if self.settings.os == "Windows":
             self.copy("custom/*", ".", self.local_houdini_installation)
+            self.copy("python27/*", ".", self.local_houdini_installation)
+            self.copy("python37/*", ".", self.local_houdini_installation)
         elif self.settings.os == "Linux":
             self.copy("houdini_setup*", ".", self.local_houdini_installation)  # needed for sesitag etc
             self.copy("dsolib/*", ".", self.local_houdini_installation)
             self.copy("houdini/Licensing.opt", ".", self.local_houdini_installation)
+            self.copy("python/*", ".", self.local_houdini_installation)
 
     def package_info(self):
         self.cpp_info.libdirs = ['dsolib']

@@ -40,6 +40,7 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <cassert>
 
 namespace {
 
@@ -226,7 +227,7 @@ void convertMaterialToAttributeMap(prtx::PRTUtils::AttributeMapBuilderPtr& aBuil
 
 			case prtx::Material::PT_TEXTURE: {
 				const auto& t = prtxAttr.getTexture(key);
-				const std::wstring p = uriToPath(t);
+				const std::wstring p = t->getURI()->wstring();
 				aBuilder->setString(key.c_str(), p.c_str());
 				break;
 			}
@@ -235,7 +236,8 @@ void convertMaterialToAttributeMap(prtx::PRTUtils::AttributeMapBuilderPtr& aBuil
 				const auto& ta = prtxAttr.getTextureArray(key);
 
 				prtx::WStringVector pa(ta.size());
-				std::transform(ta.begin(), ta.end(), pa.begin(), uriToPath);
+				std::transform(ta.begin(), ta.end(), pa.begin(),
+				               [](const prtx::TexturePtr& t) { return t->getURI()->wstring(); });
 
 				std::vector<const wchar_t*> ppa = toPtrVec(pa);
 				aBuilder->setStringArray(key.c_str(), ppa.data(), ppa.size());
@@ -316,7 +318,8 @@ void forwardGenericAttributes(HoudiniCallbacks* hc, size_t initialShapeIndex, co
 			           case prtx::Attributable::PT_BOOL_ARRAY: {
 				           const prtx::BoolVector& v = shape->getBoolArray(keyStr);
 				           const std::unique_ptr<bool[]> vPtrs(new bool[v.size()]);
-				           for (size_t i = 0; i < v.size(); i++) vPtrs[i] = prtx::toPrimitive(v[i]);
+				           for (size_t i = 0; i < v.size(); i++)
+					           vPtrs[i] = prtx::toPrimitive(v[i]);
 				           hc->attrBoolArray(initialShapeIndex, shape->getID(), key, vPtrs.get(), v.size(), 1);
 				           break;
 			           }

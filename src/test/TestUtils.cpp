@@ -18,7 +18,7 @@
 
 #include "prt/API.h"
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 namespace {
 
@@ -29,15 +29,15 @@ constexpr const wchar_t* FILE_CGA_PRINT = L"CGAPrint.txt";
 
 } // namespace
 
-void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const PLD_BOOST_NS::filesystem::path& rpkPath,
+void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesystem::path& rpkPath,
               const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
               const std::vector<std::wstring>& startRules) {
 	REQUIRE(initialShapeURIs.size() == startRules.size());
 
 	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
+	REQUIRE(rpkRM);
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs; // key -> uri
-	getCGBs(rpkRM, cgbs);
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(rpkRM); // key -> uri
 
 	AttributeMapBuilderUPtr amb(prt::AttributeMapBuilder::create());
 	const RuleFileInfoUPtr ruleFileInfo(prt::createRuleFileInfo(cgbs[0].second.c_str(), prtCtx->mPRTCache.get()));

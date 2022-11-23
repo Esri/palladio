@@ -18,8 +18,11 @@
 
 #include "PRTContext.h"
 #include "ShapeConverter.h"
+#include "RuleAttributes.h"
 
 #include "SOP/SOP_Node.h"
+
+#include <variant>
 
 class SOPAssign : public SOP_Node {
 public:
@@ -29,10 +32,16 @@ public:
 	const PRTContextUPtr& getPRTCtx() const {
 		return mPRTCtx;
 	}
-	const PLD_BOOST_NS::filesystem::path& getRPK() const {
+	const std::filesystem::path& getRPK() const {
 		return mShapeConverter->mDefaultMainAttributes.mRPK;
 	}
+	const std::wstring& getStyle() const {
+		return mShapeConverter->mDefaultMainAttributes.mStyle;
+	}
 
+	void updateDefaultCGAAttributes(const ShapeData& shapeData);
+	void updatePrimitiveAttributes(GU_Detail* detail);
+	void buildUI(const RuleAttributeSet& ruleAttributes, const RuleFileInfoUPtr& ruleFileInfo);
 	void opChanged(OP_EventType reason, void* data = nullptr) override;
 
 protected:
@@ -41,4 +50,9 @@ protected:
 private:
 	const PRTContextUPtr& mPRTCtx;
 	ShapeConverterUPtr mShapeConverter;
+
+public:
+	using CGAAttributeValueType = std::variant<std::monostate, std::wstring, double, bool, std::vector<std::wstring>, std::vector<double>, std::vector<bool>>;
+	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
+	CGAAttributeValueMap mDefaultCGAAttributes;
 };

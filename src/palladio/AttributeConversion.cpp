@@ -19,13 +19,10 @@
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/algorithm/string.hpp)
-// clang-format on
-
 #include <mutex>
 #include <bitset>
+
+#include "UT/UT_VarEncode.h"
 
 namespace {
 
@@ -68,7 +65,7 @@ void setHandleRange(const GA_IndexMap& indexMap, GA_RWBatchHandleS& handle, GA_O
 	const UT_String attrValue = [&value]() {
 		const auto sh = StringConversionCaches::toPrimAttr.get(value);
 		if (sh)
-			return sh.get();
+			return sh.value();
 		const std::string nv = toOSNarrowFromUTF16(value);
 		UT_String hv(UT_String::ALWAYS_DEEP, nv); // ensure owning UT_String inside cache
 		StringConversionCaches::toPrimAttr.insert(value, hv);
@@ -324,7 +321,7 @@ void ToHoudini::createAttributeHandles(bool useArrayTypes) {
 		const auto& type = hm.second.type;
 
 		HandleType handle; // set to NoHandle by default
-		assert(handle.which() == 0);
+		assert(handle.index() == 0);
 		switch (type) {
 			case prt::Attributable::PT_BOOL:
 			case prt::Attributable::PT_BOOL_ARRAY: {
@@ -393,10 +390,10 @@ void ToHoudini::createAttributeHandles(bool useArrayTypes) {
 				break;
 		}
 
-		if (handle.which() != 0) {
+		if (handle.index() != 0) {
 			hm.second.handleType = handle;
 			if (DBG)
-				LOG_DBG << "added attr handle " << utKey << " of type " << handle.type().name();
+				LOG_DBG << "added attr handle " << utKey;
 		}
 		else if (DBG)
 			LOG_DBG << "could not update handle for primitive attribute " << utKey;
@@ -408,7 +405,7 @@ void ToHoudini::setAttributeValues(const prt::AttributeMap* attrMap, const GA_In
 	for (auto& h : mHandleMap) {
 		if (attrMap->hasKey(h.second.key.c_str())) {
 			const HandleVisitor hv(h.second, attrMap, primIndexMap, rangeStart, rangeSize);
-			PLD_BOOST_NS::apply_visitor(hv, h.second.handleType);
+			std::visit(hv, h.second.handleType);
 		}
 	}
 }
@@ -501,72 +498,51 @@ void ToHoudini::HandleVisitor::operator()(GA_RWHandleSA& handle) const {
 
 } // namespace AttributeConversion
 
-namespace {
-
-constexpr const char* RULE_ATTR_NAME_TO_PRIM_ATTR[][2] = {{".", "__"}};
-constexpr size_t RULE_ATTR_NAME_TO_PRIM_ATTR_N =
-        sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR) / sizeof(RULE_ATTR_NAME_TO_PRIM_ATTR[0]);
-
-constexpr wchar_t STYLE_SEPARATOR = L'$';
-
-} // namespace
-
 namespace NameConversion {
 
-std::wstring addStyle(const std::wstring& n, const std::wstring& style) {
-	return style + STYLE_SEPARATOR + n;
+std::wstring addStyle(const std::wstring& attrName, const std::wstring& style) {
+	return style + STYLE_SEPARATOR + attrName;
 }
 
-std::wstring removeStyle(const std::wstring& n) {
-	const auto p = n.find_first_of(STYLE_SEPARATOR);
+std::wstring removeStyle(const std::wstring& fullyQualifiedAttrName) {
+	const auto p = fullyQualifiedAttrName.find_first_of(STYLE_SEPARATOR);
 	if (p != std::string::npos)
-		return n.substr(p + 1);
-	return n;
+		return fullyQualifiedAttrName.substr(p + 1);
+	return fullyQualifiedAttrName;
 }
 
-UT_String toPrimAttr(const std::wstring& name) {
+std::wstring removeGroups(const std::wstring & fullyQualifiedAttrName) {
+	const auto p = fullyQualifiedAttrName.rfind(GROUP_SEPARATOR);
+	if (p != std::string::npos)
+		return fullyQualifiedAttrName.substr(p + 1);
+	return fullyQualifiedAttrName;
+}
+
+UT_String toPrimAttr(const std::wstring& fullyQualifiedAttrName) {
 	WA("all");
 
-	const auto cv = StringConversionCaches::toPrimAttr.get(name);
+	const auto cv = StringConversionCaches::toPrimAttr.get(fullyQualifiedAttrName);
 	if (cv)
-		return cv.get();
+		return cv.value();
 
-	std::string s = toOSNarrowFromUTF16(removeStyle(name));
-	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][0], RULE_ATTR_NAME_TO_PRIM_ATTR[i][1]);
+	std::string s = toOSNarrowFromUTF16(removeStyle(fullyQualifiedAttrName));
 
 	UT_String primAttr(UT_String::ALWAYS_DEEP, s); // ensure owning UT_String inside cache
-	StringConversionCaches::toPrimAttr.insert(name, primAttr);
+	primAttr = UT_VarEncode::encodeAttrib(primAttr);
+	StringConversionCaches::toPrimAttr.insert(fullyQualifiedAttrName, primAttr);
+
 	return primAttr;
 }
 
-std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& name) {
+std::wstring toRuleAttr(const std::wstring& style, const UT_StringHolder& attrName) {
 	WA("all");
 
-	std::string s = name.toStdString();
-	for (size_t i = 0; i < RULE_ATTR_NAME_TO_PRIM_ATTR_N; i++)
-		PLD_BOOST_NS::replace_all(s, RULE_ATTR_NAME_TO_PRIM_ATTR[i][1], RULE_ATTR_NAME_TO_PRIM_ATTR[i][0]);
-	return addStyle(toUTF16FromOSNarrow(s), style);
-}
+	std::string s = attrName.toStdString();
 
-void separate(const std::wstring& fqName, std::wstring& style, std::wstring& name) {
-	if (fqName.length() <= 1)
-		return;
+	UT_StringHolder ruleAttr(s);
+	ruleAttr = UT_VarEncode::decodeAttrib(ruleAttr);
 
-	const auto p = fqName.find_first_of(STYLE_SEPARATOR);
-	if (p == std::wstring::npos) {
-		name.assign(fqName);
-	}
-	else if (p > 0 && p < fqName.length() - 1) {
-		style.assign(fqName.substr(0, p));
-		name.assign(fqName.substr(p + 1));
-	}
-	else if (p == 0) { // empty style
-		name = fqName.substr(1);
-	}
-	else if (p == fqName.length() - 1) { // empty name
-		style = fqName.substr(0, p);
-	}
+	return addStyle(toUTF16FromOSNarrow(ruleAttr.toStdString()), style);
 }
 
 } // namespace NameConversion

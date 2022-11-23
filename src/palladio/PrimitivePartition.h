@@ -22,11 +22,7 @@
 #include "GU/GU_Detail.h"
 #include "SOP/SOP_Node.h"
 
-// clang-format off
-#include "BoostRedirect.h"
-#include PLD_BOOST_INCLUDE(/variant.hpp)
-// clang-format on
-
+#include <variant>
 #include <vector>
 #include <map>
 
@@ -34,7 +30,7 @@ class PrimitiveClassifier;
 
 class PrimitivePartition {
 public:
-	using ClassifierValueType = PLD_BOOST_NS::variant<UT_String, int32>;
+	using ClassifierValueType = std::variant<UT_String, int32>;
 	using PrimitiveVector = std::vector<const GA_Primitive*>;
 	using PartitionMap = std::map<ClassifierValueType, PrimitiveVector>;
 

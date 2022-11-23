@@ -2,3 +2,7 @@
 /.idea
 /src/.idea
 /src/Pipfile.lock
+/.venv*
+/.vs
+/.vscode
+src/CMakeSettings.json
