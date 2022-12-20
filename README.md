@@ -46,7 +46,7 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 * Windows 10 or 11 (64bit)
 * RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 * Houdini 18.5, 19.0 or 19.5
-* The latest release requires CityEngine 2022.0 or older for creating rule packages.
+* The latest release requires CityEngine 2022.1 or older for creating rule packages.
 * For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
 
 #### From Pre-Built Binaries
@@ -315,6 +315,12 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. Run `bin\palladio_test`
 
 ## Release Notes
+
+### v2.0.0 Beta 2
+
+Required CityEngine version: 2022.1 or older.
+#### Changed:
+- Updated Procedural Runtime (PRT) to 2.7.8538 (corresponds to CityEngine 2022.1)
 
 ### v2.0.0 Beta 1 (Nov 22, 2022)
 
