@@ -994,6 +994,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 				continue;
 			const PRM_Type currParmType = parm.getType();
 			GA_AttributeOwner attrOwner = getGroupAttribOwner(GA_GroupType::GA_GROUP_PRIMITIVE);
+			GA_Range primitiveRange = detail->getPrimitiveRange();
 
 			switch (currParmType.getBasicType()) {
 				case PRM_Type::PRM_BasicType::PRM_BASIC_ORDINAL: {
@@ -1005,7 +1006,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								UT_String result;
 								if (choices->tokenFromIndex(result, intValue)) {
 									GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-									stringHandle.set(0, result);
+									for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+										stringHandle.set(it.getOffset(), result);
 								}
 							}
 							break;
@@ -1014,7 +1016,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							const int intValue = evalInt(&parm, 0, time);
 							GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0),
 							                                               nullptr, nullptr, GA_STORE_INT8));
-							ordinalHandle.set(0, intValue);
+							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+								ordinalHandle.set(it.getOffset(), intValue);
 							break;
 						}
 						default:
@@ -1032,7 +1035,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 
 							GA_RWHandleT<UT_Int32Array> intArrayHandle(
 							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
-							intArrayHandle.set(0, boolArray.value());
+							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+								intArrayHandle.set(it.getOffset(), boolArray.value());
 						}
 						else if (std::holds_alternative<std::vector<double>>(it->second)) {
 							const std::optional<UT_FprealArray> floatArray = getFloatArrayFromParm(this, parm, time);
@@ -1041,7 +1045,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								break;
 
 							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
-							floatArrayHandle.set(0, floatArray.value());
+							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+								floatArrayHandle.set(it.getOffset(), floatArray.value());
 						}
 						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
 							const std::optional<UT_StringArray> stringArray = getStringArrayFromParm(this, parm, time);
@@ -1050,7 +1055,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								break;
 
 							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
-							stringArrayHandle.set(0, stringArray.value());
+							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+								stringArrayHandle.set(it.getOffset(), stringArray.value());
 						}
 					}
 					else {
@@ -1067,7 +1073,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								}
 
 								GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-								floatHandle.set(0, floatValue);
+								for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+									floatHandle.set(it.getOffset(), floatValue);
 								break;
 							}
 							case PRM_Type::PRM_FLOAT_RGBA: {
@@ -1078,7 +1085,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 
 								UT_String stringValue(toOSNarrowFromUTF16(colorString));
 								GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-								stringHandle.set(0, stringValue);
+								for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+									stringHandle.set(it.getOffset(), stringValue);
 								break;
 							}
 							default:
@@ -1092,7 +1100,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 					evalString(stringValue, &parm, 0, time);
 
 					GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-					stringHandle.set(0, stringValue);
+					for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
+						stringHandle.set(it.getOffset(), stringValue);
 					break;
 				}
 				default: {
