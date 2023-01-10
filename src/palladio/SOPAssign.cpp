@@ -893,6 +893,11 @@ bool tryHandleColor(SOPAssign* node, const std::wstring attrId, const std::wstri
 	return true;
 }
 
+template <typename H, typename V>
+void setAttributeRange(const GA_Range& range, H& handle, const V& value) {
+	for (GA_Iterator it(range); !it.atEnd(); ++it)
+		handle.set(it.getOffset(), value);
+}
 } // namespace
 
 SOPAssign::SOPAssign(const PRTContextUPtr& pCtx, OP_Network* net, const char* name, OP_Operator* op)
@@ -1006,8 +1011,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								UT_String result;
 								if (choices->tokenFromIndex(result, intValue)) {
 									GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-									for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-										stringHandle.set(it.getOffset(), result);
+									setAttributeRange(primitiveRange, stringHandle, result);
 								}
 							}
 							break;
@@ -1016,8 +1020,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 							const int intValue = evalInt(&parm, 0, time);
 							GA_RWHandleI ordinalHandle(detail->addIntTuple(attrOwner, attributeName, 1, GA_Defaults(0),
 							                                               nullptr, nullptr, GA_STORE_INT8));
-							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-								ordinalHandle.set(it.getOffset(), intValue);
+							setAttributeRange(primitiveRange, ordinalHandle, intValue);
 							break;
 						}
 						default:
@@ -1035,8 +1038,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 
 							GA_RWHandleT<UT_Int32Array> intArrayHandle(
 							        detail->addIntArray(attrOwner, attributeName, 1, nullptr, nullptr, GA_STORE_INT8));
-							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-								intArrayHandle.set(it.getOffset(), boolArray.value());
+							setAttributeRange(primitiveRange, intArrayHandle, boolArray.value());
 						}
 						else if (std::holds_alternative<std::vector<double>>(it->second)) {
 							const std::optional<UT_FprealArray> floatArray = getFloatArrayFromParm(this, parm, time);
@@ -1045,8 +1047,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								break;
 
 							GA_RWHandleDA floatArrayHandle(detail->addFloatArray(attrOwner, attributeName, 1));
-							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-								floatArrayHandle.set(it.getOffset(), floatArray.value());
+							setAttributeRange(primitiveRange, floatArrayHandle, floatArray.value());
 						}
 						else if (std::holds_alternative<std::vector<std::wstring>>(it->second)) {
 							const std::optional<UT_StringArray> stringArray = getStringArrayFromParm(this, parm, time);
@@ -1055,8 +1056,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								break;
 
 							GA_RWHandleSA stringArrayHandle(detail->addStringArray(attrOwner, attributeName, 1));
-							for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-								stringArrayHandle.set(it.getOffset(), stringArray.value());
+							setAttributeRange(primitiveRange, stringArrayHandle, stringArray.value());
 						}
 					}
 					else {
@@ -1073,8 +1073,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 								}
 
 								GA_RWHandleD floatHandle(detail->addFloatTuple(attrOwner, attributeName, 1));
-								for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-									floatHandle.set(it.getOffset(), floatValue);
+								setAttributeRange(primitiveRange, floatHandle, floatValue);
 								break;
 							}
 							case PRM_Type::PRM_FLOAT_RGBA: {
@@ -1085,8 +1084,8 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 
 								UT_String stringValue(toOSNarrowFromUTF16(colorString));
 								GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-								for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-									stringHandle.set(it.getOffset(), stringValue);
+								setAttributeRange(primitiveRange, stringHandle, stringValue);
+
 								break;
 							}
 							default:
@@ -1100,8 +1099,7 @@ void SOPAssign::updatePrimitiveAttributes(GU_Detail* detail) {
 					evalString(stringValue, &parm, 0, time);
 
 					GA_RWHandleS stringHandle(detail->addStringTuple(attrOwner, attributeName, 1));
-					for (GA_Iterator it(primitiveRange); !it.atEnd(); ++it)
-						stringHandle.set(it.getOffset(), stringValue);
+					setAttributeRange(primitiveRange, stringHandle, stringValue);
 					break;
 				}
 				default: {
