@@ -81,7 +81,8 @@ FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Op
 		if (!buf)
 			return nullptr;
 		UT_WorkBuffer buffer((const char*)buf->data(), buf->size());
-		return new FS_ReaderStream(buffer, 0); // freed by Houdini
+		std::time_t modTime = getFileModificationTime(source);
+		return new FS_ReaderStream(buffer, modTime); // freed by Houdini
 	}
 	return nullptr;
 }
