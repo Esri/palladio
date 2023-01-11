@@ -19,7 +19,9 @@ pld_set_common_compiler_flags(${TGT_FS})
 pld_add_version_definitions(${TGT_FS})
 
 if (PLD_WINDOWS)
-    # nothing, inheriting compiler flags from houdini
+    if (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+        target_compile_options(${TGT_FS} PRIVATE -Od -Zi)
+    endif()
 
 elseif (PLD_LINUX)
     if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
