@@ -69,7 +69,8 @@ FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Op
 		const prtx::BinaryVectorPtr buf = resolveRulePackageFile(source, mCache);
 		if (!buf)
 			return nullptr;
-		return new FS_ReaderStream((const char*)buf->data(), buf->size(), 0); // freed by Houdini
+		UT_WorkBuffer buffer((const char*)buf->data(), buf->size());
+		return new FS_ReaderStream(buffer, 0); // freed by Houdini
 	}
 	return nullptr;
 }
