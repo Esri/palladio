@@ -31,13 +31,16 @@ bool isRulePackageURI(const char* p) {
 
 // The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
 std::string getBaseURIPath(const char* p) {
-	const char* lastSchemaSep = std::strrchr(p, ':');
-	const char* firstInnerSep = std::strchr(p, '!');
-	if (lastSchemaSep < firstInnerSep) {
-		return prtx::URIUtils::percentDecode(std::string(lastSchemaSep + 1, firstInnerSep));
-	}
-	else
+	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
+	prtx::URIPtr uri = prtx::URI::create(toUTF16FromUTF8(p));
+	if (!uri)
 		return {};
+
+	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
+	while (uri->getNestedURI())
+		uri = uri->getNestedURI();
+
+	return toUTF8FromUTF16(uri->getPath());
 }
 
 prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cache) {
