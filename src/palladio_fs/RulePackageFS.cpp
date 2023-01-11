@@ -61,6 +61,14 @@ prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cac
 	return {};
 }
 
+std::time_t getFileModificationTime(const char* path) {
+	std::string actualPath(path);
+	if (isRulePackageURI(path))
+		actualPath = getBaseURIPath(path);
+	FS_Info info(actualPath.c_str());
+	return info.getModTime();
+}
+
 } // namespace
 
 RulePackageReader::RulePackageReader(prt::Cache* cache) : mCache(cache) {
@@ -104,11 +112,7 @@ time_t RulePackageInfoHelper::getModTime(const char* source) {
 #else
 int RulePackageInfoHelper::getModTime(const char* source) {
 #endif
-	std::string src(source);
-	if (isRulePackageURI(source))
-		src = getBaseURIPath(source);
-	FS_Info info(src.c_str());
-	return info.getModTime();
+	return getFileModificationTime(source);
 }
 
 int64 RulePackageInfoHelper::getSize(const char* source) {
