@@ -246,6 +246,10 @@ std::string toUTF8FromOSNarrow(const std::string& osString) {
 	return callAPI<wchar_t, char>(prt::StringUtils::toUTF8FromUTF16, utf16String);
 }
 
+std::string toUTF8FromUTF16(const std::wstring& utf16String) {
+	return callAPI<wchar_t, char>(prt::StringUtils::toUTF8FromUTF16, utf16String);
+}
+
 std::wstring toFileURI(const std::string& p) {
 #ifdef _WIN32
 	static const std::wstring schema = L"file:/";
