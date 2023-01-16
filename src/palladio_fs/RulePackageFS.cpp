@@ -1,5 +1,7 @@
 #include "RulePackageFS.h"
 
+#include "palladio/Utils.h"
+
 #include "prtx/DataBackend.h" // !!! use of PRTX requires palladio_fs to be built with the same compiler as PRT
 #include "prtx/URI.h"
 
@@ -8,7 +10,6 @@
 #include <cassert>
 #include <iostream>
 #include <map>
-#include <mutex>
 
 namespace {
 
@@ -31,13 +32,16 @@ bool isRulePackageURI(const char* p) {
 
 // The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
 std::string getBaseURIPath(const char* p) {
-	const char* lastSchemaSep = std::strrchr(p, ':');
-	const char* firstInnerSep = std::strchr(p, '!');
-	if (lastSchemaSep < firstInnerSep) {
-		return prtx::URIUtils::percentDecode(std::string(lastSchemaSep + 1, firstInnerSep));
-	}
-	else
+	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
+	prtx::URIPtr uri = prtx::URI::create(toUTF16FromUTF8(p));
+	if (!uri)
 		return {};
+
+	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
+	while (uri->getNestedURI())
+		uri = uri->getNestedURI();
+
+	return toUTF8FromUTF16(uri->getPath());
 }
 
 prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cache) {
@@ -58,6 +62,14 @@ prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cac
 	return {};
 }
 
+pld_time_t getFileModificationTime(const char* path) {
+	std::string actualPath(path);
+	if (isRulePackageURI(path))
+		actualPath = getBaseURIPath(path);
+	FS_Info info(actualPath.c_str());
+	return info.getModTime();
+}
+
 } // namespace
 
 RulePackageReader::RulePackageReader(prt::Cache* cache) : mCache(cache) {
@@ -69,7 +81,9 @@ FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Op
 		const prtx::BinaryVectorPtr buf = resolveRulePackageFile(source, mCache);
 		if (!buf)
 			return nullptr;
-		return new FS_ReaderStream((const char*)buf->data(), buf->size(), 0); // freed by Houdini
+		UT_WorkBuffer buffer((const char*)buf->data(), buf->size());
+		pld_time_t modTime = getFileModificationTime(source);
+		return new FS_ReaderStream(buffer, modTime); // freed by Houdini
 	}
 	return nullptr;
 }
@@ -95,16 +109,8 @@ bool RulePackageInfoHelper::getIsDirectory(const char* source) {
 	return info.getIsDirectory();
 }
 
-#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
-time_t RulePackageInfoHelper::getModTime(const char* source) {
-#else
-int RulePackageInfoHelper::getModTime(const char* source) {
-#endif
-	std::string src(source);
-	if (isRulePackageURI(source))
-		src = getBaseURIPath(source);
-	FS_Info info(src.c_str());
-	return info.getModTime();
+pld_time_t RulePackageInfoHelper::getModTime(const char* source) {
+	return getFileModificationTime(source);
 }
 
 int64 RulePackageInfoHelper::getSize(const char* source) {
