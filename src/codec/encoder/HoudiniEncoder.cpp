@@ -52,7 +52,7 @@ constexpr const wchar_t* ENC_DESCRIPTION = L"Encodes geometry into the Houdini f
 const prtx::EncodePreparator::PreparationFlags PREP_FLAGS =
         prtx::EncodePreparator::PreparationFlags()
                 .instancing(false)
-                .mergeByMaterial(false)
+                .meshMerging(prtx::MeshMerging::NONE)
                 .triangulate(false)
                 .processHoles(prtx::HoleProcessor::TRIANGULATE_FACES_WITH_HOLES)
                 .mergeVertices(true)
