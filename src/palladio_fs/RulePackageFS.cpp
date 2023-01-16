@@ -1,5 +1,7 @@
 #include "RulePackageFS.h"
 
+#include "palladio/Utils.h"
+
 #include "prtx/DataBackend.h" // !!! use of PRTX requires palladio_fs to be built with the same compiler as PRT
 #include "prtx/URI.h"
 
@@ -8,7 +10,6 @@
 #include <cassert>
 #include <iostream>
 #include <map>
-#include <mutex>
 
 namespace {
 
