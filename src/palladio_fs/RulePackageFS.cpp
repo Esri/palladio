@@ -61,7 +61,7 @@ prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cac
 	return {};
 }
 
-std::time_t getFileModificationTime(const char* path) {
+pld_time_t getFileModificationTime(const char* path) {
 	std::string actualPath(path);
 	if (isRulePackageURI(path))
 		actualPath = getBaseURIPath(path);
@@ -81,7 +81,7 @@ FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Op
 		if (!buf)
 			return nullptr;
 		UT_WorkBuffer buffer((const char*)buf->data(), buf->size());
-		std::time_t modTime = getFileModificationTime(source);
+		pld_time_t modTime = getFileModificationTime(source);
 		return new FS_ReaderStream(buffer, modTime); // freed by Houdini
 	}
 	return nullptr;
@@ -108,11 +108,7 @@ bool RulePackageInfoHelper::getIsDirectory(const char* source) {
 	return info.getIsDirectory();
 }
 
-#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
-time_t RulePackageInfoHelper::getModTime(const char* source) {
-#else
-int RulePackageInfoHelper::getModTime(const char* source) {
-#endif
+pld_time_t RulePackageInfoHelper::getModTime(const char* source) {
 	return getFileModificationTime(source);
 }
 

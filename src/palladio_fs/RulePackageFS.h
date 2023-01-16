@@ -5,6 +5,8 @@
 
 #include "palladio/Utils.h"
 
+#include <ctime>
+
 /**
  * support for nested file RPK URIs:
  * rpk:file:/path/to/file.rpk!/nested/file.cgb
@@ -21,6 +23,12 @@ private:
 	prt::Cache* mCache;
 };
 
+#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
+using pld_time_t = std::time_t;
+#else
+using pld_time_t = int;
+#endif
+
 class RulePackageInfoHelper : public FS_InfoHelper {
 public:
 	RulePackageInfoHelper(prt::Cache* cache);
@@ -29,11 +37,7 @@ public:
 	bool canHandle(const char* source) override;
 	bool hasAccess(const char* source, int mode) override;
 	bool getIsDirectory(const char* source) override;
-#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
-	time_t getModTime(const char* source) override;
-#else
-	int getModTime(const char* source) override;
-#endif
+	pld_time_t getModTime(const char* source) override;
 	int64 getSize(const char* source) override;
 	UT_String getExtension(const char* source) override;
 	bool getContents(const char* source, UT_StringArray& contents, UT_StringArray* dirs) override;
