@@ -44,9 +44,10 @@ UTVector3FVector convertVertices(const double* vtx, size_t vtxSize) {
 }
 
 void setVertexNormals(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker, const double* nrm, size_t nrmSize,
-                      const uint32_t* indices) {
+                      const uint32_t* indices, size_t indicesSize) {
 	uint32_t vi = 0;
 	for (GA_Iterator it(marker.vertexRange()); !it.atEnd(); ++it, ++vi) {
+		assert(vi < indicesSize);
 		const auto nrmIdx = indices[vi];
 		const auto nrmPos = nrmIdx * 3;
 		assert(nrmPos + 2 < nrmSize);
@@ -65,8 +66,9 @@ namespace ModelConversion {
 
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name, const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize, const uint32_t* counts, size_t countsSize,
-                           const uint32_t* indices, size_t indicesSize, double const* const* uvs,
-                           size_t const* uvsSizes, uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+                           const uint32_t* vertexIndices, size_t vertexIndicesSize, const uint32_t* normalIndices,
+                           size_t normalIndicesSize, double const* const* uvs, size_t const* uvsSizes,
+                           uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
                            uint32_t const* const* uvIndices, size_t const* uvIndicesSizes, uint32_t uvSets) {
 	WA("all");
 
@@ -80,12 +82,12 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 		return pc;
 	}();
 	const GA_Offset primStartOffset = GU_PrimPoly::buildBlock(mDetail, utPoints.data(), utPoints.size(), geoPolyCounts,
-	                                                          reinterpret_cast<const int*>(indices));
+	                                                          reinterpret_cast<const int*>(vertexIndices));
 
 	// -- add vertex normals
 	if (nrmSize > 0) {
 		GA_RWHandleV3 nrmh(mDetail->addNormalAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL32));
-		setVertexNormals(nrmh, marker, nrm, nrmSize, indices);
+		setVertexNormals(nrmh, marker, nrm, vertexIndicesSize, normalIndices, normalIndicesSize);
 	}
 
 	// -- add texture coordinates
@@ -153,7 +155,8 @@ ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<
     : mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) {}
 
 void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-                         const uint32_t* counts, size_t countsSize, const uint32_t* indices, size_t indicesSize,
+                         const uint32_t* counts, size_t countsSize, const uint32_t* vertexIndices,
+                         size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
                          double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
                          size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
                          uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize,
@@ -163,8 +166,9 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
 	const GA_Offset primStartOffset = ModelConversion::createPrimitives(
-	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, indices, indicesSize, uvs,
-	        uvsSizes, uvCounts, uvCountsSizes, uvIndices, uvIndicesSizes, uvSets);
+	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, vertexIndices,
+	        vertexIndicesSize, normalIndices, normalIndicesSize, uvs, uvsSizes, uvCounts, uvCountsSizes, uvIndices,
+	        uvIndicesSizes, uvSets);
 
 	// -- convert materials/reports into primitive attributes based on face ranges
 	if (DBG)
