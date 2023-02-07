@@ -59,7 +59,7 @@ const prtx::EncodePreparator::PreparationFlags PREP_FLAGS =
                 .cleanupVertexNormals(true)
                 .cleanupUVs(true)
                 .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
-                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SAME_FOR_ALL_VERTEX_ATTRIBUTES);
+                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
 
 std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
