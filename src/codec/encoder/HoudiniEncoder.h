@@ -40,21 +40,23 @@ namespace detail {
 
 struct SerializedGeometry {
 	prtx::DoubleVector coords;
-	prtx::DoubleVector normals; // uses same indexing as coords
+	prtx::DoubleVector normals;
 	std::vector<uint32_t> counts;
-	std::vector<uint32_t> indices;
+	std::vector<uint32_t> vertexIndices;
+	std::vector<uint32_t> normalIndices;
 
 	std::vector<prtx::DoubleVector> uvs;
 	std::vector<prtx::IndexVector> uvCounts;
 	std::vector<prtx::IndexVector> uvIndices;
 
 	SerializedGeometry(uint32_t numCoords, uint32_t numNormalCoords, uint32_t numCounts, uint32_t numIndices,
-	                   uint32_t uvSets)
+	                   uint32_t numNormalIndices, uint32_t uvSets)
 	    : uvs(uvSets), uvCounts(uvSets), uvIndices(uvSets) {
 		coords.reserve(3 * numCoords);
 		normals.reserve(3 * numNormalCoords);
 		counts.reserve(numCounts);
-		indices.reserve(numIndices);
+		vertexIndices.reserve(numIndices);
+		normalIndices.reserve(numIndices);
 	}
 };
 

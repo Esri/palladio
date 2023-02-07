@@ -35,8 +35,10 @@ public:
 	 * @param nrmSize length of vertex normal array
 	 * @param counts polygon count array
 	 * @param countsSize length of polygon count array
-	 * @param indices vertex attribute index array (grouped by counts)
-	 * @param indicesSize vertex attribute index array
+	 * @param vertexIndices vertex attribute index array (grouped by counts)
+	 * @param vertexIndicesSize vertex attribute index array
+	 * @param normalIndices vertex normal attribute index array (grouped by counts)
+	 * @param normalIndicesSize vertex normal attribute index array
 	 * @param uvs array of texture coordinate arrays (same indexing as vertices per uv set)
 	 * @param uvsSizes lengths of uv arrays per uv set
 	 * @param uvCounts uv index count per face per uv set (values are either 0 or same as vertex count for each face)
@@ -51,7 +53,8 @@ public:
 	 * @param shapeIDs shape ids per face, contains faceRangesSize-1 values
 	 */
 	virtual void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	                 const uint32_t* counts, size_t countsSize, const uint32_t* indices, size_t indicesSize,
+	                 const uint32_t* counts, size_t countsSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
+	                 const uint32_t* normalIndices, size_t normalIndicesSize,
 
 	                 double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
 	                 size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
