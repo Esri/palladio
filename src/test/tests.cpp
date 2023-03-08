@@ -271,7 +271,7 @@ TEST_CASE("serialize basic mesh") {
 
 	CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
-	CHECK(sg.indices == vtxIndRev); // reverses winding
+	CHECK(sg.vertexIndices == vtxIndRev); // reverses winding
 
 	CHECK(sg.uvs.size() == 0);
 	CHECK(sg.uvCounts.size() == 0);
@@ -310,7 +310,7 @@ TEST_CASE("serialize mesh with one uv set") {
 	CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
 	const prtx::IndexVector vtxIdxExp = {3, 2, 1, 0};
-	CHECK(sg.indices == vtxIdxExp);
+	CHECK(sg.vertexIndices == vtxIdxExp);
 
 #if PRT_VERSION_MAJOR < 2
 	CHECK(sg.uvs.size() == 2); // bug in 1.x
@@ -356,7 +356,7 @@ TEST_CASE("serialize mesh with two uv sets") {
 	CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
 	const prtx::IndexVector vtxIdxExp = {3, 2, 1, 0};
-	CHECK(sg.indices == vtxIdxExp);
+	CHECK(sg.vertexIndices == vtxIdxExp);
 
 	CHECK(sg.uvs.size() == 2);
 	CHECK(sg.uvCounts.size() == 2);
@@ -408,7 +408,7 @@ TEST_CASE("serialize mesh with two non-consecutive uv sets") {
 
 	CHECK(sg.counts == faceCnt);
 	CHECK(sg.coords == vtx);
-	compareReversed(sg.indices, vtxIdx);
+	compareReversed(sg.vertexIndices, vtxIdx);
 
 #if PRT_VERSION_MAJOR < 2
 	CHECK(sg.uvs.size() == 4); // bug in 1.x
@@ -477,7 +477,7 @@ TEST_CASE("serialize mesh with mixed face uvs (one uv set)") {
 	CHECK(sg.coords == vtx);
 
 	const prtx::IndexVector vtxIdxExp = {3, 2, 1, 0, 4, 1, 0, 4, 3, 2, 1, 0};
-	CHECK(sg.indices == vtxIdxExp);
+	CHECK(sg.vertexIndices == vtxIdxExp);
 
 #if PRT_VERSION_MAJOR < 2
 	CHECK(sg.uvs.size() == 2); // bug in 1.x
@@ -538,7 +538,7 @@ TEST_CASE("serialize two meshes with one uv set") {
 	CHECK(sg.coords == expVtx);
 
 	const prtx::IndexVector expVtxIdx = {3, 2, 1, 0, 7, 6, 5, 4};
-	CHECK(sg.indices == expVtxIdx);
+	CHECK(sg.vertexIndices == expVtxIdx);
 
 #if PRT_VERSION_MAJOR < 2
 	CHECK(sg.uvs.size() == 2); // bug in 1.x
@@ -601,7 +601,7 @@ TEST_CASE("serialize two meshes where one does not have uvs (issue 108)") {
 	CHECK(sg.coords == expVtx);
 
 	const prtx::IndexVector expVtxIdx = {3, 2, 1, 0, 7, 6, 5, 4};
-	CHECK(sg.indices == expVtxIdx);
+	CHECK(sg.vertexIndices == expVtxIdx);
 
 #if PRT_VERSION_MAJOR < 2
 	CHECK(sg.uvs.size() == 2); // bug in 1.x
@@ -648,7 +648,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 
 		const std::vector<uint32_t> idxExp = {3,  2,  1,  0,  7,  6,  5,  4,  11, 10, 9,  8,
 		                                      15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20};
-		CHECK(cr.idx == idxExp);
+		CHECK(cr.vtxIdx == idxExp);
 
 #if PRT_VERSION_MAJOR < 2
 		CHECK(cr.uvs.size() == 2); // bug in 1.x
@@ -674,7 +674,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 
 		const std::vector<uint32_t> idxExp = {3,  2,  1,  0,  7,  6,  5,  4,  11, 10, 9,  8,
 		                                      15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20};
-		CHECK(cr.idx == idxExp);
+		CHECK(cr.vtxIdx == idxExp);
 
 #if PRT_VERSION_MAJOR < 2
 		CHECK(cr.uvs.size() == 4); // bug in 1.x
