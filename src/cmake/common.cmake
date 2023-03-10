@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 
 
+### generator detection
+
+if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set(PLD_GEN_VISUAL_STUDIO 1)
+endif()
+
+
 ### platform configuration
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -27,13 +34,14 @@ function(pld_set_common_compiler_flags TGT)
             target_compile_options(${TGT} PRIVATE -Od -Zi)
         endif()
 
-        string(FIND ${CMAKE_GENERATOR} "Visual Studio" DETECTED_VISUAL_STUDIO)
-        if(${DETECTED_VISUAL_STUDIO} GREATER -1)
+        if(PLD_GEN_VISUAL_STUDIO)
             target_compile_options(${TGT} PRIVATE -MP) # enable parallel building in Visual Studio generators
         endif()
+
     elseif (PLD_LINUX)
         target_compile_definitions(${TGT} PRIVATE -DPLD_LINUX=1 -DPLD_TC_GCC=1)
         target_compile_options(${TGT} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+
     endif ()
 endfunction()
 
