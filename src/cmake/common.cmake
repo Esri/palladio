@@ -23,6 +23,10 @@ function(pld_set_common_compiler_flags TGT)
     if (PLD_WINDOWS)
         target_compile_definitions(${TGT} PRIVATE -DPLD_WINDOWS=1 -DPLD_TC_VC=1)
 
+        if (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+            target_compile_options(${TGT} PRIVATE -Od -Zi)
+        endif()
+
         string(FIND ${CMAKE_GENERATOR} "Visual Studio" DETECTED_VISUAL_STUDIO)
         if(${DETECTED_VISUAL_STUDIO} GREATER -1)
             target_compile_options(${TGT} PRIVATE -MP) # enable parallel building in Visual Studio generators
