@@ -40,6 +40,18 @@ function(pld_set_common_compiler_flags TGT)
 
     elseif (PLD_LINUX)
         target_compile_definitions(${TGT} PRIVATE -DPLD_LINUX=1 -DPLD_TC_GCC=1)
+
+        if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+            target_compile_options(${TGT} PRIVATE -O3 -flto)
+            target_compile_definitions(${TGT} PRIVATE -DNDEBUG)
+        elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+            target_compile_options(${TGT} PRIVATE -O3 -ggdb -pg)
+            target_compile_definitions(${TGT} PRIVATE -DNDEBUG)
+        elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+            target_compile_options(${TGT} PRIVATE -O0 -ggdb -pg)
+            target_compile_definitions(${TGT} PRIVATE -DDEBUG)
+        endif ()
+
         target_compile_options(${TGT} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
 
     endif ()

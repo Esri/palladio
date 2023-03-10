@@ -18,21 +18,7 @@ target_include_directories(${TGT_FS} PRIVATE
 pld_set_common_compiler_flags(${TGT_FS})
 pld_add_version_definitions(${TGT_FS})
 
-if (PLD_WINDOWS)
-    # nothing, inheriting compiler flags from houdini
-
-elseif (PLD_LINUX)
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        target_compile_options(${TGT_FS} PRIVATE -O3 -flto)
-        target_compile_definitions(${TGT_FS} PRIVATE -DNDEBUG)
-    elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-        target_compile_options(${TGT_FS} PRIVATE -O3 -ggdb -pg)
-        target_compile_definitions(${TGT_FS} PRIVATE -DNDEBUG)
-    elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        target_compile_options(${TGT_FS} PRIVATE -O0 -ggdb -pg)
-        target_compile_definitions(${TGT_FS} PRIVATE -DDEBUG)
-    endif ()
-
+if (PLD_LINUX)
     set_target_properties(${TGT_FS} PROPERTIES
             INSTALL_RPATH "\$ORIGIN/../../packages/palladio"
             INSTALL_RPATH_USE_LINK_PATH FALSE
