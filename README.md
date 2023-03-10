@@ -293,6 +293,11 @@ Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDIN
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src`
 1. `nmake install` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini19.5/dso` directory)
 
+#### Debugging Palladio
+
+For the best debugging UX, please use the build type `RelWithDebInfo` when running CMake (or in Visual Studio).
+The `Debug` mode does not work as it will result in incompatible ABI between Houdini, PRT and the Palladio client code.
+
 ### Running Palladio
 See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
