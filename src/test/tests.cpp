@@ -646,8 +646,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 		const std::vector<uint32_t> cntsExp = {4, 4, 4, 4, 4, 4};
 		CHECK(cr.cnts == cntsExp);
 
-		const std::vector<uint32_t> idxExp = {3,  2,  1,  0,  7,  6,  5,  4,  11, 10, 9,  8,
-		                                      15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20};
+		const std::vector<uint32_t> idxExp = {3, 2, 1, 0, 4, 5, 6, 7, 7, 6, 2, 3, 6, 5, 1, 2, 5, 4, 0, 1, 4, 7, 3, 0};
 		CHECK(cr.vtxIdx == idxExp);
 
 #if PRT_VERSION_MAJOR < 2
@@ -659,7 +658,9 @@ TEST_CASE("generate two cubes with two uv sets") {
 #endif
 
 		CHECK(cr.uvCounts[0] == cntsExp);
-		CHECK(cr.uvIndices[0] == idxExp);
+		
+		const std::vector<uint32_t> uvIdxExp = {3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0};
+		CHECK(cr.uvIndices[0] == uvIdxExp);
 
 		const std::vector<uint32_t> faceRangesExp = {0, 6};
 		CHECK(cr.faceRanges == faceRangesExp);
