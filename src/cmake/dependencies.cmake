@@ -1,7 +1,7 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.15.cmake)
+include(${PLD_CONAN_TOOLS}/conan-0.18.1.cmake)
 conan_check(VERSION 1.20 REQUIRED)
 
 
@@ -52,6 +52,10 @@ if(PLD_WINDOWS)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
+endif()
+
+if (PLD_GEN_VISUAL_STUDIO AND NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RelWithDebInfo") # workaround for using conan with the Visual Studio multi-generator
 endif()
 
 conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS ENV ${PLD_CONAN_ENV})

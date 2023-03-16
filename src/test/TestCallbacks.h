@@ -35,7 +35,8 @@ struct CallbackResult {
 	std::vector<std::vector<uint32_t>> uvCounts;
 	std::vector<std::vector<uint32_t>> uvIndices;
 	std::vector<uint32_t> cnts;
-	std::vector<uint32_t> idx;
+	std::vector<uint32_t> vtxIdx;
+	std::vector<uint32_t> nrmIdx;
 	std::vector<uint32_t> faceRanges;
 	std::vector<AttributeMapUPtr> materials;
 	std::map<int32_t, AttributeMapUPtr> attrsPerShapeID;
@@ -54,11 +55,11 @@ public:
 	std::map<int32_t, AttributeMapBuilderUPtr> attrs;
 
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	         const uint32_t* counts, size_t countsSize, const uint32_t* indices, size_t indicesSize,
-	         double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
-	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
-	         uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize, const prt::AttributeMap** materials,
-	         const prt::AttributeMap** reports, const int32_t* shapeIDs) override {
+	         const uint32_t* counts, size_t countsSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
+	         const uint32_t* normalIndices, size_t normalIndicesSize, double const* const* uvs, size_t const* uvsSizes,
+	         uint32_t const* const* uvCounts, size_t const* uvCountsSizes, uint32_t const* const* uvIndices,
+	         size_t const* uvIndicesSizes, uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize,
+	         const prt::AttributeMap** materials, const prt::AttributeMap** reports, const int32_t* shapeIDs) override {
 		results.emplace_back(std::make_unique<CallbackResult>(uvSets));
 		auto& cr = *results.back();
 
@@ -66,7 +67,8 @@ public:
 		cr.vtx.assign(vtx, vtx + vtxSize);
 		cr.nrm.assign(nrm, nrm + nrmSize);
 		cr.cnts.assign(counts, counts + countsSize);
-		cr.idx.assign(indices, indices + indicesSize);
+		cr.vtxIdx.assign(vertexIndices, vertexIndices + vertexIndicesSize);
+		cr.nrmIdx.assign(normalIndices, normalIndices + normalIndicesSize);
 
 		for (size_t i = 0; i < uvSets; i++) {
 			cr.uvs[i].assign(uvs[i], uvs[i] + uvsSizes[i]);

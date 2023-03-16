@@ -54,5 +54,10 @@ pld_setup_packaging()
 ### setup test target
 
 enable_testing()
-add_subdirectory(test EXCLUDE_FROM_ALL)
+if (PLD_GEN_VISUAL_STUDIO)
+    add_subdirectory(test)
+else()
+    add_subdirectory(test EXCLUDE_FROM_ALL)
+endif()
+
 add_dependencies(${TGT_TEST} ${TGT_CODEC})

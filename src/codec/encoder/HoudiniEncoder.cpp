@@ -59,7 +59,7 @@ const prtx::EncodePreparator::PreparationFlags PREP_FLAGS =
                 .cleanupVertexNormals(true)
                 .cleanupUVs(true)
                 .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
-                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SAME_FOR_ALL_VERTEX_ATTRIBUTES);
+                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
 
 std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
@@ -423,6 +423,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 
 	// PASS 2: copy
 	uint32_t vertexIndexBase = 0;
+	uint32_t normalIndexBase = 0;
 	std::vector<uint32_t> uvIndexBases(maxNumUVSets, 0u);
 	for (const auto& geo : geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
@@ -480,14 +481,22 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 
 			// append counts and indices for vertices and vertex normals
 			for (uint32_t fi = 0, faceCount = mesh->getFaceCount(); fi < faceCount; ++fi) {
-				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
 				const uint32_t vtxCnt = mesh->getFaceVertexCount(fi);
+
+				const uint32_t* vtxIdx = mesh->getFaceVertexIndices(fi);
+				const uint32_t* nrmIdx = mesh->getFaceVertexNormalIndices(fi);
+				const size_t nrmCnt = mesh->getFaceVertexNormalCount(fi);
 				sg.counts.push_back(vtxCnt);
-				for (uint32_t vi = 0; vi < vtxCnt; vi++)
-					sg.indices.push_back(vertexIndexBase + vtxIdx[vtxCnt - vi - 1]); // reverse winding
+				for (uint32_t vi = 0; vi < vtxCnt; vi++) {
+					uint32_t viReversed = vtxCnt - vi - 1; // reverse winding
+					sg.vertexIndices.push_back(vertexIndexBase + vtxIdx[viReversed]);
+					if (nrmCnt > 0 && nrmIdx != nullptr)
+						sg.normalIndices.push_back(normalIndexBase + nrmIdx[viReversed]);
+				}
 			}
 
 			vertexIndexBase += (uint32_t)verts.size() / 3u;
+			normalIndexBase += (uint32_t)norms.size() / 3u;
 		} // for all meshes
 	}     // for all geometries
 
@@ -623,7 +632,8 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	assert(sg.uvs.size() == puvCounts.second.size());
 
 	cb->add(initialShape.getName(), sg.coords.data(), sg.coords.size(), sg.normals.data(), sg.normals.size(),
-	        sg.counts.data(), sg.counts.size(), sg.indices.data(), sg.indices.size(),
+	        sg.counts.data(), sg.counts.size(), sg.vertexIndices.data(), sg.vertexIndices.size(),
+	        sg.normalIndices.data(), sg.normalIndices.size(),
 
 	        puvs.first.data(), puvs.second.data(), puvCounts.first.data(), puvCounts.second.data(),
 	        puvIndices.first.data(), puvIndices.second.data(), static_cast<uint32_t>(sg.uvs.size()),
