@@ -1,0 +1,1 @@
+				<Directory Id='PalladioInstallComponentDir${HOU_MAJOR}${HOU_MINOR}' Name='houdini${HOU_MAJOR}.${HOU_MINOR}' />

@@ -1,0 +1,5 @@
+package_name = ${PACKAGE_NAME}
+package_version_base = ${PLD_VERSION_BASE}
+package_version = ${PLD_VERSION}
+package_file = ${PACKAGE_FILE_NAME}
+package_classifier = ${PLD_PKG_OS}

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.19)
 
 project(palladio CXX)
 
@@ -20,10 +20,13 @@ set(HOUDINI_RELATIVE_PALLADIO_PATH "${HOUDINI_RELATIVE_PACKAGES_PATH}/palladio")
 
 ### versioning
 
-set(PLD_VERSION_MAJOR 2)
-set(PLD_VERSION_MINOR 0)
-set(PLD_VERSION_PATCH 0)
-set(PLD_VERSION_PRE "-beta.1") # set to empty string for final releases
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../version.json" VERSION_FILE)
+
+string(JSON PLD_VERSION_MAJOR GET ${VERSION_FILE} "PLD_VERSION_MAJOR")
+string(JSON PLD_VERSION_MINOR GET ${VERSION_FILE} "PLD_VERSION_MINOR")
+string(JSON PLD_VERSION_PATCH GET ${VERSION_FILE} "PLD_VERSION_PATCH")
+string(JSON PLD_VERSION_PRE GET ${VERSION_FILE} "PLD_VERSION_PRE")
+
 if (NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif ()
