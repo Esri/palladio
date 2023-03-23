@@ -321,15 +321,26 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ## Release Notes
 
-### v2.0.0 Beta 2
+### v2.0.0 Beta 2 (Mar 27, 2023)
 
-Required CityEngine version: 2022.1 or older.
+Required CityEngine version: 2022.1 or older
+
 #### Changed:
+- Changed indexing of generated meshes: all vertex attributes now have separate indices. This improves mesh connectivity and sharing of points.
+- Fixed rule attribute overrides for multiple initial shapes
+- Fixed two bugs in the "FileSystem Helper" when reading textures from RPKs (fixes rendering with Mantra) 
 - Updated Procedural Runtime (PRT) to 2.7.8538 (corresponds to CityEngine 2022.1)
+
+#### Development:
+- Turned off optimization for config `RelWithDebInfo` to have better debugger experience
+- Added workaround for Conan/CMake and the Visual Studio CMake generator
+- Added tests to generated Visual Studio solution. Tests can now be started and debugged in Visual Studio by setting the test project as startup project.
+- Updated cmake-conan integration to 0.18.1
+- Updated developer docs
 
 ### v2.0.0 Beta 1 (Nov 22, 2022)
 
-Required CityEngine version: 2022.0 or older.
+Required CityEngine version: 2022.0 or older
 
 #### Added:
 - Support for Houdini 19 and 19.5
