@@ -6,9 +6,9 @@ class CESDKConan(ConanFile):
     name = "cesdk"
     settings = "os", "compiler", "arch"
     description = "Develop 3D applications using the procedural geometry engine of Esri CityEngine."
-    url = "https://github.com/Esri/cityengine-sdk"
+    url = "https://github.com/Esri/esri-cityengine-sdk"
     license = "CityEngine EULA"
-    baseURL = "https://github.com/esri/cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
+    baseURL = "https://github.com/esri/esri-cityengine-sdk/releases/download/{}/esri_ce_sdk-{}-{}-{}-x86_64-rel-opt.zip"
 
     def build(self):
         if self.settings.os == "Windows":
