@@ -46,7 +46,7 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 * Windows 10 or 11 (64bit)
 * RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 * Houdini 18.5, 19.0 or 19.5
-* The latest release requires CityEngine 2022.0 or older for creating rule packages.
+* The latest release requires CityEngine 2022.1 or older for creating rule packages.
 * For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
 
 #### From Pre-Built Binaries
@@ -266,13 +266,13 @@ The below steps will populate your local Conan repository with dependencies for 
 
 ##### Linux
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
-1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/2.6.8300@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/2.7.8538@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini 19.5 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc93 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs19.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs19.5.Z` for Linux).
 
 ##### Windows
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git`
 1. Open a Windows command shell and `cd` to the Palladio git repository
-1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/2.6.8300@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/2.7.8538@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v142 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
 
 #### Building Palladio
