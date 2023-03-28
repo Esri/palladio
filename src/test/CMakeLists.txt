@@ -42,11 +42,13 @@ endif ()
 
 add_test(NAME ${TGT_TEST} COMMAND ${TGT_TEST} -r junit -o  ${CMAKE_CURRENT_BINARY_DIR}/${TGT_TEST}_report.xml)
 
-add_custom_target(build_and_run_tests
-        # first we build our test target
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target ${TGT_TEST}
-        # then we run the ctest synthetic 'test' target which runs the tests
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Build and run the tests"
-        VERBATIM)
+if (NOT PLD_GEN_VISUAL_STUDIO)
+    add_custom_target(build_and_run_tests
+            # first we build our test target
+            COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target ${TGT_TEST}
+            # then we run the ctest synthetic 'test' target which runs the tests
+            COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Build and run the tests"
+            VERBATIM)
+endif()

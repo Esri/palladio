@@ -42,21 +42,7 @@ if (PLD_TEST)
     target_compile_definitions(palladio PRIVATE -DPLD_TEST_EXPORTS)
 endif ()
 
-if (PLD_WINDOWS)
-    # nothing, inheriting compiler flags from houdini
-
-elseif (PLD_LINUX)
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        target_compile_options(${TGT_PALLADIO} PRIVATE -O3 -flto)
-        target_compile_definitions(${TGT_PALLADIO} PRIVATE -DNDEBUG)
-    elseif (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-        target_compile_options(${TGT_PALLADIO} PRIVATE -O3 -ggdb -pg)
-        target_compile_definitions(${TGT_PALLADIO} PRIVATE -DNDEBUG)
-    elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        target_compile_options(${TGT_PALLADIO} PRIVATE -O0 -ggdb -pg)
-        target_compile_definitions(${TGT_PALLADIO} PRIVATE -DDEBUG)
-    endif ()
-
+if (PLD_LINUX)
     set_target_properties(${TGT_PALLADIO} PROPERTIES
             INSTALL_RPATH "\$ORIGIN/../packages/palladio"
             INSTALL_RPATH_USE_LINK_PATH FALSE

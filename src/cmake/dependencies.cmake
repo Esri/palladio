@@ -1,7 +1,7 @@
 ### setup conan
 
 set(PLD_CONAN_TOOLS "${CMAKE_SOURCE_DIR}/../conan")
-include(${PLD_CONAN_TOOLS}/conan-0.15.cmake)
+include(${PLD_CONAN_TOOLS}/conan-0.18.1.cmake)
 conan_check(VERSION 1.20 REQUIRED)
 
 
@@ -30,11 +30,6 @@ elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 18.5...")
 	set(PLD_CONANFILE "conanfile-h185.py")
 
-# Houdini 18.0
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
-	message(STATUS "Asking Conan for Houdini 18.0...")
-	set(PLD_CONANFILE "conanfile-h180.py")
-
 endif()
 
 
@@ -52,6 +47,10 @@ if(PLD_WINDOWS)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
 elseif(PLD_LINUX)
 	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
+endif()
+
+if (PLD_GEN_VISUAL_STUDIO AND NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RelWithDebInfo") # workaround for using conan with the Visual Studio multi-generator
 endif()
 
 conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS ENV ${PLD_CONAN_ENV})
@@ -76,7 +75,7 @@ install(FILES ${PLD_PRT_LIBRARIES} DESTINATION ${HOUDINI_RELATIVE_PALLADIO_PATH}
 
 # allow-list required PRT extension libraries
 set(PLD_PRT_EXT_LIBRARIES ${PRT_EXT_LIBRARIES})
-list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.(codecs|oda|usd|adaptors)|libcrypto|tbb|usd_ms|VueExport")
+list(FILTER PLD_PRT_EXT_LIBRARIES INCLUDE REGEX "com\\.esri\\.prt\\.(codecs|oda|usd|adaptors)|libcrypto|tbb|usd_ms")
 install(FILES ${PLD_PRT_EXT_LIBRARIES} DESTINATION "${HOUDINI_RELATIVE_PALLADIO_PATH}/${PRT_RELATIVE_EXTENSION_PATH}")
 
 # the USD codecs need resource files

@@ -23,7 +23,7 @@ set(HOUDINI_RELATIVE_PALLADIO_PATH "${HOUDINI_RELATIVE_PACKAGES_PATH}/palladio")
 set(PLD_VERSION_MAJOR 2)
 set(PLD_VERSION_MINOR 0)
 set(PLD_VERSION_PATCH 0)
-set(PLD_VERSION_PRE "-beta.1") # set to empty string for final releases
+set(PLD_VERSION_PRE "-beta.2") # set to empty string for final releases
 if (NOT PLD_VERSION_BUILD)
     set(PLD_VERSION_BUILD DEV)
 endif ()
@@ -54,5 +54,10 @@ pld_setup_packaging()
 ### setup test target
 
 enable_testing()
-add_subdirectory(test EXCLUDE_FROM_ALL)
+if (PLD_GEN_VISUAL_STUDIO)
+    add_subdirectory(test)
+else()
+    add_subdirectory(test EXCLUDE_FROM_ALL)
+endif()
+
 add_dependencies(${TGT_TEST} ${TGT_CODEC})
