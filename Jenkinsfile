@@ -155,7 +155,7 @@ def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
 List applyCeSdkOverride(cfg) {
 	if (cfg.cesdk) {
 		papl.fetchDependency(cfg.cesdk, cfg)
-		return [ [ key: 'PLD_CONAN_CESDK_DIR', val: cfg.cesdk.p ] ]
+		return [ [ key: 'PLD_CESDK_DIR:PATH', val: cfg.cesdk.p ] ]
 	}
 	return []
 }
