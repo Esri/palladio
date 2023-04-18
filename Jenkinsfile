@@ -137,20 +137,15 @@ def taskBuildPalladio(cfg) {
 }
 
 def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
-	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${cfg.houdini.replace('.', '_')}"
+	final String houdiniSuf = cfg.houdini.replace('.', '_')
+	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${houdiniSuf}"
 	final String buildLog = "build-${buildSuf}.log"
-	final String idSuf = "${cfg.houdini.replace('.', '_')}-${cepl.getArchiveClassifier(cfg)}"
+	final String idSuf = "${houdiniSuf}-${cepl.getArchiveClassifier(cfg)}"
 
 	// dump build log to file for warnings scanner
 	writeFile(file: buildLog, text: consoleOut)
 
 	// scan for compiler warnings
-	if(cepl.isGCC(cfg)) {
-		def gccReports = scanForIssues(tool: gcc4(pattern: buildLog), blameDisabled: true)
-		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [gccReports])
-	}
-	else if(cepl.isMSVC(cfg)) {
-		def msvcReports = scanForIssues(tool: msBuild(pattern: buildLog), blameDisabled: true)
-		publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [msvcReports])
-	}
+	def scanReport = scanForIssues(tool: cepl.isGCC(cfg) ? gcc4(pattern: buildLog) : msBuild(pattern: buildLog), blameDisabled: true)
+	publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [scanReport])
 }
