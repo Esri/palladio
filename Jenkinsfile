@@ -121,7 +121,8 @@ def taskBuildPalladio(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		scanAndPublishBuildIssues(cfg, stdOut)
 	}
 
 	def versionExtractor = { p ->
@@ -133,4 +134,18 @@ def taskBuildPalladio(cfg) {
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
 	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+}
+
+def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
+	final String houdiniSuf = cfg.houdini.replace('.', '_')
+	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${houdiniSuf}"
+	final String buildLog = "build-${buildSuf}.log"
+	final String idSuf = "${houdiniSuf}-${cepl.getArchiveClassifier(cfg)}"
+
+	// dump build log to file for warnings scanner
+	writeFile(file: buildLog, text: consoleOut)
+
+	// scan for compiler warnings
+	def scanReport = scanForIssues(tool: cepl.isGCC(cfg) ? gcc4(pattern: buildLog) : msBuild(pattern: buildLog), blameDisabled: true)
+	publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [scanReport])
 }
