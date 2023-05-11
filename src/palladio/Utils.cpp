@@ -155,6 +155,13 @@ std::vector<std::pair<std::wstring, std::wstring>> getCGBs(const ResolveMapSPtr&
 	return cgbs;
 }
 
+std::optional<std::pair<std::wstring, std::wstring>> getCGB(const ResolveMapSPtr& rm) {
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(rm); // key -> uri
+	if (cgbs.size() != 1)
+		return std::nullopt;
+	return cgbs.front();
+}
+
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* validatedOptions = nullptr;

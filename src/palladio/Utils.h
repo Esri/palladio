@@ -26,10 +26,11 @@
 #include "prt/ResolveMap.h"
 #include "prt/RuleFileInfo.h"
 
+#include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
@@ -56,9 +57,9 @@ using EncoderInfoUPtr = std::unique_ptr<const prt::EncoderInfo, PRTDestroyer>;
 using OcclusionSetUPtr = std::unique_ptr<prt::OcclusionSet, PRTDestroyer>;
 
 PLD_TEST_EXPORTS_API std::vector<std::wstring> tokenizeAll(const std::wstring& input, wchar_t token);
-PLD_TEST_EXPORTS_API std::pair<std::wstring,std::wstring> tokenizeFirst(const std::wstring& input, wchar_t token);
+PLD_TEST_EXPORTS_API std::pair<std::wstring, std::wstring> tokenizeFirst(const std::wstring& input, wchar_t token);
 
-PLD_TEST_EXPORTS_API std::vector<std::pair<std::wstring, std::wstring>> getCGBs(const ResolveMapSPtr& rm);
+PLD_TEST_EXPORTS_API std::optional<std::pair<std::wstring, std::wstring>> getCGB(const ResolveMapSPtr& rm);
 PLD_TEST_EXPORTS_API const prt::AttributeMap* createValidatedOptions(const wchar_t* encID,
                                                                      const prt::AttributeMap* unvalidatedOptions);
 PLD_TEST_EXPORTS_API std::string objectToXML(prt::Object const* obj);

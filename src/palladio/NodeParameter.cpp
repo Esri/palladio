@@ -129,13 +129,14 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 	}
 
 	// -- try get first rule file
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
-	if (cgbs.empty()) {
+
+	auto cgb = getCGB(resolveMap); // key -> uri
+	if (!cgb) {
 		LOG_ERR << "no rule files found in rule package";
 		return NOT_CHANGED;
 	}
-	const std::wstring cgbKey = cgbs.front().first;
-	const std::wstring cgbURI = cgbs.front().second;
+	const std::wstring cgbKey = cgb->first;
+	const std::wstring cgbURI = cgb->second;
 	LOG_DBG << "cgbKey = " << cgbKey << ", "
 	        << "cgbURI = " << cgbURI;
 
@@ -147,6 +148,7 @@ int updateRPK(void* data, int, fpreal32 time, const PRM_Template*) {
 		LOG_ERR << "failed to get rule file info or rule file does not contain any rules";
 		return NOT_CHANGED;
 	}
+
 	const std::wstring fqStartRule = findStartRule(ruleFileInfo);
 	const auto [startRuleStyle, startRuleName] = tokenizeFirst(fqStartRule, NameConversion::STYLE_SEPARATOR);
 	LOG_DBG << "start rule: style = " << startRuleStyle << ", name = " << startRuleName;
@@ -180,12 +182,12 @@ void buildStyleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM_Spa
 		return;
 	}
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
-	if (cgbs.empty()) {
+	auto cgb = getCGB(resolveMap); // key -> uri
+	if (!cgb) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
-	const std::wstring cgbURI = cgbs.front().second;
+	const std::wstring cgbURI = cgb->second;
 
 	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
 	RuleFileInfoUPtr rfi(prt::createRuleFileInfo(cgbURI.c_str(), nullptr, &status));
@@ -240,13 +242,13 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 		return;
 	}
 
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
-	if (cgbs.empty()) {
+	auto cgb = getCGB(resolveMap);
+	if (!cgb) {
 		theMenu[0].setTokenAndLabel(nullptr, nullptr);
 		return;
 	}
-	const std::wstring ruleFile = cgbs.front().first;
-	const std::wstring cgbURI = cgbs.front().second;
+	const std::wstring ruleFile = cgb->first;
+	const std::wstring cgbURI = cgb->second;
 
 	if (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
