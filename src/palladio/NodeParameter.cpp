@@ -250,7 +250,7 @@ void buildStartRuleMenu(void* data, PRM_Name* theMenu, int theMaxSize, const PRM
 	const std::wstring ruleFile = cgb->first;
 	const std::wstring cgbURI = cgb->second;
 
-	if (DBG) {
+	if constexpr (DBG) {
 		LOG_DBG << "buildStartRuleMenu";
 		LOG_DBG << "   mRPK = " << rpk;
 		LOG_DBG << "   mRuleFile = " << ruleFile;
