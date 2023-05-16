@@ -35,10 +35,10 @@
 #	include <dlfcn.h>
 #endif
 
+#include <algorithm>
 #include <cassert>
 #include <filesystem>
 #include <string_view>
-#include <algorithm>
 
 namespace {
 
@@ -153,6 +153,28 @@ std::vector<std::pair<std::wstring, std::wstring>> getCGBs(const ResolveMapSPtr&
 		}
 	}
 	return cgbs;
+}
+
+std::optional<std::pair<std::wstring, std::wstring>> getCGB(const ResolveMapSPtr& rm) {
+#if (PRT_VERSION_MAJOR > 2) // CE 2023 introduced multiple CGBs per RPK and PRT 3.0 has tools for this
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const wchar_t* cgbKey = rm->findCGBKey(&status);
+	if (cgbKey == nullptr || (status != prt::STATUS_OK))
+		return std::nullopt;
+
+	const wchar_t* cgbUri = rm->getString(cgbKey, &status);
+	if (cgbUri == nullptr || (status != prt::STATUS_OK))
+		return std::nullopt;
+
+	return std::make_pair(cgbKey, cgbUri);
+
+#else
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(rm); // key -> uri
+	if (cgbs.size() != 1)
+		return std::nullopt;
+	return cgbs.front();
+
+#endif
 }
 
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {

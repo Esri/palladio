@@ -80,7 +80,7 @@ protected:
 	prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
 	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
 
-#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1)
+#if ((PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1) || PRT_VERSION_MAJOR > 2)
 	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr, size_t size,
 	                          size_t nRows) override;
 	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr, size_t size,

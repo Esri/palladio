@@ -270,7 +270,7 @@ prt::Status ModelConverter::attrString(size_t isIndex, int32_t shapeID, const wc
 	return prt::STATUS_OK;
 }
 
-#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1)
+#if ((PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1) || PRT_VERSION_MAJOR > 2)
 
 prt::Status ModelConverter::attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr,
                                           size_t size, size_t nRows) {
