@@ -10,20 +10,22 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include <string.h>
 
 namespace {
 
 const std::string SCHEMA_RPK = "rpk:";
 
+// the general URL form is for example: usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg
 bool isRulePackageURI(const char* p) {
 	if (p == nullptr)
 		return false;
 
-	// needs to start with rpk: schema
-	if (std::strncmp(p, SCHEMA_RPK.c_str(), SCHEMA_RPK.length()) != 0)
+	// URL needs to contain the rpk: schema
+	if (std::strstr(p, SCHEMA_RPK.c_str()) == nullptr)
 		return false;
 
-	// needs to contain '!' separator
+	// needs to contain at least one '!' separator
 	if (std::strchr(p, '!') == nullptr)
 		return false;
 
