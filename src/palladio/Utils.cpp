@@ -305,7 +305,7 @@ bool isRulePackageUri(const char* uri) {
 		return false;
 
 	// needs to contain at least one '!' separator
-	if (std::strchr(uri, '!') == nullptr)
+	if (std::strstr(uri, "!") == nullptr)
 		return false;
 
 	return true;
@@ -313,6 +313,9 @@ bool isRulePackageUri(const char* uri) {
 
 // The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
 std::string getBaseUriPath(const char* uri) {
+	if (uri == nullptr)
+		return {};
+
 	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
 	prtx::URIPtr prtxUri = prtx::URI::create(toUTF16FromUTF8(uri));
 	if (!prtxUri)
