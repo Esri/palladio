@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <filesystem>
 #include <string_view>
 
@@ -289,6 +290,23 @@ std::wstring toFileURI(const std::filesystem::path& p) {
 
 std::wstring percentEncode(const std::string& utf8String) {
 	return toUTF16FromUTF8(callAPI<char, char>(prt::StringUtils::percentEncode, utf8String));
+}
+
+// the general URL form is for example:
+// usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg
+bool isRulePackageUri(const char* uri) {
+	if (uri == nullptr)
+		return false;
+
+	// URL needs to contain the rpk: schema
+	if (std::strstr(uri, SCHEMA_RPK) == nullptr)
+		return false;
+
+	// needs to contain at least one '!' separator
+	if (std::strchr(uri, '!') == nullptr)
+		return false;
+
+	return true;
 }
 
 std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions) {

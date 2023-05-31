@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+constexpr const char* SCHEMA_RPK = "rpk:";
+
 struct PRTDestroyer {
 	void operator()(prt::Object const* p) {
 		if (p)
@@ -77,6 +79,7 @@ std::string toUTF8FromUTF16(const std::wstring& utf16String);
 PLD_TEST_EXPORTS_API std::wstring toFileURI(const std::filesystem::path& p);
 std::wstring toFileURI(const std::string& p);
 PLD_TEST_EXPORTS_API std::wstring percentEncode(const std::string& utf8String);
+bool isRulePackageUri(const char* uri);
 
 std::vector<const wchar_t*> toPtrVec(const std::vector<std::wstring>& wsv);
 
