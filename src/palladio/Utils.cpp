@@ -20,6 +20,8 @@
 #include "prt/API.h"
 #include "prt/StringUtils.h"
 
+#include "prtx/URI.h"
+
 #ifndef _WIN32
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
@@ -307,6 +309,20 @@ bool isRulePackageUri(const char* uri) {
 		return false;
 
 	return true;
+}
+
+// The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
+std::string getBaseUriPath(const char* uri) {
+	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
+	prtx::URIPtr prtxUri = prtx::URI::create(toUTF16FromUTF8(uri));
+	if (!prtxUri)
+		return {};
+
+	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
+	while (prtxUri->getNestedURI())
+		prtxUri = prtxUri->getNestedURI();
+
+	return toUTF8FromUTF16(prtxUri->getPath());
 }
 
 std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions) {

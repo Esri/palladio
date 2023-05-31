@@ -3,7 +3,6 @@
 #include "palladio/Utils.h"
 
 #include "prtx/DataBackend.h" // !!! use of PRTX requires palladio_fs to be built with the same compiler as PRT
-#include "prtx/URI.h"
 
 #include "FS/FS_ReaderStream.h"
 
@@ -12,20 +11,6 @@
 #include <map>
 
 namespace {
-
-// The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
-std::string getBaseURIPath(const char* p) {
-	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
-	prtx::URIPtr uri = prtx::URI::create(toUTF16FromUTF8(p));
-	if (!uri)
-		return {};
-
-	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
-	while (uri->getNestedURI())
-		uri = uri->getNestedURI();
-
-	return toUTF8FromUTF16(uri->getPath());
-}
 
 prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cache) {
 	assert(source != nullptr);
@@ -48,7 +33,7 @@ prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cac
 pld_time_t getFileModificationTime(const char* path) {
 	std::string actualPath(path);
 	if (isRulePackageUri(path))
-		actualPath = getBaseURIPath(path);
+		actualPath = getBaseUriPath(path);
 	FS_Info info(actualPath.c_str());
 	return info.getModTime();
 }
@@ -80,7 +65,7 @@ bool RulePackageInfoHelper::canHandle(const char* source) {
 bool RulePackageInfoHelper::hasAccess(const char* source, int mode) {
 	std::string src(source);
 	if (isRulePackageUri(source))
-		src = getBaseURIPath(source);
+		src = getBaseUriPath(source);
 	FS_Info info(src.c_str());
 	return info.hasAccess(mode);
 }
