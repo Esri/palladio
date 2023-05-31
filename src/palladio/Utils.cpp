@@ -322,6 +322,9 @@ std::string getBaseUriPath(const char* uri) {
 	while (prtxUri->getNestedURI())
 		prtxUri = prtxUri->getNestedURI();
 
+	if (!prtxUri->isFilePath())
+		return {};
+
 	return toUTF8FromUTF16(prtxUri->getPath());
 }
 

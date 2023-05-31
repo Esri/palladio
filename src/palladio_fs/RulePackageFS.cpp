@@ -34,6 +34,8 @@ pld_time_t getFileModificationTime(const char* path) {
 	std::string actualPath(path);
 	if (isRulePackageUri(path))
 		actualPath = getBaseUriPath(path);
+	if (actualPath.empty())
+		return {};
 	FS_Info info(actualPath.c_str());
 	return info.getModTime();
 }
