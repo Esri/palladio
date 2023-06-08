@@ -3,7 +3,6 @@
 #include "palladio/Utils.h"
 
 #include "prtx/DataBackend.h" // !!! use of PRTX requires palladio_fs to be built with the same compiler as PRT
-#include "prtx/URI.h"
 
 #include "FS/FS_ReaderStream.h"
 
@@ -12,37 +11,6 @@
 #include <map>
 
 namespace {
-
-const std::string SCHEMA_RPK = "rpk:";
-
-bool isRulePackageURI(const char* p) {
-	if (p == nullptr)
-		return false;
-
-	// needs to start with rpk: schema
-	if (std::strncmp(p, SCHEMA_RPK.c_str(), SCHEMA_RPK.length()) != 0)
-		return false;
-
-	// needs to contain '!' separator
-	if (std::strchr(p, '!') == nullptr)
-		return false;
-
-	return true;
-}
-
-// The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
-std::string getBaseURIPath(const char* p) {
-	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
-	prtx::URIPtr uri = prtx::URI::create(toUTF16FromUTF8(p));
-	if (!uri)
-		return {};
-
-	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
-	while (uri->getNestedURI())
-		uri = uri->getNestedURI();
-
-	return toUTF8FromUTF16(uri->getPath());
-}
 
 prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cache) {
 	assert(source != nullptr);
@@ -64,8 +32,10 @@ prtx::BinaryVectorPtr resolveRulePackageFile(const char* source, prt::Cache* cac
 
 pld_time_t getFileModificationTime(const char* path) {
 	std::string actualPath(path);
-	if (isRulePackageURI(path))
-		actualPath = getBaseURIPath(path);
+	if (isRulePackageUri(path))
+		actualPath = getBaseUriPath(path);
+	if (actualPath.empty())
+		return {};
 	FS_Info info(actualPath.c_str());
 	return info.getModTime();
 }
@@ -73,11 +43,11 @@ pld_time_t getFileModificationTime(const char* path) {
 } // namespace
 
 RulePackageReader::RulePackageReader(prt::Cache* cache) : mCache(cache) {
-	UTaddAbsolutePathPrefix(SCHEMA_RPK.c_str());
+	UTaddAbsolutePathPrefix(SCHEMA_RPK);
 }
 
 FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Options*) {
-	if (isRulePackageURI(source)) {
+	if (isRulePackageUri(source)) {
 		const prtx::BinaryVectorPtr buf = resolveRulePackageFile(source, mCache);
 		if (!buf)
 			return nullptr;
@@ -91,19 +61,19 @@ FS_ReaderStream* RulePackageReader::createStream(const char* source, const UT_Op
 RulePackageInfoHelper::RulePackageInfoHelper(prt::Cache* cache) : mCache(cache) {}
 
 bool RulePackageInfoHelper::canHandle(const char* source) {
-	return isRulePackageURI(source);
+	return isRulePackageUri(source);
 }
 
 bool RulePackageInfoHelper::hasAccess(const char* source, int mode) {
 	std::string src(source);
-	if (isRulePackageURI(source))
-		src = getBaseURIPath(source);
+	if (isRulePackageUri(source))
+		src = getBaseUriPath(source);
 	FS_Info info(src.c_str());
 	return info.hasAccess(mode);
 }
 
 bool RulePackageInfoHelper::getIsDirectory(const char* source) {
-	if (isRulePackageURI(source))
+	if (isRulePackageUri(source))
 		return false;
 	FS_Info info(source);
 	return info.getIsDirectory();
@@ -114,7 +84,7 @@ pld_time_t RulePackageInfoHelper::getModTime(const char* source) {
 }
 
 int64 RulePackageInfoHelper::getSize(const char* source) {
-	if (isRulePackageURI(source)) {
+	if (isRulePackageUri(source)) {
 		const prtx::BinaryVectorPtr buf = resolveRulePackageFile(source, mCache);
 		return buf->size();
 	}
@@ -123,7 +93,7 @@ int64 RulePackageInfoHelper::getSize(const char* source) {
 }
 
 UT_String RulePackageInfoHelper::getExtension(const char* source) {
-	if (isRulePackageURI(source)) {
+	if (isRulePackageUri(source)) {
 		const char* lastSchemaSep = std::strrchr(source, '.');
 		return UT_String(lastSchemaSep);
 	}
@@ -132,7 +102,7 @@ UT_String RulePackageInfoHelper::getExtension(const char* source) {
 }
 
 bool RulePackageInfoHelper::getContents(const char* source, UT_StringArray& contents, UT_StringArray* dirs) {
-	if (isRulePackageURI(source))
+	if (isRulePackageUri(source))
 		return false; // we only support individual texture files atm
 	FS_Info info(source);
 	return info.getContents(contents, dirs);
