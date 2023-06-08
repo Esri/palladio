@@ -66,9 +66,10 @@ namespace ModelConversion {
 
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name, const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize, const uint32_t* counts, size_t countsSize,
-                           const uint32_t* vertexIndices, size_t vertexIndicesSize, const uint32_t* normalIndices,
-                           size_t normalIndicesSize, double const* const* uvs, size_t const* uvsSizes,
-                           uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
+                           const uint32_t* holeCounts, size_t holeCountsSize, const uint32_t* holeIndices,
+                           size_t holeIndicesSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
+                           const uint32_t* normalIndices, size_t normalIndicesSize, double const* const* uvs,
+                           size_t const* uvsSizes, uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
                            uint32_t const* const* uvIndices, size_t const* uvIndicesSizes, uint32_t uvSets) {
 	WA("all");
 
@@ -137,6 +138,21 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 		}
 	}
 
+	// build holes by creating temporary primitive groups of parent face and hole faces
+	size_t holeIndexPos = 0;
+	for (size_t hi = 0; hi < holeCountsSize; hi++) {
+		if (holeCounts[hi] > 0) {
+			auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
+			GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
+			primGroup->addIndex(hi); // the parent face
+			for (size_t hip = 0; hip < holeCounts[hi]; hip++, holeIndexPos++) {
+				primGroup->addIndex(holeIndices[holeIndexPos]);
+			}
+			mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
+			elemGroupTable.destroy(primGroup);
+		}
+	}
+
 	// -- optionally create primitive groups
 	if (gc == GroupCreation::PRIMCLS) {
 		const std::string nName = toOSNarrowFromUTF16(name);
@@ -155,7 +171,8 @@ ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<
     : mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) {}
 
 void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-                         const uint32_t* counts, size_t countsSize, const uint32_t* vertexIndices,
+                         const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
+                         const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
                          size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
                          double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
                          size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
@@ -166,9 +183,9 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
 	const GA_Offset primStartOffset = ModelConversion::createPrimitives(
-	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, vertexIndices,
-	        vertexIndicesSize, normalIndices, normalIndicesSize, uvs, uvsSizes, uvCounts, uvCountsSizes, uvIndices,
-	        uvIndicesSizes, uvSets);
+	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, holeCounts, holeCountsSize,
+	        holeIndices, holeIndicesSize, vertexIndices, vertexIndicesSize, normalIndices, normalIndicesSize, uvs,
+	        uvsSizes, uvCounts, uvCountsSizes, uvIndices, uvIndicesSizes, uvSets);
 
 	// -- convert materials/reports into primitive attributes based on face ranges
 	if (DBG)
