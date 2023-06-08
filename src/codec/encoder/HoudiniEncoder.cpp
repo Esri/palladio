@@ -49,18 +49,6 @@ constexpr bool DBG = false;
 constexpr const wchar_t* ENC_NAME = L"SideFX(tm) Houdini(tm) Encoder";
 constexpr const wchar_t* ENC_DESCRIPTION = L"Encodes geometry into the Houdini format.";
 
-const prtx::EncodePreparator::PreparationFlags PREP_FLAGS =
-        prtx::EncodePreparator::PreparationFlags()
-                .instancing(false)
-                .meshMerging(prtx::MeshMerging::NONE)
-                .triangulate(false)
-                .processHoles(prtx::HoleProcessor::PASS)
-                .mergeVertices(true)
-                .cleanupVertexNormals(true)
-                .cleanupUVs(true)
-                .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
-                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
-
 std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
 	for (size_t i = 0; i < wsv.size(); i++)
@@ -554,8 +542,23 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 			forwardGenericAttributes(cb, initialShapeIndex, initialShape, shape);
 	}
 
+	const bool triangulateFacesWithHoles = getOptions()->getBool(EO_TRIANGULATE_FACES_WITH_HOLES);
+
+	const prtx::EncodePreparator::PreparationFlags encodePreparatorFlags =
+	        prtx::EncodePreparator::PreparationFlags()
+	                .instancing(false)
+	                .meshMerging(prtx::MeshMerging::NONE)
+	                .triangulate(false)
+	                .processHoles(triangulateFacesWithHoles ? prtx::HoleProcessor::TRIANGULATE_FACES_WITH_HOLES
+	                                                        : prtx::HoleProcessor::PASS)
+	                .mergeVertices(true)
+	                .cleanupVertexNormals(true)
+	                .cleanupUVs(true)
+	                .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
+	                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
+
 	prtx::EncodePreparator::InstanceVector instances;
-	encPrep->fetchFinalizedInstances(instances, PREP_FLAGS);
+	encPrep->fetchFinalizedInstances(instances, encodePreparatorFlags);
 	convertGeometry(initialShape, instances, cb);
 }
 
@@ -670,6 +673,7 @@ HoudiniEncoderFactory* HoudiniEncoderFactory::createInstance() {
 	amb->setBool(EO_EMIT_ATTRIBUTES, prtx::PRTX_FALSE);
 	amb->setBool(EO_EMIT_MATERIALS, prtx::PRTX_FALSE);
 	amb->setBool(EO_EMIT_REPORTS, prtx::PRTX_FALSE);
+	amb->setBool(EO_TRIANGULATE_FACES_WITH_HOLES, prtx::PRTX_TRUE);
 	encoderInfoBuilder.setDefaultOptions(amb->createAttributeMap());
 
 	return new HoudiniEncoderFactory(encoderInfoBuilder.create());

@@ -22,6 +22,7 @@ constexpr const wchar_t* ENCODER_ID_HOUDINI = L"HoudiniEncoder";
 constexpr const wchar_t* EO_EMIT_ATTRIBUTES = L"emitAttributes";
 constexpr const wchar_t* EO_EMIT_MATERIALS = L"emitMaterials";
 constexpr const wchar_t* EO_EMIT_REPORTS = L"emitReports";
+constexpr const wchar_t* EO_TRIANGULATE_FACES_WITH_HOLES = L"triangulateFacesWithHoles";
 
 class HoudiniCallbacks : public prt::Callbacks {
 public:
