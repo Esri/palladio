@@ -143,7 +143,8 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 	for (size_t hi = 0; hi < holeCountsSize; hi++) {
 		if (holeCounts[hi] > 0) {
 			auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-			GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
+			GA_PrimitiveGroup* primGroup =
+			        static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
 			primGroup->addIndex(hi); // the parent face
 			for (size_t hip = 0; hip < holeCounts[hi]; hip++, holeIndexPos++) {
 				primGroup->addIndex(holeIndices[holeIndexPos]);

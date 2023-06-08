@@ -33,6 +33,7 @@
 #include "prt/prt.h"
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -40,7 +41,6 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include <cassert>
 
 namespace {
 
@@ -349,23 +349,20 @@ struct TextureUVMapping {
 
 const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = []() -> std::vector<TextureUVMapping> {
 	return {
-		// shader key   | idx | uv set  | CGA key
-		{L"diffuseMap", 0, 0},          // colormap
-		        {L"bumpMap", 0, 1},     // bumpmap
-		        {L"diffuseMap", 1, 2},  // dirtmap
-		        {L"specularMap", 0, 3}, // specularmap
-		        {L"opacityMap", 0, 4},  // opacitymap
-		{
-			L"normalMap", 0, 5
-		} // normalmap
+	        // shader key   | idx | uv set  | CGA key
+	        {L"diffuseMap", 0, 0},  // colormap
+	        {L"bumpMap", 0, 1},     // bumpmap
+	        {L"diffuseMap", 1, 2},  // dirtmap
+	        {L"specularMap", 0, 3}, // specularmap
+	        {L"opacityMap", 0, 4},  // opacitymap
+	        {L"normalMap", 0, 5}    // normalmap
 
 #if PRT_VERSION_MAJOR > 1
-		, {L"emissiveMap", 0, 6},        // emissivemap
-		        {L"occlusionMap", 0, 7}, // occlusionmap
-		        {L"roughnessMap", 0, 8}, // roughnessmap
-		{
-			L"metallicMap", 0, 9
-		} // metallicmap
+	        ,
+	        {L"emissiveMap", 0, 6},  // emissivemap
+	        {L"occlusionMap", 0, 7}, // occlusionmap
+	        {L"roughnessMap", 0, 8}, // roughnessmap
+	        {L"metallicMap", 0, 9}   // metallicmap
 #endif
 	};
 }();
