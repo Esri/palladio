@@ -305,7 +305,7 @@ bool isRulePackageUri(const char* uri) {
 		return false;
 
 	// needs to contain at least one '!' separator
-	if (std::strstr(uri, "!") == nullptr)
+	if (std::strchr(uri, '!') == nullptr)
 		return false;
 
 	return true;
