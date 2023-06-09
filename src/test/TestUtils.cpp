@@ -31,7 +31,7 @@ constexpr const wchar_t* FILE_CGA_PRINT = L"CGAPrint.txt";
 
 void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesystem::path& rpkPath,
               const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
-              const std::vector<std::wstring>& startRules) {
+              const std::vector<std::wstring>& startRules, bool triangulateFacesWithHoles) {
 	REQUIRE(initialShapeURIs.size() == startRules.size());
 
 	ResolveMapSPtr rpkRM = prtCtx->getResolveMap(rpkPath);
@@ -92,6 +92,7 @@ void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesy
 	amb->setBool(L"emitAttributes", true);
 	amb->setBool(L"emitMaterials", true);
 	amb->setBool(L"emitReports", true);
+	amb->setBool(L"triangulateFacesWithHoles", triangulateFacesWithHoles);
 	const AttributeMapUPtr rawEncOpts(amb->createAttributeMapAndReset());
 	const AttributeMapUPtr houdiniEncOpts(createValidatedOptions(ENCODER_ID_HOUDINI, rawEncOpts.get()));
 

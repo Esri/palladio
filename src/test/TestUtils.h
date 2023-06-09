@@ -44,4 +44,4 @@ struct GenerateData { // TODO: could use ShapeData from production code
 
 void generate(TestCallbacks& tc, const PRTContextUPtr& prtCtx, const std::filesystem::path& rpkPath,
               const std::wstring& ruleFile, const std::vector<std::wstring>& initialShapeURIs,
-              const std::vector<std::wstring>& startRules);
+              const std::vector<std::wstring>& startRules, bool triangulateFacesWithHoles = true);
