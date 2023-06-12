@@ -20,6 +20,8 @@
 #include "prt/API.h"
 #include "prt/StringUtils.h"
 
+#include "prtx/URI.h"
+
 #ifndef _WIN32
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
@@ -37,6 +39,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <filesystem>
 #include <string_view>
 
@@ -289,6 +292,43 @@ std::wstring toFileURI(const std::filesystem::path& p) {
 
 std::wstring percentEncode(const std::string& utf8String) {
 	return toUTF16FromUTF8(callAPI<char, char>(prt::StringUtils::percentEncode, utf8String));
+}
+
+// the general URL form is for example:
+// usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg
+bool isRulePackageUri(const char* uri) {
+	if (uri == nullptr)
+		return false;
+
+	// URL needs to contain the rpk: schema
+	if (std::strstr(uri, SCHEMA_RPK) == nullptr)
+		return false;
+
+	// needs to contain at least one '!' separator
+	if (std::strchr(uri, '!') == nullptr)
+		return false;
+
+	return true;
+}
+
+// The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
+std::string getBaseUriPath(const char* uri) {
+	if (uri == nullptr)
+		return {};
+
+	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
+	prtx::URIPtr prtxUri = prtx::URI::create(toUTF16FromUTF8(uri));
+	if (!prtxUri)
+		return {};
+
+	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
+	while (prtxUri->getNestedURI())
+		prtxUri = prtxUri->getNestedURI();
+
+	if (!prtxUri->isFilePath())
+		return {};
+
+	return toUTF8FromUTF16(prtxUri->getPath());
 }
 
 std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions) {

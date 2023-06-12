@@ -726,6 +726,41 @@ TEST_CASE("generate with generic attributes") {
 	}
 }
 
+TEST_CASE("detect RPK URIs") {
+	CHECK(!isRulePackageUri(nullptr));
+	CHECK(!isRulePackageUri(""));
+	CHECK(!isRulePackageUri("foo"));
+	CHECK(!isRulePackageUri("!"));
+	CHECK(!isRulePackageUri("rpk:"));
+	CHECK(!isRulePackageUri("rpk!"));
+	CHECK(!isRulePackageUri("/tmp/foo"));
+	CHECK(!isRulePackageUri("file:/tmp/foo"));
+	CHECK(!isRulePackageUri("file:/tmp/foo.rpk"));
+	CHECK(!isRulePackageUri("rpk:file:/tmp/foo.rpk"));
+
+	CHECK(isRulePackageUri("rpk:!"));
+	CHECK(isRulePackageUri("rpk:/!/"));
+	CHECK(isRulePackageUri("rpk:/foo!/bar"));
+	CHECK(isRulePackageUri("rpk:/foo.rpk!/bar.jpg"));
+	CHECK(isRulePackageUri("rpk:file:/foo/bar.rpk!/my/asset.usdz"));
+	CHECK(isRulePackageUri("usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg"));
+}
+
+TEST_CASE("get base path from URI") {
+	CHECK(getBaseUriPath(nullptr).empty());
+	CHECK(getBaseUriPath("").empty());
+	CHECK(getBaseUriPath("foo").empty());
+	CHECK(getBaseUriPath("rpk:!").empty());
+
+	CHECK(getBaseUriPath("file:/") == "/");
+	CHECK(getBaseUriPath("rpk:/").empty());
+	CHECK(getBaseUriPath("rpk:/!/").empty());
+	CHECK(getBaseUriPath("rpk:file:/foo!/bar") == "/foo");
+	CHECK(getBaseUriPath("rpk:file:/foo.rpk!/bar.jpg") == "/foo.rpk");
+	CHECK(getBaseUriPath("rpk:file:/foo/bar.rpk!/my/asset.usdz") == "/foo/bar.rpk");
+	CHECK(getBaseUriPath("usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg") == "/foo/bar.rpk");
+}
+
 TEST_CASE("generate with polygon hole triangulation") {
 	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "holes" /
 	                                                                "example_bad_triang.usdexport1.usd"};
