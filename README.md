@@ -78,13 +78,12 @@ The primitive attributes can also be overwritten before the geometry is passed t
 
 #### pldGenerate Node
 
-The `pldGenerate` node is used to generate the final geometry.
-It takes an initial shape geometry with metadata as input (i.e. the output of a `pldAssign` node) and executes the CityEngine rule to generate a 3D model.
-In the parameter editor we have the options to:
+The `pldGenerate` node is used to generate the final geometry. It takes an initial shape geometry with metadata as input (i.e. the output of a `pldAssign` node) and executes the CityEngine rule to generate a 3D model. In the parameter editor we have the options to:
 
-- re-emit modified CGA attributes
-- emit material attributes
-- emit CGA reports
+- Re-emit modified CGA attributes (off by default)
+- Emit material attributes (off by default)
+- Emit CGA reports (off by default)
+- Triangulate polygons with holes (on by default). If disabled, Palladio will create "holes with bridges" similar to the [Hole](https://www.sidefx.com/docs/houdini/nodes/sop/hole.html) geometry node.
 
 ### Execute a simple CityEngine Rule
 
