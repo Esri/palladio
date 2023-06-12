@@ -94,7 +94,7 @@ bool ShapeData::isValid() const {
 
 	const size_t numPM = mPrimitiveMapping.size();
 
-	if (numISB != numPM || (numISB != numISN && numISN > 0) || (numISB == 0 && numISN > 0))
+	if (numPM == 0 || numISB != numPM || (numISB != numISN && numISN > 0) || (numISB == 0 && numISN > 0))
 		return false;
 
 	if (numIS != numAMB || numIS != numAM) // they are allowed to be all 0

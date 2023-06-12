@@ -157,7 +157,9 @@ ResolveMapCache::LookupResult ResolveMapCache::get(const std::filesystem::path& 
 			return LOOKUP_FAILURE;
 
 		it = mCache.emplace(cacheKey, std::move(rmce)).first;
-		LOG_INF << "Unpacked RPK " << actualRPK << " to " << mRPKUnpackPath;
+
+		if constexpr(UNPACK_RULE_PACKAGES)
+			LOG_INF << "Unpacked RPK " << actualRPK << " to " << mRPKUnpackPath;
 	}
 
 	return {it->second.mResolveMap, cs};

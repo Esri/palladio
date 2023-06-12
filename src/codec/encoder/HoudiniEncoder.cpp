@@ -33,6 +33,7 @@
 #include "prt/prt.h"
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -40,7 +41,6 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include <cassert>
 
 namespace {
 
@@ -48,18 +48,6 @@ constexpr bool DBG = false;
 
 constexpr const wchar_t* ENC_NAME = L"SideFX(tm) Houdini(tm) Encoder";
 constexpr const wchar_t* ENC_DESCRIPTION = L"Encodes geometry into the Houdini format.";
-
-const prtx::EncodePreparator::PreparationFlags PREP_FLAGS =
-        prtx::EncodePreparator::PreparationFlags()
-                .instancing(false)
-                .meshMerging(prtx::MeshMerging::NONE)
-                .triangulate(false)
-                .processHoles(prtx::HoleProcessor::TRIANGULATE_FACES_WITH_HOLES)
-                .mergeVertices(true)
-                .cleanupVertexNormals(true)
-                .cleanupUVs(true)
-                .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
-                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
 
 std::vector<const wchar_t*> toPtrVec(const prtx::WStringVector& wsv) {
 	std::vector<const wchar_t*> pw(wsv.size());
@@ -349,23 +337,20 @@ struct TextureUVMapping {
 
 const std::vector<TextureUVMapping> TEXTURE_UV_MAPPINGS = []() -> std::vector<TextureUVMapping> {
 	return {
-		// shader key   | idx | uv set  | CGA key
-		{L"diffuseMap", 0, 0},          // colormap
-		        {L"bumpMap", 0, 1},     // bumpmap
-		        {L"diffuseMap", 1, 2},  // dirtmap
-		        {L"specularMap", 0, 3}, // specularmap
-		        {L"opacityMap", 0, 4},  // opacitymap
-		{
-			L"normalMap", 0, 5
-		} // normalmap
+	        // shader key   | idx | uv set  | CGA key
+	        {L"diffuseMap", 0, 0},  // colormap
+	        {L"bumpMap", 0, 1},     // bumpmap
+	        {L"diffuseMap", 1, 2},  // dirtmap
+	        {L"specularMap", 0, 3}, // specularmap
+	        {L"opacityMap", 0, 4},  // opacitymap
+	        {L"normalMap", 0, 5}    // normalmap
 
 #if PRT_VERSION_MAJOR > 1
-		, {L"emissiveMap", 0, 6},        // emissivemap
-		        {L"occlusionMap", 0, 7}, // occlusionmap
-		        {L"roughnessMap", 0, 8}, // roughnessmap
-		{
-			L"metallicMap", 0, 9
-		} // metallicmap
+	        ,
+	        {L"emissiveMap", 0, 6},  // emissivemap
+	        {L"occlusionMap", 0, 7}, // occlusionmap
+	        {L"roughnessMap", 0, 8}, // roughnessmap
+	        {L"metallicMap", 0, 9}   // metallicmap
 #endif
 	};
 }();
@@ -397,6 +382,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 	uint32_t numCoords = 0;
 	uint32_t numNormalCoords = 0;
 	uint32_t numCounts = 0;
+	uint32_t numHoles = 0;
 	uint32_t numIndices = 0;
 	uint32_t maxNumUVSets = 0;
 	auto matsIt = materials.cbegin();
@@ -409,6 +395,7 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 			numNormalCoords += static_cast<uint32_t>(mesh->getVertexNormalsCoords().size());
 
 			numCounts += mesh->getFaceCount();
+			numHoles += mesh->getHolesCount();
 			const auto& vtxCnts = mesh->getFaceVertexCounts();
 			numIndices = std::accumulate(vtxCnts.begin(), vtxCnts.end(), numIndices);
 
@@ -419,11 +406,12 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 		}
 		++matsIt;
 	}
-	detail::SerializedGeometry sg(numCoords, numNormalCoords, numCounts, numIndices, maxNumUVSets);
+	detail::SerializedGeometry sg(numCoords, numNormalCoords, numCounts, numHoles, numIndices, maxNumUVSets);
 
 	// PASS 2: copy
 	uint32_t vertexIndexBase = 0;
 	uint32_t normalIndexBase = 0;
+	uint32_t faceIndexBase = 0;
 	std::vector<uint32_t> uvIndexBases(maxNumUVSets, 0u);
 	for (const auto& geo : geometries) {
 		const prtx::MeshPtrVector& meshes = geo->getMeshes();
@@ -493,10 +481,20 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 					if (nrmCnt > viReversed && nrmIdx != nullptr)
 						sg.normalIndices.push_back(normalIndexBase + nrmIdx[viReversed]);
 				}
+
+				const uint32_t holeCount = mesh->getFaceHolesCount(fi);
+				sg.holeCounts.push_back(holeCount);
+
+				const uint32_t* holesIndices = mesh->getFaceHolesIndices(fi);
+				if (holeCount > 0 && holesIndices != nullptr) {
+					for (uint32_t hi = 0; hi < holeCount; hi++)
+						sg.holeIndices.push_back(holesIndices[hi] + faceIndexBase);
+				}
 			}
 
 			vertexIndexBase += (uint32_t)verts.size() / 3u;
 			normalIndexBase += (uint32_t)norms.size() / 3u;
+			faceIndexBase += mesh->getFaceCount();
 		} // for all meshes
 	}     // for all geometries
 
@@ -544,8 +542,23 @@ void HoudiniEncoder::encode(prtx::GenerateContext& context, size_t initialShapeI
 			forwardGenericAttributes(cb, initialShapeIndex, initialShape, shape);
 	}
 
+	const bool triangulateFacesWithHoles = getOptions()->getBool(EO_TRIANGULATE_FACES_WITH_HOLES);
+
+	const prtx::EncodePreparator::PreparationFlags encodePreparatorFlags =
+	        prtx::EncodePreparator::PreparationFlags()
+	                .instancing(false)
+	                .meshMerging(prtx::MeshMerging::NONE)
+	                .triangulate(false)
+	                .processHoles(triangulateFacesWithHoles ? prtx::HoleProcessor::TRIANGULATE_FACES_WITH_HOLES
+	                                                        : prtx::HoleProcessor::PASS)
+	                .mergeVertices(true)
+	                .cleanupVertexNormals(true)
+	                .cleanupUVs(true)
+	                .processVertexNormals(prtx::VertexNormalProcessor::SET_MISSING_TO_FACE_NORMALS)
+	                .indexSharing(prtx::EncodePreparator::PreparationFlags::INDICES_SEPARATE_FOR_ALL_VERTEX_ATTRIBUTES);
+
 	prtx::EncodePreparator::InstanceVector instances;
-	encPrep->fetchFinalizedInstances(instances, PREP_FLAGS);
+	encPrep->fetchFinalizedInstances(instances, encodePreparatorFlags);
 	convertGeometry(initialShape, instances, cb);
 }
 
@@ -632,8 +645,9 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	assert(sg.uvs.size() == puvCounts.second.size());
 
 	cb->add(initialShape.getName(), sg.coords.data(), sg.coords.size(), sg.normals.data(), sg.normals.size(),
-	        sg.counts.data(), sg.counts.size(), sg.vertexIndices.data(), sg.vertexIndices.size(),
-	        sg.normalIndices.data(), sg.normalIndices.size(),
+	        sg.counts.data(), sg.counts.size(), sg.holeCounts.data(), sg.holeCounts.size(), sg.holeIndices.data(),
+	        sg.holeIndices.size(), sg.vertexIndices.data(), sg.vertexIndices.size(), sg.normalIndices.data(),
+	        sg.normalIndices.size(),
 
 	        puvs.first.data(), puvs.second.data(), puvCounts.first.data(), puvCounts.second.data(),
 	        puvIndices.first.data(), puvIndices.second.data(), static_cast<uint32_t>(sg.uvs.size()),
@@ -659,6 +673,7 @@ HoudiniEncoderFactory* HoudiniEncoderFactory::createInstance() {
 	amb->setBool(EO_EMIT_ATTRIBUTES, prtx::PRTX_FALSE);
 	amb->setBool(EO_EMIT_MATERIALS, prtx::PRTX_FALSE);
 	amb->setBool(EO_EMIT_REPORTS, prtx::PRTX_FALSE);
+	amb->setBool(EO_TRIANGULATE_FACES_WITH_HOLES, prtx::PRTX_TRUE);
 	encoderInfoBuilder.setDefaultOptions(amb->createAttributeMap());
 
 	return new HoudiniEncoderFactory(encoderInfoBuilder.create());

@@ -156,11 +156,13 @@ GroupCreation getGroupCreation(const OP_Node* node, fpreal t);
 static PRM_Name EMIT_ATTRS("emitAttrs", "Re-emit set CGA attributes");
 static PRM_Name EMIT_MATERIAL("emitMaterials", "Emit material attributes");
 static PRM_Name EMIT_REPORTS("emitReports", "Emit CGA reports");
+static PRM_Name TRIANGULATE_FACES_WITH_HOLES("triangulateFacesWithHoles", "Triangulate polygons with holes");
 static PRM_Template PARAM_TEMPLATES[]{PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1, &GROUP_CREATION,
                                                    &DEFAULT_GROUP_CREATION, &groupCreationMenu),
                                       PRM_Template(PRM_TOGGLE, 1, &EMIT_ATTRS),
                                       PRM_Template(PRM_TOGGLE, 1, &EMIT_MATERIAL),
                                       PRM_Template(PRM_TOGGLE, 1, &EMIT_REPORTS),
+                                      PRM_Template(PRM_TOGGLE, 1, &TRIANGULATE_FACES_WITH_HOLES, PRMoneDefaults),
                                       PRM_Template(PRM_ORD, PRM_Template::PRM_EXPORT_MAX, 1,
                                                    &CommonNodeParams::LOG_LEVEL, &CommonNodeParams::DEFAULT_LOG_LEVEL,
                                                    &CommonNodeParams::logLevelMenu),

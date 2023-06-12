@@ -1240,6 +1240,9 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 
 		updateDefaultCGAAttributes(shapeData);
 
+		if (!shapeData.isValid())
+			return UT_ERROR_ABORT;
+
 		const RuleFileInfoUPtr& ruleFileInfo =
 		        getRuleFileInfoFromShapeData(gdp, shapeData, 0, mShapeConverter, mPRTCtx, evalAttrErrorMessage);
 		if (!ruleFileInfo)
