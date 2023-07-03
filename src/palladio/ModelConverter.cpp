@@ -134,22 +134,26 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 		}
 	}
 
-	// -- build holes by creating a temporary primitive group of all new polygons and their holes,
-	//    presence of holes is controlled indirectly by GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES
-	if (holeIndicesSize > 0) {
+	// -- handle polygon holes and primitive groups
+	const bool needsPrimGroup = (holeIndicesSize > 0) || (gc == GroupCreation::PRIMCLS);
+	const bool keepPrimGroup = (gc == GroupCreation::PRIMCLS);
+
+	GA_PrimitiveGroup* primGroup = nullptr;
+	if (needsPrimGroup) {
 		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-		GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
-		primGroup->addRange(marker.primitiveRange());
-		mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
-		elemGroupTable.destroy(primGroup);
+		const std::string nName = toOSNarrowFromUTF16(name);
+		primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nName.c_str(), false));
+		primGroup->addRange(marker.primitiveRange()); // add all new prims of the currently generated model
 	}
 
-	// -- optionally create primitive groups
-	if (gc == GroupCreation::PRIMCLS) {
-		const std::string nName = toOSNarrowFromUTF16(name);
+	// presence of holes is controlled indirectly by GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES
+	if (holeIndicesSize > 0) {
+		mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
+	}
+
+	if (!keepPrimGroup) {
 		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-		GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(nName.c_str(), false));
-		primGroup->addRange(marker.primitiveRange());
+		elemGroupTable.destroy(primGroup);
 	}
 
 	return primStartOffset;
