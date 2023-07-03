@@ -42,8 +42,7 @@ struct SerializedGeometry {
 	prtx::DoubleVector coords;
 	prtx::DoubleVector normals;
 	std::vector<uint32_t> counts;
-	std::vector<uint32_t> holeCounts;
-	std::vector<uint32_t> holeIndices;
+	uint32_t holeCount;
 	std::vector<uint32_t> vertexIndices;
 	std::vector<uint32_t> normalIndices;
 
@@ -57,8 +56,7 @@ struct SerializedGeometry {
 		coords.reserve(3 * numCoords);
 		normals.reserve(3 * numNormalCoords);
 		counts.reserve(numCounts);
-		holeCounts.reserve(numCounts);
-		holeIndices.reserve(numHoles);
+		holeCount = numHoles;
 		vertexIndices.reserve(numIndices);
 		normalIndices.reserve(numIndices);
 	}

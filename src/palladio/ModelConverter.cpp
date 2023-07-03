@@ -62,8 +62,7 @@ std::mutex mDetailMutex; // guard the houdini detail object
 
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name, const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize, const uint32_t* counts, size_t countsSize,
-                           const uint32_t* /*holeCounts*/, size_t /*holeCountsSize*/, const uint32_t* /*holeIndices*/,
-                           size_t holeIndicesSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
+                           bool createHoles, const uint32_t* vertexIndices, size_t vertexIndicesSize,
                            const uint32_t* normalIndices, size_t normalIndicesSize, double const* const* uvs,
                            size_t const* uvsSizes, uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
                            uint32_t const* const* uvIndices, size_t const* uvIndicesSizes, uint32_t uvSets) {
@@ -135,7 +134,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 	}
 
 	// -- handle polygon holes and primitive groups
-	const bool needsPrimGroup = (holeIndicesSize > 0) || (gc == GroupCreation::PRIMCLS);
+	const bool needsPrimGroup = createHoles || (gc == GroupCreation::PRIMCLS);
 	const bool keepPrimGroup = (gc == GroupCreation::PRIMCLS);
 
 	GA_PrimitiveGroup* primGroup = nullptr;
@@ -147,7 +146,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 	}
 
 	// presence of holes is controlled indirectly by GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES
-	if (holeIndicesSize > 0) {
+	if (createHoles) {
 		mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
 	}
 
@@ -166,8 +165,7 @@ ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<
     : mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) {}
 
 void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-                         const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
-                         const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
+                         const uint32_t* counts, size_t countsSize, bool createHoles, const uint32_t* vertexIndices,
                          size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
                          double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
                          size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
@@ -177,10 +175,10 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 	// we need to protect mDetail, it is accessed by multiple generate threads
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
-	const GA_Offset primStartOffset = createPrimitives(
-	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, holeCounts, holeCountsSize,
-	        holeIndices, holeIndicesSize, vertexIndices, vertexIndicesSize, normalIndices, normalIndicesSize, uvs,
-	        uvsSizes, uvCounts, uvCountsSizes, uvIndices, uvIndicesSizes, uvSets);
+	const GA_Offset primStartOffset =
+	        createPrimitives(mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, createHoles,
+	                         vertexIndices, vertexIndicesSize, normalIndices, normalIndicesSize, uvs, uvsSizes,
+	                         uvCounts, uvCountsSizes, uvIndices, uvIndicesSizes, uvSets);
 
 	// -- convert materials/reports into primitive attributes based on face ranges
 	if (DBG)

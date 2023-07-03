@@ -36,10 +36,7 @@ public:
 	 * @param nrmSize length of vertex normal array
 	 * @param counts polygon count array
 	 * @param countsSize length of polygon count array
-	 * @param holeCounts number of related holes for each polygon
-	 * @param holeCountsSize length of holes counts array
-	 * @param holeIndices indices of hole polygons (grouped by holes counts)
-	 * @param holeIndicesSize length of holes indices array
+	 * @param createHoles if true, run the "magic" Houdini buildHole operation
 	 * @param vertexIndices vertex attribute index array (grouped by counts)
 	 * @param vertexIndicesSize vertex attribute index array
 	 * @param normalIndices vertex normal attribute index array (grouped by counts)
@@ -58,8 +55,7 @@ public:
 	 * @param shapeIDs shape ids per face, contains faceRangesSize-1 values
 	 */
 	virtual void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	                 const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
-	                 const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
+	                 const uint32_t* counts, size_t countsSize, bool createHoles, const uint32_t* vertexIndices,
 	                 size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
 
 	                 double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,

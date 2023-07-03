@@ -61,8 +61,7 @@ public:
 
 protected:
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	         const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
-	         const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
+	         const uint32_t* counts, size_t countsSize, bool createHoles, const uint32_t* vertexIndices,
 	         size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
 	         double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
 	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,

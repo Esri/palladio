@@ -481,15 +481,6 @@ SerializedGeometry serializeGeometry(const prtx::GeometryPtrVector& geometries,
 					if (nrmCnt > viReversed && nrmIdx != nullptr)
 						sg.normalIndices.push_back(normalIndexBase + nrmIdx[viReversed]);
 				}
-
-				const uint32_t holeCount = mesh->getFaceHolesCount(fi);
-				sg.holeCounts.push_back(holeCount);
-
-				const uint32_t* holesIndices = mesh->getFaceHolesIndices(fi);
-				if (holeCount > 0 && holesIndices != nullptr) {
-					for (uint32_t hi = 0; hi < holeCount; hi++)
-						sg.holeIndices.push_back(holesIndices[hi] + faceIndexBase);
-				}
 			}
 
 			vertexIndexBase += (uint32_t)verts.size() / 3u;
@@ -644,10 +635,12 @@ void HoudiniEncoder::convertGeometry(const prtx::InitialShape& initialShape,
 	assert(sg.uvs.size() == puvCounts.first.size());
 	assert(sg.uvs.size() == puvCounts.second.size());
 
+	const bool triangulateFacesWithHoles = getOptions()->getBool(EO_TRIANGULATE_FACES_WITH_HOLES);
+	const bool createHoles = !triangulateFacesWithHoles && (sg.holeCount > 0);
+
 	cb->add(initialShape.getName(), sg.coords.data(), sg.coords.size(), sg.normals.data(), sg.normals.size(),
-	        sg.counts.data(), sg.counts.size(), sg.holeCounts.data(), sg.holeCounts.size(), sg.holeIndices.data(),
-	        sg.holeIndices.size(), sg.vertexIndices.data(), sg.vertexIndices.size(), sg.normalIndices.data(),
-	        sg.normalIndices.size(),
+	        sg.counts.data(), sg.counts.size(), createHoles, sg.vertexIndices.data(), sg.vertexIndices.size(),
+	        sg.normalIndices.data(), sg.normalIndices.size(),
 
 	        puvs.first.data(), puvs.second.data(), puvCounts.first.data(), puvCounts.second.data(),
 	        puvIndices.first.data(), puvIndices.second.data(), static_cast<uint32_t>(sg.uvs.size()),
