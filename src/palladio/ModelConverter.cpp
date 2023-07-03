@@ -62,7 +62,7 @@ std::mutex mDetailMutex; // guard the houdini detail object
 
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name, const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize, const uint32_t* counts, size_t countsSize,
-                           const uint32_t* holeCounts, size_t holeCountsSize, const uint32_t* holeIndices,
+                           const uint32_t* /*holeCounts*/, size_t /*holeCountsSize*/, const uint32_t* /*holeIndices*/,
                            size_t holeIndicesSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
                            const uint32_t* normalIndices, size_t normalIndicesSize, double const* const* uvs,
                            size_t const* uvsSizes, uint32_t const* const* uvCounts, size_t const* uvCountsSizes,
@@ -134,20 +134,14 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 		}
 	}
 
-	// build holes by creating temporary primitive groups of parent face and hole faces
-	size_t holeIndexPos = 0;
-	for (size_t hi = 0; hi < holeCountsSize; hi++) {
-		if (holeCounts[hi] > 0) {
-			auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-			GA_PrimitiveGroup* primGroup =
-			        static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
-			primGroup->addIndex(hi); // the parent face
-			for (size_t hip = 0; hip < holeCounts[hi]; hip++, holeIndexPos++) {
-				primGroup->addIndex(holeIndices[holeIndexPos]);
-			}
-			mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
-			elemGroupTable.destroy(primGroup);
-		}
+	// -- build holes by creating a temporary primitive group of all new polygons and their holes,
+	//    presence of holes is controlled indirectly by GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES
+	if (holeIndicesSize > 0) {
+		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
+		GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup("tempHoleGroup", false));
+		primGroup->addRange(marker.primitiveRange());
+		mDetail->buildHoles(0.001f, 0.2f, 0, primGroup);
+		elemGroupTable.destroy(primGroup);
 	}
 
 	// -- optionally create primitive groups
