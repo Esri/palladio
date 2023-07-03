@@ -60,10 +60,6 @@ void setVertexNormals(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& mark
 
 std::mutex mDetailMutex; // guard the houdini detail object
 
-} // namespace
-
-namespace ModelConversion {
-
 GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* name, const double* vtx, size_t vtxSize,
                            const double* nrm, size_t nrmSize, const uint32_t* counts, size_t countsSize,
                            const uint32_t* holeCounts, size_t holeCountsSize, const uint32_t* holeIndices,
@@ -165,7 +161,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 	return primStartOffset;
 }
 
-} // namespace ModelConversion
+} // namespace
 
 ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<prt::Status>& statuses,
                                UT_AutoInterrupt* autoInterrupt)
@@ -183,7 +179,7 @@ void ModelConverter::add(const wchar_t* name, const double* vtx, size_t vtxSize,
 	// we need to protect mDetail, it is accessed by multiple generate threads
 	std::lock_guard<std::mutex> guard(mDetailMutex);
 
-	const GA_Offset primStartOffset = ModelConversion::createPrimitives(
+	const GA_Offset primStartOffset = createPrimitives(
 	        mDetail, mGroupCreation, name, vtx, vtxSize, nrm, nrmSize, counts, countsSize, holeCounts, holeCountsSize,
 	        holeIndices, holeIndicesSize, vertexIndices, vertexIndicesSize, normalIndices, normalIndicesSize, uvs,
 	        uvsSizes, uvCounts, uvCountsSizes, uvIndices, uvIndicesSizes, uvSets);
