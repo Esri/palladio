@@ -363,10 +363,7 @@ Required CityEngine version: 2023.0 or older
 #### Changed:
 
 - Updated Procedural Runtime (PRT) to 3.0.8905 (corresponds to CityEngine 2023.0)
-- Fixed missing textures with embedded usd assets in RPKs
-
-#### Development
-- Show compilation warnings in CI
+- Fixed lookup of textures within USDZ assets in RPKs
 
 ### v2.0.0 Beta 2 (Mar 27, 2023)
 
