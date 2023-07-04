@@ -134,8 +134,8 @@ GA_Offset createPrimitives(GU_Detail* mDetail, GroupCreation gc, const wchar_t* 
 	}
 
 	// -- handle polygon holes and primitive groups
-	const bool needsPrimGroup = createHoles || (gc == GroupCreation::PRIMCLS);
 	const bool keepPrimGroup = (gc == GroupCreation::PRIMCLS);
+	const bool needsPrimGroup = createHoles || keepPrimGroup;
 
 	GA_PrimitiveGroup* primGroup = nullptr;
 	if (needsPrimGroup) {
