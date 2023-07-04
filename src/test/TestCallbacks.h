@@ -35,8 +35,7 @@ struct CallbackResult {
 	std::vector<std::vector<uint32_t>> uvCounts;
 	std::vector<std::vector<uint32_t>> uvIndices;
 	std::vector<uint32_t> cnts;
-	std::vector<uint32_t> holeCnts;
-	std::vector<uint32_t> holeIdx;
+	bool createHoles;
 	std::vector<uint32_t> vtxIdx;
 	std::vector<uint32_t> nrmIdx;
 	std::vector<uint32_t> faceRanges;
@@ -57,8 +56,7 @@ public:
 	std::map<int32_t, AttributeMapBuilderUPtr> attrs;
 
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	         const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
-	         const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
+	         const uint32_t* counts, size_t countsSize, bool createHoles, const uint32_t* vertexIndices,
 	         size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
 	         double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
 	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
@@ -70,9 +68,8 @@ public:
 		cr.name = name;
 		cr.vtx.assign(vtx, vtx + vtxSize);
 		cr.nrm.assign(nrm, nrm + nrmSize);
+		cr.createHoles = createHoles;
 		cr.cnts.assign(counts, counts + countsSize);
-		cr.holeCnts.assign(holeCounts, holeCounts + holeCountsSize);
-		cr.holeIdx.assign(holeIndices, holeIndices + holeIndicesSize);
 		cr.vtxIdx.assign(vertexIndices, vertexIndices + vertexIndicesSize);
 		cr.nrmIdx.assign(normalIndices, normalIndices + normalIndicesSize);
 

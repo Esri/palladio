@@ -776,11 +776,7 @@ TEST_CASE("generate with polygon hole triangulation") {
 	const CallbackResult& cr = *tc.results[0];
 
 	REQUIRE(cr.cnts.size() == 49);
-
-	REQUIRE(cr.holeCnts.size() == 49); // same as cnts
-	CHECK(!std::any_of(cr.holeCnts.begin(), cr.holeCnts.end(), [](uint32_t c) { return (c > 0); }));
-
-	CHECK(cr.holeIdx.empty());
+	REQUIRE(!cr.createHoles);
 }
 
 TEST_CASE("generate without polygon hole triangulation") {
@@ -798,13 +794,5 @@ TEST_CASE("generate without polygon hole triangulation") {
 	const CallbackResult& cr = *tc.results[0];
 
 	CHECK(cr.cnts.size() == 30); // 26 quads and 4 holes
-
-	REQUIRE(cr.holeCnts.size() == 30); // same as cnts
-	CHECK(cr.holeCnts[25] == 4); // top face has four holes
-
-	REQUIRE(cr.holeIdx.size() == 4);
-	CHECK(cr.holeIdx[0] == 26);
-	CHECK(cr.holeIdx[1] == 27);
-	CHECK(cr.holeIdx[2] == 28);
-	CHECK(cr.holeIdx[3] == 29);
+	REQUIRE(cr.createHoles);
 }
