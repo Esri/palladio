@@ -60,9 +60,9 @@ void setVertexNormals(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& mark
 
 std::mutex mDetailMutex; // guard the houdini detail object (and the hole groups)
 
-GA_Offset createPrimitives(GU_Detail* mDetail, std::vector<GA_PrimitiveGroup*>& holeGroups, GroupCreation gc,
-                           const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-                           const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
+GA_Offset createPrimitives(GU_Detail* mDetail, PrimitiveGroups& holeGroups, GroupCreation gc, const wchar_t* name,
+                           const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize, const uint32_t* counts,
+                           size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
                            const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
                            size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
                            double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
@@ -140,18 +140,20 @@ GA_Offset createPrimitives(GU_Detail* mDetail, std::vector<GA_PrimitiveGroup*>& 
 	// while we still might add more prims (more generated models)
 	if (holeCountsSize > 0) {
 		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
+		PrimitiveGroupDestroyer groupDestroyer(elemGroupTable);
 
 		// collect the hole prims into groups
 		size_t holeIndexPos = 0;
 		for (size_t hi = 0; hi < holeCountsSize; hi++) {
 			if (holeCounts[hi] > 0) {
-				GA_PrimitiveGroup* primGroup = static_cast<GA_PrimitiveGroup*>(
-				        elemGroupTable.newGroup("tempHoleGroup" + std::to_string(elemGroupTable.entries()), false));
+				std::string groupName = "tempHoleGroup" + std::to_string(elemGroupTable.entries());
+				PrimitiveGroupUPtr primGroup(static_cast<GA_PrimitiveGroup*>(elemGroupTable.newGroup(groupName, false)),
+				                             groupDestroyer);
 				primGroup->addIndex(primStartOffset + hi); // the parent face
 				for (size_t hip = 0; hip < holeCounts[hi]; hip++, holeIndexPos++) {
 					primGroup->addIndex(primStartOffset + holeIndices[holeIndexPos]);
 				}
-				holeGroups.push_back(primGroup);
+				holeGroups.push_back(std::move(primGroup));
 			}
 		}
 	}
@@ -175,10 +177,8 @@ ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<
 
 ModelConverter::~ModelConverter() noexcept {
 	// after all meshes have been added, we can run buildHoles (which might delete some prims)
-	auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
-	for (GA_PrimitiveGroup* group : mHoleGroups) {
-		mDetail->buildHoles(0.001f, 0.2f, 0, group);
-		elemGroupTable.destroy(group);
+	for (PrimitiveGroupUPtr& group : mHoleGroups) {
+		mDetail->buildHoles(0.001f, 0.2f, 0, group.get());
 	}
 }
 
