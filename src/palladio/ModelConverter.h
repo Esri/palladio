@@ -58,6 +58,7 @@ class ModelConverter : public HoudiniCallbacks {
 public:
 	explicit ModelConverter(GU_Detail* gdp, GroupCreation gc, std::vector<prt::Status>& statuses,
 	                        UT_AutoInterrupt* autoInterrupt = nullptr);
+	~ModelConverter() override;
 
 protected:
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
@@ -112,6 +113,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
+	std::vector<GA_PrimitiveGroup*> mHoleGroups;
 	GroupCreation mGroupCreation;
 	std::vector<prt::Status>& mStatuses;
 	UT_AutoInterrupt* mAutoInterrupt;
