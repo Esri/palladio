@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 
-
 namespace prt {
 class RuleFileInfo;
 }
@@ -51,8 +50,8 @@ using AttributeGroup = std::vector<std::wstring>;
 using AttributeGroupOrder = std::map<std::pair<std::wstring, AttributeGroup>, int>;
 
 struct RuleAttribute {
-	std::wstring fqName;    // fully qualified rule name (i.e. including style prefix)
-	std::wstring niceName;  // rule name without style and groups
+	std::wstring fqName;   // fully qualified rule name (i.e. including style prefix)
+	std::wstring niceName; // rule name without style and groups
 	prt::AnnotationArgumentType mType;
 
 	AttributeGroup groups; // groups can be nested

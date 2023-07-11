@@ -25,7 +25,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <string>
 
 namespace {
 
@@ -205,7 +204,7 @@ bool RuleAttributeCmp::operator()(const RuleAttribute& lhs, const RuleAttribute&
 	};
 
 	auto compareOrderToGroupOrder = [](const RuleAttribute& ruleAttrWithGroups,
-	                                    const RuleAttribute& ruleAttrWithoutGroups) {
+	                                   const RuleAttribute& ruleAttrWithoutGroups) {
 		if ((ruleAttrWithGroups.groups.size() > 0) &&
 		    (ruleAttrWithGroups.globalGroupOrder == ruleAttrWithoutGroups.order))
 			return ruleAttrWithGroups.groups[0] <= ruleAttrWithoutGroups.niceName;

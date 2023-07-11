@@ -61,7 +61,8 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	const bool emitAttributes = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
 	const bool emitMaterial = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
 	const bool emitReports = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
-	const bool triangulateFacesWithHoles = (evalInt(GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES.getToken(), 0, now) > 0);
+	const bool triangulateFacesWithHoles =
+	        (evalInt(GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);
@@ -178,8 +179,8 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			WA("generate");
 
 			// prt requires one callback instance per generate call
-			std::vector<ModelConverterUPtr> hg(nThreads);
-			std::generate(hg.begin(), hg.end(),
+			std::vector<ModelConverterUPtr> modelConverters(nThreads);
+			std::generate(modelConverters.begin(), modelConverters.end(),
 			              [this, &groupCreation, &initialShapeStatus, &progress]() -> ModelConverterUPtr {
 				              return ModelConverterUPtr(
 				                      new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
@@ -191,13 +192,18 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = " << nThreads
 			        << ", initial shapes per thread = " << isRangeSize;
 
-			batchGenerate(BatchMode::OCCLUSION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
-			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
+			batchGenerate(BatchMode::OCCLUSION, nThreads, modelConverters, isRangeSize, is, mAllEncoders,
+			              mAllEncoderOptions, occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
-			batchGenerate(BatchMode::GENERATION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
-			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
+			batchGenerate(BatchMode::GENERATION, nThreads, modelConverters, isRangeSize, is, mAllEncoders,
+			              mAllEncoderOptions, occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
 			occlusionSet->dispose(occlusionHandles.data(), occlusionHandles.size());
+
+			// all modification of gdb is done, now it is safe to run buildHoles on the
+			// collected primitive groups
+			for (auto& modelConverter : modelConverters)
+				modelConverter->buildHoles();
 		}
 		select();
 	}

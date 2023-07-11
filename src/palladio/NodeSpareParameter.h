@@ -56,7 +56,8 @@ void addFloatEnumParm(OP_Node* node, const std::wstring& id, const std::wstring&
                       const std::wstring& defaultOption, const std::vector<std::wstring>& mOptions,
                       const FolderVec& parentFolders, const std::wstring& description = {});
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description = {});
+                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders,
+                 const std::wstring& description = {});
 void addDirectoryParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
                       const FolderVec& parentFolders, const std::wstring& description = {});
 void addSeparator(OP_Node* node, const FolderVec& parentFolders = {});

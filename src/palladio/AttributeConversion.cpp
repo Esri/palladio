@@ -19,8 +19,8 @@
 #include "LogHandler.h"
 #include "MultiWatch.h"
 
-#include <mutex>
 #include <bitset>
+#include <mutex>
 
 #include "UT/UT_VarEncode.h"
 
@@ -511,7 +511,7 @@ std::wstring removeStyle(const std::wstring& fullyQualifiedAttrName) {
 	return fullyQualifiedAttrName;
 }
 
-std::wstring removeGroups(const std::wstring & fullyQualifiedAttrName) {
+std::wstring removeGroups(const std::wstring& fullyQualifiedAttrName) {
 	const auto p = fullyQualifiedAttrName.rfind(GROUP_SEPARATOR);
 	if (p != std::string::npos)
 		return fullyQualifiedAttrName.substr(p + 1);

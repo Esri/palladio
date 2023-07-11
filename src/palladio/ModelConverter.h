@@ -54,10 +54,24 @@ void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker, const 
 
 } // namespace ModelConversion
 
+struct PrimitiveGroupDestroyer {
+	GA_ElementGroupTable& mGroupTable;
+	PrimitiveGroupDestroyer() = delete;
+	explicit PrimitiveGroupDestroyer(GA_ElementGroupTable& groupTable) : mGroupTable(groupTable) {}
+	void operator()(GA_PrimitiveGroup* group) {
+		mGroupTable.destroy(group);
+	}
+};
+using PrimitiveGroupUPtr = std::unique_ptr<GA_PrimitiveGroup, PrimitiveGroupDestroyer>;
+using PrimitiveGroups = std::vector<PrimitiveGroupUPtr>;
+
 class ModelConverter : public HoudiniCallbacks {
 public:
 	explicit ModelConverter(GU_Detail* gdp, GroupCreation gc, std::vector<prt::Status>& statuses,
 	                        UT_AutoInterrupt* autoInterrupt = nullptr);
+	~ModelConverter() = default;
+
+	void buildHoles();
 
 protected:
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
@@ -112,6 +126,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
+	PrimitiveGroups mHoleGroups;
 	GroupCreation mGroupCreation;
 	std::vector<prt::Status>& mStatuses;
 	UT_AutoInterrupt* mAutoInterrupt;
