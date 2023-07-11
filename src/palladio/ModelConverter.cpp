@@ -175,7 +175,7 @@ ModelConverter::ModelConverter(GU_Detail* detail, GroupCreation gc, std::vector<
                                UT_AutoInterrupt* autoInterrupt)
     : mDetail(detail), mGroupCreation(gc), mStatuses(statuses), mAutoInterrupt(autoInterrupt) {}
 
-ModelConverter::~ModelConverter() noexcept {
+void ModelConverter::buildHoles() {
 	// after all meshes have been added, we can run buildHoles (which might delete some prims)
 	for (PrimitiveGroupUPtr& group : mHoleGroups) {
 		mDetail->buildHoles(0.001f, 0.2f, 0, group.get());

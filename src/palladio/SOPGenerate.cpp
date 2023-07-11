@@ -198,6 +198,11 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
 			occlusionSet->dispose(occlusionHandles.data(), occlusionHandles.size());
+
+			// all modification of gdb is done, now it is safe to run buildHoles on the
+			// collected primitive groups
+			for (auto& modelConverter: hg)
+				modelConverter->buildHoles();
 		}
 		select();
 	}

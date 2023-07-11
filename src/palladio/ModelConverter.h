@@ -69,7 +69,9 @@ class ModelConverter : public HoudiniCallbacks {
 public:
 	explicit ModelConverter(GU_Detail* gdp, GroupCreation gc, std::vector<prt::Status>& statuses,
 	                        UT_AutoInterrupt* autoInterrupt = nullptr);
-	~ModelConverter() override;
+	~ModelConverter() = default;
+
+	void buildHoles();
 
 protected:
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
