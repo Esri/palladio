@@ -178,8 +178,8 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			WA("generate");
 
 			// prt requires one callback instance per generate call
-			std::vector<ModelConverterUPtr> hg(nThreads);
-			std::generate(hg.begin(), hg.end(),
+			std::vector<ModelConverterUPtr> modelConverters(nThreads);
+			std::generate(modelConverters.begin(), modelConverters.end(),
 			              [this, &groupCreation, &initialShapeStatus, &progress]() -> ModelConverterUPtr {
 				              return ModelConverterUPtr(
 				                      new ModelConverter(gdp, groupCreation, initialShapeStatus, &progress));
@@ -191,17 +191,17 @@ OP_ERROR SOPGenerate::cookMySop(OP_Context& context) {
 			LOG_INF << getName() << ": calling generate: #initial shapes = " << is.size() << ", #threads = " << nThreads
 			        << ", initial shapes per thread = " << isRangeSize;
 
-			batchGenerate(BatchMode::OCCLUSION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
-			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
+			batchGenerate(BatchMode::OCCLUSION, nThreads, modelConverters, isRangeSize, is, mAllEncoders,
+			              mAllEncoderOptions, occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
-			batchGenerate(BatchMode::GENERATION, nThreads, hg, isRangeSize, is, mAllEncoders, mAllEncoderOptions,
-			              occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
+			batchGenerate(BatchMode::GENERATION, nThreads, modelConverters, isRangeSize, is, mAllEncoders,
+			              mAllEncoderOptions, occlusionHandles, occlusionSet, mPRTCtx->mPRTCache, mGenerateOptions);
 
 			occlusionSet->dispose(occlusionHandles.data(), occlusionHandles.size());
 
 			// all modification of gdb is done, now it is safe to run buildHoles on the
 			// collected primitive groups
-			for (auto& modelConverter: hg)
+			for (auto& modelConverter : modelConverters)
 				modelConverter->buildHoles();
 		}
 		select();
