@@ -800,7 +800,7 @@ TEST_CASE("generate without polygon hole triangulation") {
 	CHECK(cr.cnts.size() == 30); // 26 quads and 4 holes
 
 	REQUIRE(cr.holeCnts.size() == 30); // same as cnts
-	CHECK(cr.holeCnts[25] == 4); // top face has four holes
+	CHECK(cr.holeCnts[25] == 4);       // top face has four holes
 
 	REQUIRE(cr.holeIdx.size() == 4);
 	CHECK(cr.holeIdx[0] == 26);

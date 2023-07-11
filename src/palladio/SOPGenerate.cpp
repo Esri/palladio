@@ -61,7 +61,8 @@ bool SOPGenerate::handleParams(OP_Context& context) {
 	const bool emitAttributes = (evalInt(GenerateNodeParams::EMIT_ATTRS.getToken(), 0, now) > 0);
 	const bool emitMaterial = (evalInt(GenerateNodeParams::EMIT_MATERIAL.getToken(), 0, now) > 0);
 	const bool emitReports = (evalInt(GenerateNodeParams::EMIT_REPORTS.getToken(), 0, now) > 0);
-	const bool triangulateFacesWithHoles = (evalInt(GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES.getToken(), 0, now) > 0);
+	const bool triangulateFacesWithHoles =
+	        (evalInt(GenerateNodeParams::TRIANGULATE_FACES_WITH_HOLES.getToken(), 0, now) > 0);
 
 	AttributeMapBuilderUPtr optionsBuilder(prt::AttributeMapBuilder::create());
 	optionsBuilder->setBool(EO_EMIT_ATTRIBUTES, emitAttributes);

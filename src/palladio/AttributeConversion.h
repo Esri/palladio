@@ -23,9 +23,9 @@
 
 #include "GU/GU_Detail.h"
 
+#include <string>
 #include <unordered_map>
 #include <variant>
-#include <string>
 
 namespace std {
 template <>
@@ -81,7 +81,7 @@ public:
 private:
 	using NoHandle = int8_t;
 	using HandleType = std::variant<NoHandle, GA_RWBatchHandleS, GA_RWHandleI, GA_RWHandleC, GA_RWHandleF,
-	                                         GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
+	                                GA_RWHandleSA, GA_RWHandleIA, GA_RWHandleDA>;
 
 	struct ProtoHandle {
 		HandleType handleType;
@@ -133,7 +133,7 @@ constexpr wchar_t STYLE_SEPARATOR = L'$';
 constexpr wchar_t GROUP_SEPARATOR = L'.';
 
 std::wstring addStyle(const std::wstring& attrName, const std::wstring& style);
-std::wstring removeGroups(const std::wstring & fullyQuantifiedAttrName);
+std::wstring removeGroups(const std::wstring& fullyQuantifiedAttrName);
 std::wstring removeStyle(const std::wstring& fullyQuantifiedAttrName);
 
 UT_String toPrimAttr(const std::wstring& fullyQuantifiedAttrName);
