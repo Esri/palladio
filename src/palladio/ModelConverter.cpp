@@ -136,7 +136,7 @@ GA_Offset createPrimitives(GU_Detail* mDetail, PrimitiveGroups& holeGroups, Grou
 	}
 
 	// create temporary primitive groups of parent face and hole faces,
-	// see d'tor for actual hole creation - we must not run buildHoles (which potentially deletes prims)
+	// see ModelConverter::buildHoles for actual hole creation - we must not run buildHoles (which potentially deletes prims)
 	// while we still might add more prims (more generated models)
 	if (holeCountsSize > 0) {
 		auto& elemGroupTable = mDetail->getElementGroupTable(GA_ATTRIB_PRIMITIVE);
