@@ -47,10 +47,9 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 #### Software Requirements (Latest Release)
 
 - Windows 10 or 11 (64bit)
-- RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
+- RedHat Enterprise Linux 8 or 9 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 - Houdini 18.5, 19.0 or 19.5
-- The latest release requires CityEngine 2022.1 or older for creating rule packages.
-- For commercial work, a [license](https://esri.com/cityengine) for CityEngine 2019.0 or later is required.
+- See [release notes](#release-notes) for compatible CityEngine versions and requirements for commercial work. 
 
 #### From Pre-Built Binaries
 
@@ -263,14 +262,14 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 ### Supported Operating Systems
 
 - Windows 10 or 11 (64bit)
-- RedHat Enterprise Linux 7 or 8 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
+- RedHat Enterprise Linux 8 or 9 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
 
 ### Required Toolchain & Compiler
 
 - [cmake 3.13 or later](https://cmake.org/download)
 - [conan 1.20 or later](https://www.conan.io/downloads)
-- Linux: GCC 9.3
-- Windows: Visual Studio 2019 (MSVC 14.27)
+- Linux: GCC 9.3 or later
+- Windows: Visual Studio 2019 (MSVC 14.27) or later
 
 ### Required Build Dependencies (Latest Release)
 
@@ -355,7 +354,8 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ### v2.0.0 (Jul 1, 2023)
 
-Required CityEngine version: 2023.0 or older
+- Compatible CityEngine versions: 2023.0 or older
+- For commercial work, a [license](https://www.esri.com/cityengine) for CityEngine 2022.0 or later is required.
 
 #### Added:
 - Option to disable default triangulation on polygons with holes
