@@ -85,7 +85,8 @@ void addParmsFromTemplateArray(OP_Node* node, PRM_Template* spareParmTemplates, 
 }
 
 void addParm(OP_Node* node, PRM_Type parmType, const std::wstring& id, const std::wstring& name, PRM_Default defaultVal,
-	PRM_Range* range = nullptr, PRM_SpareData* spareData = nullptr, const FolderVec& parentFolders = {}, const std::wstring& description = {}) {
+             PRM_Range* range = nullptr, PRM_SpareData* spareData = nullptr, const FolderVec& parentFolders = {},
+             const std::wstring& description = {}) {
 	UT_StringHolder token(toOSNarrowFromUTF16(id));
 	UT_StringHolder label(toOSNarrowFromUTF16(name));
 
@@ -163,7 +164,7 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 	                                           &enumMenu,         // choicelist
 	                                           nullptr,           // rangeptr
 	                                           nullptr,           // callbackfunc
-	                                           &mySpareData,       // spareData
+	                                           &mySpareData,      // spareData
 	                                           1,                 // parmGroup
 	                                           helpText.c_str()), // helptext
 	                              PRM_Template()};
@@ -175,7 +176,8 @@ void addEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name
 namespace NodeSpareParameter {
 
 void addFloatParm(OP_Node* node, const std::wstring& id, const std::wstring& name, double defaultVal, double min,
-                  double max, bool restricted, bool isPercent, const FolderVec& parentFolders, const std::wstring& description) {
+                  double max, bool restricted, bool isPercent, const FolderVec& parentFolders,
+                  const std::wstring& description) {
 	PRM_RangeFlag restrictedFlag = restricted ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI;
 	PRM_Range range =
 	        (!std::isnan(min) && !std::isnan(max)) ? PRM_Range(restrictedFlag, min, restrictedFlag, max) : PRM_Range();
@@ -225,39 +227,38 @@ void addStringParm(OP_Node* node, const std::wstring& id, const std::wstring& na
 }
 
 void addBoolArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-                    const std::vector<bool>& defaultVals, const FolderVec& parentFolders,
-                    const std::wstring& annotation) {
+                      const std::vector<bool>& defaultVals, const FolderVec& parentFolders,
+                      const std::wstring& annotation) {
 	addArrayParm<bool>(node, id, name, defaultVals, parentFolders, annotation, "boolVecParm#", PRM_TOGGLE);
 }
 
 void addFloatArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-                     const std::vector<double>& defaultVals, const FolderVec& parentFolders,
-                     const std::wstring& annotation) {
+                       const std::vector<double>& defaultVals, const FolderVec& parentFolders,
+                       const std::wstring& annotation) {
 	addArrayParm<double>(node, id, name, defaultVals, parentFolders, annotation, "floatVecParm#", PRM_FLT);
 }
 
 void addStringArrayParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-                      const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders,
-                      const std::wstring& annotation) {
+                        const std::vector<std::wstring>& defaultVals, const FolderVec& parentFolders,
+                        const std::wstring& annotation) {
 	addArrayParm<std::wstring>(node, id, name, defaultVals, parentFolders, annotation, "stringVecParm#", PRM_STRING);
 }
 
 void addStringEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-                       const std::wstring& defaultOption,
-                       const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
-                       const std::wstring& description) {
+                       const std::wstring& defaultOption, const std::vector<std::wstring>& mOptions,
+                       const FolderVec& parentFolders, const std::wstring& description) {
 	addEnumParm(node, id, name, defaultOption, mOptions, PRM_ENUM_TYPE_STRING, parentFolders, description);
 }
 
 void addFloatEnumParm(OP_Node* node, const std::wstring& id, const std::wstring& name,
-                      const std::wstring& defaultOption,
-                      const std::vector<std::wstring>& mOptions, const FolderVec& parentFolders,
-                      const std::wstring& description) {
+                      const std::wstring& defaultOption, const std::vector<std::wstring>& mOptions,
+                      const FolderVec& parentFolders, const std::wstring& description) {
 	addEnumParm(node, id, name, defaultOption, mOptions, PRM_ENUM_TYPE_FLOAT, parentFolders, description);
 }
 
 void addFileParm(OP_Node* node, const std::wstring& id, const std::wstring& name, const std::wstring& defaultVal,
-                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders, const std::wstring& description) {
+                 const std::vector<std::wstring>& extensions, const FolderVec& parentFolders,
+                 const std::wstring& description) {
 
 	const std::string extensionString = toOSNarrowFromUTF16(getFileExtensionString(extensions));
 	PRM_SpareToken sparetoken(PRM_SPARE_FILE_CHOOSER_PATTERN_TOKEN, extensionString.c_str());

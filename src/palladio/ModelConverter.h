@@ -54,18 +54,34 @@ void setUVs(GA_RWHandleV3& handle, const GA_Detail::OffsetMarker& marker, const 
 
 } // namespace ModelConversion
 
+struct PrimitiveGroupDestroyer {
+	GA_ElementGroupTable& mGroupTable;
+	PrimitiveGroupDestroyer() = delete;
+	explicit PrimitiveGroupDestroyer(GA_ElementGroupTable& groupTable) : mGroupTable(groupTable) {}
+	void operator()(GA_PrimitiveGroup* group) {
+		mGroupTable.destroy(group);
+	}
+};
+using PrimitiveGroupUPtr = std::unique_ptr<GA_PrimitiveGroup, PrimitiveGroupDestroyer>;
+using PrimitiveGroups = std::vector<PrimitiveGroupUPtr>;
+
 class ModelConverter : public HoudiniCallbacks {
 public:
 	explicit ModelConverter(GU_Detail* gdp, GroupCreation gc, std::vector<prt::Status>& statuses,
 	                        UT_AutoInterrupt* autoInterrupt = nullptr);
+	~ModelConverter() = default;
+
+	void buildHoles();
 
 protected:
 	void add(const wchar_t* name, const double* vtx, size_t vtxSize, const double* nrm, size_t nrmSize,
-	         const uint32_t* counts, size_t countsSize, const uint32_t* vertexIndices, size_t vertexIndicesSize,
-	         const uint32_t* normalIndices, size_t normalIndicesSize, double const* const* uvs, size_t const* uvsSizes,
-	         uint32_t const* const* uvCounts, size_t const* uvCountsSizes, uint32_t const* const* uvIndices,
-	         size_t const* uvIndicesSizes, uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize,
-	         const prt::AttributeMap** materials, const prt::AttributeMap** reports, const int32_t* shapeIDs) override;
+	         const uint32_t* counts, size_t countsSize, const uint32_t* holeCounts, size_t holeCountsSize,
+	         const uint32_t* holeIndices, size_t holeIndicesSize, const uint32_t* vertexIndices,
+	         size_t vertexIndicesSize, const uint32_t* normalIndices, size_t normalIndicesSize,
+	         double const* const* uvs, size_t const* uvsSizes, uint32_t const* const* uvCounts,
+	         size_t const* uvCountsSizes, uint32_t const* const* uvIndices, size_t const* uvIndicesSizes,
+	         uint32_t uvSets, const uint32_t* faceRanges, size_t faceRangesSize, const prt::AttributeMap** materials,
+	         const prt::AttributeMap** reports, const int32_t* shapeIDs) override;
 
 	prt::Status generateError(size_t isIndex, prt::Status status, const wchar_t* message) override;
 	prt::Status assetError(size_t isIndex, prt::CGAErrorLevel level, const wchar_t* key, const wchar_t* uri,
@@ -80,7 +96,7 @@ protected:
 	prt::Status attrFloat(size_t isIndex, int32_t shapeID, const wchar_t* key, double value) override;
 	prt::Status attrString(size_t isIndex, int32_t shapeID, const wchar_t* key, const wchar_t* value) override;
 
-#if (PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1)
+#if ((PRT_VERSION_MAJOR > 1 && PRT_VERSION_MINOR > 1) || PRT_VERSION_MAJOR > 2)
 	prt::Status attrBoolArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const bool* ptr, size_t size,
 	                          size_t nRows) override;
 	prt::Status attrFloatArray(size_t isIndex, int32_t shapeID, const wchar_t* key, const double* ptr, size_t size,
@@ -110,6 +126,7 @@ protected:
 
 private:
 	GU_Detail* mDetail;
+	PrimitiveGroups mHoleGroups;
 	GroupCreation mGroupCreation;
 	std::vector<prt::Status>& mStatuses;
 	UT_AutoInterrupt* mAutoInterrupt;

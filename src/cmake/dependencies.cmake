@@ -35,7 +35,8 @@ endif()
 
 ### select required CE SDK version
 
-if(PLD_CONAN_CESDK_DIR)
+set(PLD_CESDK_DIR "" CACHE PATH "Path to local CESDK distribution. Must point to the directory containing prtConfig.cmake, i.e. the 'cmake' sub-directory.")
+if(PLD_CESDK_DIR)
 	# make conan ignore cesdk package, we'll set its path manually
 	set(PLD_CONAN_ENV "PLD_CONAN_SKIP_CESDK=1")
 endif()
@@ -58,8 +59,8 @@ conan_cmake_run(CONANFILE ${PLD_CONANFILE} PROFILE ${PLD_CONAN_PROFILE} BASIC_SE
 
 ### PRT dependency
 
-if(PLD_CONAN_CESDK_DIR)
-	set(prt_DIR "${PLD_CONAN_CESDK_DIR}/cmake")
+if(PLD_CESDK_DIR)
+	set(prt_DIR "${PLD_CESDK_DIR}")
 	message(STATUS "Ignoring conan package for cesdk, using local path: ${prt_DIR}")
 else()
 	message(STATUS "CONAN_CESDK_ROOT = ${CONAN_CESDK_ROOT}")

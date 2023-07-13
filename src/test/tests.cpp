@@ -205,35 +205,35 @@ TEST_CASE("tokenize string at all tokens", "[utils]") {
 }
 
 TEST_CASE("create file extension string", "[utils]") {
-	SECTION("empty list"){
+	SECTION("empty list") {
 		const std::vector<std::wstring> empty = {};
 		const std::wstring gen = getFileExtensionString(empty);
 		const std::wstring ref = L"*";
 		CHECK(gen == ref);
 	}
 
-	SECTION("single *.extension"){
+	SECTION("single *.extension") {
 		const std::vector<std::wstring> extensions = {L"*.png"};
 		const std::wstring gen = getFileExtensionString(extensions);
 		const std::wstring ref = L"*.png";
 		CHECK(gen == ref);
 	}
 
-	SECTION("single .extension"){
+	SECTION("single .extension") {
 		const std::vector<std::wstring> extensions = {L".png"};
 		const std::wstring gen = getFileExtensionString(extensions);
 		const std::wstring ref = L"*.png";
 		CHECK(gen == ref);
 	}
 
-	SECTION("single bare extension"){
+	SECTION("single bare extension") {
 		const std::vector<std::wstring> extensions = {L"png"};
 		const std::wstring gen = getFileExtensionString(extensions);
 		const std::wstring ref = L"*.png";
 		CHECK(gen == ref);
 	}
 
-	SECTION("multiple extensions"){
+	SECTION("multiple extensions") {
 		const std::vector<std::wstring> extensions = {L"png", L".jpg", L"*.tif"};
 		const std::wstring gen = getFileExtensionString(extensions);
 		const std::wstring ref = L"*.png *.jpg *.tif";
@@ -658,7 +658,7 @@ TEST_CASE("generate two cubes with two uv sets") {
 #endif
 
 		CHECK(cr.uvCounts[0] == cntsExp);
-		
+
 		const std::vector<uint32_t> uvIdxExp = {3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0};
 		CHECK(cr.uvIndices[0] == uvIdxExp);
 
@@ -724,4 +724,87 @@ TEST_CASE("generate with generic attributes") {
 		const auto& a = cr.attrsPerShapeID.at(5);
 		CHECK(std::wcscmp(a->getString(L"Default$foo"), L"baz") == 0);
 	}
+}
+
+TEST_CASE("detect RPK URIs") {
+	CHECK(!isRulePackageUri(nullptr));
+	CHECK(!isRulePackageUri(""));
+	CHECK(!isRulePackageUri("foo"));
+	CHECK(!isRulePackageUri("!"));
+	CHECK(!isRulePackageUri("rpk:"));
+	CHECK(!isRulePackageUri("rpk!"));
+	CHECK(!isRulePackageUri("/tmp/foo"));
+	CHECK(!isRulePackageUri("file:/tmp/foo"));
+	CHECK(!isRulePackageUri("file:/tmp/foo.rpk"));
+	CHECK(!isRulePackageUri("rpk:file:/tmp/foo.rpk"));
+
+	CHECK(isRulePackageUri("rpk:!"));
+	CHECK(isRulePackageUri("rpk:/!/"));
+	CHECK(isRulePackageUri("rpk:/foo!/bar"));
+	CHECK(isRulePackageUri("rpk:/foo.rpk!/bar.jpg"));
+	CHECK(isRulePackageUri("rpk:file:/foo/bar.rpk!/my/asset.usdz"));
+	CHECK(isRulePackageUri("usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg"));
+}
+
+TEST_CASE("get base path from URI") {
+	CHECK(getBaseUriPath(nullptr).empty());
+	CHECK(getBaseUriPath("").empty());
+	CHECK(getBaseUriPath("foo").empty());
+	CHECK(getBaseUriPath("rpk:!").empty());
+
+	CHECK(getBaseUriPath("file:/") == "/");
+	CHECK(getBaseUriPath("rpk:/").empty());
+	CHECK(getBaseUriPath("rpk:/!/").empty());
+	CHECK(getBaseUriPath("rpk:file:/foo!/bar") == "/foo");
+	CHECK(getBaseUriPath("rpk:file:/foo.rpk!/bar.jpg") == "/foo.rpk");
+	CHECK(getBaseUriPath("rpk:file:/foo/bar.rpk!/my/asset.usdz") == "/foo/bar.rpk");
+	CHECK(getBaseUriPath("usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg") == "/foo/bar.rpk");
+}
+
+TEST_CASE("generate with polygon hole triangulation") {
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "holes" /
+	                                                                "example_bad_triang.usdexport1.usd"};
+	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0])};
+	const std::vector<std::wstring> startRules = {L"Default$Shape"};
+	const std::filesystem::path rpkPath = testDataPath / "holes" / "do_cleanup.rpk";
+	const std::wstring ruleFile = L"bin/do_cleanup.cgb";
+
+	TestCallbacks tc;
+	generate(tc, prtCtx, rpkPath, ruleFile, initialShapeURIs, startRules);
+
+	REQUIRE(tc.results.size() == 1);
+	const CallbackResult& cr = *tc.results[0];
+
+	REQUIRE(cr.cnts.size() == 49);
+
+	REQUIRE(cr.holeCnts.size() == 49); // same as cnts
+	CHECK(!std::any_of(cr.holeCnts.begin(), cr.holeCnts.end(), [](uint32_t c) { return (c > 0); }));
+
+	CHECK(cr.holeIdx.empty());
+}
+
+TEST_CASE("generate without polygon hole triangulation") {
+	const std::vector<std::filesystem::path> initialShapeSources = {testDataPath / "holes" /
+	                                                                "example_bad_triang.usdexport1.usd"};
+	const std::vector<std::wstring> initialShapeURIs = {toFileURI(initialShapeSources[0])};
+	const std::vector<std::wstring> startRules = {L"Default$Shape"};
+	const std::filesystem::path rpkPath = testDataPath / "holes" / "do_cleanup.rpk";
+	const std::wstring ruleFile = L"bin/do_cleanup.cgb";
+
+	TestCallbacks tc;
+	generate(tc, prtCtx, rpkPath, ruleFile, initialShapeURIs, startRules, false);
+
+	REQUIRE(tc.results.size() == 1);
+	const CallbackResult& cr = *tc.results[0];
+
+	CHECK(cr.cnts.size() == 30); // 26 quads and 4 holes
+
+	REQUIRE(cr.holeCnts.size() == 30); // same as cnts
+	CHECK(cr.holeCnts[25] == 4);       // top face has four holes
+
+	REQUIRE(cr.holeIdx.size() == 4);
+	CHECK(cr.holeIdx[0] == 26);
+	CHECK(cr.holeIdx[1] == 27);
+	CHECK(cr.holeIdx[2] == 28);
+	CHECK(cr.holeIdx[3] == 29);
 }

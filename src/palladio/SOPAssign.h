@@ -17,8 +17,8 @@
 #pragma once
 
 #include "PRTContext.h"
-#include "ShapeConverter.h"
 #include "RuleAttributes.h"
+#include "ShapeConverter.h"
 
 #include "SOP/SOP_Node.h"
 
@@ -52,7 +52,8 @@ private:
 	ShapeConverterUPtr mShapeConverter;
 
 public:
-	using CGAAttributeValueType = std::variant<std::monostate, std::wstring, double, bool, std::vector<std::wstring>, std::vector<double>, std::vector<bool>>;
+	using CGAAttributeValueType = std::variant<std::monostate, std::wstring, double, bool, std::vector<std::wstring>,
+	                                           std::vector<double>, std::vector<bool>>;
 	using CGAAttributeValueMap = std::map<std::wstring, CGAAttributeValueType>;
 	CGAAttributeValueMap mDefaultCGAAttributes;
 };

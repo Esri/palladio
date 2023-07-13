@@ -22,9 +22,9 @@
 #include "GU/GU_Detail.h"
 #include "SOP/SOP_Node.h"
 
+#include <map>
 #include <variant>
 #include <vector>
-#include <map>
 
 class PrimitiveClassifier;
 

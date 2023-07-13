@@ -52,11 +52,11 @@ AttributeMapUPtr getValidEncoderInfo(const wchar_t* encID) {
 }
 
 RuleFileInfoUPtr getRuleFileInfo(const MainAttributes& ma, const ResolveMapSPtr& resolveMap, prt::Cache* prtCache) {
-	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
-	if (cgbs.empty())
+	auto cgb = getCGB(resolveMap); // key -> uri
+	if (!cgb)
 		return {};
 
-	const std::wstring cgbURI = cgbs.front().second;
+	const std::wstring cgbURI = cgb->second;
 
 	if (cgbURI.empty())
 		return {};
@@ -703,12 +703,12 @@ bool evaluateDefaultRuleAttributes(SOPAssign* node, const GU_Detail* detail, Sha
 		else
 			randomSeed = shapeData.getInitialShapeRandomSeed(isIdx);
 
-		std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(resolveMap); // key -> uri
-		if (cgbs.empty()) {
+		auto cgb = getCGB(resolveMap); // key -> uri
+		if (!cgb) {
 			LOG_ERR << "no rule files found in rule package";
 			return false;
 		}
-		const std::wstring ruleFile = cgbs.front().first;
+		const std::wstring ruleFile = cgb->first;
 
 		isb->setAttributes(ruleFile.c_str(), ma.mStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
 		                   resolveMap.get());
@@ -1239,6 +1239,9 @@ OP_ERROR SOPAssign::cookMySop(OP_Context& context) {
 		}
 
 		updateDefaultCGAAttributes(shapeData);
+
+		if (!shapeData.isValid())
+			return UT_ERROR_ABORT;
 
 		const RuleFileInfoUPtr& ruleFileInfo =
 		        getRuleFileInfoFromShapeData(gdp, shapeData, 0, mShapeConverter, mPRTCtx, evalAttrErrorMessage);

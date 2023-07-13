@@ -178,8 +178,6 @@ void ShapeConverter::get(const GU_Detail* detail, const PrimitiveClassifier& pri
                          const PRTContextUPtr& prtCtx) {
 	WA("all");
 
-	assert(shapeData.isValid());
-
 	// -- partition primitives into initial shapes by primitive classifier values
 	PrimitivePartition primPart(detail, primCls);
 	const PrimitivePartition::PartitionMap& partitions = primPart.get();

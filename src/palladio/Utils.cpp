@@ -20,6 +20,8 @@
 #include "prt/API.h"
 #include "prt/StringUtils.h"
 
+#include "prtx/URI.h"
+
 #ifndef _WIN32
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-local-typedefs"
@@ -35,10 +37,11 @@
 #	include <dlfcn.h>
 #endif
 
+#include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <filesystem>
 #include <string_view>
-#include <algorithm>
 
 namespace {
 
@@ -155,6 +158,28 @@ std::vector<std::pair<std::wstring, std::wstring>> getCGBs(const ResolveMapSPtr&
 	return cgbs;
 }
 
+std::optional<std::pair<std::wstring, std::wstring>> getCGB(const ResolveMapSPtr& rm) {
+#if (PRT_VERSION_MAJOR > 2) // CE 2023 introduced multiple CGBs per RPK and PRT 3.0 has tools for this
+	prt::Status status = prt::STATUS_UNSPECIFIED_ERROR;
+	const wchar_t* cgbKey = rm->findCGBKey(&status);
+	if (cgbKey == nullptr || (status != prt::STATUS_OK))
+		return std::nullopt;
+
+	const wchar_t* cgbUri = rm->getString(cgbKey, &status);
+	if (cgbUri == nullptr || (status != prt::STATUS_OK))
+		return std::nullopt;
+
+	return std::make_pair(cgbKey, cgbUri);
+
+#else
+	std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(rm); // key -> uri
+	if (cgbs.size() != 1)
+		return std::nullopt;
+	return cgbs.front();
+
+#endif
+}
+
 const prt::AttributeMap* createValidatedOptions(const wchar_t* encID, const prt::AttributeMap* unvalidatedOptions) {
 	const EncoderInfoUPtr encInfo(prt::createEncoderInfo(encID));
 	const prt::AttributeMap* validatedOptions = nullptr;
@@ -267,6 +292,43 @@ std::wstring toFileURI(const std::filesystem::path& p) {
 
 std::wstring percentEncode(const std::string& utf8String) {
 	return toUTF16FromUTF8(callAPI<char, char>(prt::StringUtils::percentEncode, utf8String));
+}
+
+// the general URL form is for example:
+// usdz:rpk:file:/foo/bar.rpk!/my/asset.usdz!/some/texture.jpg
+bool isRulePackageUri(const char* uri) {
+	if (uri == nullptr)
+		return false;
+
+	// URL needs to contain the rpk: schema
+	if (std::strstr(uri, SCHEMA_RPK) == nullptr)
+		return false;
+
+	// needs to contain at least one '!' separator
+	if (std::strchr(uri, '!') == nullptr)
+		return false;
+
+	return true;
+}
+
+// The base URI is the "inner most" URI as defined by prtx::URI, i.e. the actual file
+std::string getBaseUriPath(const char* uri) {
+	if (uri == nullptr)
+		return {};
+
+	// we assume p to be a percent-encoded UTF-8 URI (it comes from a PRT resolve map)
+	prtx::URIPtr prtxUri = prtx::URI::create(toUTF16FromUTF8(uri));
+	if (!prtxUri)
+		return {};
+
+	// let's find the innermost URI (the URI could point to a texture inside USDZ inside RPK)
+	while (prtxUri->getNestedURI())
+		prtxUri = prtxUri->getNestedURI();
+
+	if (!prtxUri->isFilePath())
+		return {};
+
+	return toUTF8FromUTF16(prtxUri->getPath());
 }
 
 std::wstring getFileExtensionString(const std::vector<std::wstring>& extensions) {

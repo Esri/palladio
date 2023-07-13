@@ -8,13 +8,13 @@ import groovy.transform.Field
 import com.esri.zrh.jenkins.PipelineSupportLibrary
 import com.esri.zrh.jenkins.JenkinsTools
 import com.esri.zrh.jenkins.ce.CityEnginePipelineLibrary
-import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary
+import com.esri.zrh.jenkins.ce.PrtAppPipelineLibrary as PAPL
 import com.esri.zrh.jenkins.PslFactory
 import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 
 @Field def psl = PslFactory.create(this, UploadTrackingPsl.ID)
 @Field def cepl = new CityEnginePipelineLibrary(this, psl)
-@Field def papl = new PrtAppPipelineLibrary(cepl)
+@Field def papl = new PAPL(cepl)
 
 
 // -- GLOBAL DEFINITIONS
@@ -44,6 +44,8 @@ import com.esri.zrh.jenkins.psl.UploadTrackingPsl
 @Field final List CONFIGS_HOUDINI_195 = [
 	[ os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5' ],
 	[ os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5' ],
+	[ grp: 'cesdkLatest', os: cepl.CFG_OS_RHEL7, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_GCC93, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5', cesdk: PAPL.Dependencies.CESDK_LATEST ],
+	[ grp: 'cesdkLatest', os: cepl.CFG_OS_WIN10, bc: cepl.CFG_BC_REL, tc: cepl.CFG_TC_VC1427, cc: cepl.CFG_CC_OPT, arch: cepl.CFG_ARCH_X86_64, houdini: '19.5', cesdk: PAPL.Dependencies.CESDK_LATEST ],
 ]
 
 
@@ -112,16 +114,17 @@ def taskRunTest(cfg) {
 }
 
 def taskBuildPalladio(cfg) {
-	List defs = [
+	cepl.cleanCurrentDir()
+	unstash(name: SOURCE_STASH)
+
+	List defs = applyCeSdkOverride(cfg) + [
 		[ key: 'HOUDINI_USER_PATH',   val: "${env.WORKSPACE}/install" ],
 		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
-
-	cepl.cleanCurrentDir()
-	unstash(name: SOURCE_STASH)
 	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
+		scanAndPublishBuildIssues(cfg, stdOut)
 	}
 
 	def versionExtractor = { p ->
@@ -133,4 +136,26 @@ def taskBuildPalladio(cfg) {
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
 	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+}
+
+def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
+	final String houdiniSuf = cfg.houdini.replace('.', '_')
+	final String buildSuf = "${cepl.prtBuildSuffix(cfg)}-${houdiniSuf}"
+	final String buildLog = "build-${buildSuf}.log"
+	final String idSuf = (cfg.grp ? cfg.grp + "-" : "") + "${houdiniSuf}-${cepl.getArchiveClassifier(cfg)}"
+
+	// dump build log to file for warnings scanner
+	writeFile(file: buildLog, text: consoleOut)
+
+	// scan for compiler warnings
+	def scanReport = scanForIssues(tool: cepl.isGCC(cfg) ? gcc4(pattern: buildLog) : msBuild(pattern: buildLog), blameDisabled: true)
+	publishIssues(id: "palladio-warnings-${idSuf}", name: "palladio-${idSuf}", issues: [scanReport])
+}
+
+List applyCeSdkOverride(cfg) {
+	if (cfg.cesdk) {
+		papl.fetchDependency(cfg.cesdk, cfg)
+		return [ [ key: 'PLD_CESDK_DIR:PATH', val: cfg.cesdk.p ] ]
+	}
+	return []
 }

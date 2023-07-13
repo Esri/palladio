@@ -118,11 +118,11 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 		const auto& shapeName = shapeData.getInitialShapeName(isIdx);
 		const auto fqStartRule = getFullyQualifiedStartRule(ma);
 
-		std::vector<std::pair<std::wstring, std::wstring>> cgbs = getCGBs(assetsMap); // key -> uri
-		if (cgbs.empty())
+		auto cgb = getCGB(assetsMap); // key -> uri
+		if (!cgb)
 			continue;
 
-		const std::wstring ruleFile = cgbs.front().second;
+		const std::wstring ruleFile = cgb->second;
 
 		isb->setAttributes(ruleFile.c_str(), fqStartRule.c_str(), randomSeed, shapeName.c_str(), ruleAttr.get(),
 		                   assetsMap.get());

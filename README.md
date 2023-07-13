@@ -35,7 +35,7 @@ External documentation:
 - [CityEngine Tutorials](https://doc.arcgis.com/en/cityengine/latest/tutorials/introduction-to-the-cityengine-tutorials.htm)
 - [CityEngine CGA Reference](https://doc.arcgis.com/en/cityengine/latest/cga/cityengine-cga-introduction.htm)
 - [CityEngine Manual](https://doc.arcgis.com/en/cityengine/latest/help/cityengine-help-intro.htm)
-- [CityEngine SDK API Reference](https://esri.github.io/esri-cityengine-sdk/html/index.html)
+- [CityEngine SDK API Reference](https://esri.github.io/cityengine-sdk/html/index.html)
 - [Houdini HDK Reference](https://www.sidefx.com/docs/hdk)
 
 ## User Manual
@@ -78,13 +78,12 @@ The primitive attributes can also be overwritten before the geometry is passed t
 
 #### pldGenerate Node
 
-The `pldGenerate` node is used to generate the final geometry.
-It takes an initial shape geometry with metadata as input (i.e. the output of a `pldAssign` node) and executes the CityEngine rule to generate a 3D model.
-In the parameter editor we have the options to:
+The `pldGenerate` node is used to generate the final geometry. It takes an initial shape geometry with metadata as input (i.e. the output of a `pldAssign` node) and executes the CityEngine rule to generate a 3D model. In the parameter editor we have the options to:
 
-- re-emit modified CGA attributes
-- emit material attributes
-- emit CGA reports
+- Re-emit modified CGA attributes (off by default)
+- Emit material attributes (off by default)
+- Emit CGA reports (off by default)
+- Triangulate polygons with holes (on by default). If disabled, Palladio will create "holes with bridges" similar to the [Hole](https://www.sidefx.com/docs/houdini/nodes/sop/hole.html) geometry node.
 
 ### Execute a simple CityEngine Rule
 
@@ -293,14 +292,14 @@ The below steps will populate your local Conan repository with dependencies for 
 ##### Linux
 
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
-1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/2.7.8538@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/3.0.8905@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini 19.5 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc93 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs19.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs19.5.Z` for Linux).
 
 ##### Windows
 
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git`
 1. Open a Windows command shell and `cd` to the Palladio git repository
-1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/2.7.8538@esri-rd-zurich/stable`
+1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/3.0.8905@esri-rd-zurich/stable`
 1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v142 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
 
 #### Building Palladio
@@ -353,6 +352,18 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. Run `bin\palladio_test`
 
 ## Release Notes
+
+### v2.0.0 (Jul 1, 2023)
+
+Required CityEngine version: 2023.0 or older
+
+#### Added:
+- Option to disable default triangulation on polygons with holes
+
+#### Changed:
+
+- Updated Procedural Runtime (PRT) to 3.0.8905 (corresponds to CityEngine 2023.0)
+- Fixed lookup of textures within USDZ assets in RPKs
 
 ### v2.0.0 Beta 2 (Mar 27, 2023)
 
