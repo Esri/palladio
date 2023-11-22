@@ -352,6 +352,14 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 ## Release Notes
 
+### v2.1.0 (TBD)
+
+- Compatible CityEngine versions: 2023.1 or older
+- For commercial work, a [license](https://www.esri.com/cityengine) for CityEngine 2022.0 or later is required.
+
+#### Changed:
+- Updated Procedural Runtime (PRT) to 3.1.9666 (corresponds to CityEngine 2023.1)
+
 ### v2.0.0 (Jul 1, 2023)
 
 - Compatible CityEngine versions: 2023.0 or older
