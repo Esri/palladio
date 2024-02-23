@@ -35,10 +35,13 @@ const std::set<UT_StringHolder> ATTRIBUTE_BLACKLIST = {PLD_PRIM_CLS_NAME, PLD_RP
                                                        PLD_START_RULE,    PLD_STYLE, PLD_RANDOM_SEED};
 
 std::wstring getFullyQualifiedStartRule(const MainAttributes& ma) {
-	if (ma.mStartRule.find(L'$') != std::wstring::npos)
-		return ma.mStartRule;
+	std::wstring startRule;
+	if (std::wstring::size_type p = ma.mStartRule.find(L'$'); p < ma.mStartRule.length()-1)
+		startRule = ma.mStartRule.substr(p+1);
 	else
-		return ma.mStyle + L'$' + ma.mStartRule;
+		startRule = ma.mStartRule;
+
+	return L"Default$" + startRule; // TODO: handle edge-case when start rule is not in the Default style
 }
 
 } // namespace
@@ -110,6 +113,9 @@ void ShapeGenerator::get(const GU_Detail* detail, const PrimitiveClassifier& pri
 			const std::wstring ruleAttrName = NameConversion::toRuleAttr(ma.mStyle, attr.first);
 			fromHoudini.convert(ar, primitiveMapOffset, ruleAttrName);
 		}
+
+		// set the active style for the main CGB file (we do not support styles in imports yet)
+		amb->setString(L"/ce/style/.", ma.mStyle.c_str());
 
 		AttributeMapUPtr ruleAttr(amb->createAttributeMap());
 
