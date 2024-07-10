@@ -107,9 +107,7 @@ def taskSourceCheckout(cfg) {
 def taskRunTest(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
-	dir(path: 'build') {
-		papl.runCMakeBuild(SOURCE, 'build_and_run_tests', cfg, [])
-	}
+	papl.runCMakeBuild(SOURCE, 'build', 'build_and_run_tests', cfg, [])
 	junit('build/test/palladio_test_report.xml')
 }
 
@@ -122,10 +120,9 @@ def taskBuildPalladio(cfg) {
 		[ key: 'PLD_VERSION_BUILD',   val: env.BUILD_NUMBER ],
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
-	dir(path: 'build') {
-		final String stdOut = papl.runCMakeBuild(SOURCE, BUILD_TARGET, cfg, defs)
-		scanAndPublishBuildIssues(cfg, stdOut)
-	}
+
+	final String stdOut = papl.runCMakeBuild(SOURCE, 'build', BUILD_TARGET, cfg, defs)
+	scanAndPublishBuildIssues(cfg, stdOut)
 
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
