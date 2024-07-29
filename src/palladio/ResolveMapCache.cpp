@@ -22,6 +22,8 @@
 #	include "UT/UT_IStream.h"
 #endif
 
+#include <fstream>
+
 namespace {
 
 constexpr bool UNPACK_RULE_PACKAGES = false;

@@ -22,6 +22,7 @@
 #include "PrimitivePartition.h"
 #include "ShapeData.h"
 
+#include "GEO/GEO_Primitive.h"
 #include "GA/GA_Primitive.h"
 #include "GU/GU_Detail.h"
 
