@@ -108,8 +108,8 @@ def taskSourceCheckout(cfg) {
 def taskRunTest(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
-	papl.runCMakeBuild(SOURCE, 'build', 'build_and_run_tests', cfg, [])
-	junit('build/test/palladio_test_report.xml')
+	buildPalladio(cfg, [], 'build_and_run_tests')
+	papl.jpe.junit('build/test/palladio_test_report.xml')
 }
 
 def taskBuildPalladio(cfg) {
@@ -122,8 +122,10 @@ def taskBuildPalladio(cfg) {
 		[ key: 'PLD_HOUDINI_VERSION', val: cfg.houdini]
 	]
 
-	final String stdOut = papl.runCMakeBuild(SOURCE, 'build', BUILD_TARGET, cfg, defs)
-	scanAndPublishBuildIssues(cfg, stdOut)
+	final String stdOut = buildPalladio(cfg, defs, BUILD_TARGET)
+	if(!papl.runsOnDocker(cfg)) {
+		scanAndPublishBuildIssues(cfg, stdOut)
+	}
 
 	def versionExtractor = { p ->
 		def vers = (p =~ /.*palladio-(.*)\.hdn.*/)
@@ -134,6 +136,35 @@ def taskBuildPalladio(cfg) {
 		return cls[0][1] + '.' + cepl.getArchiveClassifier(cfg)
 	}
 	papl.publish('palladio', env.BRANCH_NAME, "palladio-*", versionExtractor, cfg, classifierExtractor)
+}
+
+def buildPalladio(cfg, defs, target) {
+	if(cfg.os == cepl.CFG_OS_RHEL8) {
+		Map dirMap = [ "${papl.jpe.env.WORKSPACE}" : cfg.containerWorkspace ]
+		Map envMap = [ DEFAULT_UID: '$(id -u)', DEFAULT_GID: '$(id -g)', WORKSPACE: cfg.containerWorkspace ]
+		String src = "${cfg.containerWorkspace}/${SOURCE}";
+		String bld = "${cfg.containerWorkspace}/build";
+
+		cmd = "cd ${src}"
+		cmd += "\npython3 -m ensurepip"
+		cmd += "\npython3 -m pip install --user pipenv"
+		cmd += "\npython3 -m pipenv install"
+		cmd += "\nPYVENV=\$(python3 -m pipenv --venv)"
+		cmd += "\ncd ${cfg.containerWorkspace}"
+		cmd += "\nsource \${PYVENV}/bin/activate"
+		cmd += "\nconan remote add --force --insert=0 zrh-conan ${psl.CONAN_REMOTE_URL}"
+
+		cmd += "\ncmake -G Ninja -DCMAKE_BUILD_TYPE=Release "
+		defs.each { d -> cmd += " -D${d.key}=${ (d.val instanceof Closure) ? d.val.call(cfg) : d.val }" }
+		cmd +=" -S ${src} -B ${bld}"
+
+		cmd += "\ncmake --build ${bld} --target ${target}"
+		String stdOut = psl.runDockerCmd(cfg.containerId, cfg.containerWorkspace, cmd, dirMap, envMap)
+		papl.jpe.echo(stdOut)
+		return stdOut
+	} else {
+		return papl.runCMakeBuild(SOURCE, 'build', target, cfg, defs)
+	}
 }
 
 def scanAndPublishBuildIssues(Map cfg, String consoleOut) {
