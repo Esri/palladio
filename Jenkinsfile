@@ -109,7 +109,7 @@ def taskRunTest(cfg) {
 	cepl.cleanCurrentDir()
 	unstash(name: SOURCE_STASH)
 	buildPalladio(cfg, [], 'build_and_run_tests')
-	papl.jpe.junit('build/test/palladio_test_report.xml')
+	junit('build/test/palladio_test_report.xml')
 }
 
 def taskBuildPalladio(cfg) {
@@ -140,7 +140,7 @@ def taskBuildPalladio(cfg) {
 
 def buildPalladio(cfg, defs, target) {
 	if(cfg.os == CEPL.CFG_OS_RHEL8) {
-		Map dirMap = [ "${papl.jpe.env.WORKSPACE}" : cfg.containerWorkspace ]
+		Map dirMap = [ "${env.WORKSPACE}" : cfg.containerWorkspace ]
 		Map envMap = [ DEFAULT_UID: '$(id -u)', DEFAULT_GID: '$(id -g)', WORKSPACE: cfg.containerWorkspace ]
 		String src = "${cfg.containerWorkspace}/${SOURCE}";
 		String bld = "${cfg.containerWorkspace}/build";
@@ -160,7 +160,7 @@ def buildPalladio(cfg, defs, target) {
 
 		cmd += "\ncmake --build ${bld} --target ${target}"
 		String stdOut = psl.runDockerCmd(cfg.containerId, cfg.containerWorkspace, cmd, dirMap, envMap)
-		papl.jpe.echo(stdOut)
+		echo(stdOut)
 		return stdOut
 	} else {
 		return papl.runCMakeBuild(SOURCE, 'build', target, cfg, defs)
