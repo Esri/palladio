@@ -8,15 +8,20 @@ conan_check(VERSION 1.20 REQUIRED)
 ### select Houdini version and required toolchain
 
 if (NOT PLD_HOUDINI_VERSION)
-	set(PLD_HOUDINI_VERSION "19.5") # use Houdini 19.5 by default
+	set(PLD_HOUDINI_VERSION "20.0") # use Houdini 20.0 by default
 endif()
 
 string(REPLACE "." ";" PLD_HDN_VER "${PLD_HOUDINI_VERSION}")
 list(GET PLD_HDN_VER 0 PLD_HDN_VER_MAJ)
 list(GET PLD_HDN_VER 1 PLD_HDN_VER_MIN)
 
+# Houdini 20.0
+if (${PLD_HDN_VER_MAJ} STREQUAL "20" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
+	message(STATUS "Asking Conan for Houdini 20.0...")
+	set(PLD_CONANFILE "conanfile-h200.py")
+
 # Houdini 19.5
-if (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
+elseif (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 	message(STATUS "Asking Conan for Houdini 19.5...")
 	set(PLD_CONANFILE "conanfile-h195.py")
 
@@ -24,12 +29,6 @@ if (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
 elseif (${PLD_HDN_VER_MAJ} STREQUAL "19" AND ${PLD_HDN_VER_MIN} STREQUAL "0")
 	message(STATUS "Asking Conan for Houdini 19.0...")
 	set(PLD_CONANFILE "conanfile-h190.py")
-
-# Houdini 18.5
-elseif (${PLD_HDN_VER_MAJ} STREQUAL "18" AND ${PLD_HDN_VER_MIN} STREQUAL "5")
-	message(STATUS "Asking Conan for Houdini 18.5...")
-	set(PLD_CONANFILE "conanfile-h185.py")
-
 endif()
 
 
@@ -45,9 +44,9 @@ endif()
 ### run conan
 
 if(PLD_WINDOWS)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v142")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/windows-v143")
 elseif(PLD_LINUX)
-	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc93")
+	set(PLD_CONAN_PROFILE "${PLD_CONAN_TOOLS}/profiles/linux-gcc112")
 endif()
 
 if (PLD_GEN_VISUAL_STUDIO AND NOT CMAKE_BUILD_TYPE)
