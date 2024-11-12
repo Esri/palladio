@@ -12,11 +12,11 @@ class PalladioConan(ConanFile):
         if "PLD_CONAN_HOUDINI_VERSION" in os.environ:
             self.requires("houdini/{}@sidefx/stable".format(os.environ["PLD_CONAN_HOUDINI_VERSION"]))
         else:
-            self.requires("houdini/[>18.5.0 <19.0.0]@sidefx/stable")
+            self.requires("houdini/[>20.0.0 <20.5.0]@sidefx/stable")
 
         if "PLD_CONAN_SKIP_CESDK" not in os.environ:
             if "PLD_CONAN_CESDK_VERSION" in os.environ:
                 cesdk_version = os.environ["PLD_CONAN_CESDK_VERSION"]
             else:
-                cesdk_version = "3.0.8905"
+                cesdk_version = "3.2.10211"
             self.requires("cesdk/{}@esri-rd-zurich/stable".format(cesdk_version))

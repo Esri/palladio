@@ -23,7 +23,7 @@ private:
 	prt::Cache* mCache;
 };
 
-#if (HOUDINI_VERSION_MAJOR >= 19 && HOUDINI_VERSION_MINOR >= 5)
+#if (HOUDINI_VERSION_MAJOR >= 20 || (HOUDINI_VERSION_MAJOR == 19 && HOUDINI_VERSION_MINOR == 5))
 using pld_time_t = std::time_t;
 #else
 using pld_time_t = int;

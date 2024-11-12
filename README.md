@@ -48,7 +48,7 @@ Please refer to the [release notes](#release-notes) for the supported CityEngine
 
 - Windows 10 or 11 (64bit)
 - RedHat Enterprise Linux 8 or 9 and compatible (CentOS, Alma Linux, Rocky Linux, ...)
-- Houdini 18.5, 19.0 or 19.5
+- Houdini 19.0, 19.5 or 20.0
 - See [release notes](#release-notes) for compatible CityEngine versions and requirements for commercial work. 
 
 #### From Pre-Built Binaries
@@ -268,12 +268,12 @@ It can be useful to put RPKs into an `rpk` sub-directory of your current Houdini
 
 - [cmake 3.13 or later](https://cmake.org/download)
 - [conan 1.20 or later](https://www.conan.io/downloads)
-- Linux: GCC 9.3 or later
-- Windows: Visual Studio 2019 (MSVC 14.27) or later
+- Linux: GCC 11.2 or later
+- Windows: Visual Studio 2022 (MSVC 14.37) or later
 
 ### Required Build Dependencies (Latest Release)
 
-- Installation of Houdini 18.5, 19.0 or 19.5 (see https://sidefx.com/download)
+- Installation of Houdini 19.0, 19.5 or 20.0 (see https://sidefx.com/download)
 
 The following will be automatically fetched via the bootstrap steps below:
 
@@ -282,7 +282,7 @@ The following will be automatically fetched via the bootstrap steps below:
 
 ### Build Instructions
 
-Default is Houdini 19.5. See below how to build for different Houdini versions.
+Default is Houdini 20.0. See below how to build for different Houdini versions.
 
 #### Bootstrap
 
@@ -291,15 +291,15 @@ The below steps will populate your local Conan repository with dependencies for 
 ##### Linux
 
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git && cd palladio`
-1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc93 conan/cesdk cesdk/3.0.8905@esri-rd-zurich/stable`
-1. Extract and package the HDK from your local Houdini 19.5 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc93 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs19.5.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs19.5.Z` for Linux).
+1. Download CityEngine SDK: `conan create -pr conan/profiles/linux-gcc112 conan/cesdk cesdk/3.2.10211@esri-rd-zurich/stable`
+1. Extract and package the HDK from your local Houdini 20.0 installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/linux-gcc112 conan/houdini houdini/20.0.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=/path/to/your/hfs20.0.Z`, if Houdini is not installed at the standard location, e.g. at `/opt/hfs20.0.Z` for Linux).
 
 ##### Windows
 
 1. Checkout Palladio: `git clone git@github.com:esri/palladio.git`
 1. Open a Windows command shell and `cd` to the Palladio git repository
-1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v142 conan/cesdk cesdk/3.0.8905@esri-rd-zurich/stable`
-1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v142 conan/houdini houdini/19.5.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
+1. Download CityEngine SDK: `conan create -pr conan/profiles/windows-v143 conan/cesdk cesdk/3.2.10211@esri-rd-zurich/stable`
+1. Extract and package the HDK from your local Houdini installation (adjust Z to your Houdini version): `conan create -pr conan/profiles/windows-v143 conan/houdini houdini/20.0.Z@sidefx/stable` (Note: use the option `-e HOUDINI_INSTALL=C:/path/to/your/houdini/installation`, if Houdini is not installed at the standard location for Windows).
 
 #### Building Palladio
 
@@ -307,19 +307,19 @@ Note: to build for another Houdini version, add the cmake argument `-DPLD_HOUDIN
 
 ##### Linux
 
-1. Ensure GCC 9.3 is active.
+1. Ensure GCC 11.2 is active.
 1. `cd` into your Palladio git repository
 1. `mkdir -p build/release && cd build/release`
 1. `cmake -DCMAKE_BUILD_TYPE=Release ../../src`
-1. `make install` (the plugin will be installed into your `~/houdini19.5/dso` directory)
+1. `make install` (the plugin will be installed into your `~/houdini20.0/dso` directory)
 
 ##### Windows
 
-1. Open a MSVC 14.27 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
+1. Open a MSVC 14.37 x64 shell (Visual Studio 2022) and `cd` to the Palladio git repository
 1. `mkdir build/release`
 1. `cd build/release`
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ../../src`
-1. `nmake install` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini19.5/dso` directory)
+1. `nmake install` (the plugin will be installed into your `%USERPROFILE%/Documents/houdini20.0/dso` directory)
 
 #### Debugging Palladio
 
@@ -334,7 +334,7 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 #### Linux
 
-1. Ensure GCC 9.3 is active.
+1. Ensure GCC 11.2 is active.
 1. `cd` into your Palladio git repository
 1. `mkdir -p build/relTest && cd build/relTest`
 1. `cmake -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
@@ -343,7 +343,7 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 
 #### Windows
 
-1. Open a MSVC 14.27 x64 shell (Visual Studio 2019) and `cd` to the Palladio git repository
+1. Open a MSVC 14.37 x64 shell (Visual Studio 2022) and `cd` to the Palladio git repository
 1. `mkdir build/relTest`
 1. `cd build/relTest`
 1. `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLD_TEST=1 ../../src`
@@ -351,6 +351,20 @@ See [Quick Start](#quick-start) how to launch Houdini with Palladio.
 1. Run `bin\palladio_test`
 
 ## Release Notes
+
+### v2.1.0 (Nov 1, 2024)
+
+- Compatible CityEngine versions: 2024.0 or older
+- For commercial work, a [license](https://www.esri.com/cityengine) for CityEngine 2022.0 or later is required.
+
+#### Added:
+- Support for Houdini 20.0
+
+#### Removed:
+- Support for Houdini 18.5
+
+#### Changed:
+- Updated Procedural Runtime (PRT) to 3.2.10211 (corresponds to CityEngine 2024.0)
 
 ### v2.0.0 (Jul 1, 2023)
 
